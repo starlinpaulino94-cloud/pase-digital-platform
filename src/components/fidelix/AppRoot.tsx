@@ -33,17 +33,23 @@ export function AppRoot() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 text-white animate-pulse">
-            <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4 animate-fade-in">
+          <div
+            className="flex h-14 w-14 items-center justify-center rounded-2xl shadow-midnight"
+            style={{ background: "oklch(0.13 0.02 265)" }}
+          >
+            <svg className="h-7 w-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="3" width="7" height="7" />
               <rect x="14" y="3" width="7" height="7" />
               <rect x="3" y="14" width="7" height="7" />
               <path d="M14 14h7v7h-7z" />
             </svg>
           </div>
-          <p className="text-sm text-muted-foreground">Pase Digital QR</p>
+          <div className="text-center">
+            <p className="text-sm font-bold tracking-wide text-foreground">PASE DIGITAL</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Cargando...</p>
+          </div>
         </div>
       </div>
     );
@@ -85,16 +91,28 @@ export function AppRoot() {
 function Toast() {
   const { toast, clearToast } = useStore();
   if (!toast) return null;
-  const colors = {
-    success: "bg-emerald-600",
-    error: "bg-red-600",
-    info: "bg-slate-800",
+
+  const styles: Record<string, { bg: string; border: string; text: string; dot: string }> = {
+    success: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-800", dot: "bg-emerald-500" },
+    error:   { bg: "bg-red-50",     border: "border-red-200",     text: "text-red-800",     dot: "bg-red-500" },
+    info:    { bg: "bg-card",       border: "border-border",      text: "text-foreground",  dot: "bg-foreground/60" },
   };
+  const s = styles[toast.type] || styles.info;
+
   return (
-    <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-4">
-      <div className={`${colors[toast.type]} text-white rounded-lg shadow-lg px-4 py-3 text-sm max-w-sm flex items-start gap-2`}>
-        <span className="flex-1">{toast.msg}</span>
-        <button onClick={clearToast} className="text-white/70 hover:text-white">×</button>
+    <div className="fixed bottom-4 right-4 z-50 animate-fade-up">
+      <div
+        className={`${s.bg} ${s.border} ${s.text} rounded-2xl border shadow-midnight px-4 py-3 text-sm max-w-sm flex items-start gap-3`}
+      >
+        <span className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${s.dot}`} />
+        <span className="flex-1 font-medium">{toast.msg}</span>
+        <button
+          onClick={clearToast}
+          className="shrink-0 rounded p-0.5 opacity-50 hover:opacity-100 transition-opacity"
+          aria-label="Cerrar"
+        >
+          ×
+        </button>
       </div>
     </div>
   );
