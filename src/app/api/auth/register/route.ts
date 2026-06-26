@@ -17,7 +17,7 @@ const registerSchema = z.object({
   tipoNegocioId: z.string().min(1),
   empresaId: z.string().min(1),
   estrategiaId: z.string().optional(),
-  campos: z.record(z.string()).optional(),
+  campos: z.record(z.string(), z.string()).optional(),
 });
 
 // POST /api/auth/register
