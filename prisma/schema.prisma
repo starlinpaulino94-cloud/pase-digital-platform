@@ -1,5 +1,5 @@
-// PASE Digital Platform — DB-001 Database Blueprint
-// Schema implementation pending Sprint 1.2
+// PASE Digital Platform — MVP Data Layer
+// Sprint 1.2 — DB-001 Implementation
 // See: docs/03-ARQUITECTURA/DB-001 Database Blueprint.md
 
 generator client {
@@ -10,4 +10,467 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum UserRole {
+  SUPERADMIN
+  ADMIN_EMPRESA
+  EMPLEADO
+  CLIENTE
+}
+
+enum CompanyStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum BranchStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum PromotionType {
+  COUPON
+  DISCOUNT
+  PLAN
+  MEMBERSHIP
+  VISIT_BASED
+  TEMPORARY_OFFER
+  BUNDLE
+  CASHBACK
+  REFERRAL
+}
+
+enum PromotionStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  EXPIRED
+  CANCELLED
+}
+
+enum AssignmentStatus {
+  PENDING_PAYMENT
+  ACTIVE
+  COMPLETED
+  USED
+  EXPIRED
+  CANCELLED
+  BLOCKED
+}
+
+enum ValidationStatus {
+  SCANNED
+  EVALUATED
+  CONFIRMED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+enum ReceiptStatus {
+  PENDING
+  ISSUED
+  VOIDED
+}
+
+// ─────────────────────────────────────────────
+// MODELS
+// ─────────────────────────────────────────────
+
+// 1. User
+// Represents any authenticated principal in the system.
+// Linked 1:1 with Supabase auth.users via supabaseId.
+model User {
+  id          String   @id @default(uuid())
+  supabaseId  String   @unique // auth.users.id from Supabase
+  email       String   @unique
+  name        String
+  phone       String?
+  avatarUrl   String?
+  role        UserRole
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  employee    Employee?
+  customer    Customer?
+  auditLogs   AuditLog[]
+  createdPromotions Promotion[] @relation("PromotionCreatedBy")
+  validations Validation[] @relation("EmployeeValidations")
+
+  @@index([email])
+  @@index([supabaseId])
+  @@index([role])
+  @@map("users")
+}
+
+// 2. Company
+// Represents a business registered on the platform (tenant).
+// All operational data is isolated by companyId.
+model Company {
+  id          String        @id @default(uuid())
+  name        String        // commercial name
+  legalName   String?       // razón social
+  industry    String
+  logoUrl     String?
+  coverUrl    String?
+  description String?
+  phone       String?
+  email       String?
+  address     String?
+  city        String?
+  country     String        @default("DO")
+  status      CompanyStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  branches          Branch[]
+  employees         Employee[]
+  promotions        Promotion[]
+  customerCompanies CustomerCompany[]
+  validations       Validation[]
+  receipts          Receipt[]
+  auditLogs         AuditLog[]
+  settings          CompanySettings?
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("companies")
+}
+
+// 3. Branch
+// Represents a physical location or branch of a company.
+model Branch {
+  id        String       @id @default(uuid())
+  companyId String
+  name      String
+  address   String?
+  phone     String?
+  status    BranchStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  // Relations
+  company     Company      @relation(fields: [companyId], references: [id])
+  employees   Employee[]
+  validations Validation[]
+
+  @@index([companyId])
+  @@index([status])
+  @@map("branches")
+}
+
+// 4. Employee
+// Connects a User to a Company (and optionally a Branch) with an operational role.
+model Employee {
+  id        String         @id @default(uuid())
+  userId    String         @unique
+  companyId String
+  branchId  String?
+  role      UserRole       // ADMIN_EMPRESA or EMPLEADO
+  status    EmployeeStatus @default(ACTIVE)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  // Relations
+  user        User         @relation(fields: [userId], references: [id])
+  company     Company      @relation(fields: [companyId], references: [id])
+  branch      Branch?      @relation(fields: [branchId], references: [id])
+  validations Validation[] @relation("EmployeeValidation")
+
+  @@index([companyId])
+  @@index([userId])
+  @@index([status])
+  @@map("employees")
+}
+
+// 5. Customer
+// Represents the end client's profile.
+// A customer can be linked to multiple companies via CustomerCompany.
+model Customer {
+  id        String         @id @default(uuid())
+  userId    String         @unique
+  firstName String
+  lastName  String
+  phone     String?
+  status    CustomerStatus @default(ACTIVE)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  // Relations
+  user                  User                  @relation(fields: [userId], references: [id])
+  customerCompanies     CustomerCompany[]
+  digitalPasses         DigitalPass[]
+  promotionAssignments  PromotionAssignment[]
+  validations           Validation[]
+  receipts              Receipt[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("customers")
+}
+
+// 6. CustomerCompany
+// N:M join between Customer and Company.
+// Tracks aggregate visit data per relationship.
+model CustomerCompany {
+  id           String   @id @default(uuid())
+  customerId   String
+  companyId    String
+  totalVisits  Int      @default(0)
+  firstVisitAt DateTime?
+  lastVisitAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  customer Customer @relation(fields: [customerId], references: [id])
+  company  Company  @relation(fields: [companyId], references: [id])
+
+  @@unique([customerId, companyId])
+  @@index([customerId])
+  @@index([companyId])
+  @@map("customer_companies")
+}
+
+// 7. DigitalPass
+// Represents a customer's QR Digital Pass.
+// The token is an opaque random string — contains NO personal or promotion data.
+// A customer may have multiple passes (e.g. after revoke + regenerate).
+model DigitalPass {
+  id            String    @id @default(uuid())
+  customerId    String
+  token         String    @unique // 32-char cryptographically random token
+  isActive      Boolean   @default(true)
+  activatedAt   DateTime?
+  expiresAt     DateTime?
+  revokedAt     DateTime?
+  revokedReason String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  customer    Customer     @relation(fields: [customerId], references: [id])
+  validations Validation[]
+
+  @@index([customerId])
+  @@index([token])
+  @@index([isActive])
+  @@map("digital_passes")
+}
+
+// 8. Promotion
+// Represents any type of benefit offered by a company.
+// All promotion types share this model — flexibility via `type` enum + `config` JSON.
+// No separate table per promotion type.
+model Promotion {
+  id          String          @id @default(uuid())
+  companyId   String
+  name        String
+  description String?
+  type        PromotionType
+  status      PromotionStatus @default(DRAFT)
+  config      Json            @default("{}") // flexible config per type
+  maxUses     Int?            // null = unlimited across all assignments
+  usedCount   Int             @default(0)
+  startsAt    DateTime?
+  expiresAt   DateTime?
+  createdById String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  company     Company               @relation(fields: [companyId], references: [id])
+  createdBy   User                  @relation("PromotionCreatedBy", fields: [createdById], references: [id])
+  assignments PromotionAssignment[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([type])
+  @@index([expiresAt])
+  @@map("promotions")
+}
+
+// 9. PromotionAssignment
+// Represents a customer owning/having access to a promotion.
+// Tracks usage progress, payment, and lifecycle state.
+model PromotionAssignment {
+  id               String           @id @default(uuid())
+  customerId       String
+  promotionId      String
+  companyId        String           // denormalized for tenant isolation queries
+  status           AssignmentStatus @default(PENDING_PAYMENT)
+  usesAllowed      Int?             // null = unlimited per assignment config
+  usesConsumed     Int              @default(0)
+  progress         Float            @default(0) // for visit-based promotions
+  progressTarget   Int?             // e.g. visit every 10 times → progressTarget = 10
+  paymentConfirmed Boolean          @default(false)
+  paymentConfirmedAt DateTime?
+  paymentAmount    Decimal?         @db.Decimal(10, 2)
+  startedAt        DateTime?
+  expiresAt        DateTime?
+  completedAt      DateTime?
+  notes            String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  // Relations
+  customer    Customer     @relation(fields: [customerId], references: [id])
+  promotion   Promotion    @relation(fields: [promotionId], references: [id])
+  validations Validation[]
+  receipts    Receipt[]
+
+  @@index([customerId])
+  @@index([promotionId])
+  @@index([companyId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("promotion_assignments")
+}
+
+// 10. Validation
+// Records the QR scan + evaluation + confirmation lifecycle.
+// SCAN does NOT consume the promotion.
+// Consumption only happens on CONFIRMATION.
+// sessionId ensures idempotency — prevents double-processing the same scan.
+model Validation {
+  id                    String           @id @default(uuid())
+  sessionId             String           @unique @default(uuid()) // idempotency key
+  digitalPassId         String
+  customerId            String
+  promotionAssignmentId String?
+  companyId             String
+  branchId              String?
+  employeeId            String?          // User.id of the employee who scanned
+  employeeRecordId      String?          // Employee.id
+  status                ValidationStatus @default(SCANNED)
+  scannedAt             DateTime         @default(now())
+  evaluatedAt           DateTime?
+  confirmedAt           DateTime?
+  rejectedAt            DateTime?
+  rejectionReason       String?
+  metadata              Json?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  // Relations
+  digitalPass          DigitalPass          @relation(fields: [digitalPassId], references: [id])
+  customer             Customer             @relation(fields: [customerId], references: [id])
+  promotionAssignment  PromotionAssignment? @relation(fields: [promotionAssignmentId], references: [id])
+  company              Company              @relation(fields: [companyId], references: [id])
+  branch               Branch?              @relation(fields: [branchId], references: [id])
+  employee             User?                @relation("EmployeeValidations", fields: [employeeId], references: [id])
+  employeeRecord       Employee?            @relation("EmployeeValidation", fields: [employeeRecordId], references: [id])
+  receipt              Receipt?
+
+  @@index([digitalPassId])
+  @@index([customerId])
+  @@index([companyId])
+  @@index([status])
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("validations")
+}
+
+// 11. Receipt
+// Internal proof of a confirmed validation / promotion use.
+// Created only on CONFIRMATION — never on scan alone.
+// One receipt per validation (1:1).
+model Receipt {
+  id                    String        @id @default(uuid())
+  validationId          String        @unique // 1:1 with Validation
+  customerId            String
+  promotionAssignmentId String
+  companyId             String
+  externalInvoiceId     String?       // company's own invoice/receipt number
+  externalInvoiceUrl    String?
+  status                ReceiptStatus @default(PENDING)
+  issuedAt              DateTime?
+  voidedAt              DateTime?
+  voidReason            String?
+  metadata              Json?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  // Relations
+  validation          Validation          @relation(fields: [validationId], references: [id])
+  customer            Customer            @relation(fields: [customerId], references: [id])
+  promotionAssignment PromotionAssignment @relation(fields: [promotionAssignmentId], references: [id])
+  company             Company             @relation(fields: [companyId], references: [id])
+
+  @@index([customerId])
+  @@index([companyId])
+  @@index([promotionAssignmentId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("receipts")
+}
+
+// 12. AuditLog
+// Insert-only event log — never updated or deleted.
+// Records all significant business events across the platform.
+model AuditLog {
+  id         String   @id @default(uuid())
+  companyId  String?
+  userId     String?
+  event      String   // e.g. PROMOTION_CREATED, VALIDATION_CONFIRMED
+  entityType String   // e.g. Promotion, Validation, PromotionAssignment
+  entityId   String
+  payload    Json     @default("{}")
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  // Relations
+  company Company? @relation(fields: [companyId], references: [id])
+  user    User?    @relation(fields: [userId], references: [id])
+
+  @@index([companyId])
+  @@index([userId])
+  @@index([event])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// 13. CompanySettings
+// One settings record per company (1:1).
+model CompanySettings {
+  id                              String   @id @default(uuid())
+  companyId                       String   @unique
+  allowMultipleActiveAssignments  Boolean  @default(true)
+  requirePaymentConfirmation      Boolean  @default(false)
+  defaultAssignmentDurationDays   Int?
+  maxAssignmentsPerCustomer       Int?
+  notificationsEmail              String?
+  webhookUrl                      String?
+  customConfig                    Json?
+  createdAt                       DateTime @default(now())
+  updatedAt                       DateTime @updatedAt
+
+  // Relations
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("company_settings")
 }
