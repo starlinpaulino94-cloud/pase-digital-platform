@@ -15,7 +15,17 @@ const eslintConfig = [
     },
   },
   {
-    ignores: ['node_modules/**', '.next/**', 'out/**', 'build/**', 'next-env.d.ts'],
+    ignores: [
+      'node_modules/**',
+      '.next/**',
+      '.claude/**',
+      'out/**',
+      'build/**',
+      'next-env.d.ts',
+      'prisma/**',
+      'src/components/ui/**',
+      'src/hooks/use-mobile.ts',
+    ],
   },
 ]
 

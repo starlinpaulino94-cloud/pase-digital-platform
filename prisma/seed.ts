@@ -34,7 +34,7 @@ async function main() {
   const superadmin = await prisma.user.create({
     data: {
       supabaseId: fakeSupabaseId(),
-      email: 'superadmin@pasedigital.do',
+      email: 'superadmin@example.com',
       name: 'Super Admin',
       role: UserRole.SUPERADMIN,
     },
@@ -109,7 +109,7 @@ async function main() {
   const adminCarwash = await prisma.user.create({
     data: {
       supabaseId: fakeSupabaseId(),
-      email: 'admin@autospa.do',
+      email: 'admin.carwash@example.com',
       name: 'Admin AutoSpa',
       role: UserRole.ADMIN_EMPRESA,
       employee: {
@@ -125,7 +125,7 @@ async function main() {
   const adminRestaurante = await prisma.user.create({
     data: {
       supabaseId: fakeSupabaseId(),
-      email: 'admin@saborcriollo.do',
+      email: 'admin.restaurante@example.com',
       name: 'Admin Sabor Criollo',
       role: UserRole.ADMIN_EMPRESA,
       employee: {
@@ -143,7 +143,7 @@ async function main() {
   const empleadoCarwash = await prisma.user.create({
     data: {
       supabaseId: fakeSupabaseId(),
-      email: 'empleado@autospa.do',
+      email: 'empleado.carwash@example.com',
       name: 'Juan Empleado',
       role: UserRole.EMPLEADO,
       employee: {
@@ -159,7 +159,7 @@ async function main() {
   const empleadoRestaurante = await prisma.user.create({
     data: {
       supabaseId: fakeSupabaseId(),
-      email: 'empleado@saborcriollo.do',
+      email: 'empleado.restaurante@example.com',
       name: 'Maria Empleada',
       role: UserRole.EMPLEADO,
       employee: {
@@ -177,7 +177,7 @@ async function main() {
   const userCliente1 = await prisma.user.create({
     data: {
       supabaseId: fakeSupabaseId(),
-      email: 'cliente1@example.com',
+      email: 'cliente@example.com',
       name: 'Carlos Martínez',
       phone: '809-555-1001',
       role: UserRole.CLIENTE,
@@ -435,12 +435,18 @@ async function main() {
   console.log('✅ Audit logs created')
 
   console.log('\n🎉 Seed complete!')
-  console.log('─'.repeat(50))
-  console.log(`  Superadmin : ${superadmin.email}`)
-  console.log(`  Admin (carwash): ${adminCarwash.email}`)
-  console.log(`  Admin (rest.)  : ${adminRestaurante.email}`)
-  console.log(`  Cliente 1  : ${userCliente1.email}  pass: ${pass1.token.slice(0, 8)}...`)
-  console.log(`  Cliente 2  : ${userCliente2.email}  pass: ${pass2.token.slice(0, 8)}...`)
+  console.log('─'.repeat(60))
+  console.log('  Test accounts (password: Test1234! for all):')
+  console.log(`  SUPERADMIN    : ${superadmin.email}`)
+  console.log(`  ADMIN_EMPRESA : ${adminCarwash.email}`)
+  console.log(`  ADMIN_EMPRESA : ${adminRestaurante.email}`)
+  console.log(`  EMPLEADO      : ${empleadoCarwash.email}`)
+  console.log(`  EMPLEADO      : ${empleadoRestaurante.email}`)
+  console.log(`  CLIENTE       : ${userCliente1.email}   pass: ${pass1.token.slice(0, 8)}...`)
+  console.log(`  CLIENTE       : ${userCliente2.email}  pass: ${pass2.token.slice(0, 8)}...`)
+  console.log('─'.repeat(60))
+  console.log('  ⚠  supabaseId values are placeholders — run db:seed AFTER')
+  console.log('  ⚠  creating real users in Supabase Auth and updating the IDs.')
 }
 
 main()
