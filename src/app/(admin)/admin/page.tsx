@@ -37,6 +37,17 @@ export default async function AdminPage() {
             </Button>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Clientes</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/admin/clientes">Ver clientes</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
