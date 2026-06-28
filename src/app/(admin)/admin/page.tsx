@@ -15,6 +15,7 @@ export default async function AdminPage() {
     listAllPromotions(),
   ])
 
+
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-semibold">Panel PASE — Superadmin</h1>
@@ -62,6 +63,17 @@ export default async function AdminPage() {
           <CardContent className="space-y-2">
             <Button variant="outline" size="sm" asChild>
               <Link href="/admin/clientes">Ver clientes</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Validaciones QR</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/admin/validaciones">Ver validaciones</Link>
             </Button>
           </CardContent>
         </Card>

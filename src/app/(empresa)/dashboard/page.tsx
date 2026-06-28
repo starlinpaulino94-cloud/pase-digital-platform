@@ -47,6 +47,17 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Validación QR</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button size="sm" className="w-full" asChild>
+              <Link href="/dashboard/validaciones">Escanear QR</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
         {canManage && (
           <Card>
             <CardHeader>
