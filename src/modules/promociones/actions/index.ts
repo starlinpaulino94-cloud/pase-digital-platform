@@ -11,6 +11,7 @@ import {
   pausePromotion,
   archivePromotion,
   duplicatePromotion,
+  deletePromotion,
 } from '../mutations'
 import { getPromotionById, promotionBelongsToCompany } from '../queries'
 import type { Promotion } from '../types'
@@ -202,6 +203,21 @@ export async function duplicatePromotionAction(
     revalidatePath('/dashboard/promociones')
     revalidatePath('/admin/promociones')
     return { success: true, data: promotion }
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Error inesperado' }
+  }
+}
+
+export async function deletePromotionAction(promotionId: string): Promise<ActionResult> {
+  try {
+    const user = await requireRole('SUPERADMIN', 'ADMIN_EMPRESA')
+    await assertPromotionAccess(user, promotionId)
+
+    await deletePromotion(promotionId, user.dbUserId, user.companyId ?? undefined)
+
+    revalidatePath('/dashboard/promociones')
+    revalidatePath('/admin/promociones')
+    return { success: true }
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : 'Error inesperado' }
   }

@@ -200,3 +200,32 @@ export async function duplicatePromotion(
 
   return copy
 }
+
+export async function deletePromotion(
+  promotionId: string,
+  actorUserId?: string,
+  companyId?: string
+): Promise<void> {
+  const promotion = await db.promotion.findUnique({
+    where: { id: promotionId },
+    include: { _count: { select: { assignments: true } } },
+  })
+  if (!promotion) throw new Error('Promoción no encontrada')
+  if (promotion.status !== 'DRAFT') {
+    throw new Error('Solo se pueden eliminar promociones en estado Borrador')
+  }
+  if (promotion._count.assignments > 0) {
+    throw new Error('No se puede eliminar una promoción con asignaciones')
+  }
+
+  await db.promotion.delete({ where: { id: promotionId } })
+
+  await writeAuditLog({
+    companyId: companyId ?? promotion.companyId,
+    userId: actorUserId,
+    event: 'PROMOTION_DELETED',
+    entityType: 'Promotion',
+    entityId: promotionId,
+    payload: { name: promotion.name },
+  })
+}
