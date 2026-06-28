@@ -12,7 +12,7 @@ import {
   regenerateDigitalPass,
   revokeDigitalPass,
 } from '../mutations'
-import { getCustomerById, emailExistsAsUser, customerLinkedToCompany, getActivePass } from '../queries'
+import { getCustomerById, getCustomerByUserId, emailExistsAsUser, customerLinkedToCompany, getActivePass } from '../queries'
 import type { Customer, CustomerStatus, DigitalPass } from '../types'
 
 // ─── Create ──────────────────────────────────────────────────────────────────
@@ -198,6 +198,41 @@ export async function revokePassAction(passId: string, reason: string): Promise<
 }
 
 // ─── Customer self-actions ────────────────────────────────────────────────────
+
+export async function updateProfileSelfAction(
+  _prev: ActionResult<Customer>,
+  formData: FormData
+): Promise<ActionResult<Customer>> {
+  try {
+    const user = await requireRole('CLIENTE')
+    if (!user.dbUserId) return { success: false, error: 'No autenticado' }
+
+    const customer = await getCustomerByUserId(user.dbUserId)
+    if (!customer) return { success: false, error: 'Perfil no encontrado' }
+
+    const raw = {
+      firstName: formData.get('firstName'),
+      lastName: formData.get('lastName'),
+      phone: formData.get('phone'),
+    }
+
+    const parsed = updateCustomerSchema.safeParse(raw)
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: 'Datos inválidos',
+        fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+      }
+    }
+
+    const updated = await updateCustomer(customer.id, parsed.data, user.dbUserId)
+
+    revalidatePath('/profile')
+    return { success: true, data: updated }
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Error inesperado' }
+  }
+}
 
 export async function getMyPassAction(customerId: string): Promise<ActionResult<DigitalPass>> {
   try {

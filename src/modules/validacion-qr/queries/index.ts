@@ -61,6 +61,28 @@ export async function listCompanyValidations(
   return { items, total }
 }
 
+export async function listCustomerValidations(
+  customerId: string,
+  params?: { page?: number; pageSize?: number }
+): Promise<{ items: ValidationSession[]; total: number }> {
+  const { page = 1, pageSize = 30 } = params ?? {}
+
+  const where = { customerId }
+
+  const [items, total] = await Promise.all([
+    db.validation.findMany({
+      where,
+      orderBy: { scannedAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: VALIDATION_INCLUDE,
+    }),
+    db.validation.count({ where }),
+  ])
+
+  return { items, total }
+}
+
 export async function getDigitalPassByToken(token: string) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (db as any).digitalPass.findUnique({
