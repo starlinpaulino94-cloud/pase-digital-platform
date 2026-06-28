@@ -1,6 +1,21 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { getSession } from '@/lib/auth'
+import { AppSidebar } from '@/components/layout/AppSidebar'
+
+const NAV = [
+  { label: 'Panel', href: '/admin' },
+  { label: 'Empresas', href: '/admin/empresas' },
+  { label: 'Clientes', href: '/admin/clientes' },
+  { label: 'Empleados', href: '/admin/empleados' },
+  { label: 'Promociones', href: '/admin/promociones' },
+  { label: 'Validaciones', href: '/admin/validaciones' },
+  { label: 'Auditoría', href: '/admin/auditoria' },
+  { label: 'Reportes', href: '/admin/reportes' },
+]
+
+const BOTTOM_NAV = [
+  { label: 'Configuración', href: '/admin/configuracion' },
+]
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession()
@@ -9,21 +24,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (session.role !== 'SUPERADMIN') redirect('/dashboard')
 
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b bg-muted/30">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center gap-6 text-sm overflow-x-auto">
-          <Link href="/admin" className="font-semibold text-foreground shrink-0">PASE Admin</Link>
-          <Link href="/admin/empresas" className="text-muted-foreground hover:text-foreground shrink-0">Empresas</Link>
-          <Link href="/admin/clientes" className="text-muted-foreground hover:text-foreground shrink-0">Clientes</Link>
-          <Link href="/admin/empleados" className="text-muted-foreground hover:text-foreground shrink-0">Empleados</Link>
-          <Link href="/admin/promociones" className="text-muted-foreground hover:text-foreground shrink-0">Promociones</Link>
-          <Link href="/admin/validaciones" className="text-muted-foreground hover:text-foreground shrink-0">Validaciones</Link>
-          <Link href="/admin/auditoria" className="text-muted-foreground hover:text-foreground shrink-0">Auditoría</Link>
-          <Link href="/admin/reportes" className="text-muted-foreground hover:text-foreground shrink-0">Reportes</Link>
-          <Link href="/admin/configuracion" className="text-muted-foreground hover:text-foreground shrink-0">Configuración</Link>
+    <div className="flex min-h-screen bg-background">
+      <AppSidebar
+        brand="PASE Admin"
+        brandHref="/admin"
+        items={NAV}
+        bottomItems={BOTTOM_NAV}
+      />
+      <main className="flex-1 ml-56 min-h-screen">
+        <div className="max-w-6xl mx-auto px-8 py-8">
+          {children}
         </div>
-      </nav>
-      <main>{children}</main>
+      </main>
     </div>
   )
 }

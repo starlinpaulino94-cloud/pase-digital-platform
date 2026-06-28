@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { getSession } from '@/lib/auth'
+import { AppSidebar } from '@/components/layout/AppSidebar'
 
 export default async function EmpresaLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession()
@@ -14,24 +14,36 @@ export default async function EmpresaLayout({ children }: { children: React.Reac
 
   const isAdmin = session.role === 'ADMIN_EMPRESA' || session.role === 'SUPERADMIN'
 
+  const nav = [
+    { label: 'Panel', href: '/dashboard' },
+    { label: 'Promociones', href: '/dashboard/promociones' },
+    { label: 'Clientes', href: '/dashboard/clientes' },
+    { label: 'Validaciones', href: '/dashboard/validaciones' },
+    { label: 'Sucursales', href: '/dashboard/sucursales' },
+    ...(isAdmin
+      ? [
+          { label: 'Empleados', href: '/dashboard/empleados' },
+        ]
+      : []),
+  ]
+
+  const bottomNav = isAdmin
+    ? [{ label: 'Mi empresa', href: '/dashboard/empresa' }]
+    : []
+
   return (
-    <div className="min-h-screen bg-background">
-      <nav className="border-b">
-        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center gap-6 text-sm overflow-x-auto">
-          <Link href="/dashboard" className="font-semibold text-foreground shrink-0">Panel</Link>
-          <Link href="/dashboard/promociones" className="text-muted-foreground hover:text-foreground shrink-0">Promociones</Link>
-          <Link href="/dashboard/clientes" className="text-muted-foreground hover:text-foreground shrink-0">Clientes</Link>
-          <Link href="/dashboard/validaciones" className="text-muted-foreground hover:text-foreground shrink-0">Validaciones</Link>
-          <Link href="/dashboard/sucursales" className="text-muted-foreground hover:text-foreground shrink-0">Sucursales</Link>
-          {isAdmin && (
-            <>
-              <Link href="/dashboard/empleados" className="text-muted-foreground hover:text-foreground shrink-0">Empleados</Link>
-              <Link href="/dashboard/empresa" className="text-muted-foreground hover:text-foreground shrink-0">Configuración</Link>
-            </>
-          )}
+    <div className="flex min-h-screen bg-background">
+      <AppSidebar
+        brand="Panel empresa"
+        brandHref="/dashboard"
+        items={nav}
+        bottomItems={bottomNav}
+      />
+      <main className="flex-1 ml-56 min-h-screen">
+        <div className="max-w-5xl mx-auto px-8 py-8">
+          {children}
         </div>
-      </nav>
-      <main>{children}</main>
+      </main>
     </div>
   )
 }

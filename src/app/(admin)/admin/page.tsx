@@ -5,8 +5,8 @@ import { requireSuperAdmin } from '@/lib/auth/guards'
 import { listAllCompanies } from '@/modules/empresas/queries'
 import { listAllPromotions } from '@/modules/promociones/queries'
 import { listAllCustomers } from '@/modules/clientes/queries'
+import { StatCard } from '@/components/ui/stat-card'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default async function AdminPage() {
   await requireSuperAdmin()
@@ -28,81 +28,64 @@ export default async function AdminPage() {
   ])
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Panel PASE — Superadmin</h1>
+    <div className="space-y-8 animate-fade-up">
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">Panel de administración</h1>
+        <p className="mt-0.5 text-sm text-muted-foreground">Vista global de la plataforma PASE</p>
+      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground font-normal">Empresas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            <p className="text-3xl font-bold">{totalCompanies}</p>
-            <p className="text-xs text-muted-foreground">{totalEmpresasActivas} activas</p>
-            <Button variant="outline" size="sm" className="mt-2" asChild>
-              <Link href="/admin/empresas">Gestionar</Link>
-            </Button>
-          </CardContent>
-        </Card>
+      {/* Stats grid */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <StatCard
+          label="Empresas"
+          value={totalCompanies}
+          sub={`${totalEmpresasActivas} activas · ${totalCompanies - totalEmpresasActivas} pendientes`}
+          accent="blue"
+        />
+        <StatCard
+          label="Promociones"
+          value={totalPromotions}
+          sub={`${totalPromotionsActivas} activas`}
+          accent="purple"
+        />
+        <StatCard
+          label="Clientes"
+          value={totalClientes}
+          sub={`${totalClientesActivos} activos`}
+          accent="green"
+        />
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground font-normal">Promociones</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            <p className="text-3xl font-bold">{totalPromotions}</p>
-            <p className="text-xs text-muted-foreground">{totalPromotionsActivas} activas</p>
-            <Button variant="outline" size="sm" className="mt-2" asChild>
-              <Link href="/admin/promociones">Gestionar</Link>
-            </Button>
-          </CardContent>
-        </Card>
+      {/* Quick access */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {[
+          { label: 'Gestionar empresas', href: '/admin/empresas', desc: 'Activar, suspender y configurar empresas' },
+          { label: 'Ver validaciones', href: '/admin/validaciones', desc: 'Historial de validaciones QR' },
+          { label: 'Auditoría', href: '/admin/auditoria', desc: 'Registros de actividad del sistema' },
+          { label: 'Clientes', href: '/admin/clientes', desc: 'Gestión de cuentas de clientes' },
+          { label: 'Empleados', href: '/admin/empleados', desc: 'Gestión de accesos y roles' },
+          { label: 'Reportes', href: '/admin/reportes', desc: 'Métricas y exportaciones CSV' },
+        ].map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="group bg-card border border-border rounded-xl p-4 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
+          >
+            <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+              {item.label}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{item.desc}</p>
+          </Link>
+        ))}
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground font-normal">Clientes</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            <p className="text-3xl font-bold">{totalClientes}</p>
-            <p className="text-xs text-muted-foreground">{totalClientesActivos} activos</p>
-            <Button variant="outline" size="sm" className="mt-2" asChild>
-              <Link href="/admin/clientes">Ver clientes</Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground font-normal">Empleados</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/admin/empleados">Ver empleados</Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground font-normal">Validaciones QR</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/admin/validaciones">Ver validaciones</Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground font-normal">Auditoría</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/admin/auditoria">Ver registros</Link>
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="flex items-center gap-3">
+        <Button size="sm" asChild>
+          <Link href="/admin/empresas/nueva">+ Nueva empresa</Link>
+        </Button>
+        <Button size="sm" variant="outline" asChild>
+          <Link href="/admin/reportes/exportar">Exportar CSV</Link>
+        </Button>
       </div>
     </div>
   )

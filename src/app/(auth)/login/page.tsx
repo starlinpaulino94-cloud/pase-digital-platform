@@ -3,16 +3,18 @@ import { LoginForm } from '@/components/auth/LoginForm'
 
 export default function LoginPage() {
   return (
-    <div className="space-y-6">
-      <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Iniciar sesión</h1>
+    <div className="space-y-7">
+      <div className="space-y-1.5">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Bienvenido de vuelta</h1>
         <p className="text-sm text-muted-foreground">Ingresa a tu cuenta de PASE Digital</p>
       </div>
+
       <LoginForm />
-      <p className="text-center text-sm text-muted-foreground">
+
+      <p className="text-sm text-muted-foreground">
         ¿No tienes cuenta?{' '}
-        <Link href="/registro" className="underline underline-offset-4 hover:text-foreground">
-          Regístrate
+        <Link href="/registro" className="font-medium text-foreground underline underline-offset-4 hover:no-underline">
+          Regístrate gratis
         </Link>
       </p>
     </div>
