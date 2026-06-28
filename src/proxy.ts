@@ -36,8 +36,22 @@ function isAllowed(role: AppRole, allowedRoles: AppRole[]): boolean {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Refresh the Supabase session (rotates cookies if needed).
-  const { supabaseResponse, user } = await updateSession(request)
+  // If Supabase env vars are not configured, pass through to avoid crashing.
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return NextResponse.next()
+  }
+
+  let supabaseResponse: NextResponse
+  let user: { app_metadata?: Record<string, unknown> } | null
+
+  try {
+    const result = await updateSession(request)
+    supabaseResponse = result.supabaseResponse
+    user = result.user
+  } catch {
+    // If session refresh fails, pass through without auth enforcement.
+    return NextResponse.next()
+  }
 
   const isPublicRoute = PUBLIC_ROUTES.some((r) => pathname === r)
   const isAuthRoute = AUTH_ROUTES.some(

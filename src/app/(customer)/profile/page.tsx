@@ -5,8 +5,6 @@ import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth'
 import { getCustomerByUserId } from '@/modules/clientes/queries'
 import { CustomerStatusBadge } from '@/components/customers/CustomerStatusBadge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
 export default async function ProfilePage() {
@@ -20,76 +18,99 @@ export default async function ProfilePage() {
 
   if (!customer) {
     return (
-      <div className="p-6">
-        <h1 className="text-2xl font-semibold">Mi Perfil</h1>
-        <p className="text-muted-foreground mt-2">Perfil de cliente no encontrado.</p>
+      <div className="py-12 text-center">
+        <p className="text-muted-foreground text-sm">Perfil de cliente no encontrado.</p>
       </div>
     )
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">{customer.firstName} {customer.lastName}</h1>
-          <p className="text-sm text-muted-foreground">{customer.user.email}</p>
-        </div>
-        <CustomerStatusBadge status={customer.status} />
-      </div>
-
-      <div className="grid gap-4">
-        <Card>
-          <CardHeader><CardTitle className="text-base">Información</CardTitle></CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <Row label="Email" value={customer.user.email} />
-            <Row label="Teléfono" value={customer.phone} />
-            <Row label="Miembro desde" value={customer.createdAt.toLocaleDateString('es-DO')} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Pase Digital</CardTitle>
-              <Button asChild size="sm">
-                <Link href="/profile/pase">Ver Pase</Link>
-              </Button>
+    <div className="space-y-6 animate-fade-up">
+      {/* Identity card */}
+      <div className="bg-card border border-border rounded-2xl p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground font-bold text-lg flex items-center justify-center shrink-0">
+              {customer.firstName[0].toUpperCase()}
             </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Tu código QR único para acceder a beneficios y promociones.
+            <div>
+              <h1 className="text-base font-semibold text-foreground">
+                {customer.firstName} {customer.lastName}
+              </h1>
+              <p className="text-sm text-muted-foreground">{customer.user.email}</p>
+            </div>
+          </div>
+          <CustomerStatusBadge status={customer.status} />
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-3 text-sm border-t border-border pt-4">
+          <div>
+            <p className="text-xs text-muted-foreground">Teléfono</p>
+            <p className="mt-0.5 font-medium text-foreground">{customer.phone ?? '—'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Miembro desde</p>
+            <p className="mt-0.5 font-medium text-foreground">
+              {new Date(customer.createdAt).toLocaleDateString('es-DO', { month: 'long', year: 'numeric' })}
             </p>
-          </CardContent>
-        </Card>
-
-        {(customer.customerCompanies ?? []).length > 0 && (
-          <Card>
-            <CardHeader><CardTitle className="text-base">Mis empresas</CardTitle></CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {customer.customerCompanies!.map((cc) => (
-                  <Badge key={cc.id} variant="outline">
-                    {cc.company?.name}
-                    {cc.totalVisits > 0 && (
-                      <span className="ml-1 text-xs">· {cc.totalVisits} visitas</span>
-                    )}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+          </div>
+        </div>
       </div>
-    </div>
-  )
-}
 
-function Row({ label, value }: { label: string; value: string | null | undefined }) {
-  return (
-    <div className="flex justify-between">
-      <span className="text-muted-foreground">{label}</span>
-      <span>{value ?? '—'}</span>
+      {/* QR Pass CTA */}
+      <Link
+        href="/profile/pase"
+        className="flex items-center justify-between bg-[oklch(0.155_0.028_264)] text-white rounded-2xl p-5 hover:opacity-95 transition-opacity"
+      >
+        <div>
+          <p className="text-xs text-[oklch(0.55_0.012_264)] font-medium uppercase tracking-widest">Pase Digital</p>
+          <p className="mt-1 font-semibold text-base">Ver mi código QR</p>
+          <p className="mt-0.5 text-sm text-[oklch(0.65_0.012_264)]">
+            Muéstralo para validar tus beneficios
+          </p>
+        </div>
+        <div className="w-12 h-12 rounded-xl bg-[oklch(0.22_0.030_264)] flex items-center justify-center shrink-0 text-2xl">
+          🎟️
+        </div>
+      </Link>
+
+      {/* Quick links */}
+      <div className="grid grid-cols-2 gap-3">
+        {[
+          { label: 'Promociones', sub: 'Ver mis beneficios activos', href: '/profile/promociones' },
+          { label: 'Historial', sub: 'Mis usos anteriores', href: '/profile/historial' },
+          { label: 'Empresas', sub: 'Empresas asociadas', href: '/profile/empresas' },
+          { label: 'Configuración', sub: 'Editar perfil y datos', href: '/profile/configuracion' },
+        ].map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="group bg-card border border-border rounded-xl p-4 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
+          >
+            <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+              {item.label}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{item.sub}</p>
+          </Link>
+        ))}
+      </div>
+
+      {/* Companies */}
+      {(customer.customerCompanies ?? []).length > 0 && (
+        <div className="bg-card border border-border rounded-xl p-4 space-y-2">
+          <p className="text-sm font-semibold text-foreground">Empresas asociadas</p>
+          <div className="flex flex-wrap gap-2">
+            {customer.customerCompanies!.map((cc) => (
+              <Badge key={cc.id} variant="outline">
+                {cc.company?.name}
+                {cc.totalVisits > 0 && (
+                  <span className="ml-1 text-xs opacity-60">· {cc.totalVisits} visitas</span>
+                )}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
