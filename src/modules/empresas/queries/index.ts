@@ -65,3 +65,32 @@ export async function getBranchById(id: string): Promise<Branch | null> {
     include: { company: { select: { name: true } } },
   })
 }
+
+export async function listAuditLogs(params?: {
+  companyId?: string
+  event?: string
+  page?: number
+  pageSize?: number
+}): Promise<{ items: Record<string, unknown>[]; total: number }> {
+  const { companyId, event, page = 1, pageSize = 50 } = params ?? {}
+
+  const where: Record<string, unknown> = {}
+  if (companyId) where.companyId = companyId
+  if (event) where.event = { contains: event, mode: 'insensitive' }
+
+  const [items, total] = await Promise.all([
+    db.auditLog.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: {
+        user: { select: { email: true, name: true } },
+        company: { select: { name: true } },
+      },
+    }),
+    db.auditLog.count({ where }),
+  ])
+
+  return { items, total }
+}
