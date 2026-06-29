@@ -31,7 +31,7 @@ export default async function PromocionAdminDetailPage({
             <PromotionStatusBadge status={promotion.status} />
           </div>
           <p className="text-sm text-muted-foreground">
-            Empresa: {promotion.company?.name ?? '—'} · Tipo: <PromotionTypeBadge type={promotion.type} />
+            Empresa: {promotion.company?.name ?? ''} · Tipo: <PromotionTypeBadge type={promotion.type} />
           </p>
         </div>
         <Button variant="outline" size="sm" asChild>
@@ -89,7 +89,7 @@ export default async function PromocionAdminDetailPage({
       </div>
 
       <div className="text-xs text-muted-foreground space-y-1">
-        <p>Creado por: {promotion.createdBy?.name ?? '—'}</p>
+        <p>Creado por: {promotion.createdBy?.name ?? ''}</p>
         <p>Creado: {new Date(promotion.createdAt).toLocaleString('es-DO')}</p>
         <p>Actualizado: {new Date(promotion.updatedAt).toLocaleString('es-DO')}</p>
       </div>

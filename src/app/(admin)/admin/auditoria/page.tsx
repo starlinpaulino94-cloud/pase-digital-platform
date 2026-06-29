@@ -86,12 +86,12 @@ export default async function AuditoriaPage({
                   <TableCell className="text-xs text-muted-foreground">
                     {new Date(l.createdAt).toLocaleString('es-DO')}
                   </TableCell>
-                  <TableCell className="text-sm">{l.company?.name ?? '—'}</TableCell>
+                  <TableCell className="text-sm">{l.company?.name ?? ''}</TableCell>
                   <TableCell className="text-xs font-mono">{String(l.event)}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {String(l.entityType)} {String(l.entityId).slice(0, 8)}…
                   </TableCell>
-                  <TableCell className="text-xs">{l.user?.email ?? '—'}</TableCell>
+                  <TableCell className="text-xs">{l.user?.email ?? ''}</TableCell>
                 </TableRow>
               )
             })}

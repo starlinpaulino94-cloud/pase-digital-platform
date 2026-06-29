@@ -49,7 +49,7 @@ export default async function AdminEmployeeDetailPage({
             )}
             <div className="flex justify-between">
               <span className="text-muted-foreground">Empresa</span>
-              <span>{employee.company?.name ?? '—'}</span>
+              <span>{employee.company?.name ?? ''}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Sucursal</span>

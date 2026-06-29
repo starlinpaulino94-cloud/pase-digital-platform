@@ -60,7 +60,7 @@ export default async function AdminEmpresasPage() {
                   )}
                 </TableCell>
                 <TableCell className="capitalize">{company.industry}</TableCell>
-                <TableCell>{company.city ?? '—'}</TableCell>
+                <TableCell>{company.city ?? ''}</TableCell>
                 <TableCell>
                   <CompanyStatusBadge status={company.status} />
                 </TableCell>

@@ -56,7 +56,7 @@ export default async function AdminPromocionesPage() {
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.name}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {p.company?.name ?? '—'}
+                  {p.company?.name ?? ''}
                 </TableCell>
                 <TableCell><PromotionTypeBadge type={p.type} /></TableCell>
                 <TableCell><PromotionStatusBadge status={p.status} /></TableCell>

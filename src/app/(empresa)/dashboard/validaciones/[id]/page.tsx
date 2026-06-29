@@ -37,7 +37,7 @@ export default async function ValidationDetailPage({
 
   const assignmentOptions = activeAssignments.map((a) => ({
     id: a.id,
-    promotionName: a.promotion?.name ?? '—',
+    promotionName: a.promotion?.name ?? '',
     promotionType: a.promotion?.type ?? '',
     usesConsumed: a.usesConsumed,
     usesAllowed: a.usesAllowed,

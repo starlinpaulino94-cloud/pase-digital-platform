@@ -59,7 +59,7 @@ export default async function EmpleadosPage() {
               <TableRow key={emp.id}>
                 <TableCell className="font-medium">{emp.user.name}</TableCell>
                 <TableCell className="text-sm">{emp.user.email}</TableCell>
-                <TableCell>{emp.branch?.name ?? '—'}</TableCell>
+                <TableCell>{emp.branch?.name ?? ''}</TableCell>
                 <TableCell><EmployeeRoleBadge role={emp.role} /></TableCell>
                 <TableCell><EmployeeStatusBadge status={emp.status} /></TableCell>
                 <TableCell className="text-right">

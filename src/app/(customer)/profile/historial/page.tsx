@@ -52,7 +52,7 @@ export default async function HistorialPage() {
                   {new Date(v.scannedAt).toLocaleString('es-DO')}
                 </TableCell>
                 <TableCell className="text-sm">
-                  {v.promotionAssignment?.promotion?.name ?? '—'}
+                  {v.promotionAssignment?.promotion?.name ?? ''}
                 </TableCell>
                 <TableCell>
                   <ValidationStatusBadge status={v.status} />

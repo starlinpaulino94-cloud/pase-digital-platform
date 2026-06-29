@@ -46,7 +46,7 @@ export default async function ProfilePage() {
         <div className="mt-5 grid grid-cols-2 gap-3 text-sm border-t border-border pt-4">
           <div>
             <p className="text-xs text-muted-foreground">Teléfono</p>
-            <p className="mt-0.5 font-medium text-foreground">{customer.phone ?? '—'}</p>
+            <p className="mt-0.5 font-medium text-foreground">{customer.phone ?? ''}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Miembro desde</p>

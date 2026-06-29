@@ -88,7 +88,7 @@ export default async function AdminClienteDetailPage({ params }: Props) {
               <DigitalPassQR token={pass.token} />
               <div className="space-y-2 text-sm">
                 <Row label="Estado" value={pass.isActive ? 'Activo' : 'Inactivo'} />
-                <Row label="Activado" value={pass.activatedAt?.toLocaleDateString('es-DO') ?? '—'} />
+                <Row label="Activado" value={pass.activatedAt?.toLocaleDateString('es-DO') ?? ''} />
                 <Row label="Token" value={`${pass.token.slice(0, 8)}...`} />
               </div>
             </div>
@@ -124,7 +124,7 @@ export default async function AdminClienteDetailPage({ params }: Props) {
               <TableBody>
                 {assignments.map((a) => (
                   <TableRow key={a.id}>
-                    <TableCell className="font-medium">{a.promotion?.name ?? '—'}</TableCell>
+                    <TableCell className="font-medium">{a.promotion?.name ?? ''}</TableCell>
                     <TableCell><AssignmentStatusBadge status={a.status} /></TableCell>
                     <TableCell className="text-sm">
                       {a.usesConsumed}{a.usesAllowed != null ? `/${a.usesAllowed}` : ''}
@@ -152,7 +152,7 @@ function Row({ label, value }: { label: string; value: string | null | undefined
   return (
     <div className="flex justify-between">
       <span className="text-muted-foreground">{label}</span>
-      <span>{value ?? '—'}</span>
+      <span>{value ?? ''}</span>
     </div>
   )
 }

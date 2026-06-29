@@ -56,8 +56,8 @@ export default async function SucursalesPage() {
             {branches.map((branch) => (
               <TableRow key={branch.id}>
                 <TableCell className="font-medium">{branch.name}</TableCell>
-                <TableCell>{branch.address ?? '—'}</TableCell>
-                <TableCell>{branch.phone ?? '—'}</TableCell>
+                <TableCell>{branch.address ?? ''}</TableCell>
+                <TableCell>{branch.phone ?? ''}</TableCell>
                 <TableCell>{branch._count?.employees ?? 0}</TableCell>
                 <TableCell>
                   <BranchStatusBadge status={branch.status} />

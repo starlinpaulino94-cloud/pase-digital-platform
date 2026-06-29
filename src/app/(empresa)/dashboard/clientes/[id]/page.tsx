@@ -113,7 +113,7 @@ export default async function ClienteDetailPage({ params }: Props) {
               <TableBody>
                 {assignments.map((a) => (
                   <TableRow key={a.id}>
-                    <TableCell className="font-medium">{a.promotion?.name ?? '—'}</TableCell>
+                    <TableCell className="font-medium">{a.promotion?.name ?? ''}</TableCell>
                     <TableCell><AssignmentStatusBadge status={a.status} /></TableCell>
                     <TableCell className="text-sm">
                       {a.usesConsumed}{a.usesAllowed != null ? `/${a.usesAllowed}` : ''}
@@ -141,7 +141,7 @@ function Row({ label, value }: { label: string; value: string | null | undefined
   return (
     <div className="flex justify-between">
       <span className="text-muted-foreground">{label}</span>
-      <span>{value ?? '—'}</span>
+      <span>{value ?? ''}</span>
     </div>
   )
 }

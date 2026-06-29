@@ -29,12 +29,12 @@ export default async function MisPromocionesPage() {
             <Card key={a.id}>
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-sm font-medium">{a.promotion?.name ?? '—'}</CardTitle>
+                  <CardTitle className="text-sm font-medium">{a.promotion?.name ?? ''}</CardTitle>
                   <AssignmentStatusBadge status={a.status} />
                 </div>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground space-y-1">
-                <p>Tipo: {a.promotion?.type ?? '—'}</p>
+                <p>Tipo: {a.promotion?.type ?? ''}</p>
                 {a.usesAllowed !== null && (
                   <p>Usos: {a.usesConsumed} / {a.usesAllowed}</p>
                 )}

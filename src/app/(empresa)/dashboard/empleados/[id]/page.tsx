@@ -58,7 +58,7 @@ function Row({ label, value }: { label: string; value: string | null | undefined
   return (
     <div className="flex justify-between">
       <span className="text-muted-foreground">{label}</span>
-      <span>{value ?? '—'}</span>
+      <span>{value ?? ''}</span>
     </div>
   )
 }

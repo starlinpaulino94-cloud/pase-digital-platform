@@ -50,7 +50,7 @@ export default async function AdminClientesPage() {
               <TableRow key={c.id}>
                 <TableCell className="font-medium">{c.firstName} {c.lastName}</TableCell>
                 <TableCell className="text-sm">{c.user.email}</TableCell>
-                <TableCell>{c.phone ?? '—'}</TableCell>
+                <TableCell>{c.phone ?? ''}</TableCell>
                 <TableCell><CustomerStatusBadge status={c.status} /></TableCell>
                 <TableCell className="text-right">
                   <Button variant="ghost" size="sm" asChild>

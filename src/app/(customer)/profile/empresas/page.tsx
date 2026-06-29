@@ -28,7 +28,7 @@ export default async function MisEmpresasPage() {
             <Card key={cc.id}>
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
-                  <CardTitle className="text-sm">{cc.company?.name ?? '—'}</CardTitle>
+                  <CardTitle className="text-sm">{cc.company?.name ?? ''}</CardTitle>
                   <Badge variant="outline" className="text-xs">{cc.company?.industry}</Badge>
                 </div>
               </CardHeader>
