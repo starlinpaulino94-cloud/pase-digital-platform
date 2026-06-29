@@ -89,6 +89,83 @@ export async function confirmarPago(
   }
 }
 
+/** Create a PENDIENTE membership for a cliente with the given plan. */
+export async function crearMembresia(
+  clienteId: string,
+  planId: string,
+  _companyId: string
+): Promise<AdminActionState> {
+  try {
+    const user = await requireAdmin()
+    if (!user) return { error: 'No autorizado.' }
+
+    const cliente = await prisma.cliente.findUnique({
+      where: { id: clienteId },
+    })
+    if (!cliente) return { error: 'Cliente no encontrado.' }
+    if (
+      user.metadata.role !== 'SUPERADMIN' &&
+      user.metadata.companyId &&
+      cliente.companyId !== user.metadata.companyId
+    ) {
+      return { error: 'No autorizado.' }
+    }
+
+    const plan = await prisma.plan.findUnique({ where: { id: planId } })
+    if (!plan || plan.companyId !== cliente.companyId) {
+      return { error: 'Plan no válido.' }
+    }
+
+    await prisma.membership.create({
+      data: {
+        clienteId,
+        planId,
+        estado: 'PENDIENTE',
+        lavadosRestantes: plan.esIlimitado ? 0 : plan.lavadosIncluidos,
+      },
+    })
+
+    revalidatePath(`/admin/clientes/${clienteId}`)
+    revalidatePath('/admin/clientes')
+    revalidatePath('/admin/membresias')
+    return { success: true }
+  } catch (e) {
+    console.error('[admin] crearMembresia error:', e)
+    return { error: 'Ocurrió un error inesperado. Intenta de nuevo.' }
+  }
+}
+
+/** Cancel a membership: estado -> CANCELADA. */
+export async function cancelarMembresia(
+  _prev: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const user = await requireAdmin()
+    if (!user) return { error: 'No autorizado.' }
+
+    const membershipId = String(formData.get('membershipId') ?? '')
+    const membership = await assertOwnership(membershipId, user)
+    if (!membership) return { error: 'Membresía no encontrada.' }
+    if (membership.estado === 'CANCELADA') {
+      return { error: 'La membresía ya está cancelada.' }
+    }
+
+    await prisma.membership.update({
+      where: { id: membership.id },
+      data: { estado: 'CANCELADA' },
+    })
+
+    revalidatePath(`/admin/clientes/${membership.clienteId}`)
+    revalidatePath('/admin/clientes')
+    revalidatePath('/admin/membresias')
+    return { success: true }
+  } catch (e) {
+    console.error('[admin] cancelarMembresia error:', e)
+    return { error: 'Ocurrió un error inesperado. Intenta de nuevo.' }
+  }
+}
+
 /** Renew: new 30-day period, reset lavadosRestantes, keep same QR. */
 export async function renovarMembresia(
   _prev: AdminActionState,

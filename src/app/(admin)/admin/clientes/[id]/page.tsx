@@ -8,6 +8,8 @@ import { EstadoBadge } from '@/components/EstadoBadge'
 import {
   ConfirmPaymentForm,
   RenewForm,
+  CancelForm,
+  NewMembershipForm,
 } from '@/components/admin/MembershipActions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { MembershipEstado } from '@/types'
@@ -62,6 +64,21 @@ export default async function ClienteDetailPage({
   if (!cliente) notFound()
   if (companyId && cliente.companyId !== companyId) notFound()
 
+  let planes: { id: string; nombre: string; precio: string }[] = []
+  try {
+    const rows = await prisma.plan.findMany({
+      where: { companyId: cliente.companyId, activo: true },
+      orderBy: { precio: 'asc' },
+    })
+    planes = rows.map((p) => ({
+      id: p.id,
+      nombre: p.nombre,
+      precio: String(Number(p.precio)),
+    }))
+  } catch (e) {
+    console.error('[admin-cliente-detail] planes', e)
+  }
+
   const membership = cliente.memberships[0]
   const token = cliente.qrTokens[0]?.token
 
@@ -114,9 +131,16 @@ export default async function ClienteDetailPage({
           </CardHeader>
           <CardContent className="space-y-4">
             {!membership ? (
-              <p className="text-slate-500">
-                El cliente aún no ha seleccionado un plan.
-              </p>
+              <div className="space-y-4">
+                <p className="text-slate-500">
+                  El cliente aún no ha seleccionado un plan.
+                </p>
+                <NewMembershipForm
+                  clienteId={cliente.id}
+                  companyId={cliente.companyId}
+                  planes={planes}
+                />
+              </div>
             ) : (
               <>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -146,17 +170,35 @@ export default async function ClienteDetailPage({
                   />
                 </div>
 
-                <div className="border-t pt-4">
-                  {membership.estado === 'PENDIENTE' ? (
+                <div className="space-y-4 border-t pt-4">
+                  {membership.estado === 'PENDIENTE' && (
                     <ConfirmPaymentForm
                       membershipId={membership.id}
                       precio={String(Number(membership.plan.precio))}
                     />
-                  ) : (
+                  )}
+                  {(membership.estado === 'ACTIVA' ||
+                    membership.estado === 'VENCIDA') && (
                     <RenewForm
                       membershipId={membership.id}
                       precio={String(Number(membership.plan.precio))}
                     />
+                  )}
+                  {membership.estado === 'ACTIVA' && (
+                    <CancelForm membershipId={membership.id} />
+                  )}
+                  {(membership.estado === 'CANCELADA' ||
+                    membership.estado === 'VENCIDA') && (
+                    <div className="border-t pt-4">
+                      <p className="mb-3 text-sm text-slate-500">
+                        Crear una nueva membresía para este cliente:
+                      </p>
+                      <NewMembershipForm
+                        clienteId={cliente.id}
+                        companyId={cliente.companyId}
+                        planes={planes}
+                      />
+                    </div>
                   )}
                 </div>
               </>

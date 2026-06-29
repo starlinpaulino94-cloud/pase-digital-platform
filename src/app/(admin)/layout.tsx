@@ -14,6 +14,7 @@ export default async function AdminLayout({
         items={[
           { href: '/admin/dashboard', label: 'Resumen' },
           { href: '/admin/clientes', label: 'Clientes' },
+          { href: '/admin/membresias', label: 'Membresías' },
           { href: '/admin/planes', label: 'Planes' },
           { href: '/empleado/scanner', label: 'Escáner' },
         ]}

@@ -20,6 +20,22 @@ export async function getClienteFull(clienteId: string) {
   })
 }
 
+export async function getVisitHistory(clienteId: string) {
+  return prisma.visit.findMany({
+    where: { clienteId },
+    include: { vehiculo: true },
+    orderBy: { fechaVisita: 'desc' },
+    take: 100,
+  })
+}
+
+export async function getClienteBasic(clienteId: string) {
+  return prisma.cliente.findUnique({
+    where: { id: clienteId },
+    include: { company: true },
+  })
+}
+
 export function activeMembership<
   T extends { estado: string; fechaVencimiento: Date | null }
 >(memberships: T[]): T | undefined {
