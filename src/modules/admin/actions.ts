@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 async function requireAdmin() {
   const user = await getUser()
@@ -203,6 +204,126 @@ export async function renovarMembresia(
   return { success: true }
   } catch (e) {
     console.error('[admin] renovarMembresia error:', e)
+    return { error: 'Ocurrió un error inesperado. Intenta de nuevo.' }
+  }
+}
+
+/** Create an EMPLEADO: Supabase auth user + DB User in the admin's company. */
+export async function crearEmpleado(
+  _prev: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const user = await requireAdmin()
+    if (!user) return { error: 'No autorizado.' }
+
+    const companyId = user.metadata.companyId
+    if (!companyId) {
+      return { error: 'Tu cuenta no está asociada a una empresa.' }
+    }
+
+    const nombre = String(formData.get('nombre') ?? '').trim()
+    const email = String(formData.get('email') ?? '').trim().toLowerCase()
+    const password = String(formData.get('password') ?? '')
+
+    if (!nombre || !email || !password) {
+      return { error: 'Todos los campos son obligatorios.' }
+    }
+    if (password.length < 6) {
+      return { error: 'La contraseña debe tener al menos 6 caracteres.' }
+    }
+
+    const existing = await prisma.user.findUnique({ where: { email } })
+    if (existing) {
+      return { error: 'Ya existe un usuario con ese correo.' }
+    }
+
+    const supabase = createAdminClient()
+    const { data: created, error: createError } =
+      await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      })
+
+    if (createError || !created.user) {
+      console.error('[admin] crearEmpleado supabase error:', createError)
+      return { error: 'No se pudo crear el usuario de acceso.' }
+    }
+
+    const supabaseId = created.user.id
+
+    let dbUser
+    try {
+      dbUser = await prisma.user.create({
+        data: {
+          supabaseId,
+          email,
+          name: nombre,
+          role: 'EMPLEADO',
+          companyId,
+        },
+      })
+    } catch (e) {
+      // Roll back the auth user so we don't leave an orphan.
+      await supabase.auth.admin.deleteUser(supabaseId).catch(() => {})
+      throw e
+    }
+
+    await supabase.auth.admin.updateUserById(supabaseId, {
+      app_metadata: {
+        role: 'EMPLEADO',
+        dbUserId: dbUser.id,
+        companyId,
+      },
+    })
+
+    revalidatePath('/admin/empleados')
+    return { success: true }
+  } catch (e) {
+    console.error('[admin] crearEmpleado error:', e)
+    return { error: 'Ocurrió un error inesperado. Intenta de nuevo.' }
+  }
+}
+
+/** Delete an EMPLEADO from Supabase auth and the DB. */
+export async function eliminarEmpleado(
+  _prev: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const user = await requireAdmin()
+    if (!user) return { error: 'No autorizado.' }
+
+    const empleadoId = String(formData.get('empleadoId') ?? '')
+    const empleado = await prisma.user.findUnique({
+      where: { id: empleadoId },
+    })
+    if (!empleado || empleado.role !== 'EMPLEADO') {
+      return { error: 'Empleado no encontrado.' }
+    }
+    if (
+      user.metadata.role !== 'SUPERADMIN' &&
+      user.metadata.companyId &&
+      empleado.companyId !== user.metadata.companyId
+    ) {
+      return { error: 'No autorizado.' }
+    }
+
+    const supabase = createAdminClient()
+    const { error: delError } = await supabase.auth.admin.deleteUser(
+      empleado.supabaseId
+    )
+    if (delError) {
+      console.error('[admin] eliminarEmpleado supabase error:', delError)
+    }
+
+    await prisma.user.delete({ where: { id: empleado.id } })
+
+    revalidatePath('/admin/empleados')
+    return { success: true }
+  } catch (e) {
+    console.error('[admin] eliminarEmpleado error:', e)
     return { error: 'Ocurrió un error inesperado. Intenta de nuevo.' }
   }
 }

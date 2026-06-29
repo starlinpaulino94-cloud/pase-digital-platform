@@ -96,6 +96,11 @@ export function LoginForm() {
           </Button>
         </form>
         <p className="mt-4 text-center text-sm text-slate-400">
+          <a href="/recuperar" className="text-sky-400 hover:underline">
+            ¿Olvidaste tu contraseña?
+          </a>
+        </p>
+        <p className="mt-2 text-center text-sm text-slate-400">
           ¿No tienes cuenta?{' '}
           <a href="/empresas" className="text-sky-400 hover:underline">
             Regístrate

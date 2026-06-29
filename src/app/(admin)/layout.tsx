@@ -16,6 +16,8 @@ export default async function AdminLayout({
           { href: '/admin/clientes', label: 'Clientes' },
           { href: '/admin/membresias', label: 'Membresías' },
           { href: '/admin/planes', label: 'Planes' },
+          { href: '/admin/empleados', label: 'Empleados' },
+          { href: '/admin/reportes', label: 'Reportes' },
           { href: '/empleado/scanner', label: 'Escáner' },
         ]}
       />

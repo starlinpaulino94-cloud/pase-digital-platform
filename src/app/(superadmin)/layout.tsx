@@ -14,6 +14,7 @@ export default async function SuperadminLayout({
         items={[
           { href: '/superadmin/dashboard', label: 'Resumen' },
           { href: '/superadmin/empresas', label: 'Empresas' },
+          { href: '/superadmin/reportes', label: 'Reportes' },
           { href: '/admin/clientes', label: 'Clientes' },
         ]}
       />

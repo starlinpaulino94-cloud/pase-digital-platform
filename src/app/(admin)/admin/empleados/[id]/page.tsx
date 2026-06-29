@@ -1,0 +1,75 @@
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { requireRole } from '@/lib/auth/guards'
+import { companyFilter } from '@/modules/admin/queries'
+import { prisma } from '@/lib/prisma'
+import { EliminarEmpleadoForm } from '@/components/admin/EmpleadoForms'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+export const dynamic = 'force-dynamic'
+
+function fmtDate(d: Date) {
+  return new Intl.DateTimeFormat('es-DO', { dateStyle: 'medium' }).format(d)
+}
+
+export default async function EmpleadoDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const user = await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  const { id } = await params
+  const companyId = companyFilter(user)
+
+  let empleado: Awaited<ReturnType<typeof prisma.user.findUnique>> = null
+  try {
+    empleado = await prisma.user.findUnique({ where: { id } })
+  } catch (e) {
+    console.error('[admin-empleado-detail]', e)
+    return (
+      <p className="text-slate-600">
+        No pudimos cargar este empleado en este momento. Intenta de nuevo más
+        tarde.
+      </p>
+    )
+  }
+
+  if (!empleado || empleado.role !== 'EMPLEADO') notFound()
+  if (companyId && empleado.companyId !== companyId) notFound()
+
+  return (
+    <div className="mx-auto max-w-lg space-y-6">
+      <Link
+        href="/admin/empleados"
+        className="text-sm text-sky-600 hover:underline"
+      >
+        ← Volver a empleados
+      </Link>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{empleado.name}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Info label="Correo" value={empleado.email} />
+            <Info label="Rol" value="Empleado" />
+            <Info label="Creado" value={fmtDate(empleado.createdAt)} />
+          </div>
+          <div className="border-t pt-4">
+            <EliminarEmpleadoForm empleadoId={empleado.id} />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className="font-medium text-slate-900">{value}</p>
+    </div>
+  )
+}
