@@ -14,7 +14,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <p className="text-[oklch(0.80_0.010_264)] text-lg leading-relaxed font-light">
               &ldquo;Accede a tus promociones digitales exclusivas con un solo código QR. Rápido, seguro y sin papel.&rdquo;
             </p>
-            <footer className="text-[oklch(0.55_0.012_264)] text-sm">PASE Digital — Promociones digitales</footer>
+            <footer className="text-[oklch(0.55_0.012_264)] text-sm">PASE Digital · Promociones digitales</footer>
           </blockquote>
         </div>
         <div className="flex items-center gap-2">

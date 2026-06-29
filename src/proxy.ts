@@ -6,7 +6,7 @@ import type { AppMetadata, AppRole } from '@/types/auth'
 const PUBLIC_ROUTES = ['/']
 
 // Routes that belong to the auth flow (redirect away if already logged in).
-const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password']
+const AUTH_ROUTES = ['/login', '/registro', '/register', '/forgot-password', '/reset-password']
 
 // Role → default post-login destination.
 const ROLE_HOME: Record<AppRole, string> = {

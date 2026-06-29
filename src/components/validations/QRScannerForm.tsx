@@ -53,7 +53,7 @@ export function QRScannerForm({ companyId, branchId, redirectBase }: QRScannerFo
           className="font-mono"
         />
         <p className="text-xs text-muted-foreground">
-          Puedes usar un lector de QR físico — el campo se llenará automáticamente.
+          Puedes usar un lector de QR físico, el campo se llenará automáticamente.
         </p>
       </div>
 

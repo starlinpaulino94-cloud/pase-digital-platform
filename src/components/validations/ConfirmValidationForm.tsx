@@ -66,7 +66,7 @@ export function ConfirmValidationForm({ validationId, activeAssignments }: Confi
           <SelectContent>
             {activeAssignments.map((a) => (
               <SelectItem key={a.id} value={a.id}>
-                {a.promotionName} — {a.usesConsumed}{a.usesAllowed != null ? `/${a.usesAllowed}` : ''} usos
+                {a.promotionName} · {a.usesConsumed}{a.usesAllowed != null ? `/${a.usesAllowed}` : ''} usos
               </SelectItem>
             ))}
           </SelectContent>
@@ -81,7 +81,7 @@ export function ConfirmValidationForm({ validationId, activeAssignments }: Confi
         <Input
           id="externalInvoiceId"
           name="externalInvoiceId"
-          placeholder="Opcional — número de factura del sistema propio"
+          placeholder="Opcional: número de factura del sistema propio"
         />
       </div>
 
