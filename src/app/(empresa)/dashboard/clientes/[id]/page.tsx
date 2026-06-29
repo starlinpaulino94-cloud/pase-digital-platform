@@ -67,6 +67,12 @@ export default async function ClienteDetailPage({ params }: Props) {
           <CardContent className="space-y-2 text-sm">
             <Row label="Email" value={customer.user.email} />
             <Row label="Teléfono" value={customer.phone ?? undefined} />
+            <Row
+              label="Fecha de nacimiento"
+              value={customer.birthDate
+                ? new Date(customer.birthDate).toLocaleDateString('es-DO')
+                : undefined}
+            />
             <Row label="Registrado" value={customer.createdAt.toLocaleDateString('es-DO')} />
           </CardContent>
         </Card>

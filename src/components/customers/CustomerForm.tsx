@@ -8,6 +8,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import type { ActionResult } from '@/types/auth'
 import type { Customer } from '@/modules/clientes/types'
 
+function toDateInputValue(value: Date | string | null | undefined): string {
+  if (!value) return ''
+  const d = new Date(value)
+  if (isNaN(d.getTime())) return ''
+  return d.toISOString().slice(0, 10)
+}
+
 interface CustomerFormProps {
   action: (prev: ActionResult<Customer>, formData: FormData) => Promise<ActionResult<Customer>>
   defaultValues?: Partial<Customer & { user: { email: string; name: string } }>
@@ -79,7 +86,7 @@ export function CustomerForm({
           </div>
         )}
 
-        <div className="space-y-1.5 sm:col-span-2">
+        <div className="space-y-1.5">
           <Label htmlFor="phone">Teléfono</Label>
           <Input
             id="phone"
@@ -89,6 +96,20 @@ export function CustomerForm({
           />
           {state.fieldErrors?.phone && (
             <p className="text-sm text-destructive">{state.fieldErrors.phone[0]}</p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="birthDate">Fecha de nacimiento</Label>
+          <Input
+            id="birthDate"
+            name="birthDate"
+            type="date"
+            defaultValue={toDateInputValue(defaultValues?.birthDate)}
+            max={new Date().toISOString().slice(0, 10)}
+          />
+          {state.fieldErrors?.birthDate && (
+            <p className="text-sm text-destructive">{state.fieldErrors.birthDate[0]}</p>
           )}
         </div>
       </div>

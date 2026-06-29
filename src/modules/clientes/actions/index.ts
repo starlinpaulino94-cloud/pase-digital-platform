@@ -33,6 +33,7 @@ export async function createCustomerAction(
       lastName: formData.get('lastName'),
       email: formData.get('email'),
       phone: formData.get('phone'),
+      birthDate: formData.get('birthDate') || undefined,
     }
 
     const parsed = createCustomerSchema.safeParse(raw)
@@ -51,6 +52,7 @@ export async function createCustomerAction(
 
     const customer = await createCustomer({
       ...parsed.data,
+      birthDate: parsed.data.birthDate || undefined,
       companyId,
       actorUserId: user.dbUserId,
     })
@@ -86,6 +88,7 @@ export async function updateCustomerAction(
       firstName: formData.get('firstName'),
       lastName: formData.get('lastName'),
       phone: formData.get('phone'),
+      birthDate: formData.get('birthDate') || undefined,
     }
 
     const parsed = updateCustomerSchema.safeParse(raw)
@@ -99,7 +102,7 @@ export async function updateCustomerAction(
 
     const updated = await updateCustomer(
       customerId,
-      parsed.data,
+      { ...parsed.data, birthDate: parsed.data.birthDate || null },
       user.dbUserId,
       user.companyId
     )
@@ -214,6 +217,7 @@ export async function updateProfileSelfAction(
       firstName: formData.get('firstName'),
       lastName: formData.get('lastName'),
       phone: formData.get('phone'),
+      birthDate: formData.get('birthDate') || undefined,
     }
 
     const parsed = updateCustomerSchema.safeParse(raw)
@@ -225,7 +229,11 @@ export async function updateProfileSelfAction(
       }
     }
 
-    const updated = await updateCustomer(customer.id, parsed.data, user.dbUserId)
+    const updated = await updateCustomer(
+      customer.id,
+      { ...parsed.data, birthDate: parsed.data.birthDate || null },
+      user.dbUserId
+    )
 
     revalidatePath('/profile')
     return { success: true, data: updated }

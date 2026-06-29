@@ -49,6 +49,14 @@ export default async function ProfilePage() {
             <p className="mt-0.5 font-medium text-foreground">{customer.phone ?? ''}</p>
           </div>
           <div>
+            <p className="text-xs text-muted-foreground">Fecha de nacimiento</p>
+            <p className="mt-0.5 font-medium text-foreground">
+              {customer.birthDate
+                ? new Date(customer.birthDate).toLocaleDateString('es-DO', { day: 'numeric', month: 'long', year: 'numeric' })
+                : '—'}
+            </p>
+          </div>
+          <div className="col-span-2">
             <p className="text-xs text-muted-foreground">Miembro desde</p>
             <p className="mt-0.5 font-medium text-foreground">
               {new Date(customer.createdAt).toLocaleDateString('es-DO', { month: 'long', year: 'numeric' })}
@@ -78,6 +86,7 @@ export default async function ProfilePage() {
       <div className="grid grid-cols-2 gap-3">
         {[
           { label: 'Promociones', sub: 'Ver mis beneficios activos', href: '/profile/promociones' },
+          { label: 'Vehículos', sub: 'Mis autos registrados', href: '/profile/vehiculos' },
           { label: 'Historial', sub: 'Mis usos anteriores', href: '/profile/historial' },
           { label: 'Empresas', sub: 'Empresas asociadas', href: '/profile/empresas' },
           { label: 'Configuración', sub: 'Editar perfil y datos', href: '/profile/configuracion' },
