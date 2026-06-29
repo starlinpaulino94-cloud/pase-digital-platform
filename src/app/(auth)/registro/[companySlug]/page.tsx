@@ -10,9 +10,15 @@ export default async function RegistroPage({
   params: Promise<{ companySlug: string }>
 }) {
   const { companySlug } = await params
-  const company = await prisma.company.findUnique({
-    where: { slug: companySlug },
-  })
+
+  let company: Awaited<ReturnType<typeof prisma.company.findUnique>> = null
+  try {
+    company = await prisma.company.findUnique({
+      where: { slug: companySlug },
+    })
+  } catch (err) {
+    console.error('[registro] DB error:', err)
+  }
 
   if (!company || !company.isActive) notFound()
 
