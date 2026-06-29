@@ -24,6 +24,8 @@ export interface ValidationSession {
   confirmedAt?: Date | string | null
   rejectedAt?: Date | string | null
   rejectionReason?: string | null
+  serviceType?: string | null
+  vehicleId?: string | null
   metadata?: Record<string, unknown> | null
   createdAt: Date | string
   updatedAt: Date | string
@@ -41,6 +43,14 @@ export interface ValidationSession {
     usesConsumed: number
     usesAllowed: number | null
     promotion: { id: string; name: string; type: string }
+  } | null
+  vehicle?: {
+    id: string
+    make: string
+    model: string
+    year: number
+    color: string
+    plate: string | null
   } | null
   receipt?: Receipt | null
 }
@@ -61,6 +71,16 @@ export interface Receipt {
   updatedAt: Date | string
 }
 
+export interface VehicleSummary {
+  id: string
+  make: string
+  model: string
+  year: number
+  color: string
+  plate: string | null
+  isDefault: boolean
+}
+
 // Result returned when a QR token is evaluated
 export interface EvaluationResult {
   validation: ValidationSession
@@ -71,6 +91,7 @@ export interface EvaluationResult {
     email: string
     status: string
   }
+  vehicles: VehicleSummary[]
   activeAssignments: Array<{
     id: string
     promotionId: string

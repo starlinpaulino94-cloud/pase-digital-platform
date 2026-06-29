@@ -213,6 +213,7 @@ model Customer {
   firstName String
   lastName  String
   phone     String?
+  birthDate DateTime?
   status    CustomerStatus @default(ACTIVE)
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
@@ -224,10 +225,33 @@ model Customer {
   promotionAssignments  PromotionAssignment[]
   validations           Validation[]
   receipts              Receipt[]
+  vehicles              Vehicle[]
 
   @@index([userId])
   @@index([status])
   @@map("customers")
+}
+
+// 5b. Vehicle
+// Vehicles owned by a customer.
+model Vehicle {
+  id         String   @id @default(uuid())
+  customerId String
+  make       String
+  model      String
+  year       Int
+  color      String
+  plate      String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  customer    Customer     @relation(fields: [customerId], references: [id])
+  validations Validation[]
+
+  @@index([customerId])
+  @@map("vehicles")
 }
 
 // 6. CustomerCompany
@@ -363,6 +387,8 @@ model Validation {
   branchId              String?
   employeeId            String?          // User.id of the employee who scanned
   employeeRecordId      String?          // Employee.id
+  vehicleId             String?          // Vehicle used in this visit
+  serviceType           String?          // e.g. "BASIC", "PREMIUM", "SPECIAL", "OTHER"
   status                ValidationStatus @default(SCANNED)
   scannedAt             DateTime         @default(now())
   evaluatedAt           DateTime?
@@ -381,6 +407,7 @@ model Validation {
   branch               Branch?              @relation(fields: [branchId], references: [id])
   employee             User?                @relation("EmployeeValidations", fields: [employeeId], references: [id])
   employeeRecord       Employee?            @relation("EmployeeValidation", fields: [employeeRecordId], references: [id])
+  vehicle              Vehicle?             @relation(fields: [vehicleId], references: [id])
   receipt              Receipt?
 
   @@index([digitalPassId])
@@ -389,6 +416,7 @@ model Validation {
   @@index([status])
   @@index([sessionId])
   @@index([createdAt])
+  @@index([vehicleId])
   @@map("validations")
 }
 

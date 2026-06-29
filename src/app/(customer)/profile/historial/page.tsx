@@ -51,6 +51,8 @@ export default async function HistorialPage({
           <TableHeader>
             <TableRow>
               <TableHead>Fecha</TableHead>
+              <TableHead>Servicio</TableHead>
+              <TableHead>Vehículo</TableHead>
               <TableHead>Promoción</TableHead>
               <TableHead>Estado</TableHead>
             </TableRow>
@@ -58,15 +60,25 @@ export default async function HistorialPage({
           <TableBody>
             {validations.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   Sin historial de validaciones.
                 </TableCell>
               </TableRow>
             )}
             {validations.map((v) => (
               <TableRow key={v.id}>
-                <TableCell className="text-xs text-muted-foreground">
+                <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                   {new Date(v.scannedAt).toLocaleString('es-DO')}
+                </TableCell>
+                <TableCell className="text-xs text-foreground">
+                  {v.serviceType
+                    ? { BASIC: 'Básico', PREMIUM: 'Premium', SPECIAL: 'Especial', OTHER: 'Otro' }[v.serviceType] ?? v.serviceType
+                    : '—'}
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {v.vehicle
+                    ? `${v.vehicle.year} ${v.vehicle.make} ${v.vehicle.model}`
+                    : '—'}
                 </TableCell>
                 <TableCell className="text-sm">
                   {v.promotionAssignment?.promotion?.name ?? ''}

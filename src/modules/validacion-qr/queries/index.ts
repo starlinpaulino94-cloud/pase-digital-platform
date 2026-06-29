@@ -23,6 +23,9 @@ const VALIDATION_INCLUDE = {
       promotion: { select: { id: true, name: true, type: true } },
     },
   },
+  vehicle: {
+    select: { id: true, make: true, model: true, year: true, color: true, plate: true },
+  },
   receipt: true,
 }
 

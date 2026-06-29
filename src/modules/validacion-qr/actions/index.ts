@@ -83,6 +83,8 @@ export async function confirmValidationAction(
     const raw = {
       validationId: formData.get('validationId'),
       assignmentId: formData.get('assignmentId'),
+      serviceType: formData.get('serviceType'),
+      vehicleId: formData.get('vehicleId') || undefined,
       externalInvoiceId: formData.get('externalInvoiceId') || undefined,
       externalInvoiceUrl: formData.get('externalInvoiceUrl') || undefined,
     }

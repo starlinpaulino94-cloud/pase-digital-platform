@@ -37,12 +37,14 @@ export interface Customer {
   firstName: string
   lastName: string
   phone: string | null
+  birthDate: Date | string | null
   status: CustomerStatus
   createdAt: Date
   updatedAt: Date
   user: CustomerUser
   digitalPasses?: DigitalPass[]
   customerCompanies?: CustomerCompanyLink[]
+  vehicles?: import('@/modules/vehiculos/types').Vehicle[]
 }
 
 export interface CreateCustomerInput {
@@ -51,10 +53,12 @@ export interface CreateCustomerInput {
   lastName: string
   email: string
   phone?: string
+  birthDate?: string
 }
 
 export interface UpdateCustomerInput {
   firstName?: string
   lastName?: string
   phone?: string
+  birthDate?: string | null
 }

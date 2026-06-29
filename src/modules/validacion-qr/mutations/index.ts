@@ -130,12 +130,14 @@ export async function evaluateValidation(
 export async function confirmValidation(params: {
   validationId: string
   assignmentId: string
+  serviceType: string
+  vehicleId?: string | null
   externalInvoiceId?: string | null
   externalInvoiceUrl?: string | null
   companyId: string
   employeeId?: string
 }): Promise<{ validation: ValidationSession; receipt: Receipt }> {
-  const { validationId, assignmentId, externalInvoiceId, externalInvoiceUrl, companyId, employeeId } = params
+  const { validationId, assignmentId, serviceType, vehicleId, externalInvoiceId, externalInvoiceUrl, companyId, employeeId } = params
 
   const v = await db.validation.findUnique({ where: { id: validationId } })
   if (!v) throw new Error('Validación no encontrada')
@@ -179,7 +181,7 @@ export async function confirmValidation(params: {
   // Consume use on the assignment — this auto-completes if exhausted
   await consumeUse(assignmentId, employeeId, companyId)
 
-  // Update validation → CONFIRMED, link assignment
+  // Update validation → CONFIRMED, link assignment, record vehicle + service type
   const updatedValidation = await db.validation.update({
     where: { id: validationId },
     data: {
@@ -187,6 +189,8 @@ export async function confirmValidation(params: {
       confirmedAt: new Date(),
       promotionAssignmentId: assignmentId,
       evaluatedAt: v.evaluatedAt ?? new Date(),
+      serviceType: serviceType,
+      vehicleId: vehicleId ?? null,
     },
     include: VALIDATION_INCLUDE,
   })

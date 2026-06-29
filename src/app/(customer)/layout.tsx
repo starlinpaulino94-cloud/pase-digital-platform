@@ -27,6 +27,7 @@ export default async function CustomerLayout({ children }: { children: React.Rea
             {[
               { label: 'Mi Pase', href: '/profile/pase' },
               { label: 'Promociones', href: '/profile/promociones' },
+              { label: 'Vehículos', href: '/profile/vehiculos' },
               { label: 'Historial', href: '/profile/historial' },
               { label: 'Empresas', href: '/profile/empresas' },
             ].map((item) => (

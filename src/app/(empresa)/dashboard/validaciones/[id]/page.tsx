@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { requireRole } from '@/lib/auth/guards'
 import { getValidationById } from '@/modules/validacion-qr/queries'
 import { listCustomerAssignments } from '@/modules/asignaciones/queries'
+import { getVehiclesByCustomer } from '@/modules/vehiculos/queries'
 import { ValidationStatusBadge } from '@/components/validations/ValidationStatusBadge'
 import { ConfirmValidationForm } from '@/components/validations/ConfirmValidationForm'
 import { RejectValidationForm } from '@/components/validations/RejectValidationForm'
@@ -27,13 +28,16 @@ export default async function ValidationDetailPage({
 
   const isPending = validation.status === 'SCANNED' || validation.status === 'EVALUATED'
 
-  // Load active assignments for the customer in this company to allow selection
-  const activeAssignments = isPending
-    ? await listCustomerAssignments(validation.customerId, {
-        status: 'ACTIVE',
-        companyId: validation.companyId,
-      })
-    : []
+  // Load active assignments and customer vehicles for confirmation form
+  const [activeAssignments, customerVehicles] = isPending
+    ? await Promise.all([
+        listCustomerAssignments(validation.customerId, {
+          status: 'ACTIVE',
+          companyId: validation.companyId,
+        }),
+        getVehiclesByCustomer(validation.customerId),
+      ])
+    : [[], []]
 
   const assignmentOptions = activeAssignments.map((a) => ({
     id: a.id,
@@ -84,6 +88,27 @@ export default async function ValidationDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* Customer vehicles */}
+      {customerVehicles.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Vehículos del cliente</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {customerVehicles.map((v) => (
+                <div key={v.id} className="flex items-center justify-between text-sm">
+                  <span className="text-foreground font-medium">
+                    {v.year} {v.make} {v.model}
+                  </span>
+                  <span className="text-muted-foreground text-xs">
+                    {v.color}{v.plate ? ` · ${v.plate}` : ''}{v.isDefault ? ' · Principal' : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {validation.status === 'CONFIRMED' && validation.promotionAssignment && (
         <Card>
@@ -138,6 +163,7 @@ export default async function ValidationDetailPage({
                   <ConfirmValidationForm
                     validationId={validation.id}
                     activeAssignments={assignmentOptions}
+                    vehicles={customerVehicles}
                   />
                 )}
               </CardContent>

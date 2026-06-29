@@ -19,10 +19,11 @@ export async function createCustomer(params: {
   lastName: string
   email: string
   phone?: string
+  birthDate?: string
   companyId?: string
   actorUserId?: string
 }): Promise<Customer> {
-  const { firstName, lastName, email, phone, companyId, actorUserId } = params
+  const { firstName, lastName, email, phone, birthDate, companyId, actorUserId } = params
 
   const customer = await db.user.create({
     data: {
@@ -36,6 +37,7 @@ export async function createCustomer(params: {
           firstName,
           lastName,
           phone: phone || null,
+          birthDate: birthDate ? new Date(birthDate) : null,
           status: 'ACTIVE',
         },
       },
@@ -79,7 +81,7 @@ export async function createCustomer(params: {
 
 export async function updateCustomer(
   customerId: string,
-  data: { firstName?: string; lastName?: string; phone?: string },
+  data: { firstName?: string; lastName?: string; phone?: string; birthDate?: string | null },
   actorUserId?: string,
   companyId?: string
 ): Promise<Customer> {
@@ -90,6 +92,9 @@ export async function updateCustomer(
         ...(data.firstName !== undefined && { firstName: data.firstName }),
         ...(data.lastName !== undefined && { lastName: data.lastName }),
         ...(data.phone !== undefined && { phone: data.phone || null }),
+        ...(data.birthDate !== undefined && {
+          birthDate: data.birthDate ? new Date(data.birthDate) : null,
+        }),
       },
       include: {
         user: { select: { id: true, email: true, name: true, phone: true, avatarUrl: true } },
