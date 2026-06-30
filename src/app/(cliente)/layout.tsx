@@ -13,6 +13,7 @@ export default async function ClienteLayout({
         title="PASE Digital"
         items={[
           { href: '/cliente/dashboard', label: 'Mi panel' },
+          { href: '/cliente/planes', label: 'Oportunidades' },
           { href: '/cliente/membresia', label: 'Mi membresía' },
           { href: '/cliente/historial', label: 'Historial' },
           { href: '/cliente/perfil', label: 'Mi perfil' },

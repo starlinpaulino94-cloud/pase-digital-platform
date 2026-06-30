@@ -5,7 +5,12 @@ export async function getClienteFull(clienteId: string) {
     where: { id: clienteId },
     include: {
       company: true,
-      qrTokens: { where: { activo: true }, orderBy: { createdAt: 'desc' }, take: 1 },
+      // Solo QR activos (estado=ACTIVO). El QR se genera al aprobar el pago.
+      qrTokens: {
+        where: { estado: 'ACTIVO' },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
       vehiculos: true,
       memberships: {
         include: { plan: true },

@@ -93,10 +93,8 @@ export async function registrarCliente(
         },
       })
 
-      // QR token created immediately
-      await tx.qrToken.create({
-        data: { clienteId: cliente.id },
-      })
+      // NO se genera QR en el registro.
+      // El QR se genera únicamente cuando se aprueba el pago de una membresía.
 
       // Optional vehicle
       if (marca && modelo && anioRaw && color) {

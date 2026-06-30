@@ -8,6 +8,10 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ============================================================
+// USUARIOS Y ROLES
+// ============================================================
+
 model User {
   id          String   @id @default(cuid())
   supabaseId  String   @unique
@@ -16,20 +20,60 @@ model User {
   role        AppRole  @default(CLIENTE)
   companyId   String?
   company     Company? @relation(fields: [companyId], references: [id])
+  // Sucursal asignada (para empleados/cajeros/recepción)
+  sucursalId  String?
+  sucursal    Sucursal? @relation(fields: [sucursalId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  memberships Membership[]
-  visits      Visit[]  @relation("EmpleadoVisits")
+
+  memberships   Membership[]
+  visits        Visit[]       @relation("EmpleadoVisits")
+  paymentsConfirmed Payment[] @relation("ConfirmedPayments")
+  receipts      Receipt[]     @relation("ReceiptEmitter")
+  printLogs     PrintLog[]
+  notifications Notification[]
+  permissions   Permission[]
+  auditLogs     AuditLog[]
+  // QR tokens que este usuario consumió (como empleado)
+  consumedQrTokens QrToken[]  @relation("ConsumedBy")
 
   @@map("users")
 }
 
+// Roles base del sistema híbrido.
+// Los permisos granulares se asignan vía el modelo Permission.
+// ADMIN_EMPRESA se mantiene como legacy (usuarios existentes lo tienen).
 enum AppRole {
   SUPERADMIN
-  ADMIN_EMPRESA
+  ADMINISTRADOR
+  GERENTE
+  CAJERO
+  RECEPCION
   EMPLEADO
   CLIENTE
+  ADMIN_EMPRESA
 }
+
+// Permisos granulares por usuario (sistema híbrido).
+// El rol base da acceso a rutas; los permisos autorizan acciones específicas.
+// Keys: scan_qr, confirm_visit, approve_payments, reject_payments,
+//        print_receipts, manage_plans, manage_employees, manage_branches,
+//        view_reports, manage_banks, send_notifications, manage_referrals
+model Permission {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key       String   // identificador del permiso
+  granted   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, key])
+  @@map("permissions")
+}
+
+// ============================================================
+// EMPRESAS Y SUCURSALES
+// ============================================================
 
 model Company {
   id          String    @id @default(cuid())
@@ -43,9 +87,35 @@ model Company {
   users       User[]
   plans       Plan[]
   clientes    Cliente[]
+  sucursales  Sucursal[]
+  bankAccounts BankAccount[]
 
   @@map("companies")
 }
+
+model Sucursal {
+  id         String   @id @default(cuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  nombre     String
+  direccion  String?
+  telefono   String?
+  activa     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  users       User[]
+  visits      Visit[]
+  payments    Payment[]
+  receipts    Receipt[]
+  printLogs   PrintLog[]
+
+  @@map("sucursales")
+}
+
+// ============================================================
+// PLANES
+// ============================================================
 
 model Plan {
   id               String       @id @default(cuid())
@@ -64,6 +134,10 @@ model Plan {
   @@map("plans")
 }
 
+// ============================================================
+// CLIENTES Y VEHÍCULOS
+// ============================================================
+
 model Cliente {
   id              String       @id @default(cuid())
   companyId       String
@@ -73,12 +147,19 @@ model Cliente {
   telefono        String?
   email           String
   fechaNacimiento DateTime?
+  // Sistema de referidos
+  codigoReferido  String       @unique @default(cuid())
+  referidoPorId   String?      // cliente que lo refirió
+  referidoBy      Cliente?     @relation("Referidos", fields: [referidoPorId], references: [id])
+  referidos       Cliente[]    @relation("Referidos")
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
   vehiculos       Vehiculo[]
   memberships     Membership[]
   qrTokens        QrToken[]
   visits          Visit[]
+  referralsOut    Referral[]   @relation("ReferralReferrer")
+  receipts        Receipt[]
 
   @@unique([supabaseId, companyId])
   @@map("clientes")
@@ -99,6 +180,12 @@ model Vehiculo {
   @@map("vehiculos")
 }
 
+// ============================================================
+// MEMBRESÍAS
+// Cada renovación crea una NUEVA Membership; la anterior pasa a VENCIDA.
+// Esto mantiene historial completo sin reusar registros.
+// ============================================================
+
 model Membership {
   id               String           @id @default(cuid())
   clienteId        String
@@ -111,11 +198,14 @@ model Membership {
   fechaInicio      DateTime?
   fechaVencimiento DateTime?
   lavadosRestantes Int              @default(0)
+  // DEPRECADO: usar modelo Payment. Se mantiene para no perder datos.
   montoPagado      Decimal?         @db.Decimal(10, 2)
   pagoConfirmado   Boolean          @default(false)
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   visits           Visit[]
+  payments         Payment[]
+  qrTokens         QrToken[]
 
   @@map("memberships")
 }
@@ -127,32 +217,268 @@ enum MembershipEstado {
   CANCELADA
 }
 
+// ============================================================
+// PAGOS
+// Entidad separada de Membership para historial completo.
+// Escalable: metodo es un enum al que se pueden agregar valores
+// (TARJETA_CREDITO, APPLE_PAY, STRIPE, etc.) sin cambiar la lógica.
+// ============================================================
+
+model Payment {
+  id                 String        @id @default(cuid())
+  membershipId       String
+  membership         Membership    @relation(fields: [membershipId], references: [id])
+  monto              Decimal       @db.Decimal(10, 2)
+  metodo             PaymentMetodo
+  estado             PaymentEstado @default(PENDIENTE)
+  // Comprobante subido por el cliente (transferencia) o generado (presencial)
+  comprobanteUrl     String?
+  referencia         String?       // número de transacción del cliente
+  observaciones      String?       // notas del admin al aprobar/rechazar
+  motivoRechazo      String?
+  // Quién y cuándo confirmó
+  confirmadoPorId    String?
+  confirmadoPor      User?         @relation("ConfirmedPayments", fields: [confirmadoPorId], references: [id])
+  fechaConfirmacion  DateTime?
+  // Dónde
+  sucursalId         String?
+  sucursal           Sucursal?     @relation(fields: [sucursalId], references: [id])
+  // Recibo de pago asociado (1:1)
+  receiptPagoId      String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@map("payments")
+}
+
+enum PaymentMetodo {
+  TRANSFERENCIA
+  PRESENCIAL
+  // Futuros (no rompen la lógica al agregar):
+  // TARJETA_CREDITO
+  // TARJETA_DEBITO
+  // APPLE_PAY
+  // GOOGLE_PAY
+  // PAYPAL
+  // STRIPE
+}
+
+enum PaymentEstado {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+  CANCELADO
+}
+
+// Cuentas bancarias configurables por el superadmin (método de pago: transferencia)
+model BankAccount {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  banco       String
+  titular     String
+  numero      String
+  tipoCuenta  String   // Ahorros / Corriente
+  instrucciones String? // pasos para el cliente
+  activa      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("bank_accounts")
+}
+
+// ============================================================
+// QR TOKENS — DINÁMICOS DE UN SOLO USO
+// Cada uso correcto marca el QR como CONSUMIDO y genera uno nuevo.
+// El QR solo se crea cuando la membresía se activa (pago aprobado).
+// ============================================================
+
 model QrToken {
-  id        String   @id @default(cuid())
-  clienteId String
-  cliente   Cliente  @relation(fields: [clienteId], references: [id])
-  token     String   @unique @default(cuid())
-  activo    Boolean  @default(true)
-  createdAt DateTime @default(now())
+  id                  String        @id @default(cuid())
+  clienteId           String
+  cliente             Cliente       @relation(fields: [clienteId], references: [id])
+  membershipId        String?
+  membership          Membership?   @relation(fields: [membershipId], references: [id])
+  token               String        @unique @default(cuid())
+  estado              QrTokenEstado @default(ACTIVO)
+  // DEPRECADO: usar 'estado'. Se mantiene para no perder datos.
+  activo              Boolean       @default(true)
+  createdAt           DateTime      @default(now())
+  // Datos del consumo (cuando estado = CONSUMIDO)
+  consumidoEn         DateTime?
+  consumidoPorId      String?       // empleado que lo consumió
+  consumidoPor        User?         @relation("ConsumedBy", fields: [consumidoPorId], references: [id])
+  consumidoEnSucursalId String?
+  // QR que reemplazó a este (rotación)
+  reemplazadoPorId    String?
+  visitId             String?
 
   @@map("qr_tokens")
 }
 
+enum QrTokenEstado {
+  ACTIVO
+  CONSUMIDO
+  REVOCADO
+}
+
+// ============================================================
+// VISITAS / CONSUMOS
+// ============================================================
+
 model Visit {
-  id           String     @id @default(cuid())
-  clienteId    String
-  cliente      Cliente    @relation(fields: [clienteId], references: [id])
-  vehiculoId   String?
-  vehiculo     Vehiculo?  @relation(fields: [vehiculoId], references: [id])
-  membershipId String
-  membership   Membership @relation(fields: [membershipId], references: [id])
-  empleadoId   String?
-  empleado     User?      @relation("EmpleadoVisits", fields: [empleadoId], references: [id])
-  servicio     String
-  descontado   Boolean    @default(false)
-  fechaVisita  DateTime   @default(now())
-  notas        String?
-  createdAt    DateTime   @default(now())
+  id                  String     @id @default(cuid())
+  clienteId           String
+  cliente             Cliente    @relation(fields: [clienteId], references: [id])
+  vehiculoId          String?
+  vehiculo            Vehiculo?  @relation(fields: [vehiculoId], references: [id])
+  membershipId        String
+  membership          Membership @relation(fields: [membershipId], references: [id])
+  empleadoId          String?
+  empleado            User?      @relation("EmpleadoVisits", fields: [empleadoId], references: [id])
+  servicio            String
+  descontado          Boolean    @default(false)
+  fechaVisita         DateTime   @default(now())
+  notas               String?
+  createdAt           DateTime   @default(now())
+  // Auditoría extendida
+  sucursalId          String?
+  sucursal            Sucursal?  @relation(fields: [sucursalId], references: [id])
+  ip                  String?
+  dispositivo         String?    // user agent
+  // QR rotation: token consumido + token nuevo generado
+  qrTokenConsumidoId  String?
+  nuevoQrTokenId      String?
+  // Comprobante de consumo asociado (1:1)
+  receiptConsumoId    String?
 
   @@map("visits")
+}
+
+// ============================================================
+// COMPROBANTES (dos tipos independientes)
+// PAGO: se genera al aprobar un pago. CONSUMO: se genera al confirmar visita.
+// Numeración independiente por tipo (campo numero, consecutivo por empresa).
+// ============================================================
+
+model Receipt {
+  id           String      @id @default(cuid())
+  numero       Int         // consecutivo por tipo+empresa
+  tipo         ReceiptTipo
+  // Relaciones opcionales según el tipo
+  paymentId    String?
+  visitId      String?
+  clienteId    String
+  cliente      Cliente     @relation(fields: [clienteId], references: [id])
+  empresaId    String
+  sucursalId   String?
+  sucursal     Sucursal?   @relation(fields: [sucursalId], references: [id])
+  empleadoId   String?
+  empleado     User?       @relation("ReceiptEmitter", fields: [empleadoId], references: [id])
+  fechaEmision DateTime    @default(now())
+  // Snapshot de datos (para impresión, no cambia aunque cambien las relaciones)
+  datos        Json
+  // Comprobante de pago: monto. Comprobante de consumo: null
+  monto        Decimal?    @db.Decimal(10, 2)
+  printLogs    PrintLog[]
+
+  @@unique([empresaId, tipo, numero])
+  @@map("receipts")
+}
+
+enum ReceiptTipo {
+  PAGO
+  CONSUMO
+}
+
+// Control de impresiones (trazabilidad)
+model PrintLog {
+  id         String   @id @default(cuid())
+  receiptId  String
+  receipt    Receipt  @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  empleadoId String?
+  empleado   User?    @relation(fields: [empleadoId], references: [id])
+  sucursalId String?
+  sucursal   Sucursal? @relation(fields: [sucursalId], references: [id])
+  fecha      DateTime @default(now())
+  motivo     String?  // motivo de reimpresión (opcional)
+
+  @@map("print_logs")
+}
+
+// ============================================================
+// NOTIFICACIONES
+// Arquitectura preparada para Push, WhatsApp y Email.
+// Las integraciones se activan después; el modelo y helper quedan listos.
+// ============================================================
+
+model Notification {
+  id        String             @id @default(cuid())
+  userId    String?
+  user      User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clienteId String?
+  tipo      NotificationTipo
+  titulo    String
+  mensaje   String
+  datos     Json?              // payload adicional (planId, monto, etc.)
+  leida     Boolean            @default(false)
+  createdAt DateTime           @default(now())
+
+  @@map("notifications")
+}
+
+enum NotificationTipo {
+  PAGO_APROBADO
+  PAGO_RECHAZADO
+  QR_GENERADO
+  QR_UTILIZADO
+  NUEVA_PROMOCION
+  MEMBRESIA_POR_VENCER
+  MEMBRESIA_VENCIDA
+  RECOMPENSA_OBTENIDA
+  REFERIDO_EXITOSO
+}
+
+// ============================================================
+// AUDITORÍA
+// Registra toda acción importante con datos anteriores y nuevos.
+// ============================================================
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  empresaId   String?
+  sucursalId  String?
+  ip          String?
+  userAgent   String?
+  dispositivo String?
+  accion      String   // nombre de la acción: "approve_payment", "confirm_visit", etc.
+  entidad     String   // modelo afectado: "Payment", "Visit", "Membership"
+  entidadId   String?
+  datosAntes  Json?
+  datosDespues Json?
+  fecha       DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+// ============================================================
+// REFERIDOS
+// Cada cliente tiene un código único. El superadmin configura la condición
+// de recompensa (ej: referido debe completar primer pago).
+// ============================================================
+
+model Referral {
+  id              String   @id @default(cuid())
+  referrerId      String   // cliente que refiere
+  referrer        Cliente  @relation("ReferralReferrer", fields: [referrerId], references: [id])
+  referredEmail   String   // email del referido (puede no haberse registrado aún)
+  referredClienteId String? // se llena cuando el referido se registra
+  codigo          String   @unique // código usado en el enlace
+  recompensaOtorgada Boolean @default(false)
+  fechaRecompensa DateTime?
+  createdAt       DateTime @default(now())
+
+  @@map("referrals")
 }

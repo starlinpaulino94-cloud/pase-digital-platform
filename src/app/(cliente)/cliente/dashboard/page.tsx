@@ -1,7 +1,7 @@
 import Link from 'next/link'
-import { Car, Calendar, Droplets, Infinity as InfinityIcon } from 'lucide-react'
+import { Car, Calendar, Droplets, Infinity as InfinityIcon, QrCode, Sparkles } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
-import { getClienteFull } from '@/modules/cliente/queries'
+import { getClienteFull, activeMembership } from '@/modules/cliente/queries'
 import { QRDisplay } from '@/components/qr/QRDisplay'
 import { EstadoBadge } from '@/components/EstadoBadge'
 import {
@@ -42,7 +42,9 @@ export default async function ClienteDashboard() {
   }
 
   const membership = cliente.memberships[0]
-  const token = cliente.qrTokens[0]?.token
+  const active = activeMembership(cliente.memberships)
+  // El QR solo se muestra si hay membresía ACTIVA
+  const token = active ? cliente.qrTokens[0]?.token : undefined
   const isCarwash = cliente.company.type === 'carwash'
   const unidad = isCarwash ? 'lavados' : 'consumos'
 
@@ -55,37 +57,55 @@ export default async function ClienteDashboard() {
         <p className="text-slate-500">{cliente.company.name}</p>
       </div>
 
-      {!membership && (
+      {!active && (
         <Alert>
-          <AlertTitle>Aún no tienes una membresía</AlertTitle>
+          <Sparkles className="h-4 w-4" />
+          <AlertTitle>Activa tu Pase Digital</AlertTitle>
           <AlertDescription>
-            Elige un plan para empezar a disfrutar tus beneficios.{' '}
-            <Link href="/cliente/membresia" className="font-medium text-sky-600">
-              Ver planes
+            {!membership
+              ? 'Aún no tienes una membresía. '
+              : 'Tu membresía está pendiente de pago. '}
+            <Link href="/cliente/planes" className="font-medium text-sky-600">
+              Ver oportunidades disponibles
             </Link>
           </AlertDescription>
         </Alert>
       )}
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* QR */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Tu código QR</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center gap-3">
-            {token ? (
-              <>
-                <QRDisplay token={token} />
-                <p className="text-center text-sm text-slate-500">
-                  Muéstralo en {cliente.company.name} para registrar tu visita.
-                </p>
-              </>
-            ) : (
-              <p className="text-slate-500">No hay código QR disponible.</p>
-            )}
-          </CardContent>
-        </Card>
+        {/* QR — solo se muestra si hay membresía activa */}
+        {active && token ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <QrCode className="h-5 w-5 text-sky-500" />
+                Tu Pase Digital
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center gap-3">
+              <QRDisplay token={token} />
+              <p className="text-center text-sm text-slate-500">
+                Muéstralo en {cliente.company.name} para registrar tu visita.
+              </p>
+              <p className="text-center text-xs text-slate-400">
+                Tu QR se renueva automáticamente después de cada uso.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="flex flex-col items-center justify-center p-8 text-center">
+            <QrCode className="mb-3 h-12 w-12 text-slate-300" />
+            <p className="font-medium text-slate-600">Sin Pase Digital activo</p>
+            <p className="mt-1 text-sm text-slate-400">
+              Activa una membresía para obtener tu QR
+            </p>
+            <Link href="/cliente/planes" className="mt-4">
+              <Button className="bg-sky-500 hover:bg-sky-400">
+                Ver oportunidades
+              </Button>
+            </Link>
+          </Card>
+        )}
 
         {/* Membership status */}
         <Card>

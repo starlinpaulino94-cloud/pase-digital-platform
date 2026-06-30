@@ -150,6 +150,42 @@ export async function runSeed(): Promise<SeedResult> {
     companiesBySlug[company.slug] = { id: c.id, name: c.name, type: c.type }
     details.push(`Empresa: ${c.name}`)
 
+    // Sucursal principal (una por empresa para demo)
+    const sucursalExistente = await prisma.sucursal.findFirst({
+      where: { companyId: c.id, nombre: 'Sucursal Principal' },
+    })
+    if (!sucursalExistente) {
+      await prisma.sucursal.create({
+        data: {
+          companyId: c.id,
+          nombre: 'Sucursal Principal',
+          direccion: c.type === 'carwash' ? 'Av. 27 de Febrero #100, Santiago' : 'Calle El Sol #45, Santo Domingo',
+          telefono: c.type === 'carwash' ? '809-555-0100' : '809-555-0200',
+          activa: true,
+        },
+      })
+      details.push(`  Sucursal Principal creada`)
+    }
+
+    // Cuenta bancaria (para transferencias)
+    const bancoExistente = await prisma.bankAccount.findFirst({
+      where: { companyId: c.id, banco: 'Banco Popular' },
+    })
+    if (!bancoExistente) {
+      await prisma.bankAccount.create({
+        data: {
+          companyId: c.id,
+          banco: 'Banco Popular',
+          titular: c.name,
+          numero: '1234567890',
+          tipoCuenta: 'Ahorros',
+          instrucciones: 'Realizar la transferencia y enviar comprobante con tu nombre y plan seleccionado.',
+          activa: true,
+        },
+      })
+      details.push(`  Cuenta bancaria creada`)
+    }
+
     for (const plan of company.plans) {
       const existing = await prisma.plan.findFirst({
         where: { companyId: c.id, nombre: plan.nombre },

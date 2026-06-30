@@ -1,21 +1,28 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import type { AppMetadata, AppRole } from '@/types'
+import { ROLE_HOME, type AppMetadata, type AppRole } from '@/types'
 
 type CookieToSet = { name: string; value: string; options?: CookieOptions }
-
-const ROLE_HOME: Record<AppRole, string> = {
-  SUPERADMIN: '/superadmin/dashboard',
-  ADMIN_EMPRESA: '/admin/dashboard',
-  EMPLEADO: '/empleado/scanner',
-  CLIENTE: '/cliente/dashboard',
-}
 
 // Route prefix -> roles allowed to access it
 const PROTECTED: { prefix: string; roles: AppRole[] }[] = [
   { prefix: '/superadmin', roles: ['SUPERADMIN'] },
-  { prefix: '/admin', roles: ['ADMIN_EMPRESA', 'SUPERADMIN'] },
-  { prefix: '/empleado', roles: ['EMPLEADO', 'ADMIN_EMPRESA', 'SUPERADMIN'] },
+  {
+    prefix: '/admin',
+    roles: ['SUPERADMIN', 'ADMINISTRADOR', 'GERENTE', 'CAJERO', 'ADMIN_EMPRESA'],
+  },
+  {
+    prefix: '/empleado',
+    roles: [
+      'SUPERADMIN',
+      'ADMINISTRADOR',
+      'GERENTE',
+      'CAJERO',
+      'RECEPCION',
+      'EMPLEADO',
+      'ADMIN_EMPRESA',
+    ],
+  },
   { prefix: '/cliente', roles: ['CLIENTE'] },
 ]
 
