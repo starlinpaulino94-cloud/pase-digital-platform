@@ -7,7 +7,7 @@ export async function getClienteFull(clienteId: string) {
       company: true,
       // Solo QR activos (estado=ACTIVO). El QR se genera al aprobar el pago.
       qrTokens: {
-        where: { estado: 'ACTIVO' },
+        where: { activo: true },
         orderBy: { createdAt: 'desc' },
         take: 1,
       },
