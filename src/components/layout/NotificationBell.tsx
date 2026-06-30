@@ -17,6 +17,7 @@ const TIPO_ICON: Record<string, string> = {
   NUEVO_COMPROBANTE: '📄',
   MEMBRESIA_POR_VENCER: '⚠️',
   MEMBRESIA_ACTIVADA: '🎉',
+  PROMOCION_NUEVA: '🎁',
   SISTEMA: '🔔',
 }
 

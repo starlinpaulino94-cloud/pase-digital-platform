@@ -40,6 +40,36 @@ export async function notificarAdmins(
   }
 }
 
+/**
+ * Notify every CLIENTE with an account in this company (any cliente row
+ * scoped to companyId, regardless of which company is their "home" User row —
+ * support for clientes con cuentas en varias empresas).
+ */
+export async function notificarClientesEmpresa(
+  companyId: string,
+  payload: { tipo: NotifTipo; titulo: string; mensaje: string; href?: string }
+) {
+  try {
+    const clientes = await prisma.cliente.findMany({
+      where: { companyId },
+      select: { supabaseId: true },
+    })
+    if (clientes.length === 0) return
+
+    const users = await prisma.user.findMany({
+      where: { supabaseId: { in: clientes.map((c) => c.supabaseId) } },
+      select: { id: true },
+    })
+    if (users.length === 0) return
+
+    await prisma.notificacion.createMany({
+      data: users.map((u) => ({ userId: u.id, ...payload })),
+    })
+  } catch (e) {
+    console.error('[notificacion] notificarClientesEmpresa error', e)
+  }
+}
+
 // ── Server actions ────────────────────────────────────────────────────────────
 
 export async function getNotificaciones() {
