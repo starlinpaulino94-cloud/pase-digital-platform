@@ -16,10 +16,10 @@ export default async function ClienteLayout({
           { href: '/cliente/planes', label: 'Oportunidades' },
           { href: '/cliente/membresia', label: 'Mi membresía' },
           { href: '/cliente/historial', label: 'Historial' },
-          { href: '/cliente/perfil', label: 'Mi perfil' },
+          { href: '/cliente/pagos', label: 'Mis pagos' },
         ]}
       />
-      <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+      <main className="mx-auto max-w-4xl px-4 py-8">{children}</main>
     </div>
   )
 }
