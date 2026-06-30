@@ -19,6 +19,15 @@ enum AppRole {
   CLIENTE
 }
 
+enum NotifTipo {
+  PAGO_APROBADO
+  PAGO_RECHAZADO
+  NUEVO_COMPROBANTE
+  MEMBRESIA_POR_VENCER
+  MEMBRESIA_ACTIVADA
+  SISTEMA
+}
+
 enum MembershipEstado {
   PENDIENTE          // solicitada, sin pago
   PENDIENTE_PAGO     // comprobante enviado, esperando validación
@@ -58,10 +67,11 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  memberships  Membership[]
-  visits       Visit[]      @relation("EmpleadoVisits")
-  auditLogs    AuditLog[]
-  comprobantes Comprobante[]
+  memberships     Membership[]
+  visits          Visit[]        @relation("EmpleadoVisits")
+  auditLogs       AuditLog[]
+  comprobantes    Comprobante[]
+  notificaciones  Notificacion[]
 
   @@map("users")
 }
@@ -286,4 +296,20 @@ model AuditLog {
   @@index([entidadTipo, entidadId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+model Notificacion {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  tipo      NotifTipo
+  titulo    String
+  mensaje   String
+  href      String?   // ruta a la que lleva al hacer clic
+  leida     Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  @@index([userId, leida])
+  @@index([userId, createdAt])
+  @@map("notificaciones")
 }

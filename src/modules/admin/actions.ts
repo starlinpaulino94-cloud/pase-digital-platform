@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { headers } from 'next/headers'
+import { crearNotificacion, notificarAdmins } from '@/modules/notificaciones/actions'
 
 async function requireAdmin() {
   const user = await getUser()
@@ -124,6 +125,21 @@ export async function confirmarPago(
       },
     })
   })
+
+  // Notify the client
+  const clienteUser = await prisma.user.findUnique({
+    where: { supabaseId: membership.cliente.supabaseId },
+    select: { id: true },
+  })
+  if (clienteUser) {
+    await crearNotificacion({
+      userId: clienteUser.id,
+      tipo: 'PAGO_APROBADO',
+      titulo: '¡Tu membresía está activa!',
+      mensaje: `Tu pago para el plan "${membership.plan.nombre}" fue confirmado. Ya puedes usar tu membresía.`,
+      href: '/cliente/membresia',
+    })
+  }
 
   revalidatePath(`/admin/clientes/${membership.clienteId}`)
   revalidatePath('/admin/clientes')
@@ -250,6 +266,21 @@ export async function rechazarPago(
       },
     })
   })
+
+  // Notify the client
+  const clienteUserRejected = await prisma.user.findUnique({
+    where: { supabaseId: membership.cliente.supabaseId },
+    select: { id: true },
+  })
+  if (clienteUserRejected) {
+    await crearNotificacion({
+      userId: clienteUserRejected.id,
+      tipo: 'PAGO_RECHAZADO',
+      titulo: 'Tu comprobante fue rechazado',
+      mensaje: `Motivo: ${motivo}. Por favor sube un nuevo comprobante para continuar.`,
+      href: '/cliente/membresia',
+    })
+  }
 
   revalidatePath(`/admin/clientes/${membership.clienteId}`)
   revalidatePath('/admin/clientes')

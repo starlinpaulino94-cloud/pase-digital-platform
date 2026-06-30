@@ -6,6 +6,7 @@ import { LogOut, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { logout } from '@/modules/auth/actions'
+import { NotificationBell } from '@/components/layout/NotificationBell'
 
 export interface NavItem {
   href: string
@@ -15,9 +16,11 @@ export interface NavItem {
 export function AppNav({
   items,
   title,
+  notifCount = 0,
 }: {
   items: NavItem[]
   title: string
+  notifCount?: number
 }) {
   const pathname = usePathname()
 
@@ -65,16 +68,19 @@ export function AppNav({
           </nav>
         </div>
 
-        {/* Logout */}
-        <form action={logout}>
-          <button
-            type="submit"
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-          >
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:block">Salir</span>
-          </button>
-        </form>
+        {/* Right side: bell + logout */}
+        <div className="flex items-center gap-1">
+          <NotificationBell initialCount={notifCount} />
+          <form action={logout}>
+            <button
+              type="submit"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:block">Salir</span>
+            </button>
+          </form>
+        </div>
       </div>
 
       {/* Mobile scrollable nav */}

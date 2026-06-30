@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
+import { notificarAdmins } from '@/modules/notificaciones/actions'
 
 export interface SeleccionState {
   error?: string
@@ -116,6 +117,14 @@ export async function enviarComprobante(
       metodoPagoId: metodoPagoId || null,
       rechazadoReason: null,
     },
+  })
+
+  // Notify admins of this company
+  await notificarAdmins(membership.cliente.companyId, {
+    tipo: 'NUEVO_COMPROBANTE',
+    titulo: 'Nuevo comprobante de pago',
+    mensaje: `${membership.cliente.nombre} envió un comprobante para su membresía. Revísalo para activarla.`,
+    href: `/admin/pagos`,
   })
 
   revalidatePath('/cliente/membresia')
