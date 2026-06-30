@@ -136,6 +136,8 @@ export default async function MembresiasPage({
 const MAP_LABEL: Record<MembershipEstado, string> = {
   ACTIVA: 'Activas',
   PENDIENTE: 'Pendientes',
+  PENDIENTE_PAGO: 'Pend. pago',
+  RECHAZADA: 'Rechazadas',
   VENCIDA: 'Vencidas',
   CANCELADA: 'Canceladas',
 }

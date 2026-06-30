@@ -9,7 +9,13 @@ export type AppRole =
   // Legacy (se mantiene para no romper usuarios existentes)
   | 'ADMIN_EMPRESA'
 
-export type MembershipEstado = 'PENDIENTE' | 'ACTIVA' | 'VENCIDA' | 'CANCELADA'
+export type MembershipEstado =
+  | 'PENDIENTE'
+  | 'PENDIENTE_PAGO'
+  | 'RECHAZADA'
+  | 'ACTIVA'
+  | 'VENCIDA'
+  | 'CANCELADA'
 
 export type PaymentEstado = 'PENDIENTE' | 'APROBADO' | 'RECHAZADO' | 'CANCELADO'
 export type PaymentMetodo = 'TRANSFERENCIA' | 'PRESENCIAL'

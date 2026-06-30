@@ -11,7 +11,9 @@ import {
   CancelForm,
   NewMembershipForm,
 } from '@/components/admin/MembershipActions'
+import { ConfirmarPagoButton, RechazarPagoButton } from '@/components/admin/ValidarPagoActions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { FileText } from 'lucide-react'
 import type { MembershipEstado } from '@/types'
 
 export const dynamic = 'force-dynamic'
@@ -38,7 +40,7 @@ export default async function ClienteDetailPage({
         qrTokens: { where: { activo: true }, take: 1 },
         vehiculos: true,
         memberships: {
-          include: { plan: true },
+          include: { plan: true, metodoPago: true },
           orderBy: { createdAt: 'desc' },
         },
         visits: {
@@ -170,12 +172,58 @@ export default async function ClienteDetailPage({
                   />
                 </div>
 
+                {/* Comprobante de pago */}
+                {membership.comprobanteUrl && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3">
+                    <p className="text-sm font-medium text-amber-800 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Comprobante enviado por el cliente
+                    </p>
+                    {membership.comprobanteNota && (
+                      <p className="text-sm text-slate-600 italic">"{membership.comprobanteNota}"</p>
+                    )}
+                    {/\.(jpe?g|png|webp)$/i.test(membership.comprobanteUrl) ? (
+                      <a href={membership.comprobanteUrl} target="_blank" rel="noopener noreferrer">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={membership.comprobanteUrl}
+                          alt="Comprobante"
+                          className="max-h-48 rounded-lg border object-contain"
+                        />
+                      </a>
+                    ) : (
+                      <a
+                        href={membership.comprobanteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-sky-600 underline"
+                      >
+                        Ver comprobante (PDF)
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {/* Motivo de rechazo */}
+                {membership.rechazadoReason && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                    <p className="text-sm font-medium text-red-700">Motivo de rechazo</p>
+                    <p className="text-sm text-red-600">{membership.rechazadoReason}</p>
+                  </div>
+                )}
+
                 <div className="space-y-4 border-t pt-4">
                   {membership.estado === 'PENDIENTE' && (
                     <ConfirmPaymentForm
                       membershipId={membership.id}
                       precio={String(Number(membership.plan.precio))}
                     />
+                  )}
+                  {membership.estado === 'PENDIENTE_PAGO' && (
+                    <div className="flex gap-3">
+                      <ConfirmarPagoButton membershipId={membership.id} />
+                      <RechazarPagoButton membershipId={membership.id} />
+                    </div>
                   )}
                   {(membership.estado === 'ACTIVA' ||
                     membership.estado === 'VENCIDA') && (

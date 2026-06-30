@@ -4,11 +4,6 @@ import { RegisterForm } from '@/components/auth/RegisterForm'
 
 export const dynamic = 'force-dynamic'
 
-const FALLBACK_COMPANIES: Record<string, { id: string; name: string; slug: string; type: string }> = {
-  'cartown-wash': { id: 'company-cartown', name: 'CARTOWN Wash & Detailing', slug: 'cartown-wash', type: 'carwash' },
-  'tonis':        { id: 'company-tonis',   name: "Toni's Restaurante",        slug: 'tonis',        type: 'restaurante' },
-}
-
 export default async function RegistroPage({
   params,
 }: {
@@ -16,23 +11,33 @@ export default async function RegistroPage({
 }) {
   const { companySlug } = await params
 
-  let company: { id: string; name: string; slug: string; type: string } | null = null
-  try {
-    company = await prisma.company.findUnique({ where: { slug: companySlug } })
-  } catch (err) {
-    console.error('[registro] DB error:', err)
-  }
+  const company = await prisma.company.findUnique({
+    where: { slug: companySlug },
+    include: {
+      plans: {
+        where: { activo: true },
+        orderBy: { precio: 'asc' },
+      },
+    },
+  })
 
-  // Fallback to hardcoded data if DB fails or company not seeded yet
-  if (!company) company = FALLBACK_COMPANIES[companySlug] ?? null
-
-  if (!company) notFound()
+  if (!company || !company.isActive) notFound()
 
   return (
     <RegisterForm
       companySlug={company.slug}
       companyName={company.name}
       isCarwash={company.type === 'carwash'}
+      plans={company.plans.map((p) => ({
+        id: p.id,
+        nombre: p.nombre,
+        precio: Number(p.precio),
+        lavadosIncluidos: p.lavadosIncluidos,
+        esIlimitado: p.esIlimitado,
+        descripcion: p.descripcion ?? null,
+        beneficios: p.beneficios,
+        vigenciaDias: p.vigenciaDias,
+      }))}
     />
   )
 }

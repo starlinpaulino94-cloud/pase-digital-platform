@@ -1,6 +1,7 @@
 import { requireRole } from '@/lib/auth/guards'
 import { AppNav } from '@/components/layout/AppNav'
 import { ADMIN_ROLES } from '@/types'
+import { getUnreadCount } from '@/modules/notificaciones/actions'
 
 export default async function AdminLayout({
   children,
@@ -8,15 +9,19 @@ export default async function AdminLayout({
   children: React.ReactNode
 }) {
   await requireRole(ADMIN_ROLES)
+  const notifCount = await getUnreadCount()
   return (
     <div className="min-h-screen bg-slate-50">
       <AppNav
         title="PASE · Admin"
+        notifCount={notifCount}
         items={[
           { href: '/admin/dashboard', label: 'Resumen' },
           { href: '/admin/clientes', label: 'Clientes' },
           { href: '/admin/membresias', label: 'Membresías' },
           { href: '/admin/pagos', label: 'Pagos' },
+          { href: '/admin/metodos-pago', label: 'Métodos de pago' },
+          { href: '/admin/sucursales', label: 'Sucursales' },
           { href: '/admin/planes', label: 'Planes' },
           { href: '/admin/empleados', label: 'Empleados' },
           { href: '/admin/reportes', label: 'Reportes' },

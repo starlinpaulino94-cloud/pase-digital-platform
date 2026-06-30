@@ -93,8 +93,7 @@ export async function registrarCliente(
         },
       })
 
-      // NO se genera QR en el registro.
-      // El QR se genera únicamente cuando se aprueba el pago de una membresía.
+      // QR se genera solo al activar la membresía, no en el registro
 
       // Optional vehicle
       if (marca && modelo && anioRaw && color) {

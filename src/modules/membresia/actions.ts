@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
+import { notificarAdmins } from '@/modules/notificaciones/actions'
 
 export interface SeleccionState {
   error?: string
@@ -67,4 +68,66 @@ export async function seleccionarPlan(
     console.error('[membresia] unexpected error:', e)
     return { error: 'Ocurrió un error inesperado. Intenta de nuevo.' }
   }
+}
+
+export interface ComprobanteState {
+  error?: string
+  success?: boolean
+}
+
+/**
+ * El cliente sube el comprobante de pago.
+ * Cambia el estado de PENDIENTE → PENDIENTE_PAGO.
+ */
+export async function enviarComprobante(
+  _prev: ComprobanteState,
+  formData: FormData
+): Promise<ComprobanteState> {
+  const user = await getUser()
+  if (!user || user.metadata.role !== 'CLIENTE' || !user.metadata.clienteId) {
+    return { error: 'No autorizado.' }
+  }
+
+  const membershipId = String(formData.get('membershipId') ?? '').trim()
+  const comprobanteUrl = String(formData.get('comprobanteUrl') ?? '').trim()
+  const metodoPagoId = String(formData.get('metodoPagoId') ?? '').trim() || null
+  const nota = String(formData.get('nota') ?? '').trim() || null
+
+  if (!membershipId) return { error: 'Membresía no especificada.' }
+  if (!comprobanteUrl) return { error: 'Adjunta el comprobante de pago.' }
+
+  const membership = await prisma.membership.findUnique({
+    where: { id: membershipId },
+    include: { cliente: true },
+  })
+  if (!membership) return { error: 'Membresía no encontrada.' }
+  if (membership.clienteId !== user.metadata.clienteId) {
+    return { error: 'No autorizado.' }
+  }
+  if (!['PENDIENTE', 'RECHAZADA'].includes(membership.estado)) {
+    return { error: 'Solo puedes enviar comprobante en estado Pendiente o Rechazado.' }
+  }
+
+  await prisma.membership.update({
+    where: { id: membershipId },
+    data: {
+      estado: 'PENDIENTE_PAGO',
+      comprobanteUrl,
+      comprobanteNota: nota,
+      metodoPagoId: metodoPagoId || null,
+      rechazadoReason: null,
+    },
+  })
+
+  // Notify admins of this company
+  await notificarAdmins(membership.cliente.companyId, {
+    tipo: 'NUEVO_COMPROBANTE',
+    titulo: 'Nuevo comprobante de pago',
+    mensaje: `${membership.cliente.nombre} envió un comprobante para su membresía. Revísalo para activarla.`,
+    href: `/admin/pagos`,
+  })
+
+  revalidatePath('/cliente/membresia')
+  revalidatePath('/cliente/dashboard')
+  return { success: true }
 }
