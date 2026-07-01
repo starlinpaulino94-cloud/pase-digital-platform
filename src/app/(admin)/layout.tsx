@@ -12,7 +12,11 @@ export default async function AdminLayout({
   const notifCount = await getUnreadCount()
   return (
     <AppShell
-      role="ADMIN_EMPRESA"
+      // Resolvemos el menú por el rol real del usuario. Así un SUPERADMIN que
+      // entre a una página /admin/* conserva su barra lateral (Superadmin) en
+      // vez de quedar "atrapado" en el menú de Administrador. Los roles admin
+      // (ADMIN_EMPRESA, GERENTE, etc.) siguen viendo el menú Admin.
+      role={user.metadata.role}
       title="PASE Digital"
       userEmail={user.email}
       notifCount={notifCount}
