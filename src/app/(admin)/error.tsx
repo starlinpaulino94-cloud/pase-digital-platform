@@ -2,7 +2,7 @@
 
 import { PanelError } from '@/components/PanelError'
 
-export default function PanelErrorBoundary(props: {
+export default function AdminPanelError(props: {
   error: Error & { digest?: string }
   reset: () => void
 }) {
