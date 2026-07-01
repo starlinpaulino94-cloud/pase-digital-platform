@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { ensureEmailIdentity } from '@/lib/supabase/identity'
 
 export interface RegistroState {
   error?: string
@@ -152,6 +153,9 @@ export async function registrarCliente(
   }
 
   const supabaseId = created.user.id
+
+  // Garantiza la fila de identity (email) para que el login funcione.
+  await ensureEmailIdentity(supabaseId, email)
 
   try {
     const result = await prisma.$transaction(async (tx) => {

@@ -10,6 +10,7 @@ import { procesarReferidoCompletado } from '@/modules/referidos/actions'
 import { activarMembresia } from '@/modules/pagos/activacion'
 import { paymentLimiter } from '@/lib/rate-limit'
 import { validateCsrfToken } from '@/lib/csrf'
+import { ensureEmailIdentity } from '@/lib/supabase/identity'
 
 async function requireAdmin() {
   const user = await getUser()
@@ -371,6 +372,9 @@ export async function crearEmpleado(
     }
 
     const supabaseId = created.user.id
+
+    // Garantiza la fila de identity (email) para que el login funcione.
+    await ensureEmailIdentity(supabaseId, email)
 
     let dbUser
     try {
