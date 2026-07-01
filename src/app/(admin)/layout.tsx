@@ -1,5 +1,5 @@
 import { requireRole } from '@/lib/auth/guards'
-import { AppNav } from '@/components/layout/AppNav'
+import { AppShell } from '@/components/layout/AppShell'
 import { ADMIN_ROLES } from '@/types'
 import { getUnreadCount } from '@/modules/notificaciones/actions'
 
@@ -8,30 +8,16 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  await requireRole(ADMIN_ROLES)
+  const user = await requireRole(ADMIN_ROLES)
   const notifCount = await getUnreadCount()
   return (
-    <div className="min-h-screen bg-slate-50">
-      <AppNav
-        title="PASE · Admin"
-        notifCount={notifCount}
-        items={[
-          { href: '/admin/dashboard', label: 'Resumen' },
-          { href: '/admin/clientes', label: 'Clientes' },
-          { href: '/admin/membresias', label: 'Membresías' },
-          { href: '/admin/pagos', label: 'Pagos' },
-          { href: '/admin/metodos-pago', label: 'Métodos de pago' },
-          { href: '/admin/sucursales', label: 'Sucursales' },
-          { href: '/admin/planes', label: 'Planes' },
-          { href: '/admin/promociones', label: 'Promociones' },
-          { href: '/admin/referidos', label: 'Referidos' },
-          { href: '/admin/whatsapp', label: 'WhatsApp' },
-          { href: '/admin/empleados', label: 'Empleados' },
-          { href: '/admin/reportes', label: 'Reportes' },
-          { href: '/empleado/scanner', label: 'Escáner' },
-        ]}
-      />
-      <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
-    </div>
+    <AppShell
+      role="ADMIN_EMPRESA"
+      title="PASE Digital"
+      userEmail={user.email}
+      notifCount={notifCount}
+    >
+      {children}
+    </AppShell>
   )
 }
