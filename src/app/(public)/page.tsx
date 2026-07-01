@@ -38,8 +38,76 @@ async function getStats() {
   }
 }
 
+/** Forma normalizada usada por la sección de empresas/planes de la landing. */
+interface LandingCompany {
+  slug: string
+  name: string
+  description: string
+  type: string
+  plans: {
+    nombre: string
+    precio: number
+    esIlimitado: boolean
+    descripcion: string
+    beneficios: string[]
+  }[]
+}
+
+/**
+ * Obtiene las empresas y planes reales desde la BD para que los enlaces de
+ * registro usen el slug real (evita 404 en /registro/[slug]). Si la BD está
+ * vacía o no disponible, usa SEED_COMPANIES como respaldo visual.
+ */
+async function getCompanies(): Promise<LandingCompany[]> {
+  try {
+    const companies = await prisma.company.findMany({
+      where: { isActive: true },
+      orderBy: { name: 'asc' },
+      include: {
+        plans: {
+          where: { activo: true },
+          orderBy: { precio: 'asc' },
+        },
+      },
+    })
+
+    if (companies.length > 0) {
+      return companies.map((c) => ({
+        slug: c.slug,
+        name: c.name,
+        description: c.description ?? '',
+        type: c.type,
+        plans: c.plans.map((p) => ({
+          nombre: p.nombre,
+          precio: Number(p.precio),
+          esIlimitado: p.esIlimitado,
+          descripcion: p.descripcion ?? '',
+          beneficios: p.beneficios,
+        })),
+      }))
+    }
+  } catch (err) {
+    console.error('[landing] DB error al cargar empresas:', err)
+  }
+
+  // Respaldo: datos estáticos (BD vacía o sin conexión).
+  return SEED_COMPANIES.map((c) => ({
+    slug: c.slug,
+    name: c.name,
+    description: c.description,
+    type: c.type,
+    plans: c.plans.map((p) => ({
+      nombre: p.nombre,
+      precio: p.precio,
+      esIlimitado: p.esIlimitado,
+      descripcion: p.descripcion,
+      beneficios: p.beneficios,
+    })),
+  }))
+}
+
 export default async function LandingPage() {
-  const stats = await getStats()
+  const [stats, companies] = await Promise.all([getStats(), getCompanies()])
 
   return (
     <main className="min-h-screen bg-[#0f172a] text-white">
@@ -184,7 +252,7 @@ export default async function LandingPage() {
       </section>
 
       {/* Empresas y planes */}
-      {SEED_COMPANIES.map((company) => (
+      {companies.map((company) => (
         <section key={company.slug} className="mx-auto max-w-6xl px-6 py-12">
           <div className="mb-8 flex items-center gap-4">
             <div
