@@ -48,7 +48,7 @@ const ADMIN_NAV: NavGroup[] = [
   {
     label: 'Operaciones',
     items: [
-      { href: '/empleado/scanner', label: 'Escáner QR', icon: ScanLine },
+      { href: '/admin/scanner', label: 'Escáner QR', icon: ScanLine },
       { href: '/admin/pagos', label: 'Pagos', icon: Wallet },
     ],
   },
