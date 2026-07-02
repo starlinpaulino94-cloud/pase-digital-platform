@@ -111,20 +111,46 @@ const SUPERADMIN_NAV: NavGroup[] = [
     label: 'Plataforma',
     items: [
       { href: '/superadmin/empresas', label: 'Empresas', icon: Building2 },
-      { href: '/superadmin/planes', label: 'Planes', icon: Package },
-      { href: '/superadmin/membresias', label: 'Membresías', icon: CreditCard },
+      { href: '/superadmin/planes', label: 'Planes globales', icon: Package },
+      { href: '/superadmin/membresias', label: 'Membresías globales', icon: CreditCard },
+      { href: '/superadmin/operaciones', label: 'Operaciones', icon: ClipboardList },
+      { href: '/superadmin/reportes', label: 'Reportes globales', icon: BarChart3 },
+    ],
+  },
+  {
+    label: 'Clientes',
+    items: [
+      { href: '/admin/clientes', label: 'Clientes', icon: Users },
+      { href: '/admin/membresias', label: 'Membresías', icon: CreditCard },
+      { href: '/admin/promociones', label: 'Promociones', icon: Megaphone },
+      { href: '/admin/referidos', label: 'Referidos', icon: Gift },
     ],
   },
   {
     label: 'Operaciones',
     items: [
-      { href: '/superadmin/operaciones', label: 'Operaciones', icon: ClipboardList },
-      { href: '/admin/clientes', label: 'Clientes', icon: Users },
+      { href: '/admin/scanner', label: 'Escáner QR', icon: ScanLine },
+      { href: '/admin/pagos', label: 'Pagos', icon: Wallet },
     ],
   },
   {
-    label: 'Reportes',
-    items: [{ href: '/superadmin/reportes', label: 'Reportes', icon: BarChart3 }],
+    label: 'Empresa',
+    items: [
+      { href: '/admin/sucursales', label: 'Sucursales', icon: Building2 },
+      { href: '/admin/metodos-pago', label: 'Métodos de pago', icon: Landmark },
+      { href: '/admin/planes', label: 'Planes', icon: Package },
+    ],
+  },
+  {
+    label: 'Marketing',
+    items: [{ href: '/admin/whatsapp', label: 'WhatsApp', icon: MessageCircle }],
+  },
+  {
+    label: 'Configuración',
+    items: [
+      { href: '/admin/empleados', label: 'Empleados', icon: UserCog },
+      { href: '/admin/reportes', label: 'Reportes', icon: BarChart3 },
+    ],
   },
 ]
 
