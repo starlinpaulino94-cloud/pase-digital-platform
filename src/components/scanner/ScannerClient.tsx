@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { buscarPorToken, type ClienteLookup, type LookupResult } from '@/modules/visitas/actions'
 import { ConfirmVisit } from '@/components/scanner/ConfirmVisit'
+import { ScannerErrorBoundary } from '@/components/scanner/ScannerErrorBoundary'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -177,7 +178,9 @@ export function ScannerClient({ sucursales = [] }: { sucursales?: Sucursal[] }) 
     return (
       <Card className="border-border/60 shadow-card-hover animate-scale-in">
         <CardContent className="p-6">
-          <ConfirmVisit cliente={cliente} sucursales={sucursales} onDone={reset} />
+          <ScannerErrorBoundary onReset={reset}>
+            <ConfirmVisit cliente={cliente} sucursales={sucursales} onDone={reset} />
+          </ScannerErrorBoundary>
         </CardContent>
       </Card>
     )
