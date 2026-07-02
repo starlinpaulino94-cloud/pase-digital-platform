@@ -1,0 +1,153 @@
+/**
+ * Utilidades compartidas del módulo de Comunicación y Soporte.
+ * Sin dependencias de servidor: se puede importar desde componentes cliente.
+ */
+
+export const MENSAJE_DEFAULT =
+  'Hola, soy {cliente}. Necesito ayuda con mi membresía.'
+
+export const DIAS_SEMANA = [
+  { value: 0, label: 'Dom', full: 'Domingo' },
+  { value: 1, label: 'Lun', full: 'Lunes' },
+  { value: 2, label: 'Mar', full: 'Martes' },
+  { value: 3, label: 'Mié', full: 'Miércoles' },
+  { value: 4, label: 'Jue', full: 'Jueves' },
+  { value: 5, label: 'Vie', full: 'Viernes' },
+  { value: 6, label: 'Sáb', full: 'Sábado' },
+] as const
+
+export interface PlantillaVars {
+  cliente?: string
+  empresa?: string
+  membresia?: string
+  fecha?: string
+}
+
+/** Reemplaza las variables {cliente} {empresa} {membresia} {fecha} en el texto. */
+export function renderPlantilla(texto: string, vars: PlantillaVars): string {
+  const fecha = vars.fecha ?? new Date().toLocaleDateString('es-DO')
+  return texto
+    .replace(/\{cliente\}/g, vars.cliente ?? 'cliente')
+    .replace(/\{empresa\}/g, vars.empresa ?? 'la empresa')
+    .replace(/\{membresia\}/g, vars.membresia ?? 'mi membresía')
+    .replace(/\{fecha\}/g, fecha)
+}
+
+/** Normaliza el código de país a formato +NN (solo dígitos precedidos de +). */
+export function normalizarCodigoPais(raw: string): string {
+  const digits = raw.replace(/[^\d]/g, '')
+  return digits ? `+${digits}` : ''
+}
+
+/** Deja solo dígitos del número nacional. */
+export function normalizarNumero(raw: string): string {
+  return raw.replace(/\D/g, '')
+}
+
+/** Construye el enlace https://wa.me/ a partir de código de país + número. */
+export function buildWaLink(
+  codigoPais: string,
+  numero: string,
+  mensaje?: string
+): string {
+  const full = `${normalizarCodigoPais(codigoPais)}${normalizarNumero(numero)}`.replace(
+    /^\+/,
+    ''
+  )
+  const base = `https://wa.me/${full}`
+  return mensaje ? `${base}?text=${encodeURIComponent(mensaje)}` : base
+}
+
+/** Formatea el número para mostrar: "+52 5512345678". */
+export function formatNumeroPreview(codigoPais: string, numero: string): string {
+  const cp = normalizarCodigoPais(codigoPais)
+  const n = normalizarNumero(numero)
+  if (!cp && !n) return '—'
+  return `${cp} ${n}`.trim()
+}
+
+/** Parsea la CSV de días laborales a un arreglo de índices. */
+export function parseDias(csv: string | null | undefined): number[] {
+  if (!csv) return [1, 2, 3, 4, 5]
+  return csv
+    .split(',')
+    .map((s) => Number(s.trim()))
+    .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6)
+}
+
+/** Texto legible del horario para el cliente. */
+export function horarioLegible(
+  horaInicio?: string | null,
+  horaCierre?: string | null,
+  diasCsv?: string | null
+): string | null {
+  if (!horaInicio || !horaCierre) return null
+  const dias = parseDias(diasCsv)
+  if (dias.length === 0) return null
+  const sorted = [...dias].sort((a, b) => a - b)
+  // Rango contiguo → "Lun a Vie", si no lista
+  const contiguo = sorted.every((d, i) => i === 0 || d === sorted[i - 1] + 1)
+  const label = (v: number) => DIAS_SEMANA[v].label
+  const diasTxt =
+    sorted.length > 1 && contiguo
+      ? `${label(sorted[0])} a ${label(sorted[sorted.length - 1])}`
+      : sorted.map(label).join(', ')
+  return `${diasTxt} · ${horaInicio} – ${horaCierre}`
+}
+
+// ── Tickets: etiquetas y colores ────────────────────────────────────────────
+
+export const TICKET_ESTADOS = [
+  'NUEVO',
+  'EN_PROCESO',
+  'ESPERANDO_CLIENTE',
+  'RESUELTO',
+  'CERRADO',
+] as const
+export type TicketEstadoT = (typeof TICKET_ESTADOS)[number]
+
+export const TICKET_CATEGORIAS = [
+  'PAGO',
+  'MEMBRESIA',
+  'BENEFICIOS',
+  'APP',
+  'OTRO',
+] as const
+export type TicketCategoriaT = (typeof TICKET_CATEGORIAS)[number]
+
+export function estadoLabel(e: string): string {
+  return (
+    {
+      NUEVO: 'Nuevo',
+      EN_PROCESO: 'En proceso',
+      ESPERANDO_CLIENTE: 'Esperando cliente',
+      RESUELTO: 'Resuelto',
+      CERRADO: 'Cerrado',
+    } as Record<string, string>
+  )[e] ?? e
+}
+
+/** Clases de color (tailwind) para el badge de estado. */
+export function estadoBadgeClass(e: string): string {
+  return (
+    {
+      NUEVO: 'bg-sky-100 text-sky-700',
+      EN_PROCESO: 'bg-amber-100 text-amber-700',
+      ESPERANDO_CLIENTE: 'bg-violet-100 text-violet-700',
+      RESUELTO: 'bg-emerald-100 text-emerald-700',
+      CERRADO: 'bg-slate-200 text-slate-600',
+    } as Record<string, string>
+  )[e] ?? 'bg-slate-100 text-slate-600'
+}
+
+export function categoriaLabel(c: string): string {
+  return (
+    {
+      PAGO: 'Pago',
+      MEMBRESIA: 'Membresía',
+      BENEFICIOS: 'Beneficios',
+      APP: 'App',
+      OTRO: 'Otro',
+    } as Record<string, string>
+  )[c] ?? c
+}

@@ -16,6 +16,7 @@ import {
   History,
   User,
   ShieldCheck,
+  LifeBuoy,
   type LucideIcon,
 } from 'lucide-react'
 import type { AppRole } from '@/types'
@@ -61,8 +62,11 @@ const ADMIN_NAV: NavGroup[] = [
     ],
   },
   {
-    label: 'Marketing',
-    items: [{ href: '/admin/whatsapp', label: 'WhatsApp', icon: MessageCircle }],
+    label: 'Soporte',
+    items: [
+      { href: '/admin/comunicacion', label: 'Comunicación y Soporte', icon: MessageCircle },
+      { href: '/admin/tickets', label: 'Tickets', icon: LifeBuoy },
+    ],
   },
   {
     label: 'Configuración',
@@ -98,6 +102,7 @@ const CLIENTE_NAV: NavGroup[] = [
     items: [
       { href: '/cliente/historial', label: 'Historial', icon: History },
       { href: '/cliente/perfil', label: 'Perfil', icon: User },
+      { href: '/cliente/ayuda', label: 'Ayuda', icon: LifeBuoy },
     ],
   },
 ]
@@ -142,8 +147,11 @@ const SUPERADMIN_NAV: NavGroup[] = [
     ],
   },
   {
-    label: 'Marketing',
-    items: [{ href: '/admin/whatsapp', label: 'WhatsApp', icon: MessageCircle }],
+    label: 'Soporte',
+    items: [
+      { href: '/admin/comunicacion', label: 'Comunicación y Soporte', icon: MessageCircle },
+      { href: '/admin/tickets', label: 'Tickets', icon: LifeBuoy },
+    ],
   },
   {
     label: 'Configuración',

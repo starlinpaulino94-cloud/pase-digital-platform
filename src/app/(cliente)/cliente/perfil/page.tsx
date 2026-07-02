@@ -31,7 +31,11 @@ export default async function PerfilPage() {
           <p className="text-sm text-muted-foreground">{cliente.company.name}</p>
         </div>
         {whatsapp?.activo && (
-          <WhatsAppButton numero={whatsapp.numero} mensaje={whatsapp.mensajePlantilla} />
+          <WhatsAppButton
+            codigoPais={whatsapp.codigoPais}
+            numero={whatsapp.numero}
+            mensaje={whatsapp.mensajePlantilla}
+          />
         )}
       </div>
 
