@@ -5,7 +5,6 @@ import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
 import { notificarAdmins } from '@/modules/notificaciones/actions'
 import { formSubmitLimiter } from '@/lib/rate-limit'
-import { validateCsrfToken } from '@/lib/csrf'
 
 export interface SeleccionState {
   error?: string
@@ -17,13 +16,6 @@ export async function seleccionarPlan(
   formData: FormData
 ): Promise<SeleccionState> {
   try {
-  // Validate CSRF token
-  try {
-    await validateCsrfToken(formData)
-  } catch {
-    return { error: 'Solicitud inválida. Intenta de nuevo.' }
-  }
-
   const user = await getUser()
   if (!user || user.metadata.role !== 'CLIENTE' || !user.metadata.clienteId) {
     return { error: 'No autorizado.' }
@@ -98,13 +90,6 @@ export async function enviarComprobante(
   _prev: ComprobanteState,
   formData: FormData
 ): Promise<ComprobanteState> {
-  // Validate CSRF token
-  try {
-    await validateCsrfToken(formData)
-  } catch {
-    return { error: 'Solicitud inválida. Intenta de nuevo.' }
-  }
-
   const user = await getUser()
   if (!user || user.metadata.role !== 'CLIENTE' || !user.metadata.clienteId) {
     return { error: 'No autorizado.' }

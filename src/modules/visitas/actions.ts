@@ -4,7 +4,6 @@ import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
 import { getRequestMeta } from '@/lib/server-utils'
 import { qrScanLimiter } from '@/lib/rate-limit'
-import { validateCsrfToken } from '@/lib/csrf'
 
 export interface VisitaReciente {
   id: string
@@ -171,13 +170,6 @@ export async function confirmarVisita(
   formData: FormData
 ): Promise<ConfirmState> {
   try {
-  // Validate CSRF token
-  try {
-    await validateCsrfToken(formData)
-  } catch {
-    return { error: 'Solicitud inválida. Intenta de nuevo.' }
-  }
-
   const user = await getUser()
   if (!user || !['EMPLEADO', 'ADMIN_EMPRESA', 'SUPERADMIN'].includes(user.metadata.role)) {
     return { error: 'No autorizado.' }
