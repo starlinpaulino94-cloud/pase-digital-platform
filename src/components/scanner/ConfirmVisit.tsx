@@ -96,7 +96,15 @@ export function ConfirmVisit({
   const [sucursalId, setSucursalId] = useState('')
   const [state, formAction, pending] = useActionState(confirmarVisita, initial)
 
-  const isCarwash = cliente.empresaType === 'carwash' || cliente.vehiculos.length > 0
+  // Defensa contra payloads incompletos (bundle viejo en el teléfono + acción
+  // nueva en el servidor, o viceversa): nunca dejar que un campo faltante
+  // tumbe la pantalla del scanner.
+  const vehiculos = cliente.vehiculos ?? []
+  const planBeneficios = cliente.planBeneficios ?? []
+  const alertas = cliente.alertas ?? []
+  const visitasRecientes = cliente.visitasRecientes ?? []
+
+  const isCarwash = cliente.empresaType === 'carwash' || vehiculos.length > 0
   const servicios = isCarwash ? SERVICIOS_CARWASH : SERVICIOS_RESTAURANTE
   const isValid = cliente.puedeUsar
 
@@ -220,13 +228,13 @@ export function ConfirmVisit({
         </div>
 
         {/* Beneficios */}
-        {cliente.planBeneficios.length > 0 && (
+        {planBeneficios.length > 0 && (
           <div className="mt-3 border-t border-border/60 pt-3">
             <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               Beneficios incluidos
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {cliente.planBeneficios.map((b) => (
+              {planBeneficios.map((b) => (
                 <Badge key={b} variant="secondary" className="text-xs bg-sky-50 text-sky-700">
                   {b}
                 </Badge>
@@ -245,9 +253,9 @@ export function ConfirmVisit({
       </div>
 
       {/* Alerts */}
-      {cliente.alertas.length > 0 && (
+      {alertas.length > 0 && (
         <div className="space-y-1.5">
-          {cliente.alertas.map((alerta) => (
+          {alertas.map((alerta) => (
             <div
               key={alerta}
               className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-700"
@@ -260,13 +268,13 @@ export function ConfirmVisit({
       )}
 
       {/* Recent visits */}
-      {cliente.visitasRecientes.length > 0 && (
+      {visitasRecientes.length > 0 && (
         <div className="rounded-xl border border-border/60 bg-muted/30 p-3">
           <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             <Clock className="h-3.5 w-3.5" /> Últimas visitas
           </p>
           <div className="space-y-1">
-            {cliente.visitasRecientes.map((v) => (
+            {visitasRecientes.map((v) => (
               <div key={v.id} className="flex items-center justify-between text-sm">
                 <span className="text-foreground">{v.servicio}</span>
                 <span className="text-xs text-muted-foreground">{fmtDateTime(v.fecha)}</span>
@@ -335,7 +343,7 @@ export function ConfirmVisit({
             </Select>
           </div>
 
-          {cliente.vehiculos.length > 0 && (
+          {vehiculos.length > 0 && (
             <div className="space-y-1.5">
               <Label className="text-xs">Vehículo</Label>
               <Select value={vehiculoId} onValueChange={setVehiculoId}>
@@ -343,7 +351,7 @@ export function ConfirmVisit({
                   <SelectValue placeholder="Selecciona vehículo (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  {cliente.vehiculos.map((v) => (
+                  {vehiculos.map((v) => (
                     <SelectItem key={v.id} value={v.id}>{v.label}</SelectItem>
                   ))}
                 </SelectContent>
