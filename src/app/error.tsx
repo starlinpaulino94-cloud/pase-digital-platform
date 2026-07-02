@@ -1,5 +1,6 @@
 'use client'
 
+import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
 import { Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -12,7 +13,7 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('[app-error]', error)
+    Sentry.captureException(error)
   }, [error])
 
   return (

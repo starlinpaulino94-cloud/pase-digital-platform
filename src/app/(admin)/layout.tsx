@@ -1,5 +1,6 @@
 import { requireRole } from '@/lib/auth/guards'
 import { AppShell } from '@/components/layout/AppShell'
+import { SentryUserSync } from '@/components/SentryUserSync'
 import { ADMIN_ROLES } from '@/types'
 import { getUnreadCount } from '@/modules/notificaciones/actions'
 
@@ -21,6 +22,7 @@ export default async function AdminLayout({
       userEmail={user.email}
       notifCount={notifCount}
     >
+      <SentryUserSync userId={user.metadata.dbUserId} email={user.email} role={user.metadata.role} companyId={user.metadata.companyId} />
       {children}
     </AppShell>
   )

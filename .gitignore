@@ -3,6 +3,7 @@
 # ============================================================
 
 # --- Entorno y secretos (NUNCA subir) ---
+.env.sentry-build-plugin
 .env
 .env.local
 .env.development.local

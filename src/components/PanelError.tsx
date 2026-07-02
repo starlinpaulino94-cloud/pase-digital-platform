@@ -1,14 +1,10 @@
 'use client'
 
+import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-/**
- * Estado de error para los paneles internos (admin / superadmin). Se renderiza
- * dentro del layout de la zona, por lo que la barra lateral permanece visible
- * y el usuario puede reintentar sin sentir que "salió de la app".
- */
 export function PanelError({
   error,
   reset,
@@ -17,7 +13,7 @@ export function PanelError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('[panel-error]', error)
+    Sentry.captureException(error)
   }, [error])
 
   return (
