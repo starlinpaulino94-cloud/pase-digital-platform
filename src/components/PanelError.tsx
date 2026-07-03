@@ -13,7 +13,7 @@ export function PanelError({
   reset: () => void
 }) {
   useEffect(() => {
-    Sentry.captureException(error)
+    try { Sentry.captureException(error) } catch {}
   }, [error])
 
   return (

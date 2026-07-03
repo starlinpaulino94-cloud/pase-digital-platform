@@ -156,8 +156,12 @@ export function ScannerClient({ sucursales = [] }: { sucursales?: Sucursal[] }) 
           setErrorState({ message: res.error, code: res.errorCode ?? null })
         } else if (res.cliente) {
           setCliente(res.cliente)
+        } else {
+          setErrorState({ message: 'Respuesta vacía del servidor.', code: 'INTERNAL' })
         }
-      } catch {
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[scanner] lookup error:', err)
         setErrorState({
           message: 'No se pudo conectar con el servidor. Verifica tu conexión a internet.',
           code: 'INTERNAL',
@@ -176,13 +180,13 @@ export function ScannerClient({ sucursales = [] }: { sucursales?: Sucursal[] }) 
 
   if (cliente) {
     return (
-      <Card className="border-border/60 shadow-card-hover animate-scale-in">
-        <CardContent className="p-6">
-          <ScannerErrorBoundary onReset={reset}>
+      <ScannerErrorBoundary onReset={reset}>
+        <Card className="border-border/60 shadow-card-hover animate-scale-in">
+          <CardContent className="p-6">
             <ConfirmVisit cliente={cliente} sucursales={sucursales} onDone={reset} />
-          </ScannerErrorBoundary>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </ScannerErrorBoundary>
     )
   }
 
