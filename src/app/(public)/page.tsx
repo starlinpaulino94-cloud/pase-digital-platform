@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   Car,
   UtensilsCrossed,
@@ -115,9 +116,7 @@ export default async function LandingPage() {
       <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0f172a]/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2 text-xl font-bold">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500">
-              <QrCode className="h-5 w-5 text-white" />
-            </span>
+            <Image src="/logo.svg" alt="MembreGo" width={32} height={32} priority />
             MembreGo
           </Link>
           <nav className="flex items-center gap-2">

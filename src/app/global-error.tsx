@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Sparkles } from 'lucide-react'
+/* eslint-disable @next/next/no-img-element */
 
 export default function GlobalError({
   error,
@@ -32,7 +32,7 @@ export default function GlobalError({
           padding: '2rem',
         }}>
           <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.5rem', fontWeight: 'bold' }}>
-            <Sparkles style={{ width: 28, height: 28, color: '#38bdf8' }} />
+            <img src="/logo.svg" alt="MembreGo" width={36} height={36} />
             MembreGo
           </div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Algo salió mal</h1>

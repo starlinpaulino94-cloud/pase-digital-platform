@@ -60,7 +60,11 @@ export function AppHeader({
 
       {/* Breadcrumbs */}
       <div className="hidden min-w-0 items-center gap-1.5 text-sm md:flex">
-        <span className="text-slate-400">MembreGo</span>
+        <span className="flex items-center gap-1.5 text-slate-400">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="" width={20} height={20} />
+          MembreGo
+        </span>
         {current && (
           <>
             <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
