@@ -95,7 +95,7 @@ export function LoginForm({
         <CardDescription className="text-slate-400">
           {isStaff
             ? 'Panel para administradores y empleados.'
-            : 'Accede a tu cuenta de MembreGo.'}
+            : 'Accede a tu cuenta de MembeGo.'}
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -63,7 +63,7 @@ export function AppHeader({
         <span className="flex items-center gap-1.5 text-slate-400">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="" width={20} height={20} />
-          MembreGo
+          MembeGo
         </span>
         {current && (
           <>

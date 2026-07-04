@@ -4,7 +4,7 @@ export function Logo({ size = 32, className }: { size?: number; className?: stri
   return (
     <Image
       src="/logo.svg"
-      alt="MembreGo"
+      alt="MembeGo"
       width={size}
       height={size}
       className={className}

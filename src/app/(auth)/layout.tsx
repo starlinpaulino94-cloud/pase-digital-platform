@@ -9,8 +9,8 @@ export default function AuthLayout({
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#0f172a] px-4 py-12 text-white">
       <Link href="/" className="mb-8 flex items-center gap-2 text-2xl font-bold">
-        <Image src="/logo.svg" alt="MembreGo" width={36} height={36} priority />
-        MembreGo
+        <Image src="/logo.svg" alt="MembeGo" width={36} height={36} priority />
+        MembeGo
       </Link>
       <div className="w-full max-w-md">{children}</div>
     </div>

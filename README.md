@@ -1,4 +1,4 @@
-# MembreGo
+# MembeGo
 
 Plataforma inteligente para la gestión de membresías, planes, suscripciones, beneficios y clubes empresariales con validación mediante QR.
 
@@ -94,7 +94,7 @@ Plan         → Plan de membresía (precio, lavadosIncluidos, beneficios)
 Cliente      → Perfil de cliente por empresa (supabaseId, companyId)
 Vehiculo     → Vehículo del cliente (carwash)
 Membership   → Membresía activa de un cliente a un plan (estado, lavadosRestantes)
-QrToken      → Pase Digital QR único por cliente
+QrToken      → QR único por cliente (membresía digital)
 Visit        → Registro de uso (visita al establecimiento)
 ```
 
@@ -120,8 +120,8 @@ Visit        → Registro de uso (visita al establecimiento)
 
 ```bash
 # 1. Clonar
-git clone https://github.com/starlinpaulino94-cloud/membrego-platform.git
-cd membrego-platform
+git clone https://github.com/starlinpaulino94-cloud/membego-platform.git
+cd membego-platform
 
 # 2. Instalar dependencias
 bun install
@@ -180,11 +180,11 @@ Disponibles tras ejecutar `bun run db:seed`:
 
 | Rol | Email | Contraseña |
 |-----|-------|------------|
-| Superadmin | `superadmin@membrego.com` | `admin123` |
-| Admin Carwash | `admin.cartown@membrego.com` | `admin123` |
-| Admin Restaurante | `admin.tonis@membrego.com` | `admin123` |
-| Empleado Carwash | `empleado.cartown@membrego.com` | `admin123` |
-| Cliente | `cliente@membrego.com` | `cliente123` |
+| Superadmin | `superadmin@membego.com` | `admin123` |
+| Admin Carwash | `admin.cartown@membego.com` | `admin123` |
+| Admin Restaurante | `admin.tonis@membego.com` | `admin123` |
+| Empleado Carwash | `empleado.cartown@membego.com` | `admin123` |
+| Cliente | `cliente@membego.com` | `cliente123` |
 
 El seed crea los usuarios en **Supabase Auth** (con `app_metadata.role`) y en la tabla `users`, para que el login funcione de inmediato.
 
@@ -252,7 +252,7 @@ bun run db:seed            # Cargar datos iniciales + usuarios de prueba
 ## Estructura de carpetas
 
 ```
-membrego-platform/
+membego-platform/
 ├── prisma/
 │   ├── schema.prisma         # 8 modelos + 2 enums
 │   └── seed.ts               # Datos iniciales + usuarios de prueba

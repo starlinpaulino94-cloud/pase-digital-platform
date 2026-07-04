@@ -9,8 +9,8 @@ export default function NotFound() {
         href="/"
         className="mb-8 flex items-center gap-2 text-2xl font-bold"
       >
-        <Image src="/logo.svg" alt="MembreGo" width={36} height={36} priority />
-        MembreGo
+        <Image src="/logo.svg" alt="MembeGo" width={36} height={36} priority />
+        MembeGo
       </Link>
       <p className="text-6xl font-bold text-sky-400">404</p>
       <h1 className="mt-4 text-2xl font-bold">Página no encontrada</h1>

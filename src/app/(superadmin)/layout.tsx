@@ -13,7 +13,7 @@ export default async function SuperadminLayout({
   return (
     <AppShell
       role="SUPERADMIN"
-      title="MembreGo"
+      title="MembeGo"
       userEmail={user.email}
       notifCount={notifCount}
     >

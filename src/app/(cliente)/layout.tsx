@@ -21,7 +21,7 @@ export default async function ClienteLayout({
   return (
     <AppShell
       role="CLIENTE"
-      title="MembreGo"
+      title="MembeGo"
       userEmail={user.email}
       notifCount={notifCount}
       companies={companies}

@@ -18,7 +18,7 @@ export default async function AdminLayout({
       // vez de quedar "atrapado" en el menú de Administrador. Los roles admin
       // (ADMIN_EMPRESA, GERENTE, etc.) siguen viendo el menú Admin.
       role={user.metadata.role}
-      title="MembreGo"
+      title="MembeGo"
       userEmail={user.email}
       notifCount={notifCount}
     >

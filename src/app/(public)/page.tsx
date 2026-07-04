@@ -116,8 +116,8 @@ export default async function LandingPage() {
       <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0f172a]/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2 text-xl font-bold">
-            <Image src="/logo.svg" alt="MembreGo" width={32} height={32} priority />
-            MembreGo
+            <Image src="/logo.svg" alt="MembeGo" width={32} height={32} priority />
+            MembeGo
           </Link>
           <nav className="flex items-center gap-2">
             <Link href="/empresas">
@@ -147,7 +147,7 @@ export default async function LandingPage() {
           className="absolute inset-0 opacity-20"
           style={{
             background:
-              'radial-gradient(circle at 30% 20%, #0ea5e9 0%, transparent 50%), radial-gradient(circle at 70% 60%, #6366f1 0%, transparent 50%)',
+              'radial-gradient(circle at 30% 20%, #2563eb 0%, transparent 50%), radial-gradient(circle at 70% 60%, #06b6d4 0%, transparent 50%)',
           }}
         />
         <div className="relative mx-auto max-w-4xl px-6 py-24 text-center">
@@ -157,12 +157,12 @@ export default async function LandingPage() {
           </Badge>
           <h1 className="mx-auto max-w-3xl text-4xl font-extrabold leading-tight tracking-tight md:text-6xl">
             Tu membresía abre la puerta a{' '}
-            <span className="bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
               promociones privadas
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-300">
-            Regístrate gratuitamente, activa tu Pase Digital y comienza a
+            Regístrate gratuitamente, activa tu membresía MembeGo y comienza a
             disfrutar promociones exclusivas en nuestros establecimientos
             participantes.
           </p>
@@ -172,7 +172,7 @@ export default async function LandingPage() {
                 size="lg"
                 className="w-full bg-sky-500 hover:bg-sky-400 sm:w-auto"
               >
-                Quiero mi membresía MembreGo
+                Quiero mi membresía MembeGo
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
@@ -223,7 +223,7 @@ export default async function LandingPage() {
       {/* Cómo funciona */}
       <section className="mx-auto max-w-5xl px-6 py-20">
         <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold">Activa tu Pase Digital en 5 pasos</h2>
+          <h2 className="text-3xl font-bold">Activa tu membresía en 5 pasos</h2>
           <p className="mt-3 text-slate-400">
             Tu acceso exclusivo está listo en minutos. Sin complicaciones.
           </p>
@@ -318,10 +318,10 @@ export default async function LandingPage() {
 
       {/* CTA final */}
       <section className="mx-auto max-w-4xl px-6 py-20 text-center">
-        <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-sky-500/10 to-indigo-500/10 p-10">
+        <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-blue-600/10 to-cyan-500/10 p-10">
           <ShieldCheck className="mx-auto mb-4 h-10 w-10 text-sky-400" />
           <h2 className="text-2xl font-bold md:text-3xl">
-            ¿Listo para activar tu Pase Digital?
+            ¿Listo para activar tu membresía?
           </h2>
           <p className="mx-auto mt-3 max-w-lg text-slate-300">
             Únete a los clientes que ya disfrutan promociones exclusivas en
@@ -340,8 +340,7 @@ export default async function LandingPage() {
       </section>
 
       <footer className="border-t border-white/10 py-8 text-center text-sm text-slate-500">
-        © {new Date().getFullYear()} MembreGo · Plataforma inteligente para membresías
-        promociones privadas
+        © {new Date().getFullYear()} MembeGo · Plataforma inteligente para membresías y promociones
       </footer>
     </main>
   )

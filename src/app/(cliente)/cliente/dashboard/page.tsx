@@ -143,7 +143,7 @@ export default async function ClienteDashboard() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-white/50">
-                  MembreGo
+                  MembeGo
                 </p>
                 <p className="font-bold text-white">{cliente.nombre}</p>
               </div>

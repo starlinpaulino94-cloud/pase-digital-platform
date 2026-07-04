@@ -1,6 +1,6 @@
 {
-  "name": "MembreGo",
-  "short_name": "MembreGo",
+  "name": "MembeGo",
+  "short_name": "MembeGo",
   "description": "Plataforma inteligente para membresías digitales",
   "start_url": "/",
   "display": "standalone",

@@ -56,9 +56,9 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.14 0.02 264);
 
-  /* Primary — clean dark navy */
-  --primary: oklch(0.20 0.04 264);
-  --primary-foreground: oklch(0.985 0.002 264);
+  /* Primary — electric blue (matches logo gradient start) */
+  --primary: oklch(0.55 0.22 255);
+  --primary-foreground: oklch(0.99 0 0);
 
   /* Secondary */
   --secondary: oklch(0.955 0.005 264);
@@ -68,9 +68,9 @@
   --muted: oklch(0.960 0.004 264);
   --muted-foreground: oklch(0.50 0.012 264);
 
-  /* Accent — blue */
-  --accent: oklch(0.945 0.015 250);
-  --accent-foreground: oklch(0.40 0.12 250);
+  /* Accent — cyan (matches logo gradient end) */
+  --accent: oklch(0.945 0.025 200);
+  --accent-foreground: oklch(0.40 0.14 200);
 
   /* Destructive */
   --destructive: oklch(0.577 0.245 27.325);
@@ -78,46 +78,46 @@
   /* Borders */
   --border: oklch(0.914 0.005 264);
   --input: oklch(0.914 0.005 264);
-  --ring: oklch(0.56 0.18 250);
+  --ring: oklch(0.55 0.22 255);
 
-  /* Sidebar — dark */
-  --sidebar: oklch(0.155 0.028 264);
-  --sidebar-foreground: oklch(0.80 0.010 264);
-  --sidebar-primary: oklch(0.60 0.18 250);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.22 0.028 264);
-  --sidebar-accent-foreground: oklch(0.92 0.008 264);
-  --sidebar-border: oklch(0.24 0.025 264);
-  --sidebar-ring: oklch(0.60 0.18 250);
+  /* Sidebar — deep navy (matches logo background) */
+  --sidebar: oklch(0.14 0.035 260);
+  --sidebar-foreground: oklch(0.80 0.010 260);
+  --sidebar-primary: oklch(0.62 0.20 230);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.20 0.035 260);
+  --sidebar-accent-foreground: oklch(0.92 0.008 260);
+  --sidebar-border: oklch(0.22 0.030 260);
+  --sidebar-ring: oklch(0.62 0.20 230);
 }
 
 .dark {
-  --background: oklch(0.13 0.025 264);
-  --foreground: oklch(0.96 0.005 264);
-  --card: oklch(0.17 0.025 264);
-  --card-foreground: oklch(0.96 0.005 264);
-  --popover: oklch(0.17 0.025 264);
-  --popover-foreground: oklch(0.96 0.005 264);
-  --primary: oklch(0.60 0.18 250);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.22 0.025 264);
-  --secondary-foreground: oklch(0.92 0.008 264);
-  --muted: oklch(0.22 0.025 264);
-  --muted-foreground: oklch(0.60 0.012 264);
-  --accent: oklch(0.24 0.04 250);
-  --accent-foreground: oklch(0.72 0.15 250);
+  --background: oklch(0.13 0.030 260);
+  --foreground: oklch(0.96 0.005 260);
+  --card: oklch(0.17 0.030 260);
+  --card-foreground: oklch(0.96 0.005 260);
+  --popover: oklch(0.17 0.030 260);
+  --popover-foreground: oklch(0.96 0.005 260);
+  --primary: oklch(0.62 0.20 230);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.22 0.030 260);
+  --secondary-foreground: oklch(0.92 0.008 260);
+  --muted: oklch(0.22 0.030 260);
+  --muted-foreground: oklch(0.60 0.012 260);
+  --accent: oklch(0.24 0.04 200);
+  --accent-foreground: oklch(0.72 0.15 200);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.60 0.18 250);
-  --sidebar: oklch(0.10 0.020 264);
-  --sidebar-foreground: oklch(0.80 0.010 264);
-  --sidebar-primary: oklch(0.60 0.18 250);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.17 0.025 264);
-  --sidebar-accent-foreground: oklch(0.92 0.008 264);
+  --ring: oklch(0.62 0.20 230);
+  --sidebar: oklch(0.10 0.025 260);
+  --sidebar-foreground: oklch(0.80 0.010 260);
+  --sidebar-primary: oklch(0.62 0.20 230);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.17 0.030 260);
+  --sidebar-accent-foreground: oklch(0.92 0.008 260);
   --sidebar-border: oklch(1 0 0 / 6%);
-  --sidebar-ring: oklch(0.60 0.18 250);
+  --sidebar-ring: oklch(0.62 0.20 230);
 }
 
 @layer base {
@@ -168,9 +168,9 @@
     -webkit-backdrop-filter: blur(12px) saturate(160%);
   }
 
-  /* Gradient text */
+  /* Gradient text — matches MembeGo logo gradient */
   .text-gradient {
-    background: linear-gradient(135deg, oklch(0.40 0.18 250), oklch(0.60 0.20 260));
+    background: linear-gradient(135deg, #2563eb, #06b6d4);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

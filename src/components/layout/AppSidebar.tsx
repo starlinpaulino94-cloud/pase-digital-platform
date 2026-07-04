@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Sparkles, LogOut } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { logout } from '@/modules/auth/actions'
 import { navForRole, roleLabel, ROLE_ICONS } from '@/components/layout/nav-config'
@@ -31,9 +31,8 @@ export function AppSidebar({
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       {/* Brand */}
       <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-sidebar-border px-5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary">
-          <Sparkles className="h-4 w-4 text-sidebar-primary-foreground" />
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.svg" alt="MembeGo" width={32} height={32} className="rounded-lg" />
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold tracking-tight text-white">
             {title}

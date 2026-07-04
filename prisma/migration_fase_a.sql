@@ -1,5 +1,5 @@
 -- ============================================================
--- FASE A — Migración MembreGo (versión corregida)
+-- FASE A — Migración MembeGo (versión corregida)
 -- Ejecutar en Supabase SQL Editor
 -- ============================================================
 

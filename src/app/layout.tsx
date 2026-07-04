@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'MembreGo',
+  title: 'MembeGo',
   description:
-    'Membresías digitales para CARTOWN Wash & Detailing y Toni\'s Restaurante',
+    'Plataforma inteligente para membresías digitales — gestiona planes, suscripciones y beneficios con validación QR.',
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: '32x32' },
