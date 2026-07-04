@@ -10,7 +10,7 @@ export default function NotFound() {
         className="mb-8 flex items-center gap-2 text-2xl font-bold"
       >
         <Sparkles className="h-7 w-7 text-sky-400" />
-        PASE Digital
+        MembreGo
       </Link>
       <p className="text-6xl font-bold text-sky-400">404</p>
       <h1 className="mt-4 text-2xl font-bold">Página no encontrada</h1>

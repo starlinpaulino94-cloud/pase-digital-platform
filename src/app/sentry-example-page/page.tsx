@@ -12,18 +12,18 @@ export default function DebugSentryPage() {
 
   function triggerClientError() {
     log('Triggering client error...')
-    throw new Error('PASE Debug: Client-side test error')
+    throw new Error('MembreGo Debug: Client-side test error')
   }
 
   function triggerSentryCapture() {
     log('Sending captureException to Sentry...')
-    const eventId = Sentry.captureException(new Error('PASE Debug: Manual captureException test'))
+    const eventId = Sentry.captureException(new Error('MembreGo Debug: Manual captureException test'))
     log(`Sent! Event ID: ${eventId}`)
   }
 
   function triggerSentryMessage() {
     log('Sending captureMessage to Sentry...')
-    const eventId = Sentry.captureMessage('PASE Debug: Test message from sentry-example-page')
+    const eventId = Sentry.captureMessage('MembreGo Debug: Test message from sentry-example-page')
     log(`Sent! Event ID: ${eventId}`)
   }
 
@@ -40,7 +40,7 @@ export default function DebugSentryPage() {
 
   async function triggerUnhandledRejection() {
     log('Triggering unhandled promise rejection...')
-    Promise.reject(new Error('PASE Debug: Unhandled promise rejection test'))
+    Promise.reject(new Error('MembreGo Debug: Unhandled promise rejection test'))
   }
 
   return (

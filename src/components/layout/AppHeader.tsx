@@ -60,7 +60,7 @@ export function AppHeader({
 
       {/* Breadcrumbs */}
       <div className="hidden min-w-0 items-center gap-1.5 text-sm md:flex">
-        <span className="text-slate-400">PASE</span>
+        <span className="text-slate-400">MembreGo</span>
         {current && (
           <>
             <ChevronRight className="h-3.5 w-3.5 text-slate-300" />

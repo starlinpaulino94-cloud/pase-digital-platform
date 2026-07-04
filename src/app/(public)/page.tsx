@@ -118,7 +118,7 @@ export default async function LandingPage() {
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500">
               <QrCode className="h-5 w-5 text-white" />
             </span>
-            PASE Digital
+            MembreGo
           </Link>
           <nav className="flex items-center gap-2">
             <Link href="/empresas">
@@ -157,7 +157,7 @@ export default async function LandingPage() {
             Membresías digitales exclusivas
           </Badge>
           <h1 className="mx-auto max-w-3xl text-4xl font-extrabold leading-tight tracking-tight md:text-6xl">
-            Tu Pase Digital abre la puerta a{' '}
+            Tu membresía abre la puerta a{' '}
             <span className="bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
               promociones privadas
             </span>
@@ -173,7 +173,7 @@ export default async function LandingPage() {
                 size="lg"
                 className="w-full bg-sky-500 hover:bg-sky-400 sm:w-auto"
               >
-                Quiero mi Pase Digital
+                Quiero mi membresía MembreGo
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
@@ -341,7 +341,7 @@ export default async function LandingPage() {
       </section>
 
       <footer className="border-t border-white/10 py-8 text-center text-sm text-slate-500">
-        © {new Date().getFullYear()} PASE Digital · Acceso exclusivo a
+        © {new Date().getFullYear()} MembreGo · Plataforma inteligente para membresías
         promociones privadas
       </footer>
     </main>

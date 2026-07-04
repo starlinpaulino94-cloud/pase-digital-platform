@@ -1,8 +1,8 @@
-# PASE Digital QR
+# MembreGo
 
-Sistema interno de membresías y pases digitales QR para negocios participantes.
+Plataforma inteligente para la gestión de membresías, planes, suscripciones, beneficios y clubes empresariales con validación mediante QR.
 
-Los clientes se registran, activan su **Pase Digital** y reciben un código QR único. Los empleados escanean ese QR en el establecimiento para validar y registrar el uso de la membresía.
+Los clientes se registran, activan su membresía y reciben un código QR único. Los empleados escanean ese QR en el establecimiento para validar y registrar el uso de la membresía.
 
 > **Nota:** Este es un sistema interno de gestión, no un producto SaaS público.
 
@@ -57,9 +57,9 @@ src/app/
 
 Cada route group tiene su propio `layout.tsx` que aplica el guard de rol correspondiente (`requireRole`) y renderiza la navegación (`AppNav`).
 
-### Middleware (`src/proxy.ts`)
+### Middleware (`middleware.ts`)
 
-Un middleware (exportado como `proxy`) protege todas las rutas:
+Un middleware protege todas las rutas:
 
 - Si no hay sesión → redirige a `/login?redirect=...`
 - Si el rol no está permitido para esa ruta → redirige al home del rol
@@ -105,7 +105,7 @@ Visit        → Registro de uso (visita al establecimiento)
 | `SUPERADMIN` | Acceso total: empresas, reportes globales, configuración |
 | `ADMIN_EMPRESA` | Su empresa: clientes, membresías, planes, empleados, reportes |
 | `EMPLEADO` | Escáner QR y registro de usos |
-| `CLIENTE` | Su Pase Digital, membresía, historial, perfil |
+| `CLIENTE` | Su membresía, historial, perfil, código QR |
 
 ---
 
@@ -120,8 +120,8 @@ Visit        → Registro de uso (visita al establecimiento)
 
 ```bash
 # 1. Clonar
-git clone https://github.com/starlinpaulino94-cloud/pase-digital-platform.git
-cd pase-digital-platform
+git clone https://github.com/starlinpaulino94-cloud/membrego-platform.git
+cd membrego-platform
 
 # 2. Instalar dependencias
 bun install
@@ -180,11 +180,11 @@ Disponibles tras ejecutar `bun run db:seed`:
 
 | Rol | Email | Contraseña |
 |-----|-------|------------|
-| Superadmin | `superadmin@pasedigital.com` | `admin123` |
-| Admin Carwash | `admin.cartown@pasedigital.com` | `admin123` |
-| Admin Restaurante | `admin.tonis@pasedigital.com` | `admin123` |
-| Empleado Carwash | `empleado.cartown@pasedigital.com` | `admin123` |
-| Cliente | `cliente@pasedigital.com` | `cliente123` |
+| Superadmin | `superadmin@membrego.com` | `admin123` |
+| Admin Carwash | `admin.cartown@membrego.com` | `admin123` |
+| Admin Restaurante | `admin.tonis@membrego.com` | `admin123` |
+| Empleado Carwash | `empleado.cartown@membrego.com` | `admin123` |
+| Cliente | `cliente@membrego.com` | `cliente123` |
 
 El seed crea los usuarios en **Supabase Auth** (con `app_metadata.role`) y en la tabla `users`, para que el login funcione de inmediato.
 
@@ -230,11 +230,11 @@ bun run db:seed            # Cargar datos iniciales + usuarios de prueba
 
 1. Entra a la landing → elige una empresa
 2. Presiona **Registrarme** → completa sus datos (+ vehículo si es carwash)
-3. Recibe su **Pase Digital QR**
+3. Recibe su código QR de membresía
 4. Visita el establecimiento y presenta el QR
 5. El empleado escanea → el sistema valida la membresía
 6. El empleado confirma el uso → se descuenta un lavado/consumo
-7. El cliente ve su historial y lavados restantes en su panel
+7. El cliente ve su historial y saldo restante en su panel
 
 ---
 
@@ -252,7 +252,7 @@ bun run db:seed            # Cargar datos iniciales + usuarios de prueba
 ## Estructura de carpetas
 
 ```
-pase-digital-platform/
+membrego-platform/
 ├── prisma/
 │   ├── schema.prisma         # 8 modelos + 2 enums
 │   └── seed.ts               # Datos iniciales + usuarios de prueba

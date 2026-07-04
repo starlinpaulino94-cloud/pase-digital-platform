@@ -1,4 +1,4 @@
-# PASE Digital Platform — Production Readiness Report
+# MembreGo Platform — Production Readiness Report
 
 **Date:** 2026-07-01  
 **Phase:** Enterprise Hardening, QA, and Production Preparation  
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The PASE Digital Platform has completed Phase 1-2 (UI/UX redesign and initial security audit) and is now in Phase 3 (Enterprise Hardening and Comprehensive QA). This document outlines the hardening measures implemented, mandatory QA flows, and requirements for production deployment.
+The MembreGo Platform has completed Phase 1-2 (UI/UX redesign and initial security audit) and is now in Phase 3 (Enterprise Hardening and Comprehensive QA). This document outlines the hardening measures implemented, mandatory QA flows, and requirements for production deployment.
 
 ### Current Status: ✅ HARDENING COMPLETE | ⏳ QA TESTING IN PROGRESS
 
@@ -125,7 +125,7 @@ Three critical user journeys must be validated end-to-end:
 
 ### 2.1 Flujo 1: Cliente Nuevo (New Client Full Lifecycle)
 
-**Scenario:** A new customer discovers PASE Digital, registers, selects a plan, uploads payment receipt, receives admin approval, gets QR code, makes a purchase, and receives notifications.
+**Scenario:** A new customer discovers MembreGo, registers, selects a plan, uploads payment receipt, receives admin approval, gets QR code, makes a purchase, and receives notifications.
 
 **Steps:**
 

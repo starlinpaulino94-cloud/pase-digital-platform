@@ -33,7 +33,7 @@ export default function GlobalError({
         }}>
           <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.5rem', fontWeight: 'bold' }}>
             <Sparkles style={{ width: 28, height: 28, color: '#38bdf8' }} />
-            PASE Digital
+            MembreGo
           </div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Algo salió mal</h1>
           <p style={{ marginTop: '0.5rem', maxWidth: '28rem', color: '#94a3b8' }}>

@@ -1,5 +1,5 @@
 -- ============================================================
--- FASE A — Migración PASE Digital (versión corregida)
+-- FASE A — Migración MembreGo (versión corregida)
 -- Ejecutar en Supabase SQL Editor
 -- ============================================================
 

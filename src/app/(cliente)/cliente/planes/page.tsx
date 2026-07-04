@@ -71,7 +71,7 @@ export default async function PlanesPage() {
               </p>
             </div>
             <Link href="/cliente/dashboard">
-              <Button variant="outline">Ver mi Pase</Button>
+              <Button variant="outline">Ver mi membresía</Button>
             </Link>
           </CardContent>
         </Card>

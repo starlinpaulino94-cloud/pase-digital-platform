@@ -121,8 +121,8 @@ export async function enviarCorreoPrueba(
 
   const result = await sendEmail({
     to: correo,
-    subject: 'Correo de prueba · PASE Digital',
-    html: `<p>Este es un correo de prueba enviado desde el módulo de Comunicación y Soporte de PASE Digital.</p>
+    subject: 'Correo de prueba · MembreGo',
+    html: `<p>Este es un correo de prueba enviado desde el módulo de Comunicación y Soporte de MembreGo.</p>
            <p>Si lo recibes, tu correo de soporte está configurado correctamente.</p>`,
   })
 

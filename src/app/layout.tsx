@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'PASE Digital',
+  title: 'MembreGo',
   description:
     'Membresías digitales para CARTOWN Wash & Detailing y Toni\'s Restaurante',
 }

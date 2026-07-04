@@ -21,7 +21,7 @@ export interface EmailResult {
 
 export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
   const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.EMAIL_FROM ?? 'PASE Digital <onboarding@resend.dev>'
+  const from = process.env.EMAIL_FROM ?? 'MembreGo <onboarding@resend.dev>'
 
   if (!payload.to || !/.+@.+\..+/.test(payload.to)) {
     return { sent: false, reason: 'destinatario inválido' }

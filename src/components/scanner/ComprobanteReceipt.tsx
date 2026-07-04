@@ -57,7 +57,7 @@ function InfoRow({ label, value, icon: Icon }: { label: string; value: string; i
 
 export function ComprobanteReceipt({ cliente, visitId, servicio, restantes, onDone }: Props) {
   const hasLogged = useRef(false)
-  const codigoOperacion = `PASE-${visitId.slice(-8).toUpperCase()}`
+  const codigoOperacion = `MBRGO-${visitId.slice(-8).toUpperCase()}`
   const now = new Date()
 
   useEffect(() => {

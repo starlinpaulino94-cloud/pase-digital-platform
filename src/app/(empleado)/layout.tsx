@@ -13,7 +13,7 @@ export default async function EmpleadoLayout({
   return (
     <AppShell
       role={user.metadata.role}
-      title="PASE Digital"
+      title="MembreGo"
       userEmail={user.email}
       notifCount={notifCount}
     >
