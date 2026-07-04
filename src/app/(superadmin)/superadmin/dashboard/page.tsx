@@ -13,14 +13,17 @@ export default async function SuperadminDashboard() {
 
   const companies = await prisma.company.findMany({
     orderBy: { name: 'asc' },
-    include: { _count: { select: { clientes: true, plans: true } } },
+    select: {
+      id: true, name: true, slug: true, type: true, isActive: true,
+      _count: { select: { clientes: true, plans: true } },
+    },
   })
 
   const perCompany = await Promise.all(
     companies.map(async (c) => {
       const [activas, pendientes] = await Promise.all([
-        prisma.membership.count({ where: { estado: 'ACTIVA', cliente: { companyId: c.id } } }),
-        prisma.membership.count({ where: { estado: 'PENDIENTE_PAGO', cliente: { companyId: c.id } } }),
+        prisma.membership.count({ where: { estado: 'ACTIVA', cliente: { companyId: c.id } } }).catch(() => 0),
+        prisma.membership.count({ where: { estado: 'PENDIENTE_PAGO', cliente: { companyId: c.id } } }).catch(() => 0),
       ])
       return { ...c, activas, pendientes }
     })
