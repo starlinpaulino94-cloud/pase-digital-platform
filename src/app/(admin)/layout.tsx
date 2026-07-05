@@ -10,7 +10,7 @@ export default async function AdminLayout({
   children: React.ReactNode
 }) {
   const user = await requireRole(ADMIN_ROLES)
-  const notifCount = await getUnreadCount()
+  const notifCount = await getUnreadCount().catch(() => 0)
   return (
     <AppShell
       // Resolvemos el menú por el rol real del usuario. Así un SUPERADMIN que

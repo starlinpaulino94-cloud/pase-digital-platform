@@ -28,14 +28,18 @@ export async function actualizarPerfil(
 
   if (!nombre) return { error: 'El nombre no puede estar vacío.' }
 
-  await prisma.cliente.update({
-    where: { id: user.metadata.clienteId! },
-    data: { nombre, telefono, ...(avatarUrl !== null ? { avatarUrl } : {}) },
-  })
-
-  revalidatePath('/cliente/perfil')
-  revalidatePath('/cliente/dashboard')
-  return { success: true }
+  try {
+    await prisma.cliente.update({
+      where: { id: user.metadata.clienteId! },
+      data: { nombre, telefono, ...(avatarUrl !== null ? { avatarUrl } : {}) },
+    })
+    revalidatePath('/cliente/perfil')
+    revalidatePath('/cliente/dashboard')
+    return { success: true }
+  } catch (e) {
+    console.error('[profile]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }
 
 export async function agregarVehiculo(
@@ -58,13 +62,17 @@ export async function agregarVehiculo(
     return { error: 'Año inválido.' }
   }
 
-  await prisma.vehiculo.create({
-    data: { clienteId: user.metadata.clienteId!, marca, modelo, anio, color, placa },
-  })
-
-  revalidatePath('/cliente/perfil')
-  revalidatePath('/cliente/dashboard')
-  return { success: true }
+  try {
+    await prisma.vehiculo.create({
+      data: { clienteId: user.metadata.clienteId!, marca, modelo, anio, color, placa },
+    })
+    revalidatePath('/cliente/perfil')
+    revalidatePath('/cliente/dashboard')
+    return { success: true }
+  } catch (e) {
+    console.error('[profile]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }
 
 export async function eliminarVehiculo(
@@ -77,15 +85,20 @@ export async function eliminarVehiculo(
   const vehiculoId = String(formData.get('vehiculoId') ?? '').trim()
   if (!vehiculoId) return { error: 'Vehículo no especificado.' }
 
-  const v = await prisma.vehiculo.findUnique({ where: { id: vehiculoId } })
-  if (!v || v.clienteId !== user.metadata.clienteId) return { error: 'No autorizado.' }
+  try {
+    const v = await prisma.vehiculo.findUnique({ where: { id: vehiculoId } })
+    if (!v || v.clienteId !== user.metadata.clienteId) return { error: 'No autorizado.' }
 
-  const visitas = await prisma.visit.count({ where: { vehiculoId } })
-  if (visitas > 0) return { error: 'No se puede eliminar: tiene visitas asociadas.' }
+    const visitas = await prisma.visit.count({ where: { vehiculoId } })
+    if (visitas > 0) return { error: 'No se puede eliminar: tiene visitas asociadas.' }
 
-  await prisma.vehiculo.delete({ where: { id: vehiculoId } })
+    await prisma.vehiculo.delete({ where: { id: vehiculoId } })
 
-  revalidatePath('/cliente/perfil')
-  revalidatePath('/cliente/dashboard')
-  return { success: true }
+    revalidatePath('/cliente/perfil')
+    revalidatePath('/cliente/dashboard')
+    return { success: true }
+  } catch (e) {
+    console.error('[profile]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }

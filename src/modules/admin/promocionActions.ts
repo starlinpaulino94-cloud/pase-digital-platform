@@ -41,22 +41,27 @@ export async function crearPromocion(
     return { error: 'Título y descripción son obligatorios.' }
   }
 
-  await prisma.promocion.create({
-    data: { companyId, titulo, descripcion, imagenUrl, vigenciaHasta },
-  })
+  try {
+    await prisma.promocion.create({
+      data: { companyId, titulo, descripcion, imagenUrl, vigenciaHasta },
+    })
 
-  await notificarClientesEmpresa(companyId, {
-    tipo: 'PROMOCION_NUEVA',
-    titulo: '¡Nueva promoción disponible!',
-    mensaje: titulo,
-    href: '/cliente/promociones',
-  })
+    await notificarClientesEmpresa(companyId, {
+      tipo: 'PROMOCION_NUEVA',
+      titulo: '¡Nueva promoción disponible!',
+      mensaje: titulo,
+      href: '/cliente/promociones',
+    })
 
-  revalidatePath('/admin/promociones')
-  revalidatePath('/superadmin/promociones')
-  revalidatePath('/cliente/promociones')
+    revalidatePath('/admin/promociones')
+    revalidatePath('/superadmin/promociones')
+    revalidatePath('/cliente/promociones')
 
-  return { success: true }
+    return { success: true }
+  } catch (e) {
+    console.error('[promocion]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }
 
 export async function actualizarPromocion(
@@ -78,24 +83,29 @@ export async function actualizarPromocion(
     return { error: 'Título y descripción son obligatorios.' }
   }
 
-  const promo = await prisma.promocion.findUnique({ where: { id } })
-  if (!promo) return { error: 'Promoción no encontrada.' }
-  if (
-    user.metadata.role !== 'SUPERADMIN' &&
-    promo.companyId !== user.metadata.companyId
-  ) {
-    return { error: 'No autorizado.' }
+  try {
+    const promo = await prisma.promocion.findUnique({ where: { id } })
+    if (!promo) return { error: 'Promoción no encontrada.' }
+    if (
+      user.metadata.role !== 'SUPERADMIN' &&
+      promo.companyId !== user.metadata.companyId
+    ) {
+      return { error: 'No autorizado.' }
+    }
+
+    await prisma.promocion.update({
+      where: { id },
+      data: { titulo, descripcion, imagenUrl, vigenciaHasta, activo },
+    })
+
+    revalidatePath('/admin/promociones')
+    revalidatePath('/superadmin/promociones')
+    revalidatePath('/cliente/promociones')
+    return { success: true }
+  } catch (e) {
+    console.error('[promocion]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
   }
-
-  await prisma.promocion.update({
-    where: { id },
-    data: { titulo, descripcion, imagenUrl, vigenciaHasta, activo },
-  })
-
-  revalidatePath('/admin/promociones')
-  revalidatePath('/superadmin/promociones')
-  revalidatePath('/cliente/promociones')
-  return { success: true }
 }
 
 export async function eliminarPromocion(
@@ -108,19 +118,24 @@ export async function eliminarPromocion(
   const id = String(formData.get('id') ?? '').trim()
   if (!id) return { error: 'ID requerido.' }
 
-  const promo = await prisma.promocion.findUnique({ where: { id } })
-  if (!promo) return { error: 'Promoción no encontrada.' }
-  if (
-    user.metadata.role !== 'SUPERADMIN' &&
-    promo.companyId !== user.metadata.companyId
-  ) {
-    return { error: 'No autorizado.' }
+  try {
+    const promo = await prisma.promocion.findUnique({ where: { id } })
+    if (!promo) return { error: 'Promoción no encontrada.' }
+    if (
+      user.metadata.role !== 'SUPERADMIN' &&
+      promo.companyId !== user.metadata.companyId
+    ) {
+      return { error: 'No autorizado.' }
+    }
+
+    await prisma.promocion.delete({ where: { id } })
+
+    revalidatePath('/admin/promociones')
+    revalidatePath('/superadmin/promociones')
+    revalidatePath('/cliente/promociones')
+    return { success: true }
+  } catch (e) {
+    console.error('[promocion]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
   }
-
-  await prisma.promocion.delete({ where: { id } })
-
-  revalidatePath('/admin/promociones')
-  revalidatePath('/superadmin/promociones')
-  revalidatePath('/cliente/promociones')
-  return { success: true }
 }

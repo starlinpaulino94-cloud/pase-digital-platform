@@ -28,20 +28,22 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session if needed - this will sync auth state across all routes
-  await supabase.auth.getUser()
+  try {
+    await Promise.race([
+      supabase.auth.getUser(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Auth timeout')), 5000)
+      ),
+    ])
+  } catch {
+    // Auth refresh failed or timed out — continue with existing session cookie
+  }
 
   return response
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|monitoring|api/|logo\\.svg|icon-.*\\.png|apple-touch-icon\\.png|manifest\\.json).*)',
   ],
 }

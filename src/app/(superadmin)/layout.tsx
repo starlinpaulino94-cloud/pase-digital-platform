@@ -9,7 +9,7 @@ export default async function SuperadminLayout({
   children: React.ReactNode
 }) {
   const user = await requireRole('SUPERADMIN')
-  const notifCount = await getUnreadCount()
+  const notifCount = await getUnreadCount().catch(() => 0)
   return (
     <AppShell
       role="SUPERADMIN"

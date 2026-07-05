@@ -45,19 +45,24 @@ export async function crearReglaRecompensa(
     return { error: 'El valor de la recompensa debe ser mayor a cero.' }
   }
 
-  await prisma.reglaRecompensa.create({
-    data: {
-      companyId,
-      nombre,
-      condicion: 'N_REFERIDOS_COMPLETADOS',
-      valorCondicion,
-      tipoRecompensa: tipoRecompensa as 'LAVADOS_GRATIS' | 'DESCUENTO_PORCENTAJE' | 'DESCUENTO_MONTO',
-      valorRecompensa,
-    },
-  })
+  try {
+    await prisma.reglaRecompensa.create({
+      data: {
+        companyId,
+        nombre,
+        condicion: 'N_REFERIDOS_COMPLETADOS',
+        valorCondicion,
+        tipoRecompensa: tipoRecompensa as 'LAVADOS_GRATIS' | 'DESCUENTO_PORCENTAJE' | 'DESCUENTO_MONTO',
+        valorRecompensa,
+      },
+    })
 
-  revalidatePath('/admin/referidos')
-  return { success: true }
+    revalidatePath('/admin/referidos')
+    return { success: true }
+  } catch (e) {
+    console.error('[recompensa]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }
 
 export async function actualizarReglaRecompensa(
@@ -72,19 +77,24 @@ export async function actualizarReglaRecompensa(
 
   if (!id) return { error: 'ID requerido.' }
 
-  const regla = await prisma.reglaRecompensa.findUnique({ where: { id } })
-  if (!regla) return { error: 'Regla no encontrada.' }
-  if (
-    user.metadata.role !== 'SUPERADMIN' &&
-    regla.companyId !== user.metadata.companyId
-  ) {
-    return { error: 'No autorizado.' }
+  try {
+    const regla = await prisma.reglaRecompensa.findUnique({ where: { id } })
+    if (!regla) return { error: 'Regla no encontrada.' }
+    if (
+      user.metadata.role !== 'SUPERADMIN' &&
+      regla.companyId !== user.metadata.companyId
+    ) {
+      return { error: 'No autorizado.' }
+    }
+
+    await prisma.reglaRecompensa.update({ where: { id }, data: { activo } })
+
+    revalidatePath('/admin/referidos')
+    return { success: true }
+  } catch (e) {
+    console.error('[recompensa]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
   }
-
-  await prisma.reglaRecompensa.update({ where: { id }, data: { activo } })
-
-  revalidatePath('/admin/referidos')
-  return { success: true }
 }
 
 export async function eliminarReglaRecompensa(
@@ -97,17 +107,22 @@ export async function eliminarReglaRecompensa(
   const id = String(formData.get('id') ?? '').trim()
   if (!id) return { error: 'ID requerido.' }
 
-  const regla = await prisma.reglaRecompensa.findUnique({ where: { id } })
-  if (!regla) return { error: 'Regla no encontrada.' }
-  if (
-    user.metadata.role !== 'SUPERADMIN' &&
-    regla.companyId !== user.metadata.companyId
-  ) {
-    return { error: 'No autorizado.' }
+  try {
+    const regla = await prisma.reglaRecompensa.findUnique({ where: { id } })
+    if (!regla) return { error: 'Regla no encontrada.' }
+    if (
+      user.metadata.role !== 'SUPERADMIN' &&
+      regla.companyId !== user.metadata.companyId
+    ) {
+      return { error: 'No autorizado.' }
+    }
+
+    await prisma.reglaRecompensa.delete({ where: { id } })
+
+    revalidatePath('/admin/referidos')
+    return { success: true }
+  } catch (e) {
+    console.error('[recompensa]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
   }
-
-  await prisma.reglaRecompensa.delete({ where: { id } })
-
-  revalidatePath('/admin/referidos')
-  return { success: true }
 }

@@ -49,11 +49,7 @@ Sentry.init({
 
   ignoreErrors: [
     'ResizeObserver loop',
-    'Network request failed',
-    'Load failed',
-    'Failed to fetch',
     'AbortError',
     'NotAllowedError',
-    'ChunkLoadError',
   ],
 })

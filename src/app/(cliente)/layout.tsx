@@ -10,8 +10,10 @@ export default async function ClienteLayout({
   children: React.ReactNode
 }) {
   const user = await requireRole('CLIENTE')
-  const notifCount = await getUnreadCount()
-  const clienteCompanies = await getClienteCompanies(user.supabaseId)
+  const [notifCount, clienteCompanies] = await Promise.all([
+    getUnreadCount().catch(() => 0),
+    getClienteCompanies(user.supabaseId).catch(() => []),
+  ])
   const companies = clienteCompanies.map((c) => ({
     companyId: c.companyId,
     name: c.company.name,

@@ -42,21 +42,26 @@ export async function crearPlan(
     .map((b) => b.trim())
     .filter(Boolean)
 
-  await prisma.plan.create({
-    data: {
-      companyId,
-      nombre,
-      precio,
-      lavadosIncluidos: esIlimitado ? 0 : lavados,
-      esIlimitado,
-      descripcion: descripcion || null,
-      beneficios,
-    },
-  })
+  try {
+    await prisma.plan.create({
+      data: {
+        companyId,
+        nombre,
+        precio,
+        lavadosIncluidos: esIlimitado ? 0 : lavados,
+        esIlimitado,
+        descripcion: descripcion || null,
+        beneficios,
+      },
+    })
 
-  revalidatePath('/superadmin/planes')
-  revalidatePath('/admin/planes')
-  return { success: true }
+    revalidatePath('/superadmin/planes')
+    revalidatePath('/admin/planes')
+    return { success: true }
+  } catch (e) {
+    console.error('[plan]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }
 
 export async function actualizarPlan(
@@ -87,22 +92,27 @@ export async function actualizarPlan(
     .map((b) => b.trim())
     .filter(Boolean)
 
-  await prisma.plan.update({
-    where: { id: planId },
-    data: {
-      nombre,
-      precio,
-      lavadosIncluidos: esIlimitado ? 0 : lavados,
-      esIlimitado,
-      descripcion: descripcion || null,
-      beneficios,
-      activo,
-    },
-  })
+  try {
+    await prisma.plan.update({
+      where: { id: planId },
+      data: {
+        nombre,
+        precio,
+        lavadosIncluidos: esIlimitado ? 0 : lavados,
+        esIlimitado,
+        descripcion: descripcion || null,
+        beneficios,
+        activo,
+      },
+    })
 
-  revalidatePath('/superadmin/planes')
-  revalidatePath('/admin/planes')
-  return { success: true }
+    revalidatePath('/superadmin/planes')
+    revalidatePath('/admin/planes')
+    return { success: true }
+  } catch (e) {
+    console.error('[plan]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }
 
 export async function eliminarPlan(
@@ -114,15 +124,20 @@ export async function eliminarPlan(
   const planId = String(formData.get('planId') ?? '').trim()
   if (!planId) return { error: 'Plan no especificado.' }
 
-  const count = await prisma.membership.count({ where: { planId } })
-  if (count > 0) {
-    return { error: `No se puede eliminar: hay ${count} membresía(s) asociadas.` }
-  }
+  try {
+    const count = await prisma.membership.count({ where: { planId } })
+    if (count > 0) {
+      return { error: `No se puede eliminar: hay ${count} membresía(s) asociadas.` }
+    }
 
-  await prisma.plan.delete({ where: { id: planId } })
-  revalidatePath('/superadmin/planes')
-  revalidatePath('/admin/planes')
-  return { success: true }
+    await prisma.plan.delete({ where: { id: planId } })
+    revalidatePath('/superadmin/planes')
+    revalidatePath('/admin/planes')
+    return { success: true }
+  } catch (e) {
+    console.error('[plan]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }
 
 export async function cancelarMembresia(
@@ -135,32 +150,37 @@ export async function cancelarMembresia(
   const membershipId = String(formData.get('membershipId') ?? '').trim()
   if (!membershipId) return { error: 'Membresía no especificada.' }
 
-  const m = await prisma.membership.findUnique({
-    where: { id: membershipId },
-    include: { cliente: true },
-  })
-  if (!m) return { error: 'Membresía no encontrada.' }
-
-  await prisma.$transaction(async (tx) => {
-    await tx.membership.update({
+  try {
+    const m = await prisma.membership.findUnique({
       where: { id: membershipId },
-      data: { estado: 'CANCELADA' },
+      include: { cliente: true },
     })
-    await tx.auditLog.create({
-      data: {
-        companyId: m.cliente.companyId,
-        userId: user.metadata.dbUserId ?? null,
-        accion: 'MEMBRESIA_CANCELADA',
-        entidadTipo: 'Membership',
-        entidadId: m.id,
-        payload: { prevEstado: m.estado },
-      },
-    })
-  })
+    if (!m) return { error: 'Membresía no encontrada.' }
 
-  revalidatePath('/superadmin/membresias')
-  revalidatePath('/admin/clientes')
-  return { success: true }
+    await prisma.$transaction(async (tx) => {
+      await tx.membership.update({
+        where: { id: membershipId },
+        data: { estado: 'CANCELADA' },
+      })
+      await tx.auditLog.create({
+        data: {
+          companyId: m.cliente.companyId,
+          userId: user.metadata.dbUserId ?? null,
+          accion: 'MEMBRESIA_CANCELADA',
+          entidadTipo: 'Membership',
+          entidadId: m.id,
+          payload: { prevEstado: m.estado },
+        },
+      })
+    })
+
+    revalidatePath('/superadmin/membresias')
+    revalidatePath('/admin/clientes')
+    return { success: true }
+  } catch (e) {
+    console.error('[plan]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }
 
 export async function desactivarMembresia(
@@ -173,31 +193,36 @@ export async function desactivarMembresia(
   const membershipId = String(formData.get('membershipId') ?? '').trim()
   if (!membershipId) return { error: 'Membresía no especificada.' }
 
-  const m = await prisma.membership.findUnique({
-    where: { id: membershipId },
-    include: { cliente: true },
-  })
-  if (!m) return { error: 'Membresía no encontrada.' }
-  if (m.estado !== 'ACTIVA') return { error: 'Solo se puede desactivar una membresía activa.' }
-
-  await prisma.$transaction(async (tx) => {
-    await tx.membership.update({
+  try {
+    const m = await prisma.membership.findUnique({
       where: { id: membershipId },
-      data: { estado: 'VENCIDA' },
+      include: { cliente: true },
     })
-    await tx.auditLog.create({
-      data: {
-        companyId: m.cliente.companyId,
-        userId: user.metadata.dbUserId ?? null,
-        accion: 'MEMBRESIA_CANCELADA',
-        entidadTipo: 'Membership',
-        entidadId: m.id,
-        payload: { prevEstado: 'ACTIVA', nuevaAccion: 'VENCIDA' },
-      },
-    })
-  })
+    if (!m) return { error: 'Membresía no encontrada.' }
+    if (m.estado !== 'ACTIVA') return { error: 'Solo se puede desactivar una membresía activa.' }
 
-  revalidatePath('/superadmin/membresias')
-  revalidatePath('/admin/clientes')
-  return { success: true }
+    await prisma.$transaction(async (tx) => {
+      await tx.membership.update({
+        where: { id: membershipId },
+        data: { estado: 'VENCIDA' },
+      })
+      await tx.auditLog.create({
+        data: {
+          companyId: m.cliente.companyId,
+          userId: user.metadata.dbUserId ?? null,
+          accion: 'MEMBRESIA_CANCELADA',
+          entidadTipo: 'Membership',
+          entidadId: m.id,
+          payload: { prevEstado: 'ACTIVA', nuevaAccion: 'VENCIDA' },
+        },
+      })
+    })
+
+    revalidatePath('/superadmin/membresias')
+    revalidatePath('/admin/clientes')
+    return { success: true }
+  } catch (e) {
+    console.error('[plan]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }

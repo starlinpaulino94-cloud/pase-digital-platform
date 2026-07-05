@@ -77,34 +77,39 @@ export async function guardarComunicacionConfig(
     return { error: 'El correo de soporte no tiene un formato válido.' }
   }
 
-  await prisma.whatsAppConfig.upsert({
-    where: { companyId },
-    create: {
-      companyId,
-      codigoPais,
-      numero,
-      mensajePlantilla: mensajePlantilla || undefined,
-      activo,
-      correoSoporte: correoSoporte || null,
-      horaInicio: horaInicio || null,
-      horaCierre: horaCierre || null,
-      diasLaborales: diasLaborales || null,
-    },
-    update: {
-      codigoPais,
-      numero,
-      mensajePlantilla: mensajePlantilla || undefined,
-      activo,
-      correoSoporte: correoSoporte || null,
-      horaInicio: horaInicio || null,
-      horaCierre: horaCierre || null,
-      diasLaborales: diasLaborales || null,
-    },
-  })
+  try {
+    await prisma.whatsAppConfig.upsert({
+      where: { companyId },
+      create: {
+        companyId,
+        codigoPais,
+        numero,
+        mensajePlantilla: mensajePlantilla || undefined,
+        activo,
+        correoSoporte: correoSoporte || null,
+        horaInicio: horaInicio || null,
+        horaCierre: horaCierre || null,
+        diasLaborales: diasLaborales || null,
+      },
+      update: {
+        codigoPais,
+        numero,
+        mensajePlantilla: mensajePlantilla || undefined,
+        activo,
+        correoSoporte: correoSoporte || null,
+        horaInicio: horaInicio || null,
+        horaCierre: horaCierre || null,
+        diasLaborales: diasLaborales || null,
+      },
+    })
 
-  revalidatePath('/admin/comunicacion')
-  revalidatePath('/cliente/ayuda')
-  return OK
+    revalidatePath('/admin/comunicacion')
+    revalidatePath('/cliente/ayuda')
+    return OK
+  } catch (e) {
+    console.error('[soporte]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }
 
 export async function enviarCorreoPrueba(
@@ -119,21 +124,26 @@ export async function enviarCorreoPrueba(
     return { error: 'Ingresa un correo de soporte válido antes de probar.' }
   }
 
-  const result = await sendEmail({
-    to: correo,
-    subject: 'Correo de prueba · MembeGo',
-    html: `<p>Este es un correo de prueba enviado desde el módulo de Comunicación y Soporte de MembeGo.</p>
-           <p>Si lo recibes, tu correo de soporte está configurado correctamente.</p>`,
-  })
+  try {
+    const result = await sendEmail({
+      to: correo,
+      subject: 'Correo de prueba · MembeGo',
+      html: `<p>Este es un correo de prueba enviado desde el módulo de Comunicación y Soporte de MembeGo.</p>
+             <p>Si lo recibes, tu correo de soporte está configurado correctamente.</p>`,
+    })
 
-  if (result.sent) {
-    return { success: true, message: `Correo de prueba enviado a ${correo}.` }
-  }
-  return {
-    error:
-      result.reason === 'RESEND_API_KEY no configurada'
-        ? 'No hay proveedor de correo configurado (RESEND_API_KEY). El correo de soporte se guardará, pero el envío automático está deshabilitado.'
-        : `No se pudo enviar el correo de prueba: ${result.reason ?? 'error'}.`,
+    if (result.sent) {
+      return { success: true, message: `Correo de prueba enviado a ${correo}.` }
+    }
+    return {
+      error:
+        result.reason === 'RESEND_API_KEY no configurada'
+          ? 'No hay proveedor de correo configurado (RESEND_API_KEY). El correo de soporte se guardará, pero el envío automático está deshabilitado.'
+          : `No se pudo enviar el correo de prueba: ${result.reason ?? 'error'}.`,
+    }
+  } catch (e) {
+    console.error('[soporte]', e)
+    return { error: 'Ocurrió un error al enviar el correo.' }
   }
 }
 
@@ -155,12 +165,17 @@ export async function crearFaq(
     return { error: 'La pregunta y la respuesta son obligatorias.' }
   }
 
-  await prisma.faqItem.create({
-    data: { companyId, pregunta, respuesta, orden },
-  })
-  revalidatePath('/admin/comunicacion')
-  revalidatePath('/cliente/ayuda')
-  return OK
+  try {
+    await prisma.faqItem.create({
+      data: { companyId, pregunta, respuesta, orden },
+    })
+    revalidatePath('/admin/comunicacion')
+    revalidatePath('/cliente/ayuda')
+    return OK
+  } catch (e) {
+    console.error('[soporte]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }
 
 export async function actualizarFaq(
@@ -175,47 +190,62 @@ export async function actualizarFaq(
   const orden = Number(formData.get('orden') ?? 0) || 0
   if (!id || !pregunta || !respuesta) return { error: 'Datos incompletos.' }
 
-  const faq = await prisma.faqItem.findUnique({ where: { id } })
-  if (!faq) return { error: 'Pregunta no encontrada.' }
-  if (user.metadata.role !== 'SUPERADMIN' && faq.companyId !== user.metadata.companyId) {
-    return { error: 'No autorizado.' }
-  }
+  try {
+    const faq = await prisma.faqItem.findUnique({ where: { id } })
+    if (!faq) return { error: 'Pregunta no encontrada.' }
+    if (user.metadata.role !== 'SUPERADMIN' && faq.companyId !== user.metadata.companyId) {
+      return { error: 'No autorizado.' }
+    }
 
-  await prisma.faqItem.update({
-    where: { id },
-    data: { pregunta, respuesta, orden },
-  })
-  revalidatePath('/admin/comunicacion')
-  revalidatePath('/cliente/ayuda')
-  return OK
+    await prisma.faqItem.update({
+      where: { id },
+      data: { pregunta, respuesta, orden },
+    })
+    revalidatePath('/admin/comunicacion')
+    revalidatePath('/cliente/ayuda')
+    return OK
+  } catch (e) {
+    console.error('[soporte]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }
 
 export async function eliminarFaq(id: string): Promise<ActionState> {
   const user = await requireAdmin()
   if (!user) return { error: 'No autorizado.' }
-  const faq = await prisma.faqItem.findUnique({ where: { id } })
-  if (!faq) return { error: 'Pregunta no encontrada.' }
-  if (user.metadata.role !== 'SUPERADMIN' && faq.companyId !== user.metadata.companyId) {
-    return { error: 'No autorizado.' }
+  try {
+    const faq = await prisma.faqItem.findUnique({ where: { id } })
+    if (!faq) return { error: 'Pregunta no encontrada.' }
+    if (user.metadata.role !== 'SUPERADMIN' && faq.companyId !== user.metadata.companyId) {
+      return { error: 'No autorizado.' }
+    }
+    await prisma.faqItem.delete({ where: { id } })
+    revalidatePath('/admin/comunicacion')
+    revalidatePath('/cliente/ayuda')
+    return OK
+  } catch (e) {
+    console.error('[soporte]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
   }
-  await prisma.faqItem.delete({ where: { id } })
-  revalidatePath('/admin/comunicacion')
-  revalidatePath('/cliente/ayuda')
-  return OK
 }
 
 export async function toggleFaq(id: string, activo: boolean): Promise<ActionState> {
   const user = await requireAdmin()
   if (!user) return { error: 'No autorizado.' }
-  const faq = await prisma.faqItem.findUnique({ where: { id } })
-  if (!faq) return { error: 'Pregunta no encontrada.' }
-  if (user.metadata.role !== 'SUPERADMIN' && faq.companyId !== user.metadata.companyId) {
-    return { error: 'No autorizado.' }
+  try {
+    const faq = await prisma.faqItem.findUnique({ where: { id } })
+    if (!faq) return { error: 'Pregunta no encontrada.' }
+    if (user.metadata.role !== 'SUPERADMIN' && faq.companyId !== user.metadata.companyId) {
+      return { error: 'No autorizado.' }
+    }
+    await prisma.faqItem.update({ where: { id }, data: { activo } })
+    revalidatePath('/admin/comunicacion')
+    revalidatePath('/cliente/ayuda')
+    return OK
+  } catch (e) {
+    console.error('[soporte]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
   }
-  await prisma.faqItem.update({ where: { id }, data: { activo } })
-  revalidatePath('/admin/comunicacion')
-  revalidatePath('/cliente/ayuda')
-  return OK
 }
 
 // ── SECCIÓN 6 (cliente): crear ticket ────────────────────────────────────────
@@ -245,54 +275,58 @@ export async function crearTicket(
     return { error: 'El asunto y la descripción son obligatorios.' }
   }
 
-  const cliente = await prisma.cliente.findUnique({
-    where: { id: clienteId },
-    select: { nombre: true },
-  })
+  try {
+    const cliente = await prisma.cliente.findUnique({
+      where: { id: clienteId },
+      select: { nombre: true },
+    })
 
-  const ticket = await prisma.supportTicket.create({
-    data: {
-      companyId,
-      clienteId,
-      asunto,
-      categoria: categoria as never,
-      adjuntoUrl: adjuntoUrl || null,
-      mensajes: {
-        create: {
-          autorTipo: 'CLIENTE',
-          autorNombre: cliente?.nombre ?? 'Cliente',
-          cuerpo: descripcion,
+    const ticket = await prisma.supportTicket.create({
+      data: {
+        companyId,
+        clienteId,
+        asunto,
+        categoria: categoria as never,
+        adjuntoUrl: adjuntoUrl || null,
+        mensajes: {
+          create: {
+            autorTipo: 'CLIENTE',
+            autorNombre: cliente?.nombre ?? 'Cliente',
+            cuerpo: descripcion,
+          },
         },
       },
-    },
-  })
-
-  // Notificar a los administradores de la empresa (interno + correo best-effort).
-  await notificarAdmins(companyId, {
-    tipo: 'TICKET_NUEVO',
-    titulo: 'Nuevo ticket de soporte',
-    mensaje: `${cliente?.nombre ?? 'Un cliente'}: ${asunto}`,
-    href: `/admin/tickets/${ticket.id}`,
-  })
-
-  const config = await prisma.whatsAppConfig.findUnique({
-    where: { companyId },
-    select: { correoSoporte: true },
-  })
-  if (config?.correoSoporte) {
-    await sendEmail({
-      to: config.correoSoporte,
-      subject: `Nuevo ticket: ${asunto}`,
-      html: `<p>Se recibió un nuevo ticket de soporte.</p>
-             <p><strong>Cliente:</strong> ${cliente?.nombre ?? 'Cliente'}<br/>
-             <strong>Asunto:</strong> ${asunto}<br/>
-             <strong>Descripción:</strong> ${descripcion}</p>`,
     })
-  }
 
-  revalidatePath('/cliente/ayuda')
-  revalidatePath('/admin/tickets')
-  return { success: true, message: 'Ticket enviado. Te avisaremos cuando haya respuesta.' }
+    await notificarAdmins(companyId, {
+      tipo: 'TICKET_NUEVO',
+      titulo: 'Nuevo ticket de soporte',
+      mensaje: `${cliente?.nombre ?? 'Un cliente'}: ${asunto}`,
+      href: `/admin/tickets/${ticket.id}`,
+    })
+
+    const config = await prisma.whatsAppConfig.findUnique({
+      where: { companyId },
+      select: { correoSoporte: true },
+    })
+    if (config?.correoSoporte) {
+      await sendEmail({
+        to: config.correoSoporte,
+        subject: `Nuevo ticket: ${asunto}`,
+        html: `<p>Se recibió un nuevo ticket de soporte.</p>
+               <p><strong>Cliente:</strong> ${cliente?.nombre ?? 'Cliente'}<br/>
+               <strong>Asunto:</strong> ${asunto}<br/>
+               <strong>Descripción:</strong> ${descripcion}</p>`,
+      }).catch(() => {})
+    }
+
+    revalidatePath('/cliente/ayuda')
+    revalidatePath('/admin/tickets')
+    return { success: true, message: 'Ticket enviado. Te avisaremos cuando haya respuesta.' }
+  } catch (e) {
+    console.error('[soporte]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }
 
 // ── SECCIÓN 7 (admin): gestión de tickets ────────────────────────────────────
@@ -321,45 +355,49 @@ export async function responderTicket(
   const nuevoEstado = String(formData.get('estado') ?? '').trim()
   if (!ticketId || !cuerpo) return { error: 'Escribe una respuesta.' }
 
-  const ticket = await loadTicketForAdmin(user, ticketId)
-  if (!ticket) return { error: 'Ticket no encontrado.' }
+  try {
+    const ticket = await loadTicketForAdmin(user, ticketId)
+    if (!ticket) return { error: 'Ticket no encontrado.' }
 
-  const estado =
-    nuevoEstado && (TICKET_ESTADOS as readonly string[]).includes(nuevoEstado)
-      ? nuevoEstado
-      : 'ESPERANDO_CLIENTE'
+    const estado =
+      nuevoEstado && (TICKET_ESTADOS as readonly string[]).includes(nuevoEstado)
+        ? nuevoEstado
+        : 'ESPERANDO_CLIENTE'
 
-  await prisma.$transaction([
-    prisma.ticketMensaje.create({
-      data: {
-        ticketId,
-        autorTipo: 'ADMIN',
-        autorNombre: user.email,
-        cuerpo,
-      },
-    }),
-    prisma.supportTicket.update({
-      where: { id: ticketId },
-      data: { estado: estado as never },
-    }),
-  ])
+    await prisma.$transaction([
+      prisma.ticketMensaje.create({
+        data: {
+          ticketId,
+          autorTipo: 'ADMIN',
+          autorNombre: user.email,
+          cuerpo,
+        },
+      }),
+      prisma.supportTicket.update({
+        where: { id: ticketId },
+        data: { estado: estado as never },
+      }),
+    ])
 
-  // Notificar al cliente (interno + correo).
-  const clienteUserId = await findUserIdBySupabase(ticket.cliente.supabaseId)
-  if (clienteUserId) {
-    await crearNotificacion({
-      userId: clienteUserId,
-      tipo: 'TICKET_RESPUESTA',
-      titulo: 'Respuesta a tu ticket',
-      mensaje: ticket.asunto,
-      href: `/cliente/ayuda/${ticketId}`,
-    })
+    const clienteUserId = await findUserIdBySupabase(ticket.cliente.supabaseId)
+    if (clienteUserId) {
+      await crearNotificacion({
+        userId: clienteUserId,
+        tipo: 'TICKET_RESPUESTA',
+        titulo: 'Respuesta a tu ticket',
+        mensaje: ticket.asunto,
+        href: `/cliente/ayuda/${ticketId}`,
+      })
+    }
+
+    revalidatePath(`/admin/tickets/${ticketId}`)
+    revalidatePath('/admin/tickets')
+    revalidatePath(`/cliente/ayuda/${ticketId}`)
+    return OK
+  } catch (e) {
+    console.error('[soporte]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
   }
-
-  revalidatePath(`/admin/tickets/${ticketId}`)
-  revalidatePath('/admin/tickets')
-  revalidatePath(`/cliente/ayuda/${ticketId}`)
-  return OK
 }
 
 export async function agregarNotaInterna(
@@ -373,20 +411,25 @@ export async function agregarNotaInterna(
   const cuerpo = String(formData.get('cuerpo') ?? '').trim()
   if (!ticketId || !cuerpo) return { error: 'Escribe la nota interna.' }
 
-  const ticket = await loadTicketForAdmin(user, ticketId)
-  if (!ticket) return { error: 'Ticket no encontrado.' }
+  try {
+    const ticket = await loadTicketForAdmin(user, ticketId)
+    if (!ticket) return { error: 'Ticket no encontrado.' }
 
-  await prisma.ticketMensaje.create({
-    data: {
-      ticketId,
-      autorTipo: 'ADMIN',
-      autorNombre: user.email,
-      cuerpo,
-      esNotaInterna: true,
-    },
-  })
-  revalidatePath(`/admin/tickets/${ticketId}`)
-  return OK
+    await prisma.ticketMensaje.create({
+      data: {
+        ticketId,
+        autorTipo: 'ADMIN',
+        autorNombre: user.email,
+        cuerpo,
+        esNotaInterna: true,
+      },
+    })
+    revalidatePath(`/admin/tickets/${ticketId}`)
+    return OK
+  } catch (e) {
+    console.error('[soporte]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }
 
 export async function cambiarEstadoTicket(
@@ -398,38 +441,43 @@ export async function cambiarEstadoTicket(
   if (!(TICKET_ESTADOS as readonly string[]).includes(estado)) {
     return { error: 'Estado inválido.' }
   }
-  const ticket = await loadTicketForAdmin(user, ticketId)
-  if (!ticket) return { error: 'Ticket no encontrado.' }
+  try {
+    const ticket = await loadTicketForAdmin(user, ticketId)
+    if (!ticket) return { error: 'Ticket no encontrado.' }
 
-  await prisma.$transaction([
-    prisma.supportTicket.update({
-      where: { id: ticketId },
-      data: { estado: estado as never },
-    }),
-    prisma.ticketMensaje.create({
-      data: {
-        ticketId,
-        autorTipo: 'SISTEMA',
-        autorNombre: 'Sistema',
-        cuerpo: `Estado cambiado a "${estadoLabel(estado)}".`,
-      },
-    }),
-  ])
+    await prisma.$transaction([
+      prisma.supportTicket.update({
+        where: { id: ticketId },
+        data: { estado: estado as never },
+      }),
+      prisma.ticketMensaje.create({
+        data: {
+          ticketId,
+          autorTipo: 'SISTEMA',
+          autorNombre: 'Sistema',
+          cuerpo: `Estado cambiado a "${estadoLabel(estado)}".`,
+        },
+      }),
+    ])
 
-  const clienteUserId = await findUserIdBySupabase(ticket.cliente.supabaseId)
-  if (clienteUserId) {
-    await crearNotificacion({
-      userId: clienteUserId,
-      tipo: 'TICKET_ACTUALIZADO',
-      titulo: 'Tu ticket cambió de estado',
-      mensaje: `${ticket.asunto} → ${estadoLabel(estado)}`,
-      href: `/cliente/ayuda/${ticketId}`,
-    })
+    const clienteUserId = await findUserIdBySupabase(ticket.cliente.supabaseId)
+    if (clienteUserId) {
+      await crearNotificacion({
+        userId: clienteUserId,
+        tipo: 'TICKET_ACTUALIZADO',
+        titulo: 'Tu ticket cambió de estado',
+        mensaje: `${ticket.asunto} → ${estadoLabel(estado)}`,
+        href: `/cliente/ayuda/${ticketId}`,
+      })
+    }
+
+    revalidatePath(`/admin/tickets/${ticketId}`)
+    revalidatePath('/admin/tickets')
+    return OK
+  } catch (e) {
+    console.error('[soporte]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
   }
-
-  revalidatePath(`/admin/tickets/${ticketId}`)
-  revalidatePath('/admin/tickets')
-  return OK
 }
 
 // ── Cliente responde a su propio ticket ──────────────────────────────────────
@@ -445,37 +493,42 @@ export async function responderTicketCliente(
   const cuerpo = String(formData.get('cuerpo') ?? '').trim()
   if (!ticketId || !cuerpo) return { error: 'Escribe tu mensaje.' }
 
-  const ticket = await prisma.supportTicket.findUnique({
-    where: { id: ticketId },
-    include: { cliente: { select: { id: true, nombre: true } } },
-  })
-  if (!ticket || ticket.clienteId !== user.metadata.clienteId) {
-    return { error: 'Ticket no encontrado.' }
-  }
-
-  await prisma.$transaction([
-    prisma.ticketMensaje.create({
-      data: {
-        ticketId,
-        autorTipo: 'CLIENTE',
-        autorNombre: ticket.cliente.nombre,
-        cuerpo,
-      },
-    }),
-    prisma.supportTicket.update({
+  try {
+    const ticket = await prisma.supportTicket.findUnique({
       where: { id: ticketId },
-      data: { estado: 'EN_PROCESO' },
-    }),
-  ])
+      include: { cliente: { select: { id: true, nombre: true } } },
+    })
+    if (!ticket || ticket.clienteId !== user.metadata.clienteId) {
+      return { error: 'Ticket no encontrado.' }
+    }
 
-  await notificarAdmins(ticket.companyId, {
-    tipo: 'TICKET_ACTUALIZADO',
-    titulo: 'Respuesta del cliente en un ticket',
-    mensaje: `${ticket.cliente.nombre}: ${ticket.asunto}`,
-    href: `/admin/tickets/${ticketId}`,
-  })
+    await prisma.$transaction([
+      prisma.ticketMensaje.create({
+        data: {
+          ticketId,
+          autorTipo: 'CLIENTE',
+          autorNombre: ticket.cliente.nombre,
+          cuerpo,
+        },
+      }),
+      prisma.supportTicket.update({
+        where: { id: ticketId },
+        data: { estado: 'EN_PROCESO' },
+      }),
+    ])
 
-  revalidatePath(`/cliente/ayuda/${ticketId}`)
-  revalidatePath(`/admin/tickets/${ticketId}`)
-  return OK
+    await notificarAdmins(ticket.companyId, {
+      tipo: 'TICKET_ACTUALIZADO',
+      titulo: 'Respuesta del cliente en un ticket',
+      mensaje: `${ticket.cliente.nombre}: ${ticket.asunto}`,
+      href: `/admin/tickets/${ticketId}`,
+    })
+
+    revalidatePath(`/cliente/ayuda/${ticketId}`)
+    revalidatePath(`/admin/tickets/${ticketId}`)
+    return OK
+  } catch (e) {
+    console.error('[soporte]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }

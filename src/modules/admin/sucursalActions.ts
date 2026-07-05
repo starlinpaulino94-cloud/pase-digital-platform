@@ -35,10 +35,14 @@ export async function crearSucursal(
 
   if (!nombre) return { error: 'El nombre es obligatorio.' }
 
-  await prisma.sucursal.create({ data: { companyId, nombre, direccion, telefono } })
-
-  revalidatePath('/admin/sucursales')
-  return { success: true }
+  try {
+    await prisma.sucursal.create({ data: { companyId, nombre, direccion, telefono } })
+    revalidatePath('/admin/sucursales')
+    return { success: true }
+  } catch (e) {
+    console.error('[sucursal]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }
 
 export async function actualizarSucursal(
@@ -56,16 +60,21 @@ export async function actualizarSucursal(
 
   if (!id || !nombre) return { error: 'ID y nombre son obligatorios.' }
 
-  const suc = await prisma.sucursal.findUnique({ where: { id } })
-  if (!suc) return { error: 'Sucursal no encontrada.' }
-  if (user.metadata.role !== 'SUPERADMIN' && suc.companyId !== user.metadata.companyId) {
-    return { error: 'No autorizado.' }
+  try {
+    const suc = await prisma.sucursal.findUnique({ where: { id } })
+    if (!suc) return { error: 'Sucursal no encontrada.' }
+    if (user.metadata.role !== 'SUPERADMIN' && suc.companyId !== user.metadata.companyId) {
+      return { error: 'No autorizado.' }
+    }
+
+    await prisma.sucursal.update({ where: { id }, data: { nombre, direccion, telefono, activa } })
+
+    revalidatePath('/admin/sucursales')
+    return { success: true }
+  } catch (e) {
+    console.error('[sucursal]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
   }
-
-  await prisma.sucursal.update({ where: { id }, data: { nombre, direccion, telefono, activa } })
-
-  revalidatePath('/admin/sucursales')
-  return { success: true }
 }
 
 export async function eliminarSucursal(
@@ -78,19 +87,24 @@ export async function eliminarSucursal(
   const id = String(formData.get('id') ?? '').trim()
   if (!id) return { error: 'ID requerido.' }
 
-  const suc = await prisma.sucursal.findUnique({ where: { id } })
-  if (!suc) return { error: 'Sucursal no encontrada.' }
-  if (user.metadata.role !== 'SUPERADMIN' && suc.companyId !== user.metadata.companyId) {
-    return { error: 'No autorizado.' }
-  }
+  try {
+    const suc = await prisma.sucursal.findUnique({ where: { id } })
+    if (!suc) return { error: 'Sucursal no encontrada.' }
+    if (user.metadata.role !== 'SUPERADMIN' && suc.companyId !== user.metadata.companyId) {
+      return { error: 'No autorizado.' }
+    }
 
-  const visitas = await prisma.visit.count({ where: { sucursalId: id } })
-  if (visitas > 0) {
-    await prisma.sucursal.update({ where: { id }, data: { activa: false } })
-  } else {
-    await prisma.sucursal.delete({ where: { id } })
-  }
+    const visitas = await prisma.visit.count({ where: { sucursalId: id } })
+    if (visitas > 0) {
+      await prisma.sucursal.update({ where: { id }, data: { activa: false } })
+    } else {
+      await prisma.sucursal.delete({ where: { id } })
+    }
 
-  revalidatePath('/admin/sucursales')
-  return { success: true }
+    revalidatePath('/admin/sucursales')
+    return { success: true }
+  } catch (e) {
+    console.error('[sucursal]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }

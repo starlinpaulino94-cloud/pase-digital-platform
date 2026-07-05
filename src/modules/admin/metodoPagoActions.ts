@@ -43,21 +43,26 @@ export async function crearMetodoPago(
     return { error: 'Tipo inválido.' }
   }
 
-  await prisma.metodoPago.create({
-    data: {
-      companyId,
-      tipo: tipo as 'TRANSFERENCIA' | 'PRESENCIAL',
-      nombre,
-      titular,
-      numeroCuenta,
-      tipoCuenta,
-      instrucciones,
-    },
-  })
+  try {
+    await prisma.metodoPago.create({
+      data: {
+        companyId,
+        tipo: tipo as 'TRANSFERENCIA' | 'PRESENCIAL',
+        nombre,
+        titular,
+        numeroCuenta,
+        tipoCuenta,
+        instrucciones,
+      },
+    })
 
-  revalidatePath('/admin/metodos-pago')
-  revalidatePath('/superadmin/metodos-pago')
-  return { success: true }
+    revalidatePath('/admin/metodos-pago')
+    revalidatePath('/superadmin/metodos-pago')
+    return { success: true }
+  } catch (e) {
+    console.error('[metodoPago]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }
 
 export async function actualizarMetodoPago(
@@ -86,14 +91,19 @@ export async function actualizarMetodoPago(
     return { error: 'No autorizado.' }
   }
 
-  await prisma.metodoPago.update({
-    where: { id },
-    data: { nombre, titular, numeroCuenta, tipoCuenta, instrucciones, activo },
-  })
+  try {
+    await prisma.metodoPago.update({
+      where: { id },
+      data: { nombre, titular, numeroCuenta, tipoCuenta, instrucciones, activo },
+    })
 
-  revalidatePath('/admin/metodos-pago')
-  revalidatePath('/superadmin/metodos-pago')
-  return { success: true }
+    revalidatePath('/admin/metodos-pago')
+    revalidatePath('/superadmin/metodos-pago')
+    return { success: true }
+  } catch (e) {
+    console.error('[metodoPago]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }
 
 export async function eliminarMetodoPago(
@@ -115,15 +125,19 @@ export async function eliminarMetodoPago(
     return { error: 'No autorizado.' }
   }
 
-  const count = await prisma.membership.count({ where: { metodoPagoId: id } })
-  if (count > 0) {
-    // Soft-delete: just deactivate
-    await prisma.metodoPago.update({ where: { id }, data: { activo: false } })
-  } else {
-    await prisma.metodoPago.delete({ where: { id } })
-  }
+  try {
+    const count = await prisma.membership.count({ where: { metodoPagoId: id } })
+    if (count > 0) {
+      await prisma.metodoPago.update({ where: { id }, data: { activo: false } })
+    } else {
+      await prisma.metodoPago.delete({ where: { id } })
+    }
 
-  revalidatePath('/admin/metodos-pago')
-  revalidatePath('/superadmin/metodos-pago')
-  return { success: true }
+    revalidatePath('/admin/metodos-pago')
+    revalidatePath('/superadmin/metodos-pago')
+    return { success: true }
+  } catch (e) {
+    console.error('[metodoPago]', e)
+    return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
 }
