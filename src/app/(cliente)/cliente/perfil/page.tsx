@@ -76,7 +76,7 @@ export default async function PerfilPage() {
           <CardContent className="space-y-5">
             {cliente.vehiculos.length > 0 && (
               <ul className="divide-y divide-border/60">
-                {cliente.vehiculos.map((v) => {
+                {cliente.vehiculos.map((v: any) => {
                   const label = `${v.marca} ${v.modelo} (${v.anio})${v.placa ? ` · ${v.placa}` : ''}`
                   return (
                     <li key={v.id} className="flex items-center justify-between py-3">

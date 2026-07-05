@@ -12,18 +12,20 @@ export const metadata = {
   title: 'Detalles de Membresía',
 }
 
-export default async function MembershipDetail({ params }: { params: { membresiaId: string } }) {
+export default async function MembershipDetail({ params }: { params: Promise<{ membresiaId: string }> }) {
+  const { membresiaId } = await params
   const user = await getUser()
   if (!user || user.metadata.role !== 'CLIENTE') {
     redirect('/auth/login')
   }
 
   const membership = await prisma.membership.findUnique({
-    where: { id: params.membresiaId },
+    where: { id: membresiaId },
     include: {
-      cliente: true,
+      cliente: {
+        include: { company: true },
+      },
       plan: true,
-      company: true,
     },
   })
 
@@ -32,7 +34,7 @@ export default async function MembershipDetail({ params }: { params: { membresia
   }
 
   // Verify ownership
-  if (membership.cliente.supabaseId !== user.metadata.supabaseId) {
+  if (membership.cliente.supabaseId !== user.supabaseId) {
     notFound()
   }
 
@@ -42,7 +44,7 @@ export default async function MembershipDetail({ params }: { params: { membresia
 
   // Load visits for this membership
   const visits = await prisma.visit.findMany({
-    where: { membresiaId: params.membresiaId },
+    where: { membershipId: membresiaId },
     include: { vehiculo: true },
     orderBy: { fechaVisita: 'desc' },
     take: 20,
@@ -50,7 +52,7 @@ export default async function MembershipDetail({ params }: { params: { membresia
 
   // Load active QR
   const qrToken = await prisma.qrToken.findFirst({
-    where: { membresiaId: params.membresiaId, activo: true },
+    where: { membresiaId: membresiaId, activo: true },
     orderBy: { createdAt: 'desc' },
   })
 
@@ -63,22 +65,22 @@ export default async function MembershipDetail({ params }: { params: { membresia
         </Link>
 
         <div className="flex items-start gap-4 mb-6">
-          {membership.company.logoUrl ? (
+          {membership.cliente.company.logoUrl ? (
             <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded">
               <Image
-                src={membership.company.logoUrl}
-                alt={membership.company.name}
+                src={membership.cliente.company.logoUrl}
+                alt={membership.cliente.company.name}
                 fill
                 className="object-cover"
               />
             </div>
           ) : (
             <div className="h-16 w-16 flex-shrink-0 rounded bg-muted flex items-center justify-center text-sm font-semibold">
-              {membership.company.name.slice(0, 2).toUpperCase()}
+              {membership.cliente.company.name.slice(0, 2).toUpperCase()}
             </div>
           )}
           <div>
-            <h1 className="text-3xl font-bold">{membership.company.name}</h1>
+            <h1 className="text-3xl font-bold">{membership.cliente.company.name}</h1>
             <p className="text-lg text-muted-foreground">{membership.plan.nombre}</p>
           </div>
         </div>

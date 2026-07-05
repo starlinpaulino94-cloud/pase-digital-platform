@@ -12,11 +12,11 @@ export const metadata = {
 
 export default async function MisMembresias() {
   const user = await getUser()
-  if (!user || !user.metadata.supabaseId) {
+  if (!user || !user.supabaseId) {
     redirect('/auth/login')
   }
 
-  const memberships = await getClienteAllMemberships(user.metadata.supabaseId)
+  const memberships = await getClienteAllMemberships(user.supabaseId)
 
   return (
     <main className="container max-w-4xl py-8">

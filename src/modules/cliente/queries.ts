@@ -59,7 +59,7 @@ export async function getClienteAllMemberships(supabaseId: string) {
     })
 }
 
-export async function getClienteFull(clienteId: string) {
+export async function getClienteFull(clienteId: string): Promise<any> {
   const cliente = await prisma.cliente.findUnique({
     where: { id: clienteId },
     select: {
@@ -103,7 +103,7 @@ export async function getClienteFull(clienteId: string) {
           fechaVisita: true,
           descontado: true,
           clienteId: true,
-          membresiaId: true,
+          membershipId: true,
           vehiculoId: true,
           vehiculo: true,
         },
