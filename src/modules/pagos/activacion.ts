@@ -37,10 +37,14 @@ export async function activarMembresia(
   const vigenciaDias = membership.plan.vigenciaDias ?? 30
 
   // esPrimera se calcula dentro de la transacción para evitar race condition
-  // con activaciones concurrentes del mismo cliente.
+  // con activaciones concurrentes del mismo cliente EN ESTA EMPRESA.
   const { esPrimera } = await prisma.$transaction(async (tx) => {
     const previasConfirmadas = await tx.membership.count({
-      where: { clienteId: membership.clienteId, pagoConfirmado: true },
+      where: {
+        clienteId: membership.clienteId,
+        companyId: membership.companyId,
+        pagoConfirmado: true,
+      },
     })
     const esPrimera = previasConfirmadas === 0
 
@@ -58,29 +62,33 @@ export async function activarMembresia(
       },
     })
 
-    const existingQr = await tx.qrToken.findFirst({
-      where: { clienteId: membership.clienteId, activo: true },
+    // Create QR for this specific membership
+    const newQr = await tx.qrToken.create({
+      data: {
+        clienteId: membership.clienteId,
+        membresiaId: membership.id,
+      },
     })
-    if (!existingQr) {
-      const newQr = await tx.qrToken.create({
-        data: { clienteId: membership.clienteId },
-      })
-      await tx.auditLog.create({
-        data: {
-          companyId: membership.cliente.companyId,
-          userId,
-          accion: 'QR_GENERADO',
-          entidadTipo: 'QrToken',
-          entidadId: newQr.id,
-          payload: { clienteId: membership.clienteId, motivo: 'activacion_membresia' },
-          ...meta,
-        },
-      })
-    }
 
     await tx.auditLog.create({
       data: {
-        companyId: membership.cliente.companyId,
+        companyId: membership.companyId,
+        userId,
+        accion: 'QR_GENERADO',
+        entidadTipo: 'QrToken',
+        entidadId: newQr.id,
+        payload: {
+          clienteId: membership.clienteId,
+          membresiaId: membership.id,
+          motivo: 'activacion_membresia',
+        },
+        ...meta,
+      },
+    })
+
+    await tx.auditLog.create({
+      data: {
+        companyId: membership.companyId,
         userId,
         accion: 'PAGO_APROBADO',
         entidadTipo: 'Membership',

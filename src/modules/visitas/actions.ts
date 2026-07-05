@@ -69,10 +69,12 @@ export async function buscarPorToken(token: string): Promise<LookupResult> {
           include: {
             company: true,
             vehiculos: true,
-            memberships: { include: { plan: true }, orderBy: { createdAt: 'desc' } },
             visits: { orderBy: { fechaVisita: 'desc' }, take: 5 },
             _count: { select: { visits: true } },
           },
+        },
+        membership: {
+          include: { plan: true },
         },
       },
     })
@@ -88,35 +90,30 @@ export async function buscarPorToken(token: string): Promise<LookupResult> {
     }
 
     const cliente = qr.cliente
+    const membership = qr.membership
 
+    // Validate scanner's company matches membership's company
     if (
       user.metadata.role !== 'SUPERADMIN' &&
       user.metadata.companyId &&
-      cliente.companyId !== user.metadata.companyId
+      membership.companyId !== user.metadata.companyId
     ) {
       await logScanInvalido(user.metadata.dbUserId, clean, 'WRONG_COMPANY')
       return { error: 'Este cliente pertenece a otra empresa.', errorCode: 'WRONG_COMPANY' }
     }
 
     const now = new Date()
-    const active = cliente.memberships.find(
-      (m) => m.estado === 'ACTIVA' && (!m.fechaVencimiento || m.fechaVencimiento > now)
-    )
-    const latest = cliente.memberships[0]
-    const m = active ?? latest
+    const m = membership
 
     const promocionesActivas = await prisma.promocion.count({
-      where: { companyId: cliente.companyId, activo: true, vigenciaDesde: { lte: now }, OR: [{ vigenciaHasta: null }, { vigenciaHasta: { gte: now } }] },
+      where: { companyId: membership.companyId, activo: true, vigenciaDesde: { lte: now }, OR: [{ vigenciaHasta: null }, { vigenciaHasta: { gte: now } }] },
     }).catch(() => 0)
 
     let puedeUsar = false
     let mensaje: string | undefined
     let errorCode: LookupResult['errorCode'] | undefined
 
-    if (!active && !latest) {
-      mensaje = 'El cliente no tiene ninguna membresía registrada.'
-      errorCode = 'NO_MEMBERSHIP'
-    } else if (!active && latest) {
+    if (m.estado !== 'ACTIVA') {
       const estadoMap: Record<string, string> = {
         PENDIENTE: 'La membresía está pendiente de activación.',
         PENDIENTE_PAGO: 'La membresía está esperando confirmación de pago.',
@@ -124,12 +121,12 @@ export async function buscarPorToken(token: string): Promise<LookupResult> {
         VENCIDA: 'La membresía ha vencido. El cliente debe renovar.',
         CANCELADA: 'La membresía fue cancelada.',
       }
-      mensaje = estadoMap[latest.estado] ?? 'La membresía no está activa.'
+      mensaje = estadoMap[m.estado] ?? 'La membresía no está activa.'
       errorCode = 'MEMBERSHIP_INACTIVE'
-    } else if (active && active.fechaVencimiento && active.fechaVencimiento <= now) {
+    } else if (m.fechaVencimiento && m.fechaVencimiento <= now) {
       mensaje = 'La membresía ha vencido.'
       errorCode = 'MEMBERSHIP_EXPIRED'
-    } else if (active && !active.plan.esIlimitado && active.lavadosRestantes <= 0) {
+    } else if (!m.plan.esIlimitado && m.lavadosRestantes <= 0) {
       mensaje = 'No quedan usos disponibles en este período.'
       errorCode = 'NO_USES_LEFT'
     } else {
@@ -137,16 +134,16 @@ export async function buscarPorToken(token: string): Promise<LookupResult> {
     }
 
     const alertas: string[] = []
-    if (active) {
-      if (active.fechaVencimiento) {
+    if (m.estado === 'ACTIVA') {
+      if (m.fechaVencimiento) {
         const daysLeft = Math.ceil(
-          (active.fechaVencimiento.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+          (m.fechaVencimiento.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
         )
         if (daysLeft <= 7 && daysLeft > 0) {
           alertas.push(`La membresía vence en ${daysLeft} día${daysLeft !== 1 ? 's' : ''}.`)
         }
       }
-      if (!active.plan.esIlimitado && active.lavadosRestantes === 1) {
+      if (!m.plan.esIlimitado && m.lavadosRestantes === 1) {
         alertas.push('Este es el último uso disponible.')
       }
     }
@@ -162,11 +159,11 @@ export async function buscarPorToken(token: string): Promise<LookupResult> {
         avatarUrl: cliente.avatarUrl ?? null,
         empresa: cliente.company.name,
         empresaType: cliente.company.type,
-        membershipId: active?.id ?? null,
+        membershipId: m.id,
         qrTokenId: qr.id,
-        planNombre: m?.plan.nombre ?? null,
-        planBeneficios: active?.plan.beneficios ?? m?.plan.beneficios ?? [],
-        estado: m?.estado ?? null,
+        planNombre: m.plan.nombre,
+        planBeneficios: m.plan.beneficios,
+        estado: m.estado,
         esIlimitado: active?.plan.esIlimitado ?? false,
         lavadosIncluidos: active?.plan.lavadosIncluidos ?? 0,
         lavadosRestantes: active?.lavadosRestantes ?? 0,
@@ -268,16 +265,16 @@ export async function confirmarVisita(
 
       let qrToken: { id: string } | null = null
       if (qrTokenId) {
-        // Verify qrToken belongs to the correct cliente and is still active
+        // Verify qrToken belongs to the correct membership and is still active
         const qrTokenData = await tx.qrToken.findUnique({
           where: { id: qrTokenId },
         })
-        if (!qrTokenData || qrTokenData.clienteId !== membership.clienteId) {
-          throw new TxError('Este código QR no es válido para este cliente.')
+        if (!qrTokenData || qrTokenData.membresiaId !== membership.id) {
+          throw new TxError('Este código QR no es válido para esta membresía.')
         }
 
         const invalidado = await tx.qrToken.updateMany({
-          where: { id: qrTokenId, activo: true, clienteId: membership.clienteId },
+          where: { id: qrTokenId, activo: true, membresiaId: membership.id },
           data: { activo: false },
         })
         if (invalidado.count === 0) {
@@ -313,7 +310,7 @@ export async function confirmarVisita(
 
       await tx.auditLog.create({
         data: {
-          companyId: membership.cliente.companyId,
+          companyId: membership.companyId,
           userId: user.metadata.dbUserId ?? null,
           accion: 'VISITA_CONFIRMADA',
           entidadTipo: 'Visit',
@@ -325,27 +322,30 @@ export async function confirmarVisita(
 
       if (qrToken) {
         const nuevoQr = await tx.qrToken.create({
-          data: { clienteId: membership.clienteId },
+          data: {
+            clienteId: membership.clienteId,
+            membresiaId: membership.id,
+          },
         })
         await tx.auditLog.create({
           data: {
-            companyId: membership.cliente.companyId,
+            companyId: membership.companyId,
             userId: user.metadata.dbUserId ?? null,
             accion: 'QR_USADO',
             entidadTipo: 'QrToken',
             entidadId: qrToken.id,
-            payload: { clienteId: membership.clienteId, visitId: visit.id },
+            payload: { clienteId: membership.clienteId, membresiaId: membership.id, visitId: visit.id },
             ...meta,
           },
         })
         await tx.auditLog.create({
           data: {
-            companyId: membership.cliente.companyId,
+            companyId: membership.companyId,
             userId: user.metadata.dbUserId ?? null,
             accion: 'QR_GENERADO',
             entidadTipo: 'QrToken',
             entidadId: nuevoQr.id,
-            payload: { clienteId: membership.clienteId, motivo: 'regeneracion_post_uso' },
+            payload: { clienteId: membership.clienteId, membresiaId: membership.id, motivo: 'regeneracion_post_uso' },
             ...meta,
           },
         })

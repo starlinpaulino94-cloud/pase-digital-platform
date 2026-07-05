@@ -16,64 +16,71 @@ export async function seleccionarPlan(
   formData: FormData
 ): Promise<SeleccionState> {
   try {
-  const user = await getUser()
-  if (!user || user.metadata.role !== 'CLIENTE' || !user.metadata.clienteId) {
-    return { error: 'No autorizado.' }
-  }
-
-  // Rate limit form submissions to prevent spam
-  const clientId = user.metadata.clienteId
-  if (!formSubmitLimiter(clientId)) {
-    return { error: 'Demasiados intentos. Intenta de nuevo en unos minutos.' }
-  }
-
-  const planId = String(formData.get('planId') ?? '')
-  if (!planId) return { error: 'Selecciona un plan.' }
-
-  const cliente = await prisma.cliente.findUnique({
-    where: { id: user.metadata.clienteId },
-    include: { memberships: true },
-  })
-  if (!cliente) return { error: 'Cliente no encontrado.' }
-
-  const plan = await prisma.plan.findUnique({ where: { id: planId } })
-  // Validate: plan must exist, belong to client's company, and be active
-  if (!plan || plan.companyId !== cliente.companyId || !plan.activo) {
-    return { error: 'Plan no válido para tu empresa.' }
-  }
-
-  // Block if there's already an active membership
-  const active = cliente.memberships.find((m) => m.estado === 'ACTIVA')
-  if (active) {
-    return {
-      error: 'Ya tienes una membresía activa. Espera a que venza para cambiar.',
+    const user = await getUser()
+    if (!user || user.metadata.role !== 'CLIENTE' || !user.metadata.clienteId) {
+      return { error: 'No autorizado.' }
     }
-  }
 
-  // Reuse a pending membership if present, otherwise create one
-  const pending = cliente.memberships.find((m) => m.estado === 'PENDIENTE')
+    // Rate limit form submissions to prevent spam
+    const clientId = user.metadata.clienteId
+    if (!formSubmitLimiter(clientId)) {
+      return { error: 'Demasiados intentos. Intenta de nuevo en unos minutos.' }
+    }
 
-  if (pending) {
-    await prisma.membership.update({
-      where: { id: pending.id },
-      data: { planId: plan.id, montoPagado: null, pagoConfirmado: false },
+    const planId = String(formData.get('planId') ?? '')
+    if (!planId) return { error: 'Selecciona un plan.' }
+
+    const cliente = await prisma.cliente.findUnique({
+      where: { id: user.metadata.clienteId },
     })
-  } else {
-    await prisma.membership.create({
-      data: {
-        clienteId: cliente.id,
-        planId: plan.id,
-        userId: user.metadata.dbUserId || null,
-        estado: 'PENDIENTE',
+    if (!cliente) return { error: 'Cliente no encontrado.' }
+
+    const plan = await prisma.plan.findUnique({ where: { id: planId } })
+    // Validate: plan must exist, belong to client's company, and be active
+    if (!plan || plan.companyId !== cliente.companyId || !plan.activo) {
+      return { error: 'Plan no válido para tu empresa.' }
+    }
+
+    // Block if there's already an active membership IN THIS COMPANY
+    const existing = await prisma.membership.findUnique({
+      where: {
+        clienteId_companyId: {
+          clienteId: cliente.id,
+          companyId: cliente.companyId,
+        },
       },
     })
-  }
 
-  revalidatePath('/cliente/membresia')
-  revalidatePath('/cliente/dashboard')
-  return { success: true }
+    if (existing?.estado === 'ACTIVA') {
+      return {
+        error: 'Ya tienes una membresía activa en esta empresa. Espera a que venza para cambiar.',
+      }
+    }
+
+    if (existing) {
+      // Reuse existing membership (PENDIENTE or PENDIENTE_PAGO)
+      await prisma.membership.update({
+        where: { id: existing.id },
+        data: { planId: plan.id, montoPagado: null, pagoConfirmado: false },
+      })
+    } else {
+      // Create new membership with companyId
+      await prisma.membership.create({
+        data: {
+          clienteId: cliente.id,
+          companyId: cliente.companyId,
+          planId: plan.id,
+          userId: user.metadata.dbUserId || null,
+          estado: 'PENDIENTE',
+        },
+      })
+    }
+
+    revalidatePath('/mis-membresias')
+    revalidatePath('/cliente/dashboard')
+    return { success: true }
   } catch (e) {
-    console.error('[membresia] unexpected error:', e)
+    console.error('[membresia] seleccionarPlan error:', e)
     return { error: 'Ocurrió un error inesperado. Intenta de nuevo.' }
   }
 }
