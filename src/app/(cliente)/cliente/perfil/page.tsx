@@ -12,13 +12,24 @@ export const dynamic = 'force-dynamic'
 
 export default async function PerfilPage() {
   const user = await requireRole('CLIENTE')
+  console.log('[cliente-perfil] User metadata:', {
+    supabaseId: user.supabaseId,
+    clienteId: user.metadata.clienteId,
+    companyId: user.metadata.companyId,
+  })
+
   let cliente = null
   try {
-    cliente = user.metadata.clienteId
-      ? await getClienteFull(user.metadata.clienteId)
-      : null
+    if (!user.metadata.clienteId) {
+      console.error('[cliente-perfil] Missing clienteId in metadata')
+      return <p className="text-muted-foreground">Cuenta no está completamente configurada. Por favor, contacta al soporte.</p>
+    }
+    cliente = await getClienteFull(user.metadata.clienteId)
   } catch (e) {
-    console.error('[cliente-perfil]', e)
+    console.error('[cliente-perfil] Error loading cliente:', {
+      clienteId: user.metadata.clienteId,
+      error: e instanceof Error ? e.message : String(e),
+    })
     return <p className="text-muted-foreground">No pudimos cargar tu información. Intenta de nuevo más tarde.</p>
   }
 
