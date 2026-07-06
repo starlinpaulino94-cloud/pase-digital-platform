@@ -29,6 +29,7 @@ export async function getCompaniesPublic(filters: MarketplaceFilters = {}): Prom
     const companies = await prisma.company.findMany({
       where: {
         isPublished: true,
+        isActive: true,
         ...(search && {
           OR: [
             { name: { contains: search, mode: 'insensitive' } },
@@ -129,6 +130,7 @@ export async function getCompanyPublic(companySlug: string): Promise<CompanyPubl
         averageRating: true,
         isFeatured: true,
         isPublished: true,
+        isActive: true,
         createdAt: true,
         categories: {
           select: {
@@ -140,7 +142,7 @@ export async function getCompanyPublic(companySlug: string): Promise<CompanyPubl
       },
     })
 
-    if (!company || !company.isPublished) return null
+    if (!company || !company.isPublished || !company.isActive) return null
 
     return {
       ...company,
@@ -171,17 +173,18 @@ export async function getPromotionsPublic(filters: PromotionFilters = {}): Promi
         vigenciaHasta: {
           gt: now,
         },
+        // El filtro por slug se fusiona dentro de company para no sobrescribir
+        // (y perder) las condiciones isPublished/isActive.
         company: {
           isPublished: true,
+          isActive: true,
+          ...(company && { slug: company }),
         },
         ...(search && {
           OR: [
             { titulo: { contains: search, mode: 'insensitive' } },
             { descripcion: { contains: search, mode: 'insensitive' } },
           ],
-        }),
-        ...(company && {
-          company: { slug: company },
         }),
         ...(type && { tipo: type }),
         ...(tag && {
@@ -243,6 +246,7 @@ export async function getFeaturedPromotions(limit: number = 6): Promise<Promotio
         },
         company: {
           isPublished: true,
+          isActive: true,
         },
       },
       select: {
@@ -314,6 +318,8 @@ export async function getPromotionDetail(promotionId: string): Promise<Promotion
             name: true,
             slug: true,
             logoUrl: true,
+            isPublished: true,
+            isActive: true,
           },
         },
         activo: true,
@@ -321,10 +327,13 @@ export async function getPromotionDetail(promotionId: string): Promise<Promotion
     })
 
     if (!promotion || !promotion.activo || !promotion.company) return null
+    if (!promotion.company.isPublished || !promotion.company.isActive) return null
     if (promotion.vigenciaHasta && promotion.vigenciaHasta < now) return null
 
     const { activo, ...rest } = promotion
-    return rest as PromotionPublic
+    // No exponer flags internos de la empresa en el payload público.
+    const { isPublished: _p, isActive: _a, ...company } = rest.company
+    return { ...rest, company } as PromotionPublic
   } catch (error) {
     console.error('[getPromotionDetail] Error:', error)
     return null
@@ -346,7 +355,7 @@ export async function getCategoriesPublic(): Promise<CategoryPublic[]> {
           select: {
             companies: {
               where: {
-                company: { isPublished: true },
+                company: { isPublished: true, isActive: true },
               },
             },
           },
