@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { SearchBar } from '@/components/public/SearchBar'
 import { PromotionGrid } from '@/components/public/PromotionGrid'
 import { getPromotionsPublic } from '@/modules/marketplace/queries'
@@ -47,16 +48,28 @@ export default async function PromotionsPage({
           <span className="text-sm text-neutral-600 flex items-center">
             Filtrar por tipo:
           </span>
+          <Link
+            href="/promociones"
+            className={`px-3 py-1 rounded-full text-sm transition-colors ${
+              !filters.type
+                ? 'bg-blue-500 text-white'
+                : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+            }`}
+          >
+            Todas
+          </Link>
           {['descuento', 'promocion', 'regalo', 'evento'].map((type) => (
-            <button
+            <Link
               key={type}
-              onClick={() => {
-                // TODO: Implement filter toggle
-              }}
-              className="px-3 py-1 rounded-full bg-neutral-100 text-neutral-700 hover:bg-neutral-200 text-sm transition-colors"
+              href={`/promociones?type=${type}`}
+              className={`px-3 py-1 rounded-full text-sm transition-colors capitalize ${
+                filters.type === type
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+              }`}
             >
               {type}
-            </button>
+            </Link>
           ))}
         </div>
       </section>
