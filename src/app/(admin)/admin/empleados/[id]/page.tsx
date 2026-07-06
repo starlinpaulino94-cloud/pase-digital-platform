@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ADMIN_ROLES } from '@/types'
 import { notFound } from 'next/navigation'
 import { requireRole } from '@/lib/auth/guards'
 import { companyFilter } from '@/modules/admin/queries'
@@ -17,7 +18,7 @@ export default async function EmpleadoDetailPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const user = await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  const user = await requireRole(ADMIN_ROLES)
   const { id } = await params
   const companyId = companyFilter(user)
 

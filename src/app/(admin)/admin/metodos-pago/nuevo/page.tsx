@@ -1,8 +1,9 @@
 import { requireRole } from '@/lib/auth/guards'
+import { ADMIN_ROLES } from '@/types'
 import { MetodoPagoForm } from '@/components/admin/MetodoPagoForm'
 
 export default async function NuevoMetodoPagoPage() {
-  await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  await requireRole(ADMIN_ROLES)
   return (
     <div className="space-y-6">
       <div>

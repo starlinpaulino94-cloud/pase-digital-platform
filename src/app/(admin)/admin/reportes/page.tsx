@@ -1,4 +1,5 @@
 import { requireRole } from '@/lib/auth/guards'
+import { ADMIN_ROLES } from '@/types'
 import { companyFilter, getReportesAdmin } from '@/modules/admin/queries'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -14,7 +15,7 @@ function fmtDate(d: Date | null) {
 }
 
 export default async function ReportesPage() {
-  const user = await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  const user = await requireRole(ADMIN_ROLES)
   const companyId = companyFilter(user)
 
   let data = {

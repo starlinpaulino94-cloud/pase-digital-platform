@@ -1,12 +1,13 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { ADMIN_ROLES } from '@/types'
 import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
 
 async function requireAdmin() {
   const user = await getUser()
-  if (!user || !['ADMIN_EMPRESA', 'SUPERADMIN'].includes(user.metadata.role)) return null
+  if (!user || !ADMIN_ROLES.includes(user.metadata.role)) return null
   return user
 }
 

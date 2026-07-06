@@ -1,4 +1,5 @@
 import { MessagesSquare } from 'lucide-react'
+import { ADMIN_ROLES } from '@/types'
 import { requireRole } from '@/lib/auth/guards'
 import {
   resolveCompanyContext,
@@ -19,7 +20,7 @@ export default async function ComunicacionPage({
 }: {
   searchParams: Promise<{ company?: string }>
 }) {
-  const user = await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  const user = await requireRole(ADMIN_ROLES)
   const sp = await searchParams
   const ctx = await resolveCompanyContext(user, sp.company)
 

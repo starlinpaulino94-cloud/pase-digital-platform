@@ -1,4 +1,5 @@
 import { requireRole } from '@/lib/auth/guards'
+import { ADMIN_ROLES } from '@/types'
 import { companyFilter } from '@/modules/admin/queries'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,7 +17,7 @@ const TIPO_LABEL: Record<string, string> = {
 }
 
 export default async function ReferidosPage() {
-  const user = await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  const user = await requireRole(ADMIN_ROLES)
   const companyId = companyFilter(user)
   const where = companyId ? { companyId } : {}
 

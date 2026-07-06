@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { ADMIN_ROLES } from '@/types'
 import Link from 'next/link'
 import { requireRole } from '@/lib/auth/guards'
 import { companyFilter } from '@/modules/admin/queries'
@@ -43,7 +44,7 @@ interface PendienteRow {
 }
 
 export default async function PagosPage() {
-  const user = await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  const user = await requireRole(ADMIN_ROLES)
   const companyId = companyFilter(user)
 
   let pendientes: PendienteRow[] = []

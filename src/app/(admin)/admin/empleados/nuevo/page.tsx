@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ADMIN_ROLES } from '@/types'
 import { requireRole } from '@/lib/auth/guards'
 import { NuevoEmpleadoForm } from '@/components/admin/EmpleadoForms'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -6,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 export const dynamic = 'force-dynamic'
 
 export default async function NuevoEmpleadoPage() {
-  await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  await requireRole(ADMIN_ROLES)
 
   return (
     <div className="mx-auto max-w-lg space-y-6">

@@ -1,4 +1,5 @@
 import { requireRole } from '@/lib/auth/guards'
+import { ADMIN_ROLES } from '@/types'
 import { companyFilter } from '@/modules/admin/queries'
 import { prisma } from '@/lib/prisma'
 import { ClientesTable, type ClienteRow } from '@/components/admin/ClientesTable'
@@ -6,7 +7,7 @@ import { ClientesTable, type ClienteRow } from '@/components/admin/ClientesTable
 export const dynamic = 'force-dynamic'
 
 export default async function ClientesPage() {
-  const user = await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  const user = await requireRole(ADMIN_ROLES)
   const companyId = companyFilter(user)
 
   let clientes: ClienteRow[] = []

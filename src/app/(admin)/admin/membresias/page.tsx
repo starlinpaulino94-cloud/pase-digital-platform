@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ADMIN_ROLES } from '@/types'
 import { requireRole } from '@/lib/auth/guards'
 import { companyFilter } from '@/modules/admin/queries'
 import { prisma } from '@/lib/prisma'
@@ -46,7 +47,7 @@ export default async function MembresiasPage({
 }: {
   searchParams: Promise<{ estado?: string }>
 }) {
-  const user = await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  const user = await requireRole(ADMIN_ROLES)
   const { estado } = await searchParams
   const companyId = companyFilter(user)
 

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ADMIN_ROLES } from '@/types'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
@@ -21,7 +22,7 @@ export default async function TicketDetailPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const user = await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  const user = await requireRole(ADMIN_ROLES)
   const { id } = await params
 
   const ticket = await getTicketDetail(id, true)

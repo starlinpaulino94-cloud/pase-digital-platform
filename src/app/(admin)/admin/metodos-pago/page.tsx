@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ADMIN_ROLES } from '@/types'
 import { requireRole } from '@/lib/auth/guards'
 import { companyFilter } from '@/modules/admin/queries'
 import { prisma } from '@/lib/prisma'
@@ -11,7 +12,7 @@ import { CreditCard, Building2, Plus, Pencil } from 'lucide-react'
 export const dynamic = 'force-dynamic'
 
 export default async function MetodosPagoPage() {
-  const user = await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  const user = await requireRole(ADMIN_ROLES)
   const companyId = companyFilter(user)
 
   let metodos: {

@@ -1,4 +1,5 @@
 import { Ticket, Inbox, Loader, CheckCircle2 } from 'lucide-react'
+import { ADMIN_ROLES } from '@/types'
 import { requireRole } from '@/lib/auth/guards'
 import { resolveCompanyContext, listTicketsAdmin, ticketStats } from '@/modules/soporte/queries'
 import { PageHeader } from '@/components/ui/page-header'
@@ -17,7 +18,7 @@ export default async function TicketsPage({
 }: {
   searchParams: Promise<{ company?: string }>
 }) {
-  const user = await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  const user = await requireRole(ADMIN_ROLES)
   const sp = await searchParams
   const ctx = await resolveCompanyContext(user, sp.company)
 

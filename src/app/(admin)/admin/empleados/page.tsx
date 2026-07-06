@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ADMIN_ROLES } from '@/types'
 import { Plus } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
 import { companyFilter } from '@/modules/admin/queries'
@@ -9,7 +10,7 @@ import { EmpleadosTable, type EmpleadoRow } from '@/components/admin/EmpleadosTa
 export const dynamic = 'force-dynamic'
 
 export default async function EmpleadosPage() {
-  const user = await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  const user = await requireRole(ADMIN_ROLES)
   const companyId = companyFilter(user)
 
   let empleados: EmpleadoRow[] = []

@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { ADMIN_ROLES } from '@/types'
 import { requireRole } from '@/lib/auth/guards'
 import { companyFilter } from '@/modules/admin/queries'
 import { prisma } from '@/lib/prisma'
@@ -9,7 +10,7 @@ export default async function EditarMetodoPagoPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const user = await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  const user = await requireRole(ADMIN_ROLES)
   const { id } = await params
 
   const method = await prisma.metodoPago.findUnique({ where: { id } })

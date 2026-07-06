@@ -1,8 +1,9 @@
 import { requireRole } from '@/lib/auth/guards'
+import { ADMIN_ROLES } from '@/types'
 import { SucursalForm } from '@/components/admin/SucursalForm'
 
 export default async function NuevaSucursalPage() {
-  await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  await requireRole(ADMIN_ROLES)
   return (
     <div className="space-y-6">
       <div>

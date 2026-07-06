@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ADMIN_ROLES } from '@/types'
 import {
   Users,
   CheckCircle2,
@@ -17,7 +18,7 @@ import { Button } from '@/components/ui/button'
 export const dynamic = 'force-dynamic'
 
 export default async function AdminDashboard() {
-  const user = await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  const user = await requireRole(ADMIN_ROLES)
 
   let metrics = { totalClientes: 0, activas: 0, pendientes: 0, visitasHoy: 0 }
   let company = null

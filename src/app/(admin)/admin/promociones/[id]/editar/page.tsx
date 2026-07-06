@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { ADMIN_ROLES } from '@/types'
 import { requireRole } from '@/lib/auth/guards'
 import { prisma } from '@/lib/prisma'
 import { PromocionForm } from '@/components/admin/PromocionForm'
@@ -8,7 +9,7 @@ export default async function EditarPromocionPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const user = await requireRole(['ADMIN_EMPRESA', 'SUPERADMIN'])
+  const user = await requireRole(ADMIN_ROLES)
   const { id } = await params
 
   const promo = await prisma.promocion.findUnique({ where: { id } })
