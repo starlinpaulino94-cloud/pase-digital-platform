@@ -16,7 +16,12 @@ export default async function MisMembresias() {
     redirect('/auth/login')
   }
 
-  const memberships = await getClienteAllMemberships(user.supabaseId)
+  let memberships: Awaited<ReturnType<typeof getClienteAllMemberships>> = []
+  try {
+    memberships = await getClienteAllMemberships(user.supabaseId)
+  } catch (error) {
+    console.error('[mis-membresias] Error loading memberships:', error)
+  }
 
   return (
     <main className="container max-w-4xl py-8">

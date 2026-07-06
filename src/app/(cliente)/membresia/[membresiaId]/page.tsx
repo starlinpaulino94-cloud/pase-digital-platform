@@ -19,15 +19,21 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
     redirect('/auth/login')
   }
 
-  const membership = await prisma.membership.findUnique({
-    where: { id: membresiaId },
-    include: {
-      cliente: {
-        include: { company: true },
+  let membership = null
+  try {
+    membership = await prisma.membership.findUnique({
+      where: { id: membresiaId },
+      include: {
+        cliente: {
+          include: { company: true },
+        },
+        plan: true,
       },
-      plan: true,
-    },
-  })
+    })
+  } catch (error) {
+    console.error('[membresia-detail] Error loading membership:', error)
+    notFound()
+  }
 
   if (!membership) {
     notFound()

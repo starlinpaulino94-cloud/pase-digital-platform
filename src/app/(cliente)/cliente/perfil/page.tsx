@@ -25,9 +25,14 @@ export default async function PerfilPage() {
   if (!cliente) return <p className="text-muted-foreground">No se encontró tu información.</p>
 
   const isCarwash = cliente.company.type === 'carwash'
-  const whatsapp = await prisma.whatsAppConfig.findUnique({
-    where: { companyId: cliente.companyId },
-  })
+  let whatsapp = null
+  try {
+    whatsapp = await prisma.whatsAppConfig.findUnique({
+      where: { companyId: cliente.companyId },
+    })
+  } catch (error) {
+    console.error('[cliente-perfil] Error loading whatsapp config:', error)
+  }
 
   return (
     <div className="space-y-6 animate-fade-up">

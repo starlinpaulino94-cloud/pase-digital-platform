@@ -5,113 +5,132 @@ import { prisma } from '@/lib/prisma'
  * Used for the new "Mis Membresías" dashboard.
  */
 export async function getClienteAllMemberships(supabaseId: string) {
-  const clientes = await prisma.cliente.findMany({
-    where: { supabaseId },
-    include: {
-      memberships: {
-        include: {
-          plan: true,
-          company: { select: { id: true, name: true, logoUrl: true, type: true } },
-          qrTokens: {
-            where: { activo: true },
-            take: 1,
-            select: { id: true, token: true },
-          },
-        },
-        orderBy: [{ estado: 'asc' }, { fechaVencimiento: 'desc' }],
-      },
-    },
-  })
+  if (!supabaseId) {
+    console.warn('[getClienteAllMemberships] Missing supabaseId')
+    return []
+  }
 
-  return clientes
-    .flatMap((c) =>
-      c.memberships.map((m) => ({
-        id: m.id,
-        clienteId: c.id,
-        companyId: m.companyId,
-        company: m.company,
-        plan: m.plan,
-        estado: m.estado,
-        fechaVencimiento: m.fechaVencimiento,
-        fechaInicio: m.fechaInicio,
-        lavadosRestantes: m.lavadosRestantes,
-        qrToken: m.qrTokens[0] || null,
-      }))
-    )
-    .sort((a, b) => {
-      // ACTIVA first, then PENDIENTE_PAGO, then others
-      const orden = {
-        ACTIVA: 0,
-        PENDIENTE_PAGO: 1,
-        PENDIENTE: 2,
-        VENCIDA: 3,
-        CANCELADA: 4,
-        RECHAZADA: 5,
-      }
-      const aOrd = orden[a.estado as keyof typeof orden] ?? 99
-      const bOrd = orden[b.estado as keyof typeof orden] ?? 99
-      if (aOrd !== bOrd) return aOrd - bOrd
-      // Then by expiration (closest first)
-      if (a.fechaVencimiento && b.fechaVencimiento) {
-        return a.fechaVencimiento.getTime() - b.fechaVencimiento.getTime()
-      }
-      return 0
+  try {
+    const clientes = await prisma.cliente.findMany({
+      where: { supabaseId },
+      include: {
+        memberships: {
+          include: {
+            plan: true,
+            company: { select: { id: true, name: true, logoUrl: true, type: true } },
+            qrTokens: {
+              where: { activo: true },
+              take: 1,
+              select: { id: true, token: true },
+            },
+          },
+          orderBy: [{ estado: 'asc' }, { fechaVencimiento: 'desc' }],
+        },
+      },
     })
+
+    return clientes
+      .flatMap((c) =>
+        c.memberships.map((m) => ({
+          id: m.id,
+          clienteId: c.id,
+          companyId: m.companyId,
+          company: m.company,
+          plan: m.plan,
+          estado: m.estado,
+          fechaVencimiento: m.fechaVencimiento,
+          fechaInicio: m.fechaInicio,
+          lavadosRestantes: m.lavadosRestantes,
+          qrToken: m.qrTokens[0] || null,
+        }))
+      )
+      .sort((a, b) => {
+        const orden = {
+          ACTIVA: 0,
+          PENDIENTE_PAGO: 1,
+          PENDIENTE: 2,
+          VENCIDA: 3,
+          CANCELADA: 4,
+          RECHAZADA: 5,
+        }
+        const aOrd = orden[a.estado as keyof typeof orden] ?? 99
+        const bOrd = orden[b.estado as keyof typeof orden] ?? 99
+        if (aOrd !== bOrd) return aOrd - bOrd
+        if (a.fechaVencimiento && b.fechaVencimiento) {
+          return a.fechaVencimiento.getTime() - b.fechaVencimiento.getTime()
+        }
+        return 0
+      })
+  } catch (error) {
+    console.error('[getClienteAllMemberships] Error:', error)
+    throw error
+  }
 }
 
 export async function getClienteFull(clienteId: string): Promise<any> {
-  const cliente = await prisma.cliente.findUnique({
-    where: { id: clienteId },
-    select: {
-      id: true,
-      nombre: true,
-      email: true,
-      telefono: true,
-      companyId: true,
-      createdAt: true,
-      supabaseId: true,
-      company: {
-        select: { id: true, name: true, slug: true, type: true, description: true, logoUrl: true, isActive: true },
-      },
-      vehiculos: true,
-      memberships: {
-        select: {
-          id: true,
-          companyId: true,
-          estado: true,
-          lavadosRestantes: true,
-          fechaInicio: true,
-          fechaVencimiento: true,
-          createdAt: true,
-          clienteId: true,
-          planId: true,
-          plan: {
-            select: { id: true, nombre: true, precio: true, lavadosIncluidos: true, esIlimitado: true, beneficios: true, descripcion: true },
-          },
-          qrTokens: {
-            where: { activo: true },
-            take: 1,
-            select: { id: true, token: true, activo: true, createdAt: true },
-          },
+  if (!clienteId) {
+    console.warn('[getClienteFull] Missing clienteId')
+    return null
+  }
+
+  let cliente
+  try {
+    cliente = await prisma.cliente.findUnique({
+      where: { id: clienteId },
+      select: {
+        id: true,
+        nombre: true,
+        email: true,
+        telefono: true,
+        companyId: true,
+        createdAt: true,
+        supabaseId: true,
+        company: {
+          select: { id: true, name: true, slug: true, type: true, description: true, logoUrl: true, isActive: true },
         },
-        orderBy: { createdAt: 'desc' },
-      },
-      visits: {
-        select: {
-          id: true,
-          servicio: true,
-          fechaVisita: true,
-          descontado: true,
-          clienteId: true,
-          membershipId: true,
-          vehiculoId: true,
-          vehiculo: true,
+        vehiculos: true,
+        memberships: {
+          select: {
+            id: true,
+            companyId: true,
+            estado: true,
+            lavadosRestantes: true,
+            fechaInicio: true,
+            fechaVencimiento: true,
+            createdAt: true,
+            clienteId: true,
+            planId: true,
+            plan: {
+              select: { id: true, nombre: true, precio: true, lavadosIncluidos: true, esIlimitado: true, beneficios: true, descripcion: true },
+            },
+            qrTokens: {
+              where: { activo: true },
+              take: 1,
+              select: { id: true, token: true, activo: true, createdAt: true },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
         },
-        orderBy: { fechaVisita: 'desc' },
-        take: 10,
+        visits: {
+          select: {
+            id: true,
+            servicio: true,
+            fechaVisita: true,
+            descontado: true,
+            clienteId: true,
+            membershipId: true,
+            vehiculoId: true,
+            vehiculo: true,
+          },
+          orderBy: { fechaVisita: 'desc' },
+          take: 10,
+        },
       },
-    },
-  })
+    })
+  } catch (error) {
+    console.error('[getClienteFull] Error loading cliente:', error)
+    throw error
+  }
 
   if (!cliente) return null
 
