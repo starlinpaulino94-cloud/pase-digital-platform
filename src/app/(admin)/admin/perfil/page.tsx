@@ -35,11 +35,29 @@ export default async function PerfilEmpresaPage() {
     )
   }
 
-  const [company, categories, selectedCategoryIds] = await Promise.all([
-    prisma.company.findUnique({ where: { id: companyId } }),
-    getActiveCategories(),
-    getCompanyCategoryIds(companyId),
-  ])
+  let company: Awaited<ReturnType<typeof prisma.company.findUnique>> = null
+  let categories: Awaited<ReturnType<typeof getActiveCategories>> = []
+  let selectedCategoryIds: string[] = []
+  try {
+    ;[company, categories, selectedCategoryIds] = await Promise.all([
+      prisma.company.findUnique({ where: { id: companyId } }),
+      getActiveCategories(),
+      getCompanyCategoryIds(companyId),
+    ])
+  } catch (e) {
+    console.error('[admin-perfil]', e)
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-slate-900">Perfil público</h1>
+        <Card>
+          <CardContent className="py-12 text-center text-slate-500">
+            <AlertCircle className="mx-auto mb-3 h-8 w-8 text-destructive" />
+            No pudimos cargar tu perfil en este momento. Intenta de nuevo.
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   if (!company) {
     return (
