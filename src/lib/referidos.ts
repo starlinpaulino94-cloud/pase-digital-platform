@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { prisma } from '@/lib/prisma'
 import type { ReferralEventTipo } from '@prisma/client'
 
@@ -14,6 +15,27 @@ export const PUNTOS: Record<ReferralEventTipo, number> = {
   CLICK: 5,
   REGISTRO: 20,
   MEMBRESIA: 200,
+  // Centro global MembeGo: referidos que se unen a OTRA empresa de la plataforma.
+  REGISTRO_GLOBAL: 20,
+  MEMBRESIA_GLOBAL: 100,
+}
+
+/** Tipos que cuentan para el programa de la EMPRESA (stats/ranking/nivel). */
+export const TIPOS_EMPRESA: ReferralEventTipo[] = ['SHARE', 'CLICK', 'REGISTRO', 'MEMBRESIA']
+/** Tipos del programa global MembeGo. */
+export const TIPOS_GLOBAL: ReferralEventTipo[] = ['REGISTRO_GLOBAL', 'MEMBRESIA_GLOBAL']
+
+/** Cookie de atribución del Centro global MembeGo. */
+export const REF_COOKIE = 'mg_ref'
+export const REF_COOKIE_DIAS = 30
+
+/**
+ * Huella anónima de IP para anti-fraude: hash truncado, nunca se guarda la IP
+ * en claro. Suficiente para detectar registros repetidos desde la misma red.
+ */
+export function hashIp(ip: string | null | undefined): string | null {
+  if (!ip) return null
+  return createHash('sha256').update(`membego:${ip}`).digest('hex').slice(0, 16)
 }
 
 export interface NivelEmbajador {
@@ -129,6 +151,8 @@ export async function logReferralEvent(params: {
   tipo: ReferralEventTipo
   canal?: string | null
   meta?: Record<string, unknown>
+  /** Override de puntos (p. ej. 0 para eventos marcados como sospechosos). */
+  puntos?: number
 }): Promise<void> {
   try {
     await prisma.referralEvent.create({
@@ -136,7 +160,7 @@ export async function logReferralEvent(params: {
         clienteId: params.clienteId,
         companyId: params.companyId,
         tipo: params.tipo,
-        puntos: PUNTOS[params.tipo],
+        puntos: params.puntos ?? PUNTOS[params.tipo],
         canal: params.canal ?? null,
         meta: (params.meta ?? {}) as object,
       },

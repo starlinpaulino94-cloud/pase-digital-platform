@@ -89,7 +89,7 @@ export default async function ReferidosClientePage() {
   try {
     ;[codigoCorto, dashboard] = await Promise.all([
       ensureCodigoCorto(cliente.id),
-      getReferidosDashboard(cliente.id, cliente.companyId),
+      getReferidosDashboard(cliente.id, cliente.companyId, user.supabaseId),
     ])
   } catch (e) {
     console.error('[cliente-referidos] dashboard', e)
@@ -104,7 +104,7 @@ export default async function ReferidosClientePage() {
   }
 
   const shareUrl = absoluteUrl(`/r/${codigoCorto}`)
-  const { stats, historial, ranking, miPosicion } = dashboard
+  const { stats, historial, ranking, miPosicion, retos, global } = dashboard
   const { nivel, siguiente, progresoPct } = calcularNivel(stats.puntos)
   const logros = calcularLogros({
     registros: stats.registros,
@@ -218,6 +218,69 @@ export default async function ReferidosClientePage() {
             <div className="rounded-lg bg-sky-50 px-4 py-2">
               <p className="text-lg font-bold text-sky-700">{stats.conversionPct}%</p>
               <p className="text-xs text-slate-500">conversión</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Retos activos de la empresa */}
+      {retos.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Gift className="h-4 w-4 text-rose-500" />
+              Retos activos
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {retos.map((r) => {
+              const pct = Math.min(100, Math.round((r.progreso / r.meta) * 100))
+              const completado = r.progreso >= r.meta
+              return (
+                <div key={r.id} className="space-y-1.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                    <p className="font-medium text-slate-800">
+                      {r.nombre}
+                      {completado && ' 🎉'}
+                    </p>
+                    <span className="text-xs text-slate-500">
+                      {r.progreso}/{r.meta} membresías · gana {r.recompensa}
+                    </span>
+                  </div>
+                  <Progress value={pct} />
+                </div>
+              )
+            })}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Centro global MembeGo */}
+      <Card className="border-violet-200 bg-violet-50/50">
+        <CardContent className="flex flex-wrap items-center justify-between gap-4 py-5">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">🌐</span>
+            <div>
+              <p className="font-semibold text-slate-900">Centro MembeGo</p>
+              <p className="max-w-md text-sm text-slate-500">
+                Tu mismo enlace también gana: si alguien se registra en{' '}
+                <strong>cualquier otra empresa</strong> de la plataforma, sumas
+                puntos MembeGo.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-6 text-center">
+            <div>
+              <p className="text-2xl font-bold text-violet-700">{global.puntos}</p>
+              <p className="text-xs text-slate-500">puntos MembeGo</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-slate-900">{global.registros}</p>
+              <p className="text-xs text-slate-500">registros</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-slate-900">{global.membresias}</p>
+              <p className="text-xs text-slate-500">membresías</p>
             </div>
           </div>
         </CardContent>

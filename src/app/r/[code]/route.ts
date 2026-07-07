@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAppUrl } from '@/lib/site'
-import { logReferralEvent } from '@/lib/referidos'
+import { logReferralEvent, hashIp, REF_COOKIE, REF_COOKIE_DIAS } from '@/lib/referidos'
 import { createRateLimiter, getClientIdentifier } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -58,12 +58,22 @@ export async function GET(
       canal,
       meta: {
         dispositivo: /mobile|android|iphone|ipad/i.test(ua) ? 'móvil' : 'escritorio',
+        ipHash: hashIp(ip),
         ...(campana ? { campana } : {}),
       },
     })
   }
 
-  return NextResponse.redirect(
+  const res = NextResponse.redirect(
     `${base}/registro/${cliente.company.slug}?ref=${cliente.codigoReferido}`
   )
+  // Atribución del Centro global MembeGo: si la persona termina registrándose
+  // en OTRA empresa de la plataforma, el referente igual gana puntos globales.
+  res.cookies.set(REF_COOKIE, cliente.codigoReferido, {
+    maxAge: REF_COOKIE_DIAS * 24 * 60 * 60,
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+  })
+  return res
 }

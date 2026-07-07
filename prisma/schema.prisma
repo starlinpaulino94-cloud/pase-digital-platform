@@ -322,6 +322,10 @@ enum ReferralEventTipo {
   CLICK // alguien abrió /r/[code]
   REGISTRO // un referido creó cuenta
   MEMBRESIA // el referido activó membresía
+  // Centro global MembeGo: el referido se unió a OTRA empresa de la plataforma.
+  // companyId = empresa del referente; meta.targetCompanyId = empresa destino.
+  REGISTRO_GLOBAL
+  MEMBRESIA_GLOBAL
 }
 
 model ReferralEvent {

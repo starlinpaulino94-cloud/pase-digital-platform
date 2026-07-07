@@ -5,8 +5,9 @@
  * desde un Server Component. Ninguna de las dos debe ser un endpoint público.
  */
 
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { logReferralEvent } from '@/lib/referidos'
+import { logReferralEvent, TIPOS_EMPRESA, TIPOS_GLOBAL } from '@/lib/referidos'
 
 /**
  * Se llama cuando un cliente activa su primera membresía. Si fue referido,
@@ -18,6 +19,10 @@ export async function procesarReferidoCompletado(
   clienteId: string,
   companyId: string
 ) {
+  // Centro global MembeGo: si este cliente llegó referido desde OTRA empresa,
+  // el referente gana los puntos globales de membresía (una sola vez).
+  await procesarMembresiaGlobal(clienteId).catch(() => {})
+
   try {
     const referido = await prisma.referido.findUnique({
       where: { referidoClienteId: clienteId },
@@ -51,6 +56,46 @@ export async function procesarReferidoCompletado(
   } catch (e) {
     console.error('[referidos] procesarReferidoCompletado error:', e)
   }
+}
+
+/**
+ * Otorga el evento MEMBRESIA_GLOBAL al referente global (si existe una
+ * atribución REGISTRO_GLOBAL para este cliente y aún no se contó su membresía).
+ */
+async function procesarMembresiaGlobal(referidoClienteId: string) {
+  const registroGlobal = await prisma.referralEvent.findFirst({
+    where: {
+      tipo: 'REGISTRO_GLOBAL',
+      meta: { path: ['referidoClienteId'], equals: referidoClienteId },
+    },
+    orderBy: { createdAt: 'asc' },
+  })
+  if (!registroGlobal) return
+
+  const yaContada = await prisma.referralEvent.findFirst({
+    where: {
+      tipo: 'MEMBRESIA_GLOBAL',
+      meta: { path: ['referidoClienteId'], equals: referidoClienteId },
+    },
+    select: { id: true },
+  })
+  if (yaContada) return
+
+  const meta = (registroGlobal.meta ?? {}) as Record<string, unknown>
+  await logReferralEvent({
+    clienteId: registroGlobal.clienteId,
+    companyId: registroGlobal.companyId,
+    tipo: 'MEMBRESIA_GLOBAL',
+    meta: {
+      global: true,
+      referidoClienteId,
+      ...(typeof meta.targetCompanyId === 'string'
+        ? { targetCompanyId: meta.targetCompanyId }
+        : {}),
+    },
+    // Si el registro fue marcado sospechoso, la membresía tampoco puntúa.
+    ...(meta.sospechoso ? { puntos: 0 } : {}),
+  })
 }
 
 /** Revisa las reglas activas de la empresa y otorga la recompensa si el referente alcanzó la condición. */
@@ -177,6 +222,22 @@ export interface ReferidosDashboard {
   }[]
   ranking: { posicion: number; nombre: string; puntos: number; esYo: boolean }[]
   miPosicion: number | null
+  /** Retos activos de la empresa (reglas de recompensa) con progreso. */
+  retos: {
+    id: string
+    nombre: string
+    meta: number
+    progreso: number
+    recompensa: string
+  }[]
+  /** Centro global MembeGo (suma de todas tus cuentas). */
+  global: { puntos: number; registros: number; membresias: number }
+}
+
+const RECOMPENSA_LABEL: Record<string, string> = {
+  LAVADOS_GRATIS: 'usos gratis',
+  DESCUENTO_PORCENTAJE: '% de descuento',
+  DESCUENTO_MONTO: 'RD$ de descuento',
 }
 
 /**
@@ -186,12 +247,13 @@ export interface ReferidosDashboard {
  */
 export async function getReferidosDashboard(
   clienteId: string,
-  companyId: string
+  companyId: string,
+  supabaseId: string
 ): Promise<ReferidosDashboard> {
-  const [eventos, referidos, topRaw] = await Promise.all([
+  const [eventos, referidos, topRaw, reglas, misClientes] = await Promise.all([
     prisma.referralEvent.groupBy({
       by: ['tipo'],
-      where: { clienteId, companyId },
+      where: { clienteId, companyId, tipo: { in: TIPOS_EMPRESA } },
       _count: { _all: true },
       _sum: { puntos: true },
     }),
@@ -202,12 +264,31 @@ export async function getReferidosDashboard(
     }),
     prisma.referralEvent.groupBy({
       by: ['clienteId'],
-      where: { companyId },
+      where: { companyId, tipo: { in: TIPOS_EMPRESA } },
       _sum: { puntos: true },
       orderBy: { _sum: { puntos: 'desc' } },
       take: 50,
     }),
+    prisma.reglaRecompensa.findMany({
+      where: { companyId, activo: true },
+      orderBy: { valorCondicion: 'asc' },
+    }),
+    prisma.cliente.findMany({
+      where: { supabaseId },
+      select: { id: true },
+    }),
   ])
+
+  // Centro global MembeGo: eventos globales de TODAS tus cuentas.
+  const globalAgg = await prisma.referralEvent.groupBy({
+    by: ['tipo'],
+    where: {
+      clienteId: { in: misClientes.map((c) => c.id) },
+      tipo: { in: TIPOS_GLOBAL },
+    },
+    _count: { _all: true },
+    _sum: { puntos: true },
+  })
 
   const byTipo = new Map(eventos.map((e) => [e.tipo, e]))
   const compartidos = byTipo.get('SHARE')?._count._all ?? 0
@@ -236,6 +317,8 @@ export async function getReferidosDashboard(
   const idx = topRaw.findIndex((t) => t.clienteId === clienteId)
   const miPosicion = idx >= 0 ? idx + 1 : null
 
+  const globalPorTipo = new Map(globalAgg.map((g) => [g.tipo, g]))
+
   return {
     stats: { compartidos, clicks, registros, membresias, conversionPct, recompensas, puntos },
     historial: referidos.map((r) => ({
@@ -250,5 +333,245 @@ export async function getReferidosDashboard(
     })),
     ranking,
     miPosicion,
+    retos: reglas.map((r) => ({
+      id: r.id,
+      nombre: r.nombre,
+      meta: r.valorCondicion,
+      progreso: Math.min(membresias, r.valorCondicion),
+      recompensa: `${Number(r.valorRecompensa)} ${RECOMPENSA_LABEL[r.tipoRecompensa] ?? ''}`.trim(),
+    })),
+    global: {
+      puntos: globalAgg.reduce((acc, g) => acc + (g._sum.puntos ?? 0), 0),
+      registros: globalPorTipo.get('REGISTRO_GLOBAL')?._count._all ?? 0,
+      membresias: globalPorTipo.get('MEMBRESIA_GLOBAL')?._count._all ?? 0,
+    },
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard ROI del programa de referidos para la empresa (/admin/referidos).
+// ---------------------------------------------------------------------------
+
+export interface EmpresaReferidosDashboard {
+  kpis: {
+    compartidos: number
+    clicks: number
+    registros: number
+    membresias: number
+    conversionPct: number
+    recompensasEntregadas: number
+    ingresosReferidos: number
+    sospechosos: number
+    embajadoresActivos: number
+    embajadoresInactivos: number
+  }
+  porCanal: { canal: string; clicks: number; compartidos: number }[]
+  porCampana: { campana: string; clicks: number }[]
+  registrosDiarios: { dia: string; registros: number }[]
+  evolucionMensual: { mes: string; registros: number; membresias: number }[]
+  topEmbajadores: { nombre: string; puntos: number; registros: number; membresias: number }[]
+  topConversion: { nombre: string; clicks: number; membresias: number; pct: number }[]
+}
+
+/**
+ * Métricas del programa de referidos de la empresa. `companyId` null =
+ * superadmin (toda la plataforma). Server-only.
+ */
+export async function getEmpresaReferidosDashboard(
+  companyId: string | null
+): Promise<EmpresaReferidosDashboard> {
+  const whereRef = companyId ? { companyId } : {}
+  const companySql = companyId
+    ? Prisma.sql`"companyId" = ${companyId}`
+    : Prisma.sql`TRUE`
+
+  const hace30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+
+  const [eventosTipo, referidosTotal, completadosRows, recompensadas, canalRows, topPuntos, porClienteTipo, activosRows] =
+    await Promise.all([
+      prisma.referralEvent.groupBy({
+        by: ['tipo'],
+        where: { ...whereRef, tipo: { in: TIPOS_EMPRESA } },
+        _count: { _all: true },
+      }),
+      prisma.referido.count({ where: whereRef }),
+      prisma.referido.findMany({
+        where: { ...whereRef, estado: 'COMPLETADO' },
+        select: { referidoClienteId: true },
+      }),
+      prisma.referido.count({ where: { ...whereRef, recompensaAplicada: true } }),
+      prisma.referralEvent.groupBy({
+        by: ['tipo', 'canal'],
+        where: { ...whereRef, tipo: { in: ['SHARE', 'CLICK'] } },
+        _count: { _all: true },
+      }),
+      prisma.referralEvent.groupBy({
+        by: ['clienteId'],
+        where: { ...whereRef, tipo: { in: TIPOS_EMPRESA } },
+        _sum: { puntos: true },
+        orderBy: { _sum: { puntos: 'desc' } },
+        take: 5,
+      }),
+      prisma.referralEvent.groupBy({
+        by: ['clienteId', 'tipo'],
+        where: { ...whereRef, tipo: { in: ['CLICK', 'MEMBRESIA'] } },
+        _count: { _all: true },
+      }),
+      prisma.referralEvent.findMany({
+        where: { ...whereRef, createdAt: { gte: hace30d } },
+        select: { clienteId: true },
+        distinct: ['clienteId'],
+      }),
+    ])
+
+  const countTipo = (t: string) =>
+    eventosTipo.find((e) => e.tipo === t)?._count._all ?? 0
+  const clicks = countTipo('CLICK')
+  const membresias = completadosRows.length
+
+  // Ingresos atribuibles: membresías pagadas de clientes que llegaron referidos.
+  let ingresosReferidos = 0
+  if (completadosRows.length > 0) {
+    const agg = await prisma.membership.aggregate({
+      where: {
+        clienteId: { in: completadosRows.map((r) => r.referidoClienteId) },
+        pagoConfirmado: true,
+      },
+      _sum: { montoPagado: true },
+    })
+    ingresosReferidos = Number(agg._sum.montoPagado ?? 0)
+  }
+
+  // Registros marcados sospechosos por el anti-fraude (huella repetida).
+  const sospechososRows = await prisma.$queryRaw<{ n: bigint }[]>(
+    Prisma.sql`SELECT count(*)::bigint AS n FROM "referral_events"
+      WHERE ${companySql} AND (meta->>'sospechoso')::boolean IS TRUE`
+  )
+  const sospechosos = Number(sospechososRows[0]?.n ?? 0)
+
+  // Clics por campaña (utm_campaign capturado en /r/[code]).
+  const campanaRows = await prisma.$queryRaw<{ campana: string; n: bigint }[]>(
+    Prisma.sql`SELECT meta->>'campana' AS campana, count(*)::bigint AS n
+      FROM "referral_events"
+      WHERE ${companySql} AND tipo = 'CLICK' AND meta->>'campana' IS NOT NULL
+      GROUP BY 1 ORDER BY 2 DESC LIMIT 10`
+  )
+
+  // Registros por día (últimos 30 días) y evolución mensual (últimos 6 meses).
+  const diariosRows = await prisma.$queryRaw<{ dia: Date; n: bigint }[]>(
+    Prisma.sql`SELECT date_trunc('day', "createdAt") AS dia, count(*)::bigint AS n
+      FROM "referidos" WHERE ${companySql} AND "createdAt" >= ${hace30d}
+      GROUP BY 1 ORDER BY 1`
+  )
+  const hace6m = new Date()
+  hace6m.setMonth(hace6m.getMonth() - 5)
+  hace6m.setDate(1)
+  const mensualRows = await prisma.$queryRaw<
+    { mes: Date; registros: bigint; membresias: bigint }[]
+  >(
+    Prisma.sql`SELECT date_trunc('month', "createdAt") AS mes,
+        count(*)::bigint AS registros,
+        count(*) FILTER (WHERE estado = 'COMPLETADO')::bigint AS membresias
+      FROM "referidos" WHERE ${companySql} AND "createdAt" >= ${hace6m}
+      GROUP BY 1 ORDER BY 1`
+  )
+
+  // Nombres + registros/membresías de los tops.
+  const clicksPor = new Map<string, number>()
+  const membresiasPor = new Map<string, number>()
+  for (const r of porClienteTipo) {
+    if (r.tipo === 'CLICK') clicksPor.set(r.clienteId, r._count._all)
+    if (r.tipo === 'MEMBRESIA') membresiasPor.set(r.clienteId, r._count._all)
+  }
+  const conversionCandidatos = [...clicksPor.entries()]
+    .filter(([, c]) => c >= 5)
+    .map(([id, c]) => ({ id, clicks: c, membresias: membresiasPor.get(id) ?? 0 }))
+    .map((x) => ({ ...x, pct: Math.round((x.membresias / x.clicks) * 100) }))
+    .sort((a, b) => b.pct - a.pct)
+    .slice(0, 5)
+
+  const idsNecesarios = [
+    ...new Set([...topPuntos.map((t) => t.clienteId), ...conversionCandidatos.map((c) => c.id)]),
+  ]
+  const nombres = await prisma.cliente.findMany({
+    where: { id: { in: idsNecesarios } },
+    select: { id: true, nombre: true },
+  })
+  const nombreDe = new Map(nombres.map((n) => [n.id, n.nombre]))
+
+  const referidosPorReferente = await prisma.referido.groupBy({
+    by: ['referenteClienteId'],
+    where: { ...whereRef, referenteClienteId: { in: topPuntos.map((t) => t.clienteId) } },
+    _count: { _all: true },
+  })
+  const completadosPorReferente = await prisma.referido.groupBy({
+    by: ['referenteClienteId'],
+    where: {
+      ...whereRef,
+      estado: 'COMPLETADO',
+      referenteClienteId: { in: topPuntos.map((t) => t.clienteId) },
+    },
+    _count: { _all: true },
+  })
+  const regDe = new Map(referidosPorReferente.map((r) => [r.referenteClienteId, r._count._all]))
+  const memDe = new Map(completadosPorReferente.map((r) => [r.referenteClienteId, r._count._all]))
+
+  // Embajadores: con actividad histórica vs con actividad en los últimos 30 días.
+  const historicosRows = await prisma.referralEvent.findMany({
+    where: whereRef,
+    select: { clienteId: true },
+    distinct: ['clienteId'],
+  })
+  const embajadoresActivos = activosRows.length
+  const embajadoresInactivos = Math.max(0, historicosRows.length - embajadoresActivos)
+
+  const fmtMes = new Intl.DateTimeFormat('es-DO', { month: 'short', year: '2-digit' })
+  const fmtDia = new Intl.DateTimeFormat('es-DO', { day: '2-digit', month: 'short' })
+
+  return {
+    kpis: {
+      compartidos: countTipo('SHARE'),
+      clicks,
+      registros: referidosTotal,
+      membresias,
+      conversionPct: clicks > 0 ? Math.round((membresias / clicks) * 100) : 0,
+      recompensasEntregadas: recompensadas,
+      ingresosReferidos,
+      sospechosos,
+      embajadoresActivos,
+      embajadoresInactivos,
+    },
+    porCanal: (() => {
+      const mapa = new Map<string, { clicks: number; compartidos: number }>()
+      for (const r of canalRows) {
+        const canal = r.canal ?? 'directo'
+        const item = mapa.get(canal) ?? { clicks: 0, compartidos: 0 }
+        if (r.tipo === 'CLICK') item.clicks += r._count._all
+        else item.compartidos += r._count._all
+        mapa.set(canal, item)
+      }
+      return [...mapa.entries()]
+        .map(([canal, v]) => ({ canal, ...v }))
+        .sort((a, b) => b.clicks + b.compartidos - (a.clicks + a.compartidos))
+    })(),
+    porCampana: campanaRows.map((c) => ({ campana: c.campana, clicks: Number(c.n) })),
+    registrosDiarios: diariosRows.map((d) => ({ dia: fmtDia.format(d.dia), registros: Number(d.n) })),
+    evolucionMensual: mensualRows.map((m) => ({
+      mes: fmtMes.format(m.mes),
+      registros: Number(m.registros),
+      membresias: Number(m.membresias),
+    })),
+    topEmbajadores: topPuntos.map((t) => ({
+      nombre: nombreDe.get(t.clienteId) ?? 'Cliente',
+      puntos: t._sum.puntos ?? 0,
+      registros: regDe.get(t.clienteId) ?? 0,
+      membresias: memDe.get(t.clienteId) ?? 0,
+    })),
+    topConversion: conversionCandidatos.map((c) => ({
+      nombre: nombreDe.get(c.id) ?? 'Cliente',
+      clicks: c.clicks,
+      membresias: c.membresias,
+      pct: c.pct,
+    })),
   }
 }
