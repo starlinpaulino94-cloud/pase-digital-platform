@@ -176,27 +176,6 @@ export async function getClienteVisitas(
   return { total, visitas: enrichedVisitas, pages: Math.ceil(total / pageSize) }
 }
 
-export async function getClienteMembresias(clienteId: string) {
-  try {
-    return await prisma.membership.findMany({
-      where: { clienteId },
-      include: { plan: true, metodoPago: true },
-      orderBy: { createdAt: 'desc' },
-    })
-  } catch {
-    return prisma.membership.findMany({
-      where: { clienteId },
-      select: {
-        id: true, estado: true, lavadosRestantes: true,
-        fechaInicio: true, fechaVencimiento: true, createdAt: true,
-        clienteId: true, planId: true,
-        plan: { select: { id: true, nombre: true, precio: true, lavadosIncluidos: true, esIlimitado: true, beneficios: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
-  }
-}
-
 export function activeMembership<
   T extends { estado: string; fechaVencimiento: Date | null }
 >(memberships: T[]): T | undefined {
@@ -205,4 +184,117 @@ export function activeMembership<
       m.estado === 'ACTIVA' &&
       (!m.fechaVencimiento || m.fechaVencimiento > new Date())
   )
+}
+
+export interface PagoHistorialItem {
+  id: string
+  tipo: 'APROBADO' | 'RECHAZADO'
+  fecha: Date
+  monto: number | null
+  motivo: string | null
+  planNombre: string | null
+}
+
+export interface ClientePagos {
+  membership: {
+    id: string
+    estado: string
+    planNombre: string
+    montoPagado: number | null
+    fechaInicio: Date | null
+    fechaVencimiento: Date | null
+    createdAt: Date
+    comprobanteUrl: string | null
+    comprobanteNota: string | null
+    rechazadoReason: string | null
+    metodoPagoNombre: string | null
+    planSolicitadoNombre: string | null
+  } | null
+  historial: PagoHistorialItem[]
+}
+
+/**
+ * Datos de "Mis pagos": estado actual de la membresía + historial real de pagos
+ * (aprobados/rechazados) reconstruido desde el AuditLog. Devuelve datos planos.
+ */
+export async function getClientePagos(clienteId: string): Promise<ClientePagos> {
+  const memberships = await prisma.membership.findMany({
+    where: { clienteId },
+    include: { plan: true, metodoPago: true, planSolicitado: true },
+    orderBy: { createdAt: 'desc' },
+  })
+
+  const membershipIds = memberships.map((m) => m.id)
+  const current = memberships[0] ?? null
+
+  let historial: PagoHistorialItem[] = []
+  if (membershipIds.length > 0) {
+    try {
+      const logs = await prisma.auditLog.findMany({
+        where: {
+          entidadTipo: 'Membership',
+          entidadId: { in: membershipIds },
+          accion: { in: ['PAGO_APROBADO', 'PAGO_RECHAZADO'] },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      })
+
+      // Resolver nombres de plan referenciados en los payloads.
+      const planIds = new Set<string>()
+      for (const l of logs) {
+        const p = (l.payload ?? {}) as Record<string, unknown>
+        if (typeof p.planId === 'string') planIds.add(p.planId)
+        if (typeof p.planNuevo === 'string') planIds.add(p.planNuevo)
+      }
+      const planes = planIds.size
+        ? await prisma.plan.findMany({
+            where: { id: { in: [...planIds] } },
+            select: { id: true, nombre: true },
+          })
+        : []
+      const planName = new Map(planes.map((p) => [p.id, p.nombre]))
+
+      historial = logs.map((l) => {
+        const p = (l.payload ?? {}) as Record<string, unknown>
+        const planRef =
+          (typeof p.planNuevo === 'string' && p.planNuevo) ||
+          (typeof p.planId === 'string' && p.planId) ||
+          null
+        return {
+          id: l.id,
+          tipo: l.accion === 'PAGO_APROBADO' ? 'APROBADO' : 'RECHAZADO',
+          fecha: l.createdAt,
+          monto: typeof p.monto === 'number' ? p.monto : null,
+          motivo: typeof p.motivo === 'string' ? p.motivo : null,
+          planNombre: planRef ? planName.get(planRef) ?? null : null,
+        }
+      })
+    } catch (e) {
+      console.error('[getClientePagos] historial', e)
+    }
+  }
+
+  return {
+    membership: current
+      ? {
+          id: current.id,
+          estado: current.estado,
+          planNombre: current.plan.nombre,
+          montoPagado: current.montoPagado != null ? Number(current.montoPagado) : null,
+          fechaInicio: current.fechaInicio,
+          fechaVencimiento: current.fechaVencimiento,
+          createdAt: current.createdAt,
+          comprobanteUrl: current.comprobanteUrl,
+          comprobanteNota: current.comprobanteNota,
+          rechazadoReason: current.rechazadoReason,
+          metodoPagoNombre: current.metodoPago?.nombre ?? null,
+          planSolicitadoNombre:
+            current.estado === 'ACTIVA' && current.planIdSolicitado
+              ? current.planSolicitado?.nombre ?? null
+              : null,
+        }
+      : null,
+    historial,
+  }
 }
