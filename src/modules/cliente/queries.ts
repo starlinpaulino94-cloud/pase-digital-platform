@@ -2,17 +2,36 @@ import { prisma } from '@/lib/prisma'
 
 /**
  * Load all memberships for a user across all companies.
- * Used for the new "Mis Membresías" dashboard.
+ * Used for the "Mis Membresías" dashboard.
+ *
+ * Busca los clientes del usuario por `supabaseId` y, como respaldo, por el
+ * `clienteId` del token de sesión (app_metadata). Esto evita que la lista quede
+ * vacía si el `cliente.supabaseId` de algún registro no coincide exactamente con
+ * el de la sesión (p. ej. datos creados por un admin o migrados).
+ *
+ * Devuelve objetos PLANOS y serializables (precio convertido a number) porque el
+ * resultado se pasa a un Client Component; un `Decimal` de Prisma rompería el
+ * render con "Only plain objects can be passed to Client Components".
+ *
+ * Propaga los errores (no los traga) para que la página distinga "sin
+ * membresías" de "falló la carga".
  */
-export async function getClienteAllMemberships(supabaseId: string) {
-  if (!supabaseId) {
-    console.warn('[getClienteAllMemberships] Missing supabaseId')
+export async function getClienteAllMemberships(
+  supabaseId: string,
+  clienteId?: string | null
+) {
+  if (!supabaseId && !clienteId) {
+    console.warn('[getClienteAllMemberships] Missing supabaseId y clienteId')
     return []
   }
 
   try {
+    const or = [
+      ...(supabaseId ? [{ supabaseId }] : []),
+      ...(clienteId ? [{ id: clienteId }] : []),
+    ]
     const clientes = await prisma.cliente.findMany({
-      where: { supabaseId },
+      where: { OR: or },
       include: {
         memberships: {
           include: {
@@ -36,7 +55,12 @@ export async function getClienteAllMemberships(supabaseId: string) {
           clienteId: c.id,
           companyId: m.companyId,
           company: m.company,
-          plan: m.plan,
+          plan: {
+            id: m.plan.id,
+            nombre: m.plan.nombre,
+            precio: Number(m.plan.precio),
+            esIlimitado: m.plan.esIlimitado,
+          },
           estado: m.estado,
           fechaVencimiento: m.fechaVencimiento,
           fechaInicio: m.fechaInicio,
