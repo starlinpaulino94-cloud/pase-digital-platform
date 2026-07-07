@@ -160,7 +160,7 @@ export function ScannerClient({ sucursales = [] }: { sucursales?: Sucursal[] }) 
           setErrorState({ message: 'Respuesta vacía del servidor.', code: 'INTERNAL' })
         }
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.error('[scanner] lookup error:', err)
         setErrorState({
           message: 'No se pudo conectar con el servidor. Verifica tu conexión a internet.',

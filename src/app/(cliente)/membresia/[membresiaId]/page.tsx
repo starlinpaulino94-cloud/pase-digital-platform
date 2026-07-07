@@ -4,7 +4,6 @@ import { prisma } from '@/lib/prisma'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import Image from 'next/image'
 

@@ -53,19 +53,19 @@ export function ConfirmarPagoButton({ membershipId }: { membershipId: string }) 
 }
 
 export function RechazarPagoButton({ membershipId }: { membershipId: string }) {
-  const [open, setOpen] = useState(false)
+  const [manualOpen, setManualOpen] = useState(false)
   const [state, formAction, pending] = useActionState(rechazarPago, init)
+  // El diálogo se cierra solo al tener éxito (estado derivado), evitando
+  // setState dentro del efecto.
+  const open = manualOpen && !state.success
 
   useEffect(() => {
-    if (state.success) {
-      toast.error('Pago rechazado.')
-      setOpen(false)
-    }
+    if (state.success) toast.error('Pago rechazado.')
     if (state.error) toast.error(state.error)
   }, [state.success, state.error])
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={setManualOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50">
           <X className="h-4 w-4" />
@@ -88,7 +88,7 @@ export function RechazarPagoButton({ membershipId }: { membershipId: string }) {
             />
           </div>
           <div className="flex gap-2 justify-end">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setManualOpen(false)}>
               Cancelar
             </Button>
             <Button
@@ -107,19 +107,18 @@ export function RechazarPagoButton({ membershipId }: { membershipId: string }) {
 }
 
 export function SolicitarEvidenciaButton({ membershipId }: { membershipId: string }) {
-  const [open, setOpen] = useState(false)
+  const [manualOpen, setManualOpen] = useState(false)
   const [state, formAction, pending] = useActionState(solicitarNuevaEvidencia, init)
+  // Cierre derivado al tener éxito (evita setState dentro del efecto).
+  const open = manualOpen && !state.success
 
   useEffect(() => {
-    if (state.success) {
-      toast.success('Se solicitó nueva evidencia al cliente.')
-      setOpen(false)
-    }
+    if (state.success) toast.success('Se solicitó nueva evidencia al cliente.')
     if (state.error) toast.error(state.error)
   }, [state.success, state.error])
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={setManualOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-50">
           <RefreshCw className="h-4 w-4" />
@@ -145,7 +144,7 @@ export function SolicitarEvidenciaButton({ membershipId }: { membershipId: strin
             El cliente recibirá una notificación y deberá subir un nuevo comprobante.
           </p>
           <div className="flex gap-2 justify-end">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setManualOpen(false)}>
               Cancelar
             </Button>
             <Button type="submit" disabled={pending} className="bg-amber-600 hover:bg-amber-500">

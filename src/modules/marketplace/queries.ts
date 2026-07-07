@@ -330,7 +330,7 @@ export async function getPromotionDetail(promotionId: string): Promise<Promotion
     if (!promotion.company.isPublished || !promotion.company.isActive) return null
     if (promotion.vigenciaHasta && promotion.vigenciaHasta < now) return null
 
-    const { activo, ...rest } = promotion
+    const { activo: _activo, ...rest } = promotion
     // No exponer flags internos de la empresa en el payload público.
     const { isPublished: _p, isActive: _a, ...company } = rest.company
     return { ...rest, company } as PromotionPublic

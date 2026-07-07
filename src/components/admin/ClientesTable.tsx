@@ -65,8 +65,8 @@ const columns: ColumnDef<ClienteRow>[] = [
 export function ClientesTable({ data }: { data: ClienteRow[] }) {
   return (
     <DataTable
-      columns={columns as any}
-      data={data as any}
+      columns={columns as unknown as ColumnDef<Record<string, unknown>, unknown>[]}
+      data={data as unknown as Record<string, unknown>[]}
       searchPlaceholder="Buscar por nombre o correo..."
       searchKey="nombre"
       pageSize={10}

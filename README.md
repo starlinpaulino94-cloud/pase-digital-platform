@@ -120,8 +120,8 @@ Visit        → Registro de uso (visita al establecimiento)
 
 ```bash
 # 1. Clonar
-git clone https://github.com/starlinpaulino94-cloud/membego-platform.git
-cd membego-platform
+git clone https://github.com/starlinpaulino94-cloud/pase-digital-platform.git
+cd pase-digital-platform
 
 # 2. Instalar dependencias
 bun install
@@ -166,9 +166,14 @@ DATABASE_URL="postgresql://postgres.XXXXX:PASSWORD@aws-0-REGION.pooler.supabase.
 # Conexión directa — solo para migraciones
 DIRECT_URL="postgresql://postgres.XXXXX:PASSWORD@aws-0-REGION.supabase.com:5432/postgres"
 
-# Sesión (no usado con Supabase Auth, pero requerido por lib/env)
-SESSION_SECRET=cadena-aleatoria-larga
+# Dominio y correo (MembeGo)
+NEXT_PUBLIC_APP_URL=https://membego.com
+EMAIL_FROM="MembeGo <no-reply@membego.com>"
+RESEND_API_KEY=re_...   # opcional; sin ella, el correo queda deshabilitado
 ```
+
+Hay más variables opcionales (Sentry, endpoints de bootstrap). Consulta
+[`.env.example`](.env.example) para la lista completa y documentada.
 
 > ⚠️ **Nunca subas `.env` a Git.** Ya está en `.gitignore`.
 
@@ -211,7 +216,7 @@ bun run db:seed            # Cargar datos iniciales + usuarios de prueba
 ## Despliegue en Vercel
 
 1. **Conecta el repositorio** en [vercel.com](https://vercel.com).
-2. **Variables de entorno** (Settings → Environment Variables): agrega las 5 del `.env`.
+2. **Variables de entorno** (Settings → Environment Variables): agrega las de `.env` (Supabase, Postgres, `NEXT_PUBLIC_APP_URL`, correo y, si aplican, Sentry).
 3. **Build**: Vercel detecta Next.js automáticamente. El `postinstall` corre `prisma generate`.
 4. **Migraciones**: Vercel no las corre. Antes de cada release con cambios de schema, ejecuta desde tu máquina:
    ```bash

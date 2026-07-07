@@ -6,7 +6,6 @@
  */
 
 import { prisma } from '@/lib/prisma'
-import { crearNotificacion } from '@/modules/notificaciones/actions'
 
 /**
  * Se llama cuando un cliente activa su primera membresía. Si fue referido,

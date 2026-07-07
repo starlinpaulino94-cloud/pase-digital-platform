@@ -7,16 +7,11 @@ const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
 const MAX_VIEWS_PER_WINDOW = 10
 const MAX_SHARES_PER_WINDOW = 5
 
-async function getRateLimitKey(type: 'view' | 'share', id: string): Promise<string> {
-  return `ratelimit:${type}:${id}:${Math.floor(Date.now() / RATE_LIMIT_WINDOW)}`
-}
-
 export async function recordPromotionView(promotionId: string): Promise<boolean> {
   if (!promotionId) return false
 
   try {
     const cookieStore = await cookies()
-    const sessionId = cookieStore.get('session')?.value || `anonymous:${Date.now()}`
 
     // Simple client-side rate limiting via cookie
     const viewsKey = `promo_views:${promotionId}`
@@ -96,13 +91,13 @@ export async function recordPromotionShare(promotionId: string): Promise<boolean
 export async function addCompanyToFavorites(companySlug: string): Promise<boolean> {
   // TODO: Implement when ClientFavorite table is created
   // Requires authentication via requireUser()
-  console.log('[addCompanyToFavorites] Not yet implemented:', companySlug)
+  console.warn('[addCompanyToFavorites] Not yet implemented:', companySlug)
   return false
 }
 
 export async function removeCompanyFromFavorites(companySlug: string): Promise<boolean> {
   // TODO: Implement when ClientFavorite table is created
   // Requires authentication via requireUser()
-  console.log('[removeCompanyFromFavorites] Not yet implemented:', companySlug)
+  console.warn('[removeCompanyFromFavorites] Not yet implemented:', companySlug)
   return false
 }

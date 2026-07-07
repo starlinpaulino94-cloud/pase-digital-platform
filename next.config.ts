@@ -28,11 +28,9 @@ const nextConfig: NextConfig = {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
           },
-          // Enable XSS protection in older browsers
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
+          // Nota: X-XSS-Protection se eliminó a propósito. Está obsoleto, los
+          // navegadores modernos lo ignoran y en algunos casos introduce
+          // vulnerabilidades. La protección real la da la Content-Security-Policy.
           // Referrer Policy: send minimal info to other sites
           {
             key: 'Referrer-Policy',
@@ -48,14 +46,20 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net", // For html5-qrcode library
+              // 'unsafe-inline'/'unsafe-eval' los requieren el runtime inline de
+              // Next.js y el decodificador wasm de html5-qrcode. Endurecerlos a
+              // CSP basada en nonce es un cambio mayor que necesita pruebas en
+              // navegador (scanner + hidratación) y se dejó como paso futuro.
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.supabase.co https://api.github.com https://*.ingest.sentry.io https://*.sentry.io",
+              // api.github.com se eliminó: no se usa en la app.
+              "connect-src 'self' https://*.supabase.co https://*.ingest.sentry.io https://*.sentry.io",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
+              "object-src 'none'",
             ].join('; '),
           },
           // Permissions Policy (formerly Feature Policy)

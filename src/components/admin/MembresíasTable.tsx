@@ -78,8 +78,8 @@ const columns: ColumnDef<MembershipRow>[] = [
 export function MembresíasTable({ data }: { data: MembershipRow[] }) {
   return (
     <DataTable
-      columns={columns as any}
-      data={data as any}
+      columns={columns as unknown as ColumnDef<Record<string, unknown>, unknown>[]}
+      data={data as unknown as Record<string, unknown>[]}
       searchPlaceholder="Buscar por cliente o plan..."
       searchKey="cliente.nombre"
       pageSize={15}

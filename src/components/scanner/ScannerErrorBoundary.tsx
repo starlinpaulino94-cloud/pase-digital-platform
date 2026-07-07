@@ -26,7 +26,7 @@ export class ScannerErrorBoundary extends Component<Props, State> {
         Sentry.captureException(error, { tags: { boundary: 'scanner' } })
       }).catch(() => {})
     } catch {}
-    // eslint-disable-next-line no-console
+     
     console.error('[scanner-boundary]', error)
   }
 

@@ -13,21 +13,24 @@ export const dynamic = 'force-dynamic'
 export default async function PerfilPage() {
   const user = await requireRole('CLIENTE')
 
+  if (!user.metadata.clienteId) {
+    console.error('[cliente-perfil] Missing clienteId in metadata')
+    return <p className="text-muted-foreground">Cuenta no está completamente configurada. Por favor, contacta al soporte.</p>
+  }
+
   let cliente = null
+  let loadError = false
   try {
-    if (!user.metadata.clienteId) {
-      console.error('[cliente-perfil] Missing clienteId in metadata')
-      return <p className="text-muted-foreground">Cuenta no está completamente configurada. Por favor, contacta al soporte.</p>
-    }
     cliente = await getClientePerfil(user.metadata.clienteId)
   } catch (e) {
     console.error('[cliente-perfil] Error loading cliente:', {
       clienteId: user.metadata.clienteId,
       error: e instanceof Error ? e.message : String(e),
     })
-    return <p className="text-muted-foreground">No pudimos cargar tu información. Intenta de nuevo más tarde.</p>
+    loadError = true
   }
 
+  if (loadError) return <p className="text-muted-foreground">No pudimos cargar tu información. Intenta de nuevo más tarde.</p>
   if (!cliente) return <p className="text-muted-foreground">No se encontró tu información.</p>
 
   const isCarwash = cliente.company.type === 'carwash'
