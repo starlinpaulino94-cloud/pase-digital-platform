@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2, CheckCircle2, Sparkles } from 'lucide-react'
+import { Loader2, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { registrarCliente, type RegistroState } from '@/modules/registro/actions'
 import { Button } from '@/components/ui/button'

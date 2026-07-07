@@ -4,8 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
 import { getRequestMeta } from '@/lib/server-utils'
 import { qrScanLimiter } from '@/lib/rate-limit'
-
-const SCANNER_ROLES = ['EMPLEADO', 'ADMIN_EMPRESA', 'SUPERADMIN', 'ADMINISTRADOR', 'GERENTE', 'CAJERO', 'RECEPCION']
+import { SCANNER_ROLES } from '@/types'
 
 export interface VisitaReciente {
   id: string

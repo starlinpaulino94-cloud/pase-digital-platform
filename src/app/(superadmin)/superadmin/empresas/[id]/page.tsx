@@ -55,6 +55,8 @@ export default async function EmpresaDetailPage({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
               {company.logoUrl ? (
+                // Logo subido por el usuario, de dominio arbitrario.
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={company.logoUrl}
                   alt={company.name}

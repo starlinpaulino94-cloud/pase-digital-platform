@@ -21,7 +21,6 @@ interface Props {
 export function MembershipAdminActions({
   membershipId,
   estado,
-  clienteId,
   planPrecio,
 }: Props) {
   const [activarState, activarAction, activarPending] = useActionState(confirmarPago, {})

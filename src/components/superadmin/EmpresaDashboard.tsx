@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import {
   Users,
   CreditCard,
@@ -8,13 +7,10 @@ import {
   Package,
   Megaphone,
   Gift,
-  TrendingUp,
   DollarSign,
   Clock,
   CheckCircle2,
-  AlertCircle,
   Activity,
-  ArrowRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -90,7 +86,6 @@ function fmtDate(d: string) {
 }
 
 export function EmpresaDashboard({
-  companyId,
   stats,
   actividadReciente,
   topPlanes,
@@ -102,7 +97,6 @@ export function EmpresaDashboard({
   topPlanes: TopPlan[]
   membresiasPorEstado: MembresiaEstado[]
 }) {
-  const router = useRouter()
   const maxMembresias = Math.max(...membresiasPorEstado.map((m) => m.count), 1)
 
   return (

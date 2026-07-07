@@ -28,7 +28,7 @@ export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
   }
 
   if (!apiKey) {
-    console.info('[email] (no RESEND_API_KEY) →', {
+    console.warn('[email] (no RESEND_API_KEY) →', {
       to: payload.to,
       subject: payload.subject,
     })

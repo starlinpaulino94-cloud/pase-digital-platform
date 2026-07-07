@@ -9,11 +9,9 @@ import {
   Building2,
   Car,
   UtensilsCrossed,
-  Users,
   MapPin,
   Mail,
   Phone,
-  Globe,
   MoreHorizontal,
   Eye,
   Pencil,
@@ -22,11 +20,7 @@ import {
   Play,
   Trash2,
   ArrowUpDown,
-  Filter,
   ChevronRight,
-  TrendingUp,
-  Store,
-  CreditCard,
   X,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -115,6 +109,9 @@ function relativeTime(d: string | null) {
 function CompanyIcon({ type, logoUrl }: { type: string; logoUrl: string | null }) {
   if (logoUrl) {
     return (
+      // Logo subido por el usuario, de dominio arbitrario: <img> evita que
+      // next/image rompa el render si el host no está en remotePatterns.
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={logoUrl}
         alt=""

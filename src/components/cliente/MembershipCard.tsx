@@ -2,8 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { format, differenceInDays } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { differenceInDays } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
@@ -20,7 +19,7 @@ interface MembershipCardProps {
     plan: {
       id: string
       nombre: string
-      precio: any
+      precio: unknown
     }
     estado: string
     fechaVencimiento: Date | null
