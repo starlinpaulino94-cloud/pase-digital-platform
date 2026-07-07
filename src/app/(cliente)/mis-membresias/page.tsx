@@ -19,14 +19,13 @@ export default async function MisMembresias() {
 
   let memberships: Awaited<ReturnType<typeof getClienteAllMemberships>> = []
   let loadError = false
+  let errorDetail = ''
   try {
     memberships = await getClienteAllMemberships(user.supabaseId, user.metadata.clienteId)
   } catch (error) {
     loadError = true
-    console.error(
-      '[mis-membresias] Error loading memberships:',
-      error instanceof Error ? error.message : String(error)
-    )
+    errorDetail = error instanceof Error ? error.message : String(error)
+    console.error('[mis-membresias] Error loading memberships:', errorDetail)
   }
 
   return (
@@ -62,6 +61,16 @@ export default async function MisMembresias() {
           <Button asChild variant="outline">
             <Link href="/mis-membresias">Reintentar</Link>
           </Button>
+          {errorDetail && (
+            <details className="mt-2 w-full max-w-full text-left">
+              <summary className="cursor-pointer text-xs text-muted-foreground">
+                Detalle técnico
+              </summary>
+              <pre className="mt-2 overflow-x-auto rounded bg-muted p-3 text-left text-xs text-muted-foreground">
+                {errorDetail}
+              </pre>
+            </details>
+          )}
         </div>
       ) : memberships.length === 0 ? (
         <div className="flex flex-col items-center gap-5 rounded-xl border border-dashed p-10 text-center">

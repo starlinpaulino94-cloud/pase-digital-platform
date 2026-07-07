@@ -32,42 +32,58 @@ export async function getClienteAllMemberships(
     ]
     const clientes = await prisma.cliente.findMany({
       where: { OR: or },
+      select: { id: true },
+    })
+    const clienteIds = clientes.map((c) => c.id)
+    if (clienteIds.length === 0) return []
+
+    // Membresías (con plan y empresa). Se consultan aparte de los QR para que un
+    // problema con las columnas de qr_tokens (activo/membresiaId) no tumbe toda
+    // la lista.
+    const memberships = await prisma.membership.findMany({
+      where: { clienteId: { in: clienteIds } },
       include: {
-        memberships: {
-          include: {
-            plan: true,
-            company: { select: { id: true, name: true, logoUrl: true, type: true } },
-            qrTokens: {
-              where: { activo: true },
-              take: 1,
-              select: { id: true, token: true },
-            },
-          },
-          orderBy: [{ estado: 'asc' }, { fechaVencimiento: 'desc' }],
-        },
+        plan: true,
+        company: { select: { id: true, name: true, logoUrl: true, type: true } },
       },
+      orderBy: [{ estado: 'asc' }, { fechaVencimiento: 'desc' }],
     })
 
-    return clientes
-      .flatMap((c) =>
-        c.memberships.map((m) => ({
-          id: m.id,
-          clienteId: c.id,
-          companyId: m.companyId,
-          company: m.company,
-          plan: {
-            id: m.plan.id,
-            nombre: m.plan.nombre,
-            precio: Number(m.plan.precio),
-            esIlimitado: m.plan.esIlimitado,
-          },
-          estado: m.estado,
-          fechaVencimiento: m.fechaVencimiento,
-          fechaInicio: m.fechaInicio,
-          lavadosRestantes: m.lavadosRestantes,
-          qrToken: m.qrTokens[0] || null,
-        }))
-      )
+    // QR activos por membresía — resiliente: si falla (drift de esquema), la
+    // lista sigue mostrándose sin QR en vez de romperse por completo.
+    const qrByMembership = new Map<string, { id: string; token: string }>()
+    try {
+      const qrs = await prisma.qrToken.findMany({
+        where: { membresiaId: { in: memberships.map((m) => m.id) }, activo: true },
+        select: { id: true, token: true, membresiaId: true },
+      })
+      for (const q of qrs) {
+        if (!qrByMembership.has(q.membresiaId)) {
+          qrByMembership.set(q.membresiaId, { id: q.id, token: q.token })
+        }
+      }
+    } catch (qrError) {
+      console.error('[getClienteAllMemberships] QR fetch failed (posible drift de esquema):', qrError)
+    }
+
+    return memberships
+      .map((m) => ({
+        id: m.id,
+        clienteId: m.clienteId,
+        companyId: m.companyId,
+        company: m.company,
+        plan: {
+          id: m.plan.id,
+          nombre: m.plan.nombre,
+          precio: Number(m.plan.precio),
+          esIlimitado: m.plan.esIlimitado,
+        },
+        estado: m.estado,
+        fechaVencimiento: m.fechaVencimiento,
+        fechaInicio: m.fechaInicio,
+        lavadosRestantes: m.lavadosRestantes,
+        qrToken: qrByMembership.get(m.id) ?? null,
+      }))
       .sort((a, b) => {
         const orden = {
           ACTIVA: 0,
