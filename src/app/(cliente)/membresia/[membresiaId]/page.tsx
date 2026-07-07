@@ -6,6 +6,7 @@ import { es } from 'date-fns/locale'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import Image from 'next/image'
+import { QRDisplay } from '@/components/qr/QRDisplay'
 
 export const metadata = {
   title: 'Detalles de Membresía',
@@ -38,8 +39,12 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
     notFound()
   }
 
-  // Verify ownership
-  if (membership.cliente.supabaseId !== user.supabaseId) {
+  // Verify ownership: por supabaseId o, como respaldo, por el clienteId de la
+  // sesión (consistente con getClienteAllMemberships).
+  const esPropietario =
+    membership.cliente.supabaseId === user.supabaseId ||
+    membership.cliente.id === user.metadata.clienteId
+  if (!esPropietario) {
     notFound()
   }
 
@@ -103,20 +108,24 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
       </div>
 
       {/* QR Section */}
-      {qrToken && (
+      {qrToken ? (
         <div className="border rounded-lg p-6 mb-8">
-          <h2 className="font-semibold mb-4">Tu Código QR</h2>
+          <h2 className="font-semibold mb-1">Tu Código QR</h2>
           <p className="text-sm text-muted-foreground mb-4">
-            Muestra este código en la empresa para acceder a tus servicios
+            Muestra este código en la empresa para acceder a tus servicios.
           </p>
-          <div className="text-center p-4 bg-muted rounded">
-            <code className="text-sm font-mono break-all">{qrToken.token}</code>
+          <div className="flex justify-center">
+            <QRDisplay token={qrToken.token} />
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Se actualiza cada vez que usas tu membresía
+          <p className="text-xs text-muted-foreground mt-4 text-center">
+            Por seguridad, el código se actualiza cada vez que usas tu membresía.
           </p>
         </div>
-      )}
+      ) : isActive ? (
+        <div className="border rounded-lg p-6 mb-8 text-center text-sm text-muted-foreground">
+          Tu código QR se está generando. Vuelve a cargar la página en un momento.
+        </div>
+      ) : null}
 
       {/* Beneficios */}
       {membership.plan.beneficios && membership.plan.beneficios.length > 0 && (
