@@ -234,14 +234,21 @@ model Promocion {
 
   // FASE 2: Marketplace fields
   slug          String?
-  tipo          String   @default("general") // "descuento" | "2x1" | "evento" | "general"
-  descuento     Int? // % si aplica
+  tipo          String   @default("general") // ver PROMO_TIPOS en src/lib/promociones.ts
+  descuento     Int? // % o monto fijo según tipo
   codigo        String? // Código cupón
   isFeatured    Boolean  @default(false)
   featuredOrder Int?
   viewCount     Int      @default(0)
   shareCount    Int      @default(0)
   tags          String[] @default([])
+
+  // F4.2: Promociones 2.0
+  visibilidad String  @default("publica") // "publica" (todo MembeGo) | "privada" (solo miembros)
+  maxCanjes   Int? // límite de canjes (null = ilimitado)
+  canjes      Int     @default(0)
+  prioridad   Int     @default(0) // mayor = primero en los listados
+  archivada   Boolean @default(false)
 
   guardadaPor PromocionGuardada[]
 

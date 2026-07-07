@@ -134,10 +134,18 @@ const PROMO_SELECT = {
 function promoVigente(now: Date) {
   return {
     activo: true,
+    archivada: false,
+    visibilidad: 'publica',
     vigenciaDesde: { lte: now },
     OR: [{ vigenciaHasta: null }, { vigenciaHasta: { gte: now } }],
     company: { isPublished: true, isActive: true },
   }
+}
+
+/** Como promoVigente, pero sin restringir visibilidad (para miembros). */
+function promoVigenteMiembro(now: Date) {
+  const { visibilidad: _v, ...rest } = promoVigente(now)
+  return rest
 }
 
 export interface PromoFeed {
@@ -165,22 +173,52 @@ export async function getPromoFeed(dbUserId: string): Promise<PromoFeed> {
   const en7dias = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
   const hace14dias = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
 
-  const follows = await prisma.companyFollow.findMany({
-    where: { userId: dbUserId },
-    select: { companyId: true, esFavorita: true },
-  })
+  const [follows, dbUser] = await Promise.all([
+    prisma.companyFollow.findMany({
+      where: { userId: dbUserId },
+      select: { companyId: true, esFavorita: true },
+    }),
+    prisma.user.findUnique({
+      where: { id: dbUserId },
+      select: { supabaseId: true },
+    }),
+  ])
   const seguidasIds = follows.map((f) => f.companyId)
   const favoritasIds = new Set(
     follows.filter((f) => f.esFavorita).map((f) => f.companyId)
   )
 
+  // Empresas donde es MIEMBRO (cuenta de cliente): ahí también ve privadas.
+  const miembroIds = dbUser
+    ? (
+        await prisma.cliente.findMany({
+          where: { supabaseId: dbUser.supabaseId },
+          select: { companyId: true },
+        })
+      ).map((c) => c.companyId)
+    : []
+
   const [seguidasRaw, destacadasRaw, nuevasRaw, expiranRaw, empresasRecomendadas] =
     await Promise.all([
       seguidasIds.length > 0
         ? prisma.promocion.findMany({
-            where: { ...promoVigente(now), companyId: { in: seguidasIds } },
+            where: {
+              ...promoVigenteMiembro(now),
+              companyId: { in: seguidasIds },
+              // Públicas de las seguidas + privadas solo donde es miembro.
+              AND: [
+                {
+                  OR: [
+                    { visibilidad: 'publica' },
+                    ...(miembroIds.length > 0
+                      ? [{ visibilidad: 'privada', companyId: { in: miembroIds } }]
+                      : []),
+                  ],
+                },
+              ],
+            },
             select: PROMO_SELECT,
-            orderBy: [{ isFeatured: 'desc' }, { publicadaEn: 'desc' }],
+            orderBy: [{ prioridad: 'desc' }, { isFeatured: 'desc' }, { publicadaEn: 'desc' }],
             take: 30,
           })
         : Promise.resolve([]),
