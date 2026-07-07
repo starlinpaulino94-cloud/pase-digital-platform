@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { prisma } from './prisma'
 import { SEED_COMPANIES } from './data/companies'
+import { BUSINESS_CATEGORIES } from './data/categories'
 
 /**
  * Seed idempotente de MembeGo: empresas, sucursal, métodos de pago, planes y
@@ -130,6 +131,20 @@ export async function runSeed(): Promise<SeedResult> {
   let plansCount = 0
   let usersCount = 0
   let clientesCount = 0
+
+  // 0. Categorías de negocio del marketplace (idempotente por slug)
+  for (const cat of BUSINESS_CATEGORIES) {
+    await prisma.businessCategory.upsert({
+      where: { slug: cat.slug },
+      update: { name: cat.name, icon: null, order: cat.order, active: true },
+      create: {
+        name: cat.name,
+        slug: cat.slug,
+        order: cat.order,
+      },
+    })
+  }
+  details.push(`Categorías: ${BUSINESS_CATEGORIES.length}`)
 
   // 1. Empresas + sucursal principal + método de pago + planes
   const companiesBySlug: Record<

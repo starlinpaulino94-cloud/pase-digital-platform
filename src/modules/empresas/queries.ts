@@ -1,5 +1,40 @@
 import { prisma } from '@/lib/prisma'
 
+export interface CategoryOption {
+  id: string
+  name: string
+  icon: string | null
+}
+
+/** Categorías de negocio activas para poblar selectores del panel. */
+export async function getActiveCategories(): Promise<CategoryOption[]> {
+  try {
+    const cats = await prisma.businessCategory.findMany({
+      where: { active: true },
+      orderBy: { order: 'asc' },
+      select: { id: true, name: true, icon: true },
+    })
+    return cats
+  } catch (e) {
+    console.error('[getActiveCategories]', e)
+    return []
+  }
+}
+
+/** IDs de las categorías asignadas a una empresa. */
+export async function getCompanyCategoryIds(companyId: string): Promise<string[]> {
+  try {
+    const rows = await prisma.companyToCategory.findMany({
+      where: { companyId },
+      select: { categoryId: true },
+    })
+    return rows.map((r) => r.categoryId)
+  } catch (e) {
+    console.error('[getCompanyCategoryIds]', e)
+    return []
+  }
+}
+
 export interface EmpresaListItem {
   id: string
   name: string

@@ -17,6 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  CategoryMultiSelect,
+  type CategoryOption,
+} from './CategoryMultiSelect'
 
 const init: ActionState = {}
 
@@ -34,7 +38,11 @@ function SubmitBtn() {
   )
 }
 
-export function EmpresaCreateForm() {
+export function EmpresaCreateForm({
+  categories,
+}: {
+  categories: CategoryOption[]
+}) {
   const router = useRouter()
   const [state, action] = useActionState(crearEmpresa, init)
 
@@ -106,6 +114,14 @@ export function EmpresaCreateForm() {
           <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="description">Descripción</Label>
             <Textarea id="description" name="description" rows={3} placeholder="Breve descripción de la empresa…" />
+          </div>
+
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Categorías del marketplace</Label>
+            <p className="text-xs text-muted-foreground">
+              Determinan en qué filtros del directorio público aparece la empresa.
+            </p>
+            <CategoryMultiSelect categories={categories} />
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
+import { getActiveCategories } from '@/modules/empresas/queries'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmpresaCreateForm } from '@/components/superadmin/EmpresaCreateForm'
 
@@ -8,6 +9,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function NuevaEmpresaPage() {
   await requireRole('SUPERADMIN')
+  const categories = await getActiveCategories()
 
   return (
     <div className="mx-auto max-w-2xl space-y-4 animate-fade-up">
@@ -23,7 +25,7 @@ export default async function NuevaEmpresaPage() {
           <CardTitle>Nueva empresa</CardTitle>
         </CardHeader>
         <CardContent>
-          <EmpresaCreateForm />
+          <EmpresaCreateForm categories={categories} />
         </CardContent>
       </Card>
     </div>

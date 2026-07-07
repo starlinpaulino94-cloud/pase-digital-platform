@@ -17,6 +17,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { LogoUpload } from './LogoUpload'
+import {
+  CategoryMultiSelect,
+  type CategoryOption,
+} from './CategoryMultiSelect'
 
 interface CompanyData {
   id: string
@@ -44,7 +48,15 @@ function SubmitBtn() {
   )
 }
 
-export function EmpresaEditForm({ company }: { company: CompanyData }) {
+export function EmpresaEditForm({
+  company,
+  categories,
+  selectedCategoryIds,
+}: {
+  company: CompanyData
+  categories: CategoryOption[]
+  selectedCategoryIds: string[]
+}) {
   const [state, action] = useActionState(actualizarEmpresa, init)
   const logoUrlRef = useRef<HTMLInputElement>(null)
 
@@ -129,6 +141,17 @@ export function EmpresaEditForm({ company }: { company: CompanyData }) {
         <div className="space-y-1.5 sm:col-span-2">
           <Label htmlFor="description">Descripción</Label>
           <Textarea id="description" name="description" rows={3} defaultValue={company.description ?? ''} placeholder="Breve descripción de la empresa…" />
+        </div>
+
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label>Categorías del marketplace</Label>
+          <p className="text-xs text-muted-foreground">
+            Determinan en qué filtros del directorio público aparece la empresa.
+          </p>
+          <CategoryMultiSelect
+            categories={categories}
+            defaultSelected={selectedCategoryIds}
+          />
         </div>
       </div>
 

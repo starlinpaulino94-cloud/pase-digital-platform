@@ -3,6 +3,10 @@ import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
 import { prisma } from '@/lib/prisma'
+import {
+  getActiveCategories,
+  getCompanyCategoryIds,
+} from '@/modules/empresas/queries'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EmpresaEditForm } from '@/components/superadmin/EmpresaEditForm'
 
@@ -18,6 +22,11 @@ export default async function EditarEmpresaPage({
 
   const company = await prisma.company.findUnique({ where: { id } })
   if (!company) notFound()
+
+  const [categories, selectedCategoryIds] = await Promise.all([
+    getActiveCategories(),
+    getCompanyCategoryIds(company.id),
+  ])
 
   return (
     <div className="mx-auto max-w-2xl space-y-4 animate-fade-up">
@@ -47,6 +56,8 @@ export default async function EditarEmpresaPage({
               categoria: company.categoria,
               website: company.website,
             }}
+            categories={categories}
+            selectedCategoryIds={selectedCategoryIds}
           />
         </CardContent>
       </Card>

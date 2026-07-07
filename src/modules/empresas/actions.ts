@@ -101,6 +101,21 @@ export async function crearEmpresa(
     })
     companyId = company.id
 
+    // Categorías de marketplace (relación many-to-many).
+    const categoryIds = formData
+      .getAll('categoryIds')
+      .map(String)
+      .filter(Boolean)
+    if (categoryIds.length > 0) {
+      await prisma.companyToCategory.createMany({
+        data: categoryIds.map((categoryId) => ({
+          companyId: company.id,
+          categoryId,
+        })),
+        skipDuplicates: true,
+      })
+    }
+
     // Usuario admin en Supabase Auth.
     const { data: created, error: createError } =
       await supabase.auth.admin.createUser({
@@ -135,6 +150,7 @@ export async function crearEmpresa(
     })
 
     revalidatePath('/superadmin/empresas')
+    revalidatePath('/empresas')
     return { success: true, message: `Empresa "${name}" creada con su administrador.` }
   } catch (e) {
     console.error('[empresa] crearEmpresa error:', e)
@@ -167,24 +183,45 @@ export async function actualizarEmpresa(
     const existing = await prisma.company.findUnique({ where: { id } })
     if (!existing) return { error: 'Empresa no encontrada.' }
 
-    await prisma.company.update({
-      where: { id },
-      data: {
-        name,
-        description: String(formData.get('description') ?? '').trim() || null,
-        type: String(formData.get('type') ?? existing.type),
-        email: String(formData.get('email') ?? '').trim() || null,
-        telefono: String(formData.get('telefono') ?? '').trim() || null,
-        direccion: String(formData.get('direccion') ?? '').trim() || null,
-        ciudad: String(formData.get('ciudad') ?? '').trim() || null,
-        categoria: String(formData.get('categoria') ?? '').trim() || null,
-        website: String(formData.get('website') ?? '').trim() || null,
-        logoUrl: String(formData.get('logoUrl') ?? '').trim() || null,
-      },
-    })
+    const categoryIds = formData
+      .getAll('categoryIds')
+      .map(String)
+      .filter(Boolean)
+
+    // Actualiza la empresa y re-sincroniza sus categorías atómicamente.
+    await prisma.$transaction([
+      prisma.company.update({
+        where: { id },
+        data: {
+          name,
+          description: String(formData.get('description') ?? '').trim() || null,
+          type: String(formData.get('type') ?? existing.type),
+          email: String(formData.get('email') ?? '').trim() || null,
+          telefono: String(formData.get('telefono') ?? '').trim() || null,
+          direccion: String(formData.get('direccion') ?? '').trim() || null,
+          ciudad: String(formData.get('ciudad') ?? '').trim() || null,
+          categoria: String(formData.get('categoria') ?? '').trim() || null,
+          website: String(formData.get('website') ?? '').trim() || null,
+          logoUrl: String(formData.get('logoUrl') ?? '').trim() || null,
+        },
+      }),
+      prisma.companyToCategory.deleteMany({ where: { companyId: id } }),
+      ...(categoryIds.length > 0
+        ? [
+            prisma.companyToCategory.createMany({
+              data: categoryIds.map((categoryId) => ({
+                companyId: id,
+                categoryId,
+              })),
+              skipDuplicates: true,
+            }),
+          ]
+        : []),
+    ])
 
     revalidatePath('/superadmin/empresas')
     revalidatePath(`/superadmin/empresas/${id}`)
+    revalidatePath('/empresas')
     return { success: true, message: 'Empresa actualizada.' }
   } catch (e) {
     console.error('[empresa]', e)

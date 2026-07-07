@@ -4,26 +4,35 @@ import { HeroSection } from '@/components/public/HeroSection'
 import { ValueProps } from '@/components/public/ValueProps'
 import { HowItWorks } from '@/components/public/HowItWorks'
 import { ForBusinessCTA } from '@/components/public/ForBusinessCTA'
+import { CategoriesSection } from '@/components/public/CategoriesSection'
 import { CompanyCard } from '@/components/public/CompanyCard'
 import { PromotionCard } from '@/components/public/PromotionCard'
 import {
   getFeaturedPromotions,
   getFeaturedCompanies,
   getRecentCompanies,
+  getCategoriesPublic,
   getPlatformStats,
 } from '@/modules/marketplace/queries'
 
 export const revalidate = 600
 
 export default async function HomePage() {
-  const [stats, promotions, featured] = await Promise.all([
-    getPlatformStats(),
-    getFeaturedPromotions(6),
-    getFeaturedCompanies(4),
-  ])
+  const [stats, promotions, featured, categories, recientes] =
+    await Promise.all([
+      getPlatformStats(),
+      getFeaturedPromotions(6),
+      getFeaturedCompanies(4),
+      getCategoriesPublic(),
+      getRecentCompanies(8),
+    ])
 
   // Si no hay destacadas, mostramos las más recientes para no dejar vacío.
-  const empresas = featured.length > 0 ? featured : await getRecentCompanies(4)
+  const empresas = featured.length > 0 ? featured : recientes.slice(0, 4)
+
+  // "Recién llegadas": las más nuevas que no estén ya en destacadas.
+  const featuredIds = new Set(featured.map((c) => c.id))
+  const nuevas = recientes.filter((c) => !featuredIds.has(c.id)).slice(0, 4)
 
   return (
     <>
@@ -59,9 +68,12 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* Explora por categoría */}
+      <CategoriesSection categories={categories} />
+
       {/* Promociones destacadas */}
       {promotions.length > 0 && (
-        <section className="bg-white py-16 sm:py-20">
+        <section className="bg-slate-50 py-16 sm:py-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mb-8 flex items-end justify-between gap-4">
               <div>
@@ -82,6 +94,35 @@ export default async function HomePage() {
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {promotions.map((p) => (
                 <PromotionCard key={p.id} promotion={p} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Recién llegadas */}
+      {nuevas.length > 0 && (
+        <section className="bg-white py-16 sm:py-20">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mb-8 flex items-end justify-between gap-4">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+                  Recién llegadas
+                </h2>
+                <p className="mt-2 text-slate-600">
+                  Las empresas más nuevas en MembeGo.
+                </p>
+              </div>
+              <Link
+                href="/empresas"
+                className="hidden items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 sm:inline-flex"
+              >
+                Ver todas <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {nuevas.map((c) => (
+                <CompanyCard key={c.id} company={c} />
               ))}
             </div>
           </div>
