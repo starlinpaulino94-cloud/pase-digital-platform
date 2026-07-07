@@ -61,7 +61,6 @@ export function CategoryTabs({ categories, isLoading = false }: CategoryTabsProp
               : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
           }`}
         >
-          {category.icon && <span>{category.icon}</span>}
           <span>{category.name}</span>
           {category.companyCount > 0 && (
             <span className="text-xs opacity-75">({category.companyCount})</span>

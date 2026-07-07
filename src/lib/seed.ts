@@ -136,11 +136,10 @@ export async function runSeed(): Promise<SeedResult> {
   for (const cat of BUSINESS_CATEGORIES) {
     await prisma.businessCategory.upsert({
       where: { slug: cat.slug },
-      update: { name: cat.name, icon: cat.icon, order: cat.order, active: true },
+      update: { name: cat.name, icon: null, order: cat.order, active: true },
       create: {
         name: cat.name,
         slug: cat.slug,
-        icon: cat.icon,
         order: cat.order,
       },
     })

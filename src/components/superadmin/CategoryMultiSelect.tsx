@@ -66,11 +66,7 @@ export function CategoryMultiSelect({
               onChange={() => toggle(c.id)}
               className="sr-only"
             />
-            {active ? (
-              <Check className="h-3.5 w-3.5" />
-            ) : c.icon ? (
-              <span>{c.icon}</span>
-            ) : null}
+            {active && <Check className="h-3.5 w-3.5" />}
             {c.name}
           </label>
         )
