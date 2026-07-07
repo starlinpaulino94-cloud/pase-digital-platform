@@ -6,6 +6,7 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import { logReferralEvent } from '@/lib/referidos'
 
 /**
  * Se llama cuando un cliente activa su primera membresía. Si fue referido,
@@ -26,6 +27,14 @@ export async function procesarReferidoCompletado(
     await prisma.referido.update({
       where: { id: referido.id },
       data: { estado: 'COMPLETADO', completadoEn: new Date() },
+    })
+
+    // Evento del embudo (+puntos) para el referente.
+    await logReferralEvent({
+      clienteId: referido.referenteClienteId,
+      companyId,
+      tipo: 'MEMBRESIA',
+      meta: { referidoClienteId: clienteId },
     })
 
     await prisma.auditLog.create({
@@ -148,4 +157,98 @@ export async function getClienteReferidos(clienteId: string) {
     include: { referidoCliente: { select: { nombre: true } } },
     orderBy: { createdAt: 'desc' },
   })
+}
+
+export interface ReferidosDashboard {
+  stats: {
+    compartidos: number
+    clicks: number
+    registros: number
+    membresias: number
+    conversionPct: number // membresías / clics
+    recompensas: number
+    puntos: number
+  }
+  historial: {
+    id: string
+    nombre: string
+    fecha: Date
+    estado: 'REGISTRADO' | 'MEMBRESIA_ACTIVA' | 'RECOMPENSA_ENTREGADA'
+  }[]
+  ranking: { posicion: number; nombre: string; puntos: number; esYo: boolean }[]
+  miPosicion: number | null
+}
+
+/**
+ * Panel completo de referidos del cliente: embudo (compartidos → clics →
+ * registros → membresías), puntos, historial con estados y ranking de la
+ * empresa (aislado por companyId). Server-only.
+ */
+export async function getReferidosDashboard(
+  clienteId: string,
+  companyId: string
+): Promise<ReferidosDashboard> {
+  const [eventos, referidos, topRaw] = await Promise.all([
+    prisma.referralEvent.groupBy({
+      by: ['tipo'],
+      where: { clienteId, companyId },
+      _count: { _all: true },
+      _sum: { puntos: true },
+    }),
+    prisma.referido.findMany({
+      where: { referenteClienteId: clienteId, companyId },
+      include: { referidoCliente: { select: { nombre: true } } },
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.referralEvent.groupBy({
+      by: ['clienteId'],
+      where: { companyId },
+      _sum: { puntos: true },
+      orderBy: { _sum: { puntos: 'desc' } },
+      take: 50,
+    }),
+  ])
+
+  const byTipo = new Map(eventos.map((e) => [e.tipo, e]))
+  const compartidos = byTipo.get('SHARE')?._count._all ?? 0
+  const clicks = byTipo.get('CLICK')?._count._all ?? 0
+  // Registros/membresías: la fuente autoritativa son las filas de Referido
+  // (los eventos existen para puntos/canales, pero pueden faltar en datos viejos).
+  const registros = referidos.length
+  const membresias = referidos.filter((r) => r.estado === 'COMPLETADO').length
+  const recompensas = referidos.filter((r) => r.recompensaAplicada).length
+  const puntos = eventos.reduce((acc, e) => acc + (e._sum.puntos ?? 0), 0)
+  const conversionPct = clicks > 0 ? Math.round((membresias / clicks) * 100) : 0
+
+  // Ranking de la empresa (top 5 + posición propia), con nombres.
+  const top5 = topRaw.slice(0, 5)
+  const nombres = await prisma.cliente.findMany({
+    where: { id: { in: top5.map((t) => t.clienteId) } },
+    select: { id: true, nombre: true },
+  })
+  const nombreDe = new Map(nombres.map((n) => [n.id, n.nombre]))
+  const ranking = top5.map((t, i) => ({
+    posicion: i + 1,
+    nombre: nombreDe.get(t.clienteId) ?? 'Cliente',
+    puntos: t._sum.puntos ?? 0,
+    esYo: t.clienteId === clienteId,
+  }))
+  const idx = topRaw.findIndex((t) => t.clienteId === clienteId)
+  const miPosicion = idx >= 0 ? idx + 1 : null
+
+  return {
+    stats: { compartidos, clicks, registros, membresias, conversionPct, recompensas, puntos },
+    historial: referidos.map((r) => ({
+      id: r.id,
+      nombre: r.referidoCliente.nombre,
+      fecha: r.createdAt,
+      estado: r.recompensaAplicada
+        ? 'RECOMPENSA_ENTREGADA'
+        : r.estado === 'COMPLETADO'
+          ? 'MEMBRESIA_ACTIVA'
+          : 'REGISTRADO',
+    })),
+    ranking,
+    miPosicion,
+  }
 }

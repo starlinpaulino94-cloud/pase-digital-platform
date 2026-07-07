@@ -164,6 +164,7 @@ model Company {
   tickets          SupportTicket[]
   categories       CompanyToCategory[]
   ratings          CompanyRating[]
+  referralEvents   ReferralEvent[]
 
   @@index([isPublished, isFeatured])
   @@index([ciudad, provincia])
@@ -275,6 +276,9 @@ model Cliente {
   fechaNacimiento DateTime?
   avatarUrl       String?
   codigoReferido  String    @unique @default(cuid())
+  // Código corto legible para el enlace /r/XXXXXX (se genera al visitar el
+  // panel de referidos; null hasta entonces).
+  codigoCorto     String?   @unique
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -284,6 +288,7 @@ model Cliente {
   visits          Visit[]
   referidosHechos Referido[]      @relation("Referente")
   referidoComo    Referido[]      @relation("Referido")
+  referralEvents  ReferralEvent[] @relation("ReferralEvents")
   tickets         SupportTicket[]
   ratings         CompanyRating[]
 
@@ -307,6 +312,33 @@ enum TipoRecompensa {
   LAVADOS_GRATIS
   DESCUENTO_PORCENTAJE
   DESCUENTO_MONTO
+}
+
+// Evento del programa de referidos: cada acción del embudo (compartir, clic,
+// registro, membresía) con sus puntos. Base de estadísticas, niveles y ranking.
+// Diseñado para extenderse (campañas, afiliados) vía canal/meta sin migrar.
+enum ReferralEventTipo {
+  SHARE // el referente compartió su enlace
+  CLICK // alguien abrió /r/[code]
+  REGISTRO // un referido creó cuenta
+  MEMBRESIA // el referido activó membresía
+}
+
+model ReferralEvent {
+  id        String            @id @default(cuid())
+  companyId String
+  company   Company           @relation(fields: [companyId], references: [id])
+  clienteId String // referente dueño del enlace
+  cliente   Cliente           @relation("ReferralEvents", fields: [clienteId], references: [id])
+  tipo      ReferralEventTipo
+  puntos    Int               @default(0)
+  canal     String? // native | whatsapp | copy | qr | telegram | ...
+  meta      Json              @default("{}") // dispositivo, campaña, referidoId...
+  createdAt DateTime          @default(now())
+
+  @@index([clienteId, companyId])
+  @@index([companyId, tipo, createdAt])
+  @@map("referral_events")
 }
 
 // Referido: vínculo entre quien invita y quien se registró con su código.

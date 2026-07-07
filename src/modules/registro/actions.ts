@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { ensureEmailIdentity } from '@/lib/supabase/identity'
 import { registerLimiter } from '@/lib/rate-limit'
 import { getRequestMeta } from '@/lib/server-utils'
+import { logReferralEvent } from '@/lib/referidos'
 
 export interface RegistroState {
   error?: string
@@ -23,12 +24,21 @@ async function vincularReferido(
       where: { codigoReferido: refCode },
     })
     if (!referente || referente.companyId !== companyId) return
+    // Anti-abuso: nadie puede referirse a sí mismo.
+    if (referente.id === referidoClienteId) return
     await prisma.referido.create({
       data: {
         companyId,
         referenteClienteId: referente.id,
         referidoClienteId,
       },
+    })
+    // Evento del embudo (+puntos) para el referente. Nunca rompe el registro.
+    await logReferralEvent({
+      clienteId: referente.id,
+      companyId,
+      tipo: 'REGISTRO',
+      meta: { referidoClienteId },
     })
   } catch (e) {
     console.error('[registro] vincularReferido error:', e)
