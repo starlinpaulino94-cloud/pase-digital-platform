@@ -1,0 +1,56 @@
+import { prisma } from '@/lib/prisma'
+import { roleLabel } from '@/components/layout/nav-config'
+import { AceptarInvitacionForm } from '@/components/onboarding/AceptarInvitacionForm'
+
+export const dynamic = 'force-dynamic'
+
+export default async function AceptarInvitacionPage({
+  params,
+}: {
+  params: Promise<{ token: string }>
+}) {
+  const { token } = await params
+  const invitacion = await prisma.invitacion
+    .findUnique({
+      where: { token },
+      include: { company: { select: { name: true } } },
+    })
+    .catch(() => null)
+
+  const invalida =
+    !invitacion ||
+    invitacion.estado !== 'PENDIENTE' ||
+    invitacion.expiraEn <= new Date()
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-5 py-10">
+      <div className="w-full max-w-md">
+        <div className="mb-6 flex items-center justify-center gap-2.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="MembeGo" width={32} height={32} className="rounded-lg" />
+          <span className="text-sm font-semibold tracking-tight text-slate-900">MembeGo</span>
+        </div>
+
+        {invalida || !invitacion ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+            <h1 className="text-lg font-bold text-slate-900">Invitación no válida</h1>
+            <p className="mt-2 text-sm text-slate-600">
+              Esta invitación no existe, ya fue usada o expiró. Pide a la empresa
+              que te envíe una nueva.
+            </p>
+            <a href="/login" className="mt-6 inline-block text-sm text-sky-600 hover:underline">
+              Ir a iniciar sesión
+            </a>
+          </div>
+        ) : (
+          <AceptarInvitacionForm
+            token={token}
+            email={invitacion.email}
+            empresa={invitacion.company.name}
+            rol={roleLabel(invitacion.rol)}
+          />
+        )}
+      </div>
+    </div>
+  )
+}

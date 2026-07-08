@@ -76,6 +76,13 @@ enum MetodoPagoTipo {
   PRESENCIAL
 }
 
+enum InvitacionEstado {
+  PENDIENTE
+  ACEPTADA
+  CANCELADA
+  EXPIRADA
+}
+
 enum AuditAccion {
   VISITA_CONFIRMADA
   PAGO_APROBADO
@@ -189,6 +196,7 @@ model Company {
   followers        CompanyFollow[]
   posts            CompanyPost[]
   campanas         Campana[]
+  invitaciones     Invitacion[]
 
   @@index([isPublished, isFeatured])
   @@index([ciudad, provincia])
@@ -307,6 +315,27 @@ model Plan {
 
   @@index([companyId])
   @@map("plans")
+}
+
+// Invitación de un miembro al equipo de una empresa (Onboarding Fase 2C).
+// El invitado abre el enlace del correo, crea su cuenta y se une con el rol
+// asignado. No bloquea la publicación (el equipo puede armarse más tarde).
+model Invitacion {
+  id          String           @id @default(cuid())
+  companyId   String
+  company     Company          @relation(fields: [companyId], references: [id])
+  email       String
+  rol         AppRole
+  token       String           @unique @default(cuid())
+  estado      InvitacionEstado @default(PENDIENTE)
+  invitadoPor String? // userId de quien invitó
+  expiraEn    DateTime
+  aceptadaEn  DateTime?
+  createdAt   DateTime         @default(now())
+
+  @@index([companyId, estado])
+  @@index([email])
+  @@map("invitaciones")
 }
 
 model Cliente {

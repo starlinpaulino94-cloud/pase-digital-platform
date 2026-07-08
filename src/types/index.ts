@@ -81,6 +81,18 @@ export const FULL_ADMIN_ROLES: AppRole[] = [
   'ADMIN_EMPRESA', // legacy
 ]
 
+// Roles que un administrador puede asignar al invitar a un miembro del equipo
+// (Onboarding Fase 2C). Excluye SUPERADMIN, CLIENTE y el legacy ADMIN_EMPRESA.
+export const INVITABLE_ROLES: AppRole[] = [
+  'ADMINISTRADOR',
+  'GERENTE',
+  'CAJERO',
+  'RECEPCION',
+  'MARKETING',
+  'SUPERVISOR',
+  'EMPLEADO',
+]
+
 // Roles que pueden acceder al escáner /empleado/*
 export const SCANNER_ROLES: AppRole[] = [
   'SUPERADMIN',

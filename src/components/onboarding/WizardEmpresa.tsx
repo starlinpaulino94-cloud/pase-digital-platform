@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { CheckCircle2, ArrowRight, Rocket, PartyPopper } from 'lucide-react'
+import { CheckCircle2, ArrowRight, Rocket, PartyPopper, Users } from 'lucide-react'
 import type { OnboardingEmpresa } from '@/modules/empresas/onboarding'
 import { Button } from '@/components/ui/button'
 import { PublicarEmpresaButton } from '@/components/admin/PublicarEmpresaButton'
@@ -123,6 +123,26 @@ export function WizardEmpresa({
           )
         })}
       </ol>
+
+      {/* Paso opcional: equipo (no bloquea la publicación) */}
+      <div className="rounded-xl border border-slate-200 bg-white p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Users className="h-5 w-5 shrink-0 text-slate-400" />
+            <div>
+              <p className="text-sm font-medium text-slate-800">Invitar a tu equipo</p>
+              <p className="text-xs text-slate-500">
+                Opcional · puedes hacerlo ahora o más tarde
+              </p>
+            </div>
+          </div>
+          <Link href="/admin/empleados">
+            <Button size="sm" variant="outline" className="gap-1 text-xs">
+              Invitar <ArrowRight className="h-3 w-3" />
+            </Button>
+          </Link>
+        </div>
+      </div>
 
       {/* Publicación */}
       <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-5">
