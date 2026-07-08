@@ -48,7 +48,8 @@ export function AvatarUpload({ clienteId, currentUrl, nombre, onUploaded }: Prop
       setPreview(url)
       onUploaded(data.publicUrl)
       toast.success('Foto actualizada.')
-    } catch {
+    } catch (err) {
+      console.error('[avatar-upload]', err)
       toast.error('No se pudo subir la imagen. Intenta de nuevo.')
     } finally {
       setUploading(false)
