@@ -129,7 +129,7 @@ Orden pensado para entregar primero lo que desbloquea producción (cumplimiento)
 | 6 | Login social (O-16) | **Solo Google al inicio** | Configurar el proveedor Google en Supabase, `signInWithOAuth`, callback y mapeo a `app_metadata` (rol CLIENTE). Apple/Facebook después, sin rehacer. |
 
 ### Sub-decisiones abiertas (no bloquean el arranque)
-- **Cupón global — financiación (Decisión 3):** ¿lo asume MembeGo o se descuenta a la empresa? Necesario antes de la Fase 4, no antes.
+- **Cupón — financiación (Decisión 3): RESUELTA (implementación).** Se implementó como **beneficio por empresa, opt-in**: cada empresa decide si ofrece descuento de bienvenida (porcentaje o monto) y lo financia ella. Configurable en /admin/planes; aplica una sola vez, en el primer pago de membresía del cliente. Un cupón global de MembeGo puede añadirse después sin rehacer.
 - **Google OAuth (Decisión 6):** hará falta una cuenta de Google Cloud con credenciales OAuth configuradas; necesario solo al llegar a la Fase 5.
 
 ---
