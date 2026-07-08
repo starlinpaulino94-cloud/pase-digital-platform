@@ -87,6 +87,13 @@ export async function GET(request: NextRequest) {
 
   switch (result.kind) {
     case 'ok': {
+      // El JWT se acuñó en exchangeCodeForSession ANTES de fijar el
+      // app_metadata (role/clienteId/companyId). Refrescamos para que la
+      // sesión ya lleve esos claims; si no, el middleware vería un rol/empresa
+      // vacíos en la primera navegación tras el alta.
+      await supabase.auth.refreshSession().catch((e) =>
+        console.error('[auth/callback] refreshSession falló:', e)
+      )
       const home = NextResponse.redirect(new URL(result.dest, appUrl))
       carrier.cookies.getAll().forEach((c) => home.cookies.set(c))
       return home
