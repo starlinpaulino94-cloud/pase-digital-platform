@@ -16,6 +16,8 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
+import { isGoogleAuthEnabled } from '@/lib/auth/googleAuth'
 
 const initial: RegistroState = {}
 
@@ -208,6 +210,27 @@ export function RegisterForm({
               Crear cuenta
             </Button>
           </form>
+          {isGoogleAuthEnabled() && (
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center gap-3 text-xs text-slate-500">
+                <span className="h-px flex-1 bg-white/10" />
+                o
+                <span className="h-px flex-1 bg-white/10" />
+              </div>
+              <GoogleSignInButton companySlug={companySlug} refCode={refCode || null} />
+              <p className="text-center text-xs text-slate-500">
+                Al continuar con Google aceptas los{' '}
+                <a href="/terms" target="_blank" className="text-sky-400 hover:underline">
+                  términos
+                </a>{' '}
+                y la{' '}
+                <a href="/privacy" target="_blank" className="text-sky-400 hover:underline">
+                  política de privacidad
+                </a>
+                .
+              </p>
+            </div>
+          )}
           <p className="mt-4 text-center text-sm text-slate-400">
             ¿Ya tienes cuenta?{' '}
             <a href="/login" className="text-sky-400 hover:underline">
