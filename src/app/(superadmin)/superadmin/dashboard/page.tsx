@@ -11,23 +11,34 @@ export const dynamic = 'force-dynamic'
 export default async function SuperadminDashboard() {
   await requireRole('SUPERADMIN')
 
-  const companies = await prisma.company.findMany({
-    orderBy: { name: 'asc' },
-    select: {
-      id: true, name: true, slug: true, type: true, isActive: true,
-      _count: { select: { clientes: true, plans: true } },
-    },
-  })
+  // 3 queries totales (antes 1 + 2 por empresa): los conteos de membresías
+  // salen de un solo groupBy por companyId/estado.
+  const [companies, membershipCounts] = await Promise.all([
+    prisma.company.findMany({
+      orderBy: { name: 'asc' },
+      select: {
+        id: true, name: true, slug: true, type: true, isActive: true,
+        _count: { select: { clientes: true, plans: true } },
+      },
+    }),
+    prisma.membership
+      .groupBy({
+        by: ['companyId', 'estado'],
+        where: { estado: { in: ['ACTIVA', 'PENDIENTE_PAGO'] } },
+        _count: { _all: true },
+      })
+      .catch(() => []),
+  ])
 
-  const perCompany = await Promise.all(
-    companies.map(async (c) => {
-      const [activas, pendientes] = await Promise.all([
-        prisma.membership.count({ where: { estado: 'ACTIVA', cliente: { companyId: c.id } } }).catch(() => 0),
-        prisma.membership.count({ where: { estado: 'PENDIENTE_PAGO', cliente: { companyId: c.id } } }).catch(() => 0),
-      ])
-      return { ...c, activas, pendientes }
-    })
-  )
+  const countFor = (companyId: string, estado: string) =>
+    membershipCounts.find((g) => g.companyId === companyId && g.estado === estado)
+      ?._count._all ?? 0
+
+  const perCompany = companies.map((c) => ({
+    ...c,
+    activas: countFor(c.id, 'ACTIVA'),
+    pendientes: countFor(c.id, 'PENDIENTE_PAGO'),
+  }))
 
   const totalClientes = perCompany.reduce((s, c) => s + c._count.clientes, 0)
   const totalActivas = perCompany.reduce((s, c) => s + c.activas, 0)

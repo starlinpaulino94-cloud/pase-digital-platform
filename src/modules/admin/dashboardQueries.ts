@@ -37,6 +37,8 @@ export async function getDashboardEjecutivo(
   inicioHoy.setHours(0, 0, 0, 0)
   const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1)
 
+  // Dos lotes de ≤8 queries (antes 16 en un solo Promise.all, que exigía
+  // 16 conexiones simultáneas del pool por cada carga del dashboard).
   const [
     clientesTotal,
     clientesNuevos30d,
@@ -46,14 +48,6 @@ export async function getDashboardEjecutivo(
     seguidores,
     nuevosSeguidores30d,
     referidosCompletados,
-    promosActivas,
-    activasConPlan,
-    visitasHoy,
-    visitasMes,
-    clientesEnRiesgo,
-    visitasRecientes,
-    topPromosRaw,
-    actividadRaw,
   ] = await Promise.all([
     prisma.cliente.count({ where: { companyId } }),
     prisma.cliente.count({ where: { companyId, createdAt: { gte: hace30dias } } }),
@@ -73,12 +67,27 @@ export async function getDashboardEjecutivo(
       where: { companyId, createdAt: { gte: hace30dias } },
     }),
     prisma.referido.count({ where: { companyId, estado: 'COMPLETADO' } }),
+  ])
+
+  const [
+    promosActivas,
+    activasPorPlanGrupos,
+    visitasHoy,
+    visitasMes,
+    clientesEnRiesgo,
+    visitasPorDiaRaw,
+    topPromosRaw,
+    actividadRaw,
+  ] = await Promise.all([
     prisma.promocion.count({
       where: { companyId, activo: true, archivada: false },
     }),
-    prisma.membership.findMany({
+    // Agregado en BD: antes se cargaban TODAS las membresías activas (con
+    // su plan) solo para sumar precios en memoria.
+    prisma.membership.groupBy({
+      by: ['planId'],
       where: { companyId, estado: 'ACTIVA' },
-      select: { plan: { select: { precio: true } } },
+      _count: { _all: true },
     }),
     prisma.visit.count({
       where: { cliente: { companyId }, fechaVisita: { gte: inicioHoy } },
@@ -93,10 +102,15 @@ export async function getDashboardEjecutivo(
         visits: { none: { fechaVisita: { gte: hace30dias } } },
       },
     }),
-    prisma.visit.findMany({
-      where: { cliente: { companyId }, fechaVisita: { gte: hace14dias } },
-      select: { fechaVisita: true },
-    }),
+    // Agrupación por día en la BD: antes se traían todas las visitas de 14
+    // días (filas crudas, sin límite) para agruparlas en JS.
+    prisma.$queryRaw<{ dia: Date; total: number }[]>`
+      SELECT date_trunc('day', v."fechaVisita") AS dia, COUNT(*)::int AS total
+      FROM "visits" v
+      JOIN "clientes" c ON c."id" = v."clienteId"
+      WHERE c."companyId" = ${companyId} AND v."fechaVisita" >= ${hace14dias}
+      GROUP BY 1
+    `.catch(() => [] as { dia: Date; total: number }[]),
     prisma.promocion.findMany({
       where: { companyId, archivada: false },
       select: {
@@ -122,20 +136,29 @@ export async function getDashboardEjecutivo(
     }),
   ])
 
-  const ingresosEstimadosMes = activasConPlan.reduce(
-    (s, m) => s + Number(m.plan.precio),
-    0
-  )
+  // Ingresos estimados = Σ (membresías activas por plan × precio del plan).
+  let ingresosEstimadosMes = 0
+  if (activasPorPlanGrupos.length > 0) {
+    const precios = await prisma.plan.findMany({
+      where: { id: { in: activasPorPlanGrupos.map((g) => g.planId) } },
+      select: { id: true, precio: true },
+    })
+    const precioDe = new Map(precios.map((p) => [p.id, Number(p.precio)]))
+    ingresosEstimadosMes = activasPorPlanGrupos.reduce(
+      (s, g) => s + g._count._all * (precioDe.get(g.planId) ?? 0),
+      0
+    )
+  }
 
-  // Visitas agrupadas por día (14 días).
+  // Visitas agrupadas por día (14 días), rellenando días sin visitas.
   const porDia = new Map<string, number>()
   for (let i = 13; i >= 0; i--) {
     const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
     porDia.set(d.toISOString().slice(0, 10), 0)
   }
-  for (const v of visitasRecientes) {
-    const key = new Date(v.fechaVisita).toISOString().slice(0, 10)
-    if (porDia.has(key)) porDia.set(key, (porDia.get(key) ?? 0) + 1)
+  for (const row of visitasPorDiaRaw) {
+    const key = new Date(row.dia).toISOString().slice(0, 10)
+    if (porDia.has(key)) porDia.set(key, (porDia.get(key) ?? 0) + row.total)
   }
   const visitasPorDia = [...porDia.entries()].map(([fecha, total]) => ({
     fecha,

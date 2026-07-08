@@ -85,53 +85,64 @@ export async function listEmpresas(): Promise<EmpresaListItem[]> {
     },
   })
 
-  const enriched = await Promise.all(
-    companies.map(async (c) => {
-      let activas = 0
-      let ingresos = 0
-      let ultimaActividad: Date | null = null
-      let sucursalesCount = 0
-      let promocionesCount = 0
-
-      try {
-        activas = await prisma.membership.count({
-          where: { estado: 'ACTIVA', cliente: { companyId: c.id } },
+  // Agregaciones globales por companyId en 5 queries fijas (antes 5 queries
+  // POR empresa). Cada bloque conserva su fallback ante drift de esquema.
+  const [activasGrupos, ingresosGrupos, actividadGrupos, sucursalesGrupos, promocionesGrupos] =
+    await Promise.all([
+      prisma.membership
+        .groupBy({
+          by: ['companyId'],
+          where: { estado: 'ACTIVA' },
+          _count: { _all: true },
         })
-      } catch (e) {
-        console.error('[empresas] Error counting active memberships:', e)
-      }
-
-      try {
-        const agg = await prisma.membership.aggregate({
-          where: {
-            cliente: { companyId: c.id },
-            montoPagado: { not: null },
-          },
+        .catch((e) => {
+          console.error('[empresas] Error counting active memberships:', e)
+          return []
+        }),
+      prisma.membership
+        .groupBy({
+          by: ['companyId'],
+          where: { montoPagado: { not: null } },
           _sum: { montoPagado: true },
         })
-        ingresos = Number(agg._sum.montoPagado ?? 0)
-      } catch (e) {
-        console.error('[empresas] Error aggregating ingresos:', e)
-      }
-
-      try {
-        const log = await prisma.auditLog.findFirst({
-          where: { companyId: c.id },
-          orderBy: { createdAt: 'desc' },
-          select: { createdAt: true },
+        .catch((e) => {
+          console.error('[empresas] Error aggregating ingresos:', e)
+          return []
+        }),
+      prisma.auditLog
+        .groupBy({
+          by: ['companyId'],
+          where: { companyId: { not: null } },
+          _max: { createdAt: true },
         })
-        ultimaActividad = log?.createdAt ?? null
-      } catch (e) {
-        console.error('[empresas] Error getting ultima actividad:', e)
-      }
+        .catch((e) => {
+          console.error('[empresas] Error getting ultima actividad:', e)
+          return []
+        }),
+      prisma.sucursal
+        .groupBy({ by: ['companyId'], _count: { _all: true } })
+        .catch(() => []),
+      prisma.promocion
+        .groupBy({ by: ['companyId'], _count: { _all: true } })
+        .catch(() => []),
+    ])
 
-      try {
-        sucursalesCount = await prisma.sucursal.count({ where: { companyId: c.id } })
-      } catch {}
+  const activasDe = new Map(activasGrupos.map((g) => [g.companyId, g._count._all]))
+  const ingresosDe = new Map(
+    ingresosGrupos.map((g) => [g.companyId, Number(g._sum.montoPagado ?? 0)])
+  )
+  const actividadDe = new Map(
+    actividadGrupos.map((g) => [g.companyId, g._max.createdAt ?? null])
+  )
+  const sucursalesDe = new Map(sucursalesGrupos.map((g) => [g.companyId, g._count._all]))
+  const promocionesDe = new Map(promocionesGrupos.map((g) => [g.companyId, g._count._all]))
 
-      try {
-        promocionesCount = await prisma.promocion.count({ where: { companyId: c.id } })
-      } catch {}
+  const enriched = companies.map((c) => {
+      const activas = activasDe.get(c.id) ?? 0
+      const ingresos = ingresosDe.get(c.id) ?? 0
+      const ultimaActividad = actividadDe.get(c.id) ?? null
+      const sucursalesCount = sucursalesDe.get(c.id) ?? 0
+      const promocionesCount = promocionesDe.get(c.id) ?? 0
 
       return {
         id: c.id,
@@ -160,8 +171,7 @@ export async function listEmpresas(): Promise<EmpresaListItem[]> {
         _ingresos: ingresos,
         _ultimaActividad: ultimaActividad,
       }
-    })
-  )
+  })
 
   return enriched
 }

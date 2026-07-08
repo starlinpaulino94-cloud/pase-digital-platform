@@ -196,6 +196,7 @@ model Sucursal {
 
   visits Visit[]
 
+  @@index([companyId])
   @@map("sucursales")
 }
 
@@ -216,6 +217,7 @@ model MetodoPago {
 
   memberships Membership[]
 
+  @@index([companyId])
   @@map("metodos_pago")
 }
 
@@ -261,6 +263,9 @@ model Promocion {
   @@index([isFeatured, vigenciaHasta])
   @@index([tipo])
   @@index([createdAt])
+  // Feed público de promociones: filtra sin companyId por estado de
+  // publicación; sin este índice cada carga del feed escanea la tabla.
+  @@index([activo, archivada, visibilidad, publicadaEn])
   @@map("promociones")
 }
 
@@ -286,6 +291,7 @@ model Plan {
   memberships            Membership[]
   membershipsSolicitadas Membership[] @relation("PlanSolicitado")
 
+  @@index([companyId])
   @@map("plans")
 }
 
@@ -537,6 +543,11 @@ model Membership {
   @@index([estado])
   @@index([clienteId])
   @@index([companyId])
+  // Conteos por plan (reportes, borrado seguro de planes).
+  @@index([planId])
+  // Patrón caliente de dashboards y automatizaciones: membresías de una
+  // empresa por estado y vencimiento (activas, por vencer, pendientes).
+  @@index([companyId, estado, fechaVencimiento])
   @@map("memberships")
 }
 
@@ -583,6 +594,8 @@ model Visit {
   @@index([clienteId])
   @@index([membershipId])
   @@index([fechaVisita])
+  @@index([vehiculoId])
+  @@index([sucursalId])
   @@map("visits")
 }
 
@@ -600,6 +613,7 @@ model Comprobante {
   creadoPor       User?      @relation(fields: [creadoPorId], references: [id])
   createdAt       DateTime   @default(now())
 
+  @@index([membershipId])
   @@map("comprobantes")
 }
 

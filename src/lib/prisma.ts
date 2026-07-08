@@ -10,4 +10,7 @@ export const prisma =
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   })
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+// Reutilizar el cliente también en producción: si el bundler evalúa este
+// módulo más de una vez (chunks/workers), cada evaluación abriría un pool
+// de conexiones propio contra el pooler de Supabase.
+globalForPrisma.prisma = prisma
