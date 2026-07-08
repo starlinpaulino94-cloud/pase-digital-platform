@@ -115,3 +115,31 @@ Orden diseñado para atacar primero las causas raíz con mínimo riesgo, validan
 | **Validación** | Build + lint + smoke de flujos por rol tras cada etapa; al final batería completa (login por rol, membresías, QR/scanner, pagos, referidos, promociones, dashboards, notificaciones, historial, perfil, marketplace) | Plataforma estable en sesiones largas | 0.5 día |
 
 **Regla acordada:** cada corrección se valida antes de pasar a la siguiente. Nada de features nuevas, pantallas nuevas ni cambios de diseño.
+
+---
+
+## 5. Estado de ejecución (implementado)
+
+Todas las etapas fueron implementadas, revisadas con una auditoría adversarial de código (8 ángulos) y validadas con `prisma validate` + `tsc --noEmit` + `eslint` + `next build` (compilación y generación de las 60+ rutas) en verde tras cada commit.
+
+| Etapa | Commit | Contenido |
+|-------|--------|-----------|
+| 1 · Núcleo auth | `4ae3c18` | P0-1, P0-2a (React.cache), P0-3, P1-1, P1-2, P2-7, P2-8 |
+| 2 · Pool y N+1 | `c65f520` | P0-4, P1-3, P1-4, P1-5, P1-6, P2-1 (migración de índices), P2-2 |
+| 3 · Amplificadores | `d3bc534` | P1-7, P1-8, P1-10 (+`vercel.json`), P2-4, P2-9, P2-10 |
+| 4 · Higiene | `2749fdd` | P2-3, P2-5, P2-6, P3-1..P3-5 |
+| 5 · Fixes de code-review | `7d35c7e` | Seguridad (fallback getSession), TOCTOU+auditoría en confirmarVisita, tz del dashboard, error state de pagos, companyId en automatizaciones |
+
+### Nota de seguridad importante (Etapa 5)
+
+La primera versión de la Etapa 1 introdujo un fallback a `getSession()` en errores transitorios que decodificaba el JWT de la cookie **sin verificar la firma** y lo usaba para autorización de rol. La auditoría de código lo detectó (escalada de privilegios durante un 429/outage) y se corrigió: `getUser()` ahora **reintenta** la validación con firma verificada y el middleware hace fail-closed; nunca se autoriza sobre un token sin verificar.
+
+## 6. Validación pendiente en tu entorno (requiere BD + Supabase)
+
+Este contenedor no tiene base de datos ni credenciales, así que la validación runtime debe hacerse con `.env` de staging apuntando a una BD real:
+
+1. **Aplicar la migración de índices**: `bun run db:migrate:deploy` (aplica `20260718_add_stability_indexes`). Es aditiva e idempotente.
+2. **Configurar en Vercel** `DATABASE_URL` con `pgbouncer=true&connection_limit=1&pool_timeout=20`.
+3. **Batería de humo por rol** (login → navegar cada módulo): cliente (membresías, historial, referidos, promociones, perfil, pagos), empresa/admin (dashboard, clientes, pagos, planes, empleados, reportes, automatizaciones, notificaciones), empleado (scanner: confirmar visita, verificar descuento de saldo y QR de un solo uso), superadmin (dashboard, empresas, reportes), marketplace y landing pública.
+4. **Prueba de sesión larga**: mantener la app abierta y navegando 20-30 min con varias cuentas simultáneas; confirmar que no hay degradación ni expulsiones a `/login`.
+5. **Confirmar el cron**: `vercel.json` programa `/api/cron/automatizaciones` a las 09:00 UTC; verificar en el dashboard de Vercel que el cron quedó registrado tras el deploy.
