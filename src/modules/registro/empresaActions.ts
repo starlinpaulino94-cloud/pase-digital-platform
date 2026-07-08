@@ -6,6 +6,7 @@ import { ensureEmailIdentity } from '@/lib/supabase/identity'
 import { registerLimiter } from '@/lib/rate-limit'
 import { getRequestMeta } from '@/lib/server-utils'
 import { TERMS_VERSION } from '@/lib/legal'
+import { isEmailVerificationEnabled, sendVerificationEmail } from '@/lib/auth/emailVerification'
 
 // F5.1: registro self-service de empresas (B2B). La empresa se crea
 // DESPUBLICADA (isPublished: false): no aparece en el marketplace hasta
@@ -14,6 +15,8 @@ import { TERMS_VERSION } from '@/lib/legal'
 export interface RegistroEmpresaState {
   error?: string
   success?: boolean
+  /** Cuenta creada pero pendiente de confirmar el correo (flag O-1). */
+  pendingVerification?: boolean
 }
 
 function slugify(input: string): string {
@@ -91,11 +94,13 @@ export async function registrarEmpresa(
     })
     companyId = company.id
 
+    const verificarCorreo = isEmailVerificationEnabled()
     const { data: created, error: createError } =
       await supabase.auth.admin.createUser({
         email,
         password,
-        email_confirm: true,
+        // Con verificación activada la cuenta nace SIN confirmar.
+        email_confirm: !verificarCorreo,
         user_metadata: { name: nombrePropietario },
       })
     if (createError || !created.user) {
@@ -128,6 +133,10 @@ export async function registrarEmpresa(
       },
     })
 
+    if (verificarCorreo) {
+      await sendVerificationEmail(supabase, email, nombrePropietario)
+      return { pendingVerification: true }
+    }
     return { success: true }
   } catch (e) {
     console.error('[registro-empresa]', e)

@@ -47,11 +47,18 @@ export function RegisterForm({
   const [state, formAction, pending] = useActionState(registrarCliente, initial)
 
   useEffect(() => {
+    if (state.pendingVerification) {
+      toast.success(
+        'Te enviamos un enlace de confirmación a tu correo. Ábrelo para activar tu cuenta.'
+      )
+      router.replace('/login?verifica=1')
+      return
+    }
     if (state.success) {
       toast.success('Cuenta creada. Inicia sesión para continuar.')
       router.replace('/login?redirect=/cliente/membresia')
     }
-  }, [state.success, router])
+  }, [state.success, state.pendingVerification, router])
 
   return (
     <div className="space-y-6">

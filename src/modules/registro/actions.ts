@@ -8,10 +8,13 @@ import { registerLimiter } from '@/lib/rate-limit'
 import { getRequestMeta } from '@/lib/server-utils'
 import { logReferralEvent, hashIp, REF_COOKIE } from '@/lib/referidos'
 import { TERMS_VERSION } from '@/lib/legal'
+import { isEmailVerificationEnabled, sendVerificationEmail } from '@/lib/auth/emailVerification'
 
 export interface RegistroState {
   error?: string
   success?: boolean
+  /** Cuenta creada pero pendiente de confirmar el correo (flag O-1). */
+  pendingVerification?: boolean
 }
 
 /**
@@ -243,11 +246,14 @@ export async function registrarCliente(
   }
 
   // 1. Create Supabase auth user
+  const verificarCorreo = isEmailVerificationEnabled()
   const { data: created, error: createError } =
     await admin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,
+      // Con verificación activada la cuenta nace SIN confirmar; el usuario la
+      // activa desde el enlace del correo. Sin el flag, se confirma al vuelo.
+      email_confirm: !verificarCorreo,
       user_metadata: { name: nombre },
     })
 
@@ -331,6 +337,10 @@ export async function registrarCliente(
 
     await vincularReferido(refCode, company.id, result.cliente.id, ipAddress)
 
+    if (verificarCorreo) {
+      await sendVerificationEmail(admin, email, nombre)
+      return { pendingVerification: true }
+    }
     return { success: true }
   } catch (e) {
     // Roll back the Supabase user if DB write failed

@@ -94,6 +94,11 @@ export function LoginForm({
     router.refresh()
   }, [email, password, searchParams, router])
 
+  // Avisos del flujo de verificación de correo (Fase 1 · O-1).
+  const verificaPendiente = searchParams.get('verifica') === '1'
+  const verificado = searchParams.get('verificado') === '1'
+  const errorVerify = searchParams.get('error') === 'verify'
+
   return (
     <Card className="border-white/10 bg-white/5 text-white">
       <CardHeader>
@@ -107,6 +112,29 @@ export function LoginForm({
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {verificaPendiente && (
+          <Alert className="mb-4 border-sky-500/40 bg-sky-500/10 text-sky-100">
+            <AlertDescription>
+              Te enviamos un enlace de confirmación a tu correo. Ábrelo (revisa
+              también spam) para activar tu cuenta y luego inicia sesión.
+            </AlertDescription>
+          </Alert>
+        )}
+        {verificado && (
+          <Alert className="mb-4 border-green-500/40 bg-green-500/10 text-green-100">
+            <AlertDescription>
+              Correo confirmado. Ya puedes iniciar sesión.
+            </AlertDescription>
+          </Alert>
+        )}
+        {errorVerify && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>
+              El enlace de confirmación no es válido o expiró. Intenta
+              registrarte de nuevo o solicita uno nuevo.
+            </AlertDescription>
+          </Alert>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <Alert variant="destructive">

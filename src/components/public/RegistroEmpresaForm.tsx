@@ -36,11 +36,18 @@ export function RegistroEmpresaForm() {
   const [state, action, pending] = useActionState(registrarEmpresa, init)
 
   useEffect(() => {
+    if (state.pendingVerification) {
+      toast.success(
+        'Te enviamos un enlace de confirmación a tu correo. Ábrelo para activar tu empresa.'
+      )
+      router.push('/login?verifica=1')
+      return
+    }
     if (state.success) {
       toast.success('¡Empresa registrada! Inicia sesión para configurar tu perfil.')
       router.push('/login?registered=empresa')
     }
-  }, [state.success, router])
+  }, [state.success, state.pendingVerification, router])
 
   return (
     <form action={action} className="space-y-5">
