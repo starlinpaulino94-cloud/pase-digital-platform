@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2, CheckCircle2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { registrarCliente, type RegistroState } from '@/modules/registro/actions'
 import { Button } from '@/components/ui/button'
@@ -17,29 +17,16 @@ import {
 } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
-interface Plan {
-  id: string
-  nombre: string
-  precio: number
-  lavadosIncluidos: number
-  esIlimitado: boolean
-  descripcion: string | null
-  beneficios: string[]
-  vigenciaDias: number
-}
-
 const initial: RegistroState = {}
 
 export function RegisterForm({
   companySlug,
   companyName,
   isCarwash,
-  plans = [],
 }: {
   companySlug: string
   companyName: string
   isCarwash: boolean
-  plans?: Plan[]
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -55,49 +42,6 @@ export function RegisterForm({
 
   return (
     <div className="space-y-6">
-      {/* Plans preview */}
-      {plans.length > 0 && (
-        <div className="space-y-3">
-          <p className="text-center text-sm font-medium text-slate-300">
-            Planes disponibles en {companyName}
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {plans.map((plan) => (
-              <div
-                key={plan.id}
-                className="rounded-xl border border-white/10 bg-white/5 p-4"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-semibold text-white">{plan.nombre}</p>
-                  <p className="shrink-0 text-lg font-bold text-sky-400">
-                    ${plan.precio.toFixed(2)}
-                  </p>
-                </div>
-                <p className="mt-1 text-xs text-slate-400">
-                  {plan.esIlimitado
-                    ? 'Usos ilimitados'
-                    : `${plan.lavadosIncluidos} uso${plan.lavadosIncluidos !== 1 ? 's' : ''}`}{' '}
-                  · {plan.vigenciaDias} días
-                </p>
-                {plan.beneficios.length > 0 && (
-                  <ul className="mt-2 space-y-0.5">
-                    {plan.beneficios.map((b) => (
-                      <li key={b} className="flex items-center gap-1.5 text-xs text-slate-300">
-                        <CheckCircle2 className="h-3 w-3 shrink-0 text-sky-400" />
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-          </div>
-          <p className="text-center text-xs text-slate-500">
-            Seleccionarás tu plan después de registrarte.
-          </p>
-        </div>
-      )}
-
       <Card className="border-white/10 bg-white/5 text-white">
         <CardHeader>
           <CardTitle className="text-2xl">Crear cuenta</CardTitle>

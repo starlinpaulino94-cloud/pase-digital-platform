@@ -13,12 +13,6 @@ export default async function RegistroPage({
 
   const company = await prisma.company.findUnique({
     where: { slug: companySlug },
-    include: {
-      plans: {
-        where: { activo: true },
-        orderBy: { precio: 'asc' },
-      },
-    },
   })
 
   if (!company || !company.isActive) notFound()
@@ -28,16 +22,6 @@ export default async function RegistroPage({
       companySlug={company.slug}
       companyName={company.name}
       isCarwash={company.type === 'carwash'}
-      plans={company.plans.map((p) => ({
-        id: p.id,
-        nombre: p.nombre,
-        precio: Number(p.precio),
-        lavadosIncluidos: p.lavadosIncluidos,
-        esIlimitado: p.esIlimitado,
-        descripcion: p.descripcion ?? null,
-        beneficios: p.beneficios,
-        vigenciaDias: p.vigenciaDias,
-      }))}
     />
   )
 }
