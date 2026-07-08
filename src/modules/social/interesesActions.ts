@@ -49,6 +49,7 @@ export async function guardarIntereses(
 
     revalidatePath('/mis-membresias')
     revalidatePath('/cliente/promociones')
+    revalidatePath('/cliente/ayuda')
     return { success: true }
   } catch (e) {
     console.error('[intereses] guardar', e)

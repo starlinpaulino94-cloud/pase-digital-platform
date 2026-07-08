@@ -52,6 +52,8 @@ export async function actualizarPerfil(
     })
     revalidatePath('/cliente/perfil')
     revalidatePath('/cliente/dashboard')
+    revalidatePath('/mis-membresias')
+    revalidatePath('/cliente/ayuda')
     return { success: true }
   } catch (e) {
     console.error('[profile]', e)
