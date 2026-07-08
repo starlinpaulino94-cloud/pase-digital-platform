@@ -47,8 +47,15 @@ export async function GET(
   }
 
   const ip = getClientIdentifier(req)
-  if (clickLimiter(`refclick:${ip}:${cliente.id}`)) {
-    const ua = req.headers.get('user-agent') ?? ''
+  const ua = req.headers.get('user-agent') ?? ''
+  // Los bots de vista previa (WhatsApp, Telegram, Facebook, etc.) visitan el
+  // enlace al generar el preview e inflaban el conteo de clics. Se les
+  // redirige igual, pero no cuentan.
+  const esBot =
+    /whatsapp|facebookexternalhit|telegrambot|twitterbot|slackbot|discordbot|linkedinbot|skypeuripreview|viber|pinterest|googlebot|bingbot|bot\b|crawler|spider|preview|curl|wget|python|headless/i.test(
+      ua
+    )
+  if (!esBot && clickLimiter(`refclick:${ip}:${cliente.id}`)) {
     const canal = req.nextUrl.searchParams.get('c')
     const campana = req.nextUrl.searchParams.get('utm_campaign')
     await logReferralEvent({

@@ -35,7 +35,11 @@ export function ReferralShareCard({ url, companyName }: Props) {
   const [copied, setCopied] = useState(false)
   const [qrOpen, setQrOpen] = useState(false)
 
-  const mensaje = `Únete a ${companyName} en MembeGo y disfruta beneficios exclusivos. Regístrate con mi enlace: ${url}`
+  // El texto SIN el enlace se usa en el share nativo (la URL va aparte en
+  // `url`; incluirla también en `text` hacía que WhatsApp mostrara el enlace
+  // dos veces y sus bots de vista previa lo visitaran doble).
+  const mensajeSinUrl = `Únete a ${companyName} en MembeGo y disfruta beneficios exclusivos. Regístrate con mi enlace:`
+  const mensaje = `${mensajeSinUrl} ${url}`
 
   // Tracking fire-and-forget: compartir nunca debe fallar por el registro.
   function track(canal: string) {
@@ -52,7 +56,7 @@ export function ReferralShareCard({ url, companyName }: Props) {
   async function compartirNativo() {
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
-        await navigator.share({ title: `Únete a ${companyName}`, text: mensaje, url })
+        await navigator.share({ title: `Únete a ${companyName}`, text: mensajeSinUrl, url })
         track('native')
       } catch {
         // usuario canceló: no cuenta como share
