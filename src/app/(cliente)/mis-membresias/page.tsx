@@ -53,9 +53,9 @@ export default async function MisMembresias() {
       {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="mb-1 text-3xl font-bold tracking-tight">Mis Membresías</h1>
-          <p className="text-muted-foreground">
-            Administra todas tus membresías y accede a tus códigos QR
+          <h1 className="text-h1 text-foreground">Mis membresías</h1>
+          <p className="mt-1 text-small text-muted-foreground">
+            Tus membresías digitales y sus códigos QR, en un solo lugar.
           </p>
         </div>
         <Button asChild variant="outline">
