@@ -21,9 +21,17 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 
 const init: ReglaRecompensaState = {}
 
-export function ReglaRecompensaForm() {
+interface EmpresaOpcion {
+  id: string
+  name: string
+}
+
+export function ReglaRecompensaForm({ companies }: { companies?: EmpresaOpcion[] }) {
   const formRef = useRef<HTMLFormElement>(null)
   const [state, formAction, pending] = useActionState(crearReglaRecompensa, init)
+
+  // Solo el superadmin necesita elegir empresa; un admin usa la suya propia.
+  const requiereEmpresa = Array.isArray(companies)
 
   useEffect(() => {
     if (state.success) {
@@ -38,6 +46,27 @@ export function ReglaRecompensaForm() {
         <Alert variant="destructive">
           <AlertDescription>{state.error}</AlertDescription>
         </Alert>
+      )}
+
+      {requiereEmpresa && (
+        <div className="space-y-2">
+          <Label htmlFor="companyId">Empresa *</Label>
+          <Select name="companyId" required>
+            <SelectTrigger id="companyId">
+              <SelectValue placeholder="Selecciona la empresa" />
+            </SelectTrigger>
+            <SelectContent>
+              {companies!.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-slate-500">
+            La regla de recompensa aplicará solo a esta empresa.
+          </p>
+        </div>
       )}
 
       <div className="grid gap-4 sm:grid-cols-2">
