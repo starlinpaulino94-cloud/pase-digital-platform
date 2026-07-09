@@ -10,7 +10,8 @@
 
 import type { RuleContext } from '../domain/context'
 import { isRuleEvaluable, type Rule } from '../domain/types'
-import type { ActionOutcome } from '../domain/actions'
+import { actionContextFromRule } from '../domain/action-context'
+import type { ActionResult, ActionExecutionReport } from '../domain/action-result'
 import type { RuleResult } from '../domain/rule-result'
 import type { ActionExecutor } from './action-executor'
 import { toMatchResult, type RuleEvaluator, type RuleMatchResult } from './rule-evaluator'
@@ -47,7 +48,10 @@ export interface RuleEvaluationResult {
   readonly result: RuleResult
   /** Resultado ligero (compat Fase 1). */
   readonly match: RuleMatchResult
-  readonly actions: readonly ActionOutcome[]
+  /** Resultados de las acciones ejecutadas (Fase 3). */
+  readonly actions: readonly ActionResult[]
+  /** Informe agregado de la ejecución de acciones (Fase 3), si se cumplió. */
+  readonly actionReport: ActionExecutionReport | null
   readonly durationMs: number
 }
 
@@ -97,13 +101,19 @@ export class RuleEngine {
       const startedAt = Date.now()
       const result = this.deps.evaluator.evaluateToResult(rule, context)
       const match = toMatchResult(rule, result)
-      let actions: readonly ActionOutcome[] = []
+      let actions: readonly ActionResult[] = []
+      let actionReport: ActionExecutionReport | null = null
       let error: string | null = null
 
       try {
         if (result.valid) {
-          const report = await this.deps.executor.execute(rule, context)
-          actions = report.outcomes
+          // El contexto de acciones ve el mismo mundo que la regla + su veredicto.
+          const actionContext = actionContextFromRule(context, {
+            ruleId: rule.id,
+            ruleResult: result,
+          })
+          actionReport = await this.deps.executor.execute(rule, actionContext)
+          actions = actionReport.results
           matchedCount++
         }
       } catch (err) {
@@ -122,6 +132,7 @@ export class RuleEngine {
           matched: result.valid,
           rejectionReason: result.rejectionReason,
           issues: result.issues,
+          actionsSuccess: actionReport?.success ?? null,
           actions: actions.map((a) => ({ type: a.type, status: a.status })),
           error,
         },
@@ -130,7 +141,7 @@ export class RuleEngine {
         error,
       })
 
-      results.push({ rule, result, match, actions, durationMs })
+      results.push({ rule, result, match, actions, actionReport, durationMs })
     }
 
     return {

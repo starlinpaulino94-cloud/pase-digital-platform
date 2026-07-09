@@ -408,3 +408,142 @@ flujo de la app invoca el motor**; nada del comportamiento existente cambió.
 Verificado con `tsc --noEmit` (0 errores), `eslint` (0 warnings) y un smoke test
 de 29 aserciones (árboles AND/OR/NOT/XOR anidados, tipado, never-throw,
 validación estática, operadores/condition-types nuevos y compatibilidad Fase 1).
+
+---
+
+# Fase 3 — Motor Universal de Acciones (Action Engine)
+
+Fase 3 construye el sistema que **ejecuta acciones** cuando una regla se cumple.
+El Rule Engine decide *"la regla se cumple"*; el Action Engine decide *"qué debe
+ocurrir"*. Cada acción es un módulo independiente (Open/Closed); el motor nunca
+conoce acciones concretas. Aditivo y retrocompatible con Fases 1–2.
+
+## Novedades
+
+| Componente | Archivo | Qué aporta |
+|------------|---------|------------|
+| **Action Context** | `domain/action-context.ts` | Contexto universal de ejecución + `actionContextFromRule()` (incluye el `RuleResult` calculado). |
+| **Action Result** | `domain/action-result.ts` | Resultado estándar por acción (estado, output, errores, warnings, intentos, tiempo) + informe agregado. |
+| **Action Catalog** | `domain/action-catalog.ts` | Catálogo universal (47 acciones en 10 categorías) como datos, sin lógica. |
+| **Action Handlers** | `domain/actions.ts` | `ActionHandler` con `execute` + `rollback` opcional; `ActionRegistry` con validación de catálogo. |
+| **Action Executor** | `application/action-executor.ts` | Ejecución secuencial por prioridad, múltiple, reintentos, obligatoria/opcional, aislamiento de errores y rollback. |
+| **Config por datos** | `rule_actions` (BD) | `obligatoria`, `maxReintentos`, `activa`, `version` + `params` + `orden`. |
+
+## Arquitectura (5 piezas que pidió la spec)
+
+- **Action Registry** → `ActionRegistry` (registro central por `type`).
+- **Action Executor** → `application/action-executor.ts`.
+- **Action Handlers** → puerto `ActionHandler` (un módulo por acción).
+- **Action Context** → `domain/action-context.ts`.
+- **Action Result** → `domain/action-result.ts`.
+
+## Flujo de ejecución de acciones
+
+```
+Regla válida (RuleResult.valid === true)
+        │
+RuleEngine construye ActionContext = datos del contexto + ruleId + ruleResult
+        │
+ActionExecutor.execute(rule, actionContext)
+        │
+        ├─ ordena acciones por `order` asc (PRIORIDAD)
+        │
+        └─ por cada acción (SECUENCIAL, aislada):
+             │
+             ├─ ¿activa? no → SKIPPED
+             ├─ ¿handler registrado? no → NO_HANDLER   (Fase 3: caso normal)
+             ├─ ejecuta con reintentos (1 + maxReintentos):
+             │     éxito → EXECUTED (+ output generado)
+             │     agota intentos → FAILED (errores capturados)
+             │
+             └─ si FAILED y la acción es OBLIGATORIA:
+                   · rollbackOnRequiredFailure → compensa las EXECUTED (reverse) → ROLLED_BACK
+                   · stopOnRequiredFailure → corta la secuencia
+        │
+        ▼
+   ActionExecutionReport { results[], executed, failed, skipped, noHandler,
+                           rolledBack, success, durationMs }
+```
+
+Ejemplo de ejecución múltiple soportada:
+`aplicar descuento → agregar puntos → consumir crédito → registrar historial →
+enviar notificación → actualizar estadísticas` — cualquier cantidad de acciones,
+cada una con su prioridad y su bandera obligatoria/opcional.
+
+## Catálogo universal de acciones (10 categorías, 47 tipos)
+
+```
+BENEFICIOS      apply/remove/update/suspend/activate_benefit
+DESCUENTOS      apply_discount_percent/fixed/category/product
+CREDITOS        add/consume/transfer/expire_credits
+PUNTOS          add/consume/revert/transfer_points
+MEMBRESIAS      activate/renew/suspend/freeze/cancel_membership · update_membership_level
+CUPONES         create/activate/deactivate/consume/expire_coupon
+QR              activate/invalidate/regenerate/register_use/block_qr
+NOTIFICACIONES  send_email/push/sms/whatsapp/internal_notification/webhook
+AUDITORIA       record_event/record_history/create_log/save_evidence
+AUTOMATIZACION  run_workflow/schedule_task/create_event/invoke_module
+```
+
+Referenciables con constantes tipadas: `ACTION_TYPES.APPLY_DISCOUNT_PERCENT`, etc.
+**Ninguno tiene lógica**: solo la arquitectura queda lista.
+
+## Cómo añadir una acción nueva (sin tocar el núcleo)
+
+Solo dos pasos, como exige la spec:
+
+```ts
+import { ActionRegistry, createRuleEngine, ACTION_TYPES, makeActionResult } from '@/lib/rule-engine'
+
+// 1. Crear el Action Handler (un módulo independiente).
+const applyDiscount = {
+  type: ACTION_TYPES.APPLY_DISCOUNT_PERCENT,
+  supportsRollback: true,
+  async execute({ action, context }) {
+    const pct = Number(action.params.percent ?? 0)
+    // …lógica de negocio de la fase correspondiente…
+    return makeActionResult({
+      actionId: action.id, type: action.type, status: 'EXECUTED',
+      required: action.required, output: { descuentoAplicado: pct },
+    })
+  },
+  async rollback({ action }) { /* deshacer el efecto */ },
+}
+
+// 2. Registrarlo. El Rule Engine y el Action Executor NO cambian.
+const engine = createRuleEngine({ actions: new ActionRegistry().register(applyDiscount) })
+```
+
+La acción se configura por datos en `rule_actions` (`tipo`, `params`, `orden`,
+`obligatoria`, `maxReintentos`, `activa`, `version`). Nunca hay `if (type === …)`.
+
+## Manejo de errores
+
+- **Aislamiento**: el fallo de una acción NO detiene el resto (salvo
+  `stopOnRequiredFailure`). Cada `ActionResult` dice exactamente qué falló y por qué.
+- **Obligatoria vs opcional**: `success` del informe es `false` solo si falla una
+  acción **obligatoria**; una opcional fallida no hunde la ejecución.
+- **Reintentos**: `maxReintentos` por acción; los intentos se cuentan en `attempts`.
+- **Rollback**: los handlers pueden declarar `supportsRollback` + `rollback()`; el
+  executor compensa en orden inverso las acciones ya ejecutadas cuando una
+  obligatoria falla (activable con `rollbackOnRequiredFailure`).
+
+## Rendimiento (arquitectura preparada)
+
+- Ejecución secuencial hoy; la interfaz `ActionExecutorOptions` y el informe con
+  tiempos dejan la puerta a **concurrencia**, **colas de eventos** y
+  **procesamiento asíncrono** sin cambiar los handlers.
+- El `ActionContext` es serializable (datos + snapshot), apto para encolar.
+- Reutiliza la caché de reglas de Fase 2 (`RuleCache`) para escalar la carga.
+
+## Confirmación de no-regresión (Fase 3)
+
+Aditivo: 4 columnas con DEFAULT en `rule_actions`
+(`20260727_add_action_engine_config`) + archivos nuevos y extensiones al módulo.
+El `ActionOutcome` de Fase 1 se conserva como tipo deprecado con un mapeador
+(`toActionOutcome`). **Ningún flujo de la app invoca el motor**; no hay handlers
+de negocio registrados (todo resulta `NO_HANDLER`), así que no se produce ningún
+efecto. Nada del comportamiento existente cambió. Verificado con `tsc --noEmit`
+(0 errores), `eslint` del módulo (0 warnings) y un smoke test (prioridad,
+ejecución múltiple, reintentos, obligatoria/opcional, aislamiento de errores,
+rollback→ROLLED_BACK, NO_HANDLER y catálogo).

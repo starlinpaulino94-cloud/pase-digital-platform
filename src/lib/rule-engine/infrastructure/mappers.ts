@@ -87,6 +87,10 @@ function mapAction(row: PrismaAction): RuleAction {
     type: row.tipo,
     params: (row.params ?? {}) as Record<string, unknown>,
     order: row.orden,
+    required: row.obligatoria,
+    maxRetries: row.maxReintentos,
+    enabled: row.activa,
+    version: row.version,
   }
 }
 

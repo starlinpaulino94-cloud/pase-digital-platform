@@ -49,14 +49,24 @@ export interface RuleCondition {
 }
 
 /**
- * Acción declarada de una regla. En Fase 1 solo se transporta la estructura:
- * `type` es la clave de un handler del ActionRegistry (aún sin implementar).
+ * Acción declarada de una regla. `type` es la clave de un handler del
+ * ActionRegistry (aún sin implementar en Fase 3). Toda su configuración vive
+ * como DATOS (params + banderas), nunca en código.
  */
 export interface RuleAction {
   readonly id: string
   readonly type: string
   readonly params: Readonly<Record<string, unknown>>
+  /** Orden/prioridad de ejecución: menor se ejecuta antes. */
   readonly order: number
+  /** Si es obligatoria, su fallo marca la ejecución de la regla como fallida. */
+  readonly required: boolean
+  /** Reintentos ante error (0 = un solo intento). */
+  readonly maxRetries: number
+  /** Interruptor: si está desactivada, se omite (SKIPPED). */
+  readonly enabled: boolean
+  /** Versión de la configuración de la acción. */
+  readonly version: number
 }
 
 /** Agrupación funcional de reglas (ej. "Validación QR"). Puramente organizativa. */

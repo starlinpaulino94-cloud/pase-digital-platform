@@ -66,6 +66,9 @@ Migraciones pendientes relevantes:
   `RuleLogicalOperator`, la tabla `rule_condition_groups` (árbol booleano
   auto-anidable) y las columnas `groupId`/`conditionType`/`dataType` (con DEFAULT)
   en `rule_conditions`. Additivo y seguro sobre filas existentes.
+- `20260727_add_action_engine_config`: Fase 3 (Action Engine). Añade a
+  `rule_actions` las columnas `obligatoria`, `maxReintentos`, `activa`, `version`
+  (con DEFAULT) para configurar cada acción por datos. Additivo y seguro.
 
 > Si prefieres `db:push`, también sincroniza el enum, pero `migrate:deploy` deja
 > registro en `_prisma_migrations` y es lo recomendado para producción.

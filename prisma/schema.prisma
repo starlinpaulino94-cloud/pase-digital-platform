@@ -1041,7 +1041,12 @@ model RuleAction {
   rule      Rule     @relation(fields: [ruleId], references: [id], onDelete: Cascade)
   tipo      String // clave del handler en el registro, ej. "grant_benefit" (aún sin implementar)
   params    Json     @default("{}")
-  orden     Int      @default(0)
+  orden     Int      @default(0) // prioridad/orden de ejecución (menor = antes)
+  // Fase 3: configuración de la acción por DATOS (no por código).
+  obligatoria   Boolean @default(true) // true = su fallo marca la ejecución como fallida
+  maxReintentos Int     @default(0) // reintentos ante error (0 = un solo intento)
+  activa        Boolean @default(true) // interruptor: si false, se omite (SKIPPED)
+  version       Int     @default(1) // versión de la configuración de la acción
   createdAt DateTime @default(now())
 
   @@index([ruleId, orden])

@@ -29,7 +29,7 @@ import {
   ConditionTypeRegistry,
   createDefaultConditionTypeRegistry,
 } from './domain/condition-types'
-import { ActionExecutor } from './application/action-executor'
+import { ActionExecutor, type ActionExecutorOptions } from './application/action-executor'
 import { RuleEvaluator } from './application/rule-evaluator'
 import { RuleEngine } from './application/rule-engine'
 import {
@@ -48,8 +48,10 @@ export interface CreateRuleEngineOptions {
   operators?: OperatorRegistry
   /** Registro de tipos de condición. Por defecto: catálogo estándar (field, …). */
   conditionTypes?: ConditionTypeRegistry
-  /** Registro de acciones. Por defecto: VACÍO (Fase 1, sin handlers). */
+  /** Registro de acciones. Por defecto: VACÍO (Fase 3, sin handlers). */
   actions?: ActionRegistry
+  /** Opciones del ejecutor de acciones (rollback, corte ante fallo). */
+  actionOptions?: ActionExecutorOptions
   /** Sumidero de auditoría. Por defecto: no-op (no persiste). */
   logSink?: ExecutionLogSink
   /** Caché de reglas. Por defecto: sin caché. */
@@ -72,7 +74,7 @@ export function createRuleEngine(options: CreateRuleEngineOptions = {}): RuleEng
   return new RuleEngine({
     repository,
     evaluator: new RuleEvaluator(operators, conditionTypes),
-    executor: new ActionExecutor(actions),
+    executor: new ActionExecutor(actions, options.actionOptions),
     logSink,
     cache: options.cache,
   })
@@ -87,13 +89,35 @@ export {
   createDefaultOperatorRegistry,
 } from './domain/operators'
 export type { Operator, OperatorArity } from './domain/operators'
-export { ActionRegistry } from './domain/actions'
+export { ActionRegistry, toActionOutcome } from './domain/actions'
 export type {
   ActionHandler,
   ActionOutcome,
   ActionOutcomeStatus,
   ActionExecutionInput,
 } from './domain/actions'
+
+// Fase 3 — Motor Universal de Acciones
+export { ActionContextBuilder, actionContextFromRule } from './domain/action-context'
+export type { ActionContext } from './domain/action-context'
+export { makeActionResult, buildReport } from './domain/action-result'
+export type {
+  ActionResult,
+  ActionStatus,
+  ActionExecutionReport,
+} from './domain/action-result'
+export {
+  ACTION_TYPES,
+  ACTION_CATALOG,
+  getActionDefinition,
+  isCatalogAction,
+  actionsByCategory,
+} from './domain/action-catalog'
+export type {
+  ActionCategory,
+  ActionDefinition,
+  ActionTypeKey,
+} from './domain/action-catalog'
 export type {
   Rule,
   RuleAction,
@@ -168,6 +192,7 @@ export type { RuleValidatorDeps } from './application/rule-validator'
 export { compileRule, buildConditionTree } from './application/rule-compiler'
 export type { CompiledRule } from './application/rule-compiler'
 export { ActionExecutor } from './application/action-executor'
+export type { ActionExecutorOptions } from './application/action-executor'
 export {
   NoopExecutionLogSink,
   NoopRuleCache,

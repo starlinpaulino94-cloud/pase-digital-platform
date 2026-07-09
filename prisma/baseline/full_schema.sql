@@ -649,6 +649,10 @@ CREATE TABLE "rule_actions" (
     "tipo" TEXT NOT NULL,
     "params" JSONB NOT NULL DEFAULT '{}',
     "orden" INTEGER NOT NULL DEFAULT 0,
+    "obligatoria" BOOLEAN NOT NULL DEFAULT true,
+    "maxReintentos" INTEGER NOT NULL DEFAULT 0,
+    "activa" BOOLEAN NOT NULL DEFAULT true,
+    "version" INTEGER NOT NULL DEFAULT 1,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "rule_actions_pkey" PRIMARY KEY ("id")

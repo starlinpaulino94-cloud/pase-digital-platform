@@ -1,57 +1,59 @@
 /**
- * Contrato y registro de ACCIONES.
+ * Contrato y registro de ACCIONES (Action Handlers).
  *
- * IMPORTANTE (Fase 1): aquí solo vive la ARQUITECTURA. No se registra ningún
- * handler real —ni beneficios, ni membresías, ni QR—. El motor, al ejecutar una
- * acción sin handler, devuelve un resultado `NO_HANDLER` en lugar de fallar.
- * Las fases futuras registrarán handlers (grant_benefit, add_points, notify…)
- * SIN modificar el motor (Open/Closed + Dependency Injection).
+ * Fase 1 dejó el esqueleto; Fase 3 lo convierte en el Motor Universal de
+ * Acciones. Cada acción de negocio se implementa como un ActionHandler
+ * independiente (un módulo) y se registra en el ActionRegistry. El motor nunca
+ * conoce acciones concretas: pide ejecutar por `type` (Open/Closed + DIP).
+ *
+ * IMPORTANTE (Fase 3): SOLO arquitectura. No se registra ningún handler real.
+ * El ActionExecutor tratará toda acción como `NO_HANDLER`.
  */
 
-import type { RuleContext } from './context'
+import type { ActionContext } from './action-context'
+import { getActionDefinition } from './action-catalog'
+import type { ActionResult } from './action-result'
 import { DuplicateRegistrationError } from './errors'
 import type { Rule, RuleAction } from './types'
 
-/** Estado del intento de ejecutar una acción. */
-export type ActionOutcomeStatus = 'EXECUTED' | 'SKIPPED' | 'NO_HANDLER' | 'FAILED'
-
-export interface ActionOutcome {
-  readonly actionId: string
-  readonly type: string
-  readonly status: ActionOutcomeStatus
-  /** Datos devueltos por el handler (libre). */
-  readonly detail?: unknown
-  /** Mensaje de error si status === 'FAILED'. */
-  readonly error?: string
-}
-
-/** Todo lo que un handler necesita para ejecutar una acción. */
+/** Todo lo que un handler necesita para ejecutar (o revertir) una acción. */
 export interface ActionExecutionInput {
   readonly rule: Rule
   readonly action: RuleAction
-  readonly context: RuleContext
+  readonly context: ActionContext
 }
 
 /**
- * Puerto (interface) que implementará cada acción de negocio en el futuro.
- * El motor depende de esta abstracción, nunca de implementaciones concretas
- * (Dependency Inversion).
+ * Puerto que implementará cada acción de negocio. `execute` realiza el efecto;
+ * `rollback` (opcional) lo deshace —base de la arquitectura de compensación—.
  */
 export interface ActionHandler {
-  /** Clave que enlaza con RuleAction.type. */
+  /** Clave que enlaza con RuleAction.type y con el catálogo. */
   readonly type: string
-  execute(input: ActionExecutionInput): Promise<ActionOutcome> | ActionOutcome
+  /** ¿El handler sabe compensar/revertir su efecto? */
+  readonly supportsRollback?: boolean
+  execute(input: ActionExecutionInput): Promise<ActionResult> | ActionResult
+  /** Compensación de un efecto ya aplicado (si `supportsRollback`). */
+  rollback?(input: ActionExecutionInput, result: ActionResult): Promise<void> | void
 }
 
 /**
- * Registro extensible de handlers de acción. En Fase 1 se instancia vacío: el
- * ActionExecutor tratará toda acción como `NO_HANDLER`.
+ * Registro extensible de handlers. En Fase 3 se instancia VACÍO. Opcionalmente
+ * valida que el `type` pertenezca al catálogo universal (permitiendo también
+ * tipos custom fuera de catálogo).
  */
 export class ActionRegistry {
   private readonly handlers = new Map<string, ActionHandler>()
 
-  register(handler: ActionHandler): this {
+  /**
+   * Registra un handler.
+   * @param opts.requireCatalog si true, exige que el type esté en el catálogo.
+   */
+  register(handler: ActionHandler, opts: { requireCatalog?: boolean } = {}): this {
     if (this.handlers.has(handler.type)) {
+      throw new DuplicateRegistrationError('acción', handler.type)
+    }
+    if (opts.requireCatalog && !getActionDefinition(handler.type)) {
       throw new DuplicateRegistrationError('acción', handler.type)
     }
     this.handlers.set(handler.type, handler)
@@ -68,5 +70,32 @@ export class ActionRegistry {
 
   list(): ActionHandler[] {
     return [...this.handlers.values()]
+  }
+}
+
+// ── Compatibilidad Fase 1 (deprecado) ───────────────────────────────────────
+
+/** @deprecated Fase 1. Usa ActionStatus/ActionResult (Fase 3). */
+export type ActionOutcomeStatus = 'EXECUTED' | 'SKIPPED' | 'NO_HANDLER' | 'FAILED'
+
+/** @deprecated Fase 1. Vista reducida de ActionResult. */
+export interface ActionOutcome {
+  readonly actionId: string
+  readonly type: string
+  readonly status: ActionOutcomeStatus
+  readonly detail?: unknown
+  readonly error?: string
+}
+
+/** Proyecta un ActionResult (Fase 3) al ActionOutcome legado (Fase 1). */
+export function toActionOutcome(result: ActionResult): ActionOutcome {
+  const status: ActionOutcomeStatus =
+    result.status === 'ROLLED_BACK' ? 'FAILED' : result.status
+  return {
+    actionId: result.actionId,
+    type: result.type,
+    status,
+    detail: result.output,
+    error: result.errors[0],
   }
 }
