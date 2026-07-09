@@ -42,7 +42,9 @@ export function PublicFooter() {
           <div>
             <Link href="/" className="flex items-center gap-2">
               <Image src="/logo.svg" alt="MembeGo" width={28} height={28} />
-              <span className="text-lg font-bold tracking-tight text-white">MembeGo</span>
+              <span className="text-lg font-bold tracking-tight text-white">
+                Membe<span className="text-emerald-400">Go</span>
+              </span>
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-400">
               La plataforma de membresías digitales y beneficios para empresas y

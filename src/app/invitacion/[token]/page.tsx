@@ -27,8 +27,10 @@ export default async function AceptarInvitacionPage({
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center justify-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="MembeGo" width={32} height={32} className="rounded-lg" />
-          <span className="text-sm font-semibold tracking-tight text-slate-900">MembeGo</span>
+          <img src="/logo.svg" alt="MembeGo" width={32} height={32} />
+          <span className="text-sm font-semibold tracking-tight text-slate-900">
+            Membe<span className="text-emerald-500">Go</span>
+          </span>
         </div>
 
         {invalida || !invitacion ? (

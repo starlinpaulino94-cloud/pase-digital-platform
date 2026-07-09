@@ -42,7 +42,9 @@ export function PublicNav() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <Image src="/logo.svg" alt="MembeGo" width={30} height={30} priority />
-          <span className="text-lg font-bold tracking-tight text-slate-900">MembeGo</span>
+          <span className="text-lg font-bold tracking-tight text-slate-900">
+            Membe<span className="text-emerald-500">Go</span>
+          </span>
         </Link>
 
         {/* Menú centrado (desktop) */}
