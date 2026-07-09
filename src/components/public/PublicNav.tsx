@@ -74,10 +74,10 @@ export function PublicNav() {
             Ingresar
           </Link>
           <Link
-            href="/empresas"
+            href="/registro"
             className="group inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-glow transition-all hover:bg-blue-700 hover:shadow-glow-strong active:scale-[0.98]"
           >
-            Empezar
+            Registrarse
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
@@ -115,11 +115,11 @@ export function PublicNav() {
               Ingresar
             </Link>
             <Link
-              href="/empresas"
+              href="/registro"
               onClick={() => setOpen(false)}
               className="block rounded-xl bg-blue-600 px-3 py-2.5 text-center text-sm font-semibold text-white shadow-glow"
             >
-              Empezar
+              Registrarse
             </Link>
           </div>
         </div>

@@ -209,7 +209,7 @@ export function LoginForm({
         {!isStaff && (
           <p className="mt-2 text-center text-sm text-slate-400">
             ¿No tienes cuenta?{' '}
-            <Link href="/empresas" className="text-sky-400 hover:underline">
+            <Link href="/registro" className="text-sky-400 hover:underline">
               Regístrate
             </Link>
           </p>
