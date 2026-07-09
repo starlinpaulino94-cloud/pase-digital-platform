@@ -115,6 +115,10 @@ export function resolveField(context: RuleContext, path: string): unknown {
   let current: unknown = context.data
   for (const segment of segments) {
     if (current == null || typeof current !== 'object') return undefined
+    // Seguridad: solo se accede a propiedades PROPIAS. Nunca a heredadas del
+    // prototipo (`constructor`, `__proto__`, `toString`…), para no exponer
+    // clases internas ni permitir prototype pollution en la resolución.
+    if (!Object.prototype.hasOwnProperty.call(current, segment)) return undefined
     current = (current as Record<string, unknown>)[segment]
   }
   return current
