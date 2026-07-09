@@ -195,3 +195,71 @@ invoca el framework. Verificado con `tsc --noEmit` (0 errores), `eslint` del
 módulo (0 warnings) y un smoke test de 23 aserciones (ciclo de vida con
 transiciones válidas/ inválidas, versionado + snapshot, auditoría con diff,
 duplicación, catálogo de restricciones y reutilización real de Rule/Action Engine).
+
+---
+
+# Fase B — Promotion Strategy Library (plantillas por industria)
+
+Sobre el Promotion Framework (arriba) se construye una **biblioteca de plantillas
+de promoción** por industria. Una promoción no es "un descuento": es una
+**estrategia comercial** con objetivo, segmento, trigger, condiciones, beneficio,
+duración, restricciones, canales y métricas. Todo **datos**; el framework no
+cambia. Módulo de código, sin cambios de BD.
+
+## Arquitectura (`templates/`)
+
+```
+templates/
+├── taxonomy.ts        # objetivos (12), segmentos, tipos de beneficio, triggers, canales, métricas
+├── template-types.ts  # PromotionTemplate + instantiatePromotionTemplate (beneficio→acción)
+├── service.ts         # createPromotionFromTemplate + recommendByGoal (recomendador)
+└── carwash.ts         # BIBLIOTECA Car Wash: 36 promos (CAR-001..036) en 12 categorías
+```
+
+## Cómo una plantilla se vuelve una promoción real
+
+`instantiatePromotionTemplate(template, companyId, overrides)` produce:
+- **create** → `CreatePromotionData` del Promotion Framework (objetivo/segmento/
+  trigger/condiciones-BEL/beneficio/canales/métricas viven en `config`).
+- **actions** → el beneficio se traduce a una acción del **Action Engine (F3)**:
+  `porcentaje→apply_discount_percent`, `valor_fijo→apply_discount_fixed`,
+  `servicio_gratis|upgrade→apply_benefit`, `puntos→add_points`, `credito→add_credits`.
+- **restrictions** → restricciones del framework (uso único, por cliente, etc.).
+
+Las **condiciones** son expresiones **BEL (F7)** (ej. `cliente.diasSinVisita >= 30`)
+sobre variables del **Data Dictionary (F6)** y el **Context Model (F5)**.
+
+```ts
+import { createPromotionService } from '@/lib/promotions'
+import { createPromotionFromTemplate, getCarwashPromo } from '@/lib/promotions'
+
+const promotions = createPromotionService()
+const promo = await createPromotionFromTemplate(
+  promotions, getCarwashPromo('CAR-007')!, companyId, { priority: 5 }, { userId },
+)
+// Crea la promoción "Te extrañamos", con acción apply_discount_percent(25) y
+// restricción per_client=1, lista para el ciclo de vida del framework.
+```
+
+## El recomendador ("¿qué promoción creo?")
+
+`recommendByGoal(templates, "quiero recuperar clientes inactivos")` detecta el
+objetivo (`recuperacion`) y devuelve las plantillas adecuadas (CAR-007/008/009)
+con sus segmentos, beneficios y métricas ya definidos. Es la base del sistema que
+ayuda al negocio a decidir **qué** promoción usar y **cuándo**.
+
+## Biblioteca Car Wash (36 promos, 12 categorías)
+
+Captación (001-003) · Frecuencia (004-006) · Recuperación (007-009) · Ticket
+(010-012) · Premium (013-015) · Membresías (016-018) · Comportamiento (019-021) ·
+Vehículo (022-024) · Sociales/referidos (025-026) · Temporales (027-030) ·
+Climáticas (031-033) · Avanzadas/IA (034-036).
+
+## Confirmación de no-regresión (Fase B)
+
+Módulo nuevo (`templates/`) dentro de `promotions`; **sin cambios de BD** ni de
+archivos existentes (solo se añadieron exports al index). Ningún flujo de la app
+lo invoca. Verificado con `tsc` (0 errores), `eslint` (0 warnings) y un smoke test
+de 24 aserciones (36 plantillas, instanciación vía Promotion Framework,
+beneficio→acción, restricciones, overrides, recomendación por objetivo/lenguaje
+natural, y validación de que TODAS las condiciones BEL de las plantillas parsean).

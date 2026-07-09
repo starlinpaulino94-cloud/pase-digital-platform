@@ -84,6 +84,28 @@ export type {
   PromotionEvaluation,
 } from './application/promotion-engine'
 
+// Fase B — Promotion Strategy Library (plantillas por industria)
+export {
+  PROMOTION_OBJECTIVES, PROMOTION_SEGMENTS, BENEFIT_TYPES, TRIGGER_TYPES,
+  PROMOTION_CHANNELS, PROMOTION_METRICS, DEFAULT_PROMOTION_METRICS,
+} from './templates/taxonomy'
+export type {
+  PromotionObjective, PromotionSegment, BenefitType, TriggerType,
+  PromotionChannel, PromotionMetric,
+} from './templates/taxonomy'
+export {
+  instantiatePromotionTemplate, benefitToAction,
+} from './templates/template-types'
+export type {
+  PromotionTemplate, BenefitSpec, TriggerSpec, TemplateRestriction,
+  PromotionTemplateOverrides, InstantiatedPromotion,
+} from './templates/template-types'
+export {
+  createPromotionFromTemplate, recommendTemplates, recommendByGoal,
+  objectiveFromGoal,
+} from './templates/service'
+export { CARWASH_PROMOTION_TEMPLATES, getCarwashPromo } from './templates/carwash'
+
 // Infraestructura
 export { PrismaPromotionRepository } from './infrastructure/prisma-promotion-repository'
 export { mapPromotion } from './infrastructure/mappers'
