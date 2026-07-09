@@ -29,38 +29,38 @@ export default async function PromotionsPage({
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-700 via-sky-600 to-indigo-800 py-14">
-        <div className="absolute -top-16 right-10 h-56 w-56 rounded-full bg-sky-400/30 blur-3xl" />
+      <section className="relative overflow-hidden bg-gradient-to-br from-blue-800 via-blue-700 to-indigo-900 pb-16 pt-14">
+        <div className="absolute inset-0 bg-grid-light mask-fade" />
+        <div className="absolute -top-16 right-10 h-56 w-56 rounded-full bg-sky-400/25 blur-3xl" />
         <div className="absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-indigo-400/20 blur-3xl" />
-        <div className="relative mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+        <div className="relative mx-auto max-w-7xl space-y-7 px-4 sm:px-6 lg:px-8">
           <div className="text-white">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-sky-100 ring-1 ring-inset ring-white/20">
-              <Tag className="h-4 w-4" /> Ofertas vigentes
+            <span className="inline-flex animate-slide-up items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-sm font-medium text-sky-100 backdrop-blur">
+              <Tag className="h-4 w-4 text-sky-300" /> Ofertas vigentes
             </span>
-            <h1 className="mt-4 text-4xl font-extrabold tracking-tight sm:text-5xl">
+            <h1 className="mt-5 animate-slide-up text-4xl font-extrabold tracking-tight delay-75 sm:text-5xl">
               Promociones
             </h1>
-            <p className="mt-2 max-w-xl text-lg text-sky-100">
-              Descubre descuentos, regalos y beneficios exclusivos de las
-              empresas afiliadas a MembeGo.
+            <p className="mt-3 max-w-xl animate-slide-up text-lg text-sky-100/90 delay-100">
+              Descuentos, regalos y beneficios exclusivos de las empresas
+              afiliadas a MembeGo.
             </p>
           </div>
-          <SearchBar placeholder="Buscar promociones..." />
+          <div className="animate-slide-up delay-150">
+            <SearchBar placeholder="Buscar promociones..." />
+          </div>
         </div>
       </section>
 
-      {/* Filters */}
-      <section className="border-b border-neutral-200 py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap gap-2">
-          <span className="text-sm text-neutral-600 flex items-center">
-            Filtrar por tipo:
-          </span>
+      {/* Filtros por tipo */}
+      <section className="sticky top-[4.5rem] z-30 border-b border-border/60 bg-white/85 py-3 glass">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 sm:px-6 lg:px-8">
           <Link
             href="/promociones"
-            className={`px-3 py-1 rounded-full text-sm transition-colors ${
+            className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-150 ${
               !filters.type
-                ? 'bg-blue-500 text-white'
-                : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                ? 'bg-blue-600 text-white shadow-glow'
+                : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground'
             }`}
           >
             Todas
@@ -69,10 +69,10 @@ export default async function PromotionsPage({
             <Link
               key={type}
               href={`/promociones?type=${type}`}
-              className={`px-3 py-1 rounded-full text-sm transition-colors capitalize ${
+              className={`rounded-full px-3.5 py-1.5 text-sm font-medium capitalize transition-all duration-150 ${
                 filters.type === type
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                  ? 'bg-blue-600 text-white shadow-glow'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground'
               }`}
             >
               {type}
