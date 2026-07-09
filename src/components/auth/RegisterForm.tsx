@@ -1,9 +1,10 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 import { registrarCliente, type RegistroState } from '@/modules/registro/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,18 +37,59 @@ export function RegisterForm({
   const searchParams = useSearchParams()
   const refCode = searchParams.get('ref') ?? ''
   const [state, formAction, pending] = useActionState(registrarCliente, initial)
+  // Al enviar guardamos las credenciales para iniciar sesión automáticamente
+  // en cuanto el registro se complete (sin volver a la pantalla de login).
+  const credsRef = useRef<{ email: string; password: string } | null>(null)
+  const handledRef = useRef(false)
+  const [redirecting, setRedirecting] = useState(false)
+
+  function captureCreds(e: React.FormEvent<HTMLFormElement>) {
+    const fd = new FormData(e.currentTarget)
+    credsRef.current = {
+      email: String(fd.get('email') ?? '').trim().toLowerCase(),
+      password: String(fd.get('password') ?? ''),
+    }
+  }
 
   useEffect(() => {
+    if (handledRef.current) return
+
+    // Cuenta pendiente de confirmar el correo: no se puede autenticar todavía.
     if (state.pendingVerification) {
+      handledRef.current = true
       toast.success(
         'Te enviamos un enlace de confirmación a tu correo. Ábrelo para activar tu cuenta.'
       )
       router.replace('/login?verifica=1')
       return
     }
+
     if (state.success) {
-      toast.success('Cuenta creada. Inicia sesión para continuar.')
-      router.replace('/login?redirect=/cliente/membresia')
+      handledRef.current = true
+      const creds = credsRef.current
+      if (!creds) {
+        router.replace('/login?redirect=/cliente/membresia')
+        return
+      }
+      // Auto-login: crea la sesión en el navegador y entra directo a la plataforma.
+      setRedirecting(true)
+      const supabase = createClient()
+      supabase.auth
+        .signInWithPassword({ email: creds.email, password: creds.password })
+        .then(({ error }) => {
+          if (error) {
+            // Si por cualquier motivo no se pudo iniciar sesión, caemos al login.
+            toast.success('Cuenta creada. Inicia sesión para continuar.')
+            router.replace('/login?redirect=/cliente/membresia')
+            return
+          }
+          toast.success('¡Bienvenido! Tu cuenta está lista.')
+          router.replace('/cliente/membresia')
+          router.refresh()
+        })
+        .catch(() => {
+          router.replace('/login?redirect=/cliente/membresia')
+        })
     }
   }, [state.success, state.pendingVerification, router])
 
@@ -61,7 +103,7 @@ export function RegisterForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={formAction} className="space-y-4">
+          <form action={formAction} onSubmit={captureCreds} className="space-y-4">
             <input type="hidden" name="companySlug" value={companySlug} />
             {refCode && <input type="hidden" name="refCode" value={refCode} />}
             {state.error && (
@@ -202,12 +244,12 @@ export function RegisterForm({
 
             <Button
               type="submit"
-              disabled={pending}
+              disabled={pending || redirecting}
               className="w-full bg-sky-500 hover:bg-sky-400"
               style={colorPrimario ? { backgroundColor: colorPrimario } : undefined}
             >
-              {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Crear cuenta
+              {(pending || redirecting) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {redirecting ? 'Entrando…' : 'Crear cuenta'}
             </Button>
           </form>
           {isGoogleAuthEnabled() && (
