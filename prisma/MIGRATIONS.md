@@ -69,6 +69,11 @@ Migraciones pendientes relevantes:
 - `20260727_add_action_engine_config`: Fase 3 (Action Engine). Añade a
   `rule_actions` las columnas `obligatoria`, `maxReintentos`, `activa`, `version`
   (con DEFAULT) para configurar cada acción por datos. Additivo y seguro.
+- `20260728_add_promotion_framework`: Fase 4 (Framework Universal de
+  Promociones). Añade el enum `PromotionStatus` y las tablas `promotions`,
+  `promotion_rules`, `promotion_actions`, `promotion_restrictions`,
+  `promotion_versions`, `promotion_audits`. Solo AÑADE; el modelo `Promocion`
+  (marketplace) queda intacto.
 
 > Si prefieres `db:push`, también sincroniza el enum, pero `migrate:deploy` deja
 > registro en `_prisma_migrations` y es lo recomendado para producción.

@@ -220,6 +220,10 @@ model Company {
   ruleGroups       RuleGroup[]
   rules            Rule[]
   ruleExecLogs     RuleExecutionLog[]
+  // Framework Universal de Promociones (Fase 4). Relaciones inversas; ningún
+  // flujo existente las consulta.
+  promotions       Promotion[]
+  promotionAudits  PromotionAudit[]
 
   @@index([isPublished, isFeatured])
   @@index([ciudad, provincia])
@@ -975,6 +979,8 @@ model Rule {
   conditionGroups RuleConditionGroup[]
   actions         RuleAction[]
   logs            RuleExecutionLog[]
+  // Fase 4: reglas reutilizadas por promociones (sin duplicar).
+  promotionRules  PromotionRule[]
 
   // Consulta caliente del motor: reglas de una empresa evaluables por estado.
   @@index([companyId, status, activo])
@@ -1072,4 +1078,145 @@ model RuleExecutionLog {
   @@index([companyId, createdAt])
   @@index([ruleId])
   @@map("rule_execution_logs")
+}
+
+// ─────────────────────────────────────────────
+// FASE 4: FRAMEWORK UNIVERSAL DE PROMOCIONES
+// ─────────────────────────────────────────────
+// Una promoción es una entidad CONFIGURABLE sin lógica programada: compone
+// información general + reglas (Rule Engine) + acciones (Action Engine) +
+// restricciones + ciclo de vida + versionado + auditoría. Es independiente de
+// la industria y del modelo `Promocion` (marketplace) existente, que NO se
+// toca. Multi-tenant: todo cuelga de companyId. Ningún flujo la consume aún.
+
+/// Ciclo de vida de una promoción. Extensible.
+enum PromotionStatus {
+  DRAFT // borrador
+  PENDING // pendiente de revisión/aprobación
+  SCHEDULED // programada (con fecha futura)
+  ACTIVE // activa
+  PAUSED // pausada temporalmente
+  SUSPENDED // suspendida (por incidencia/decisión)
+  ENDED // finalizada (fin natural)
+  ARCHIVED // archivada (histórico)
+  CANCELLED // cancelada
+}
+
+/// Definición general y ADMINISTRATIVA de una promoción. Sin lógica: la lógica
+/// vive en las reglas (Rule Engine) y las acciones (Action Engine) asociadas.
+model Promotion {
+  id           String          @id @default(cuid())
+  companyId    String
+  company      Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  nombre       String
+  descripcion  String?
+  categoria    String? // etiqueta libre de organización, NUNCA tipo de industria
+  status       PromotionStatus @default(DRAFT)
+  prioridad    Int             @default(0) // mayor = más prioritaria ante conflictos
+  inicioEn     DateTime? // ventana de vigencia (programación)
+  finEn        DateTime?
+  config       Json            @default("{}") // configuración flexible (parámetros arbitrarios)
+  metadata     Json            @default("{}") // metadatos libres
+  version      Int             @default(1) // versión actual
+  creadoPorId  String? // usuario que la creó
+  editadoPorId String? // último usuario que la modificó
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  rules        PromotionRule[]
+  actions      PromotionAction[]
+  restrictions PromotionRestriction[]
+  versions     PromotionVersion[]
+  audits       PromotionAudit[]
+
+  @@index([companyId, status])
+  @@index([companyId, prioridad])
+  @@index([companyId, status, inicioEn, finEn])
+  @@map("promotions")
+}
+
+/// Mapeo promoción→regla (Rule Engine). Reutiliza reglas SIN duplicarlas.
+model PromotionRule {
+  id          String    @id @default(cuid())
+  promotionId String
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  ruleId      String
+  rule        Rule      @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  orden       Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  @@unique([promotionId, ruleId]) // no duplicar la misma regla en una promoción
+  @@index([ruleId])
+  @@map("promotion_rules")
+}
+
+/// Mapeo promoción→acción (Action Engine). La promoción NUNCA ejecuta acciones
+/// directamente: aporta la configuración que el Action Engine ejecutará.
+model PromotionAction {
+  id            String    @id @default(cuid())
+  promotionId   String
+  promotion     Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  tipo          String // clave del catálogo del Action Engine
+  params        Json      @default("{}")
+  orden         Int       @default(0)
+  obligatoria   Boolean   @default(true)
+  maxReintentos Int       @default(0)
+  activa        Boolean   @default(true)
+  version       Int       @default(1)
+  createdAt     DateTime  @default(now())
+
+  @@index([promotionId, orden])
+  @@map("promotion_actions")
+}
+
+/// Restricción universal de una promoción (config, sin validación programada
+/// todavía). `tipo` proviene de un catálogo (MAX_USES_TOTAL, PER_CLIENT, …).
+model PromotionRestriction {
+  id          String    @id @default(cuid())
+  promotionId String
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  tipo        String // clave del catálogo de restricciones
+  valor       Int? // límite numérico cuando aplica (usos, cantidad…)
+  config      Json      @default("{}") // parámetros adicionales (ventana, ámbito…)
+  activa      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  @@index([promotionId])
+  @@map("promotion_restrictions")
+}
+
+/// Instantánea inmutable de una versión de la promoción. Nunca se borra: es el
+/// historial de versionado.
+model PromotionVersion {
+  id          String    @id @default(cuid())
+  promotionId String
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  version     Int
+  snapshot    Json // definición completa congelada en esa versión
+  resumen     String? // resumen del cambio
+  creadoPorId String?
+  createdAt   DateTime  @default(now())
+
+  @@unique([promotionId, version])
+  @@index([promotionId])
+  @@map("promotion_versions")
+}
+
+/// Auditoría completa: quién, qué, cuándo, estado anterior/nuevo y diff.
+model PromotionAudit {
+  id             String           @id @default(cuid())
+  promotionId    String
+  promotion      Promotion        @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  companyId      String
+  company        Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId         String?
+  accion         String // CREATED | UPDATED | STATUS_CHANGED | VERSIONED | ARCHIVED | ...
+  estadoAnterior PromotionStatus?
+  estadoNuevo    PromotionStatus?
+  cambios        Json             @default("{}") // diff de campos modificados
+  createdAt      DateTime         @default(now())
+
+  @@index([promotionId, createdAt])
+  @@index([companyId, createdAt])
+  @@map("promotion_audits")
 }
