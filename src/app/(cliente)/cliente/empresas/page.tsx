@@ -31,7 +31,7 @@ export default async function MisEmpresasPage() {
           </p>
         </div>
         <Button asChild variant="outline">
-          <Link href="/empresas">
+          <Link href="/cliente/explorar">
             <Search className="mr-2 h-4 w-4" /> Descubrir empresas
           </Link>
         </Button>
@@ -59,7 +59,7 @@ export default async function MisEmpresasPage() {
               novedades sin buscarlas.
             </p>
             <Button asChild className="mt-4">
-              <Link href="/empresas">Explorar empresas</Link>
+              <Link href="/cliente/explorar">Explorar empresas</Link>
             </Button>
           </CardContent>
         </Card>

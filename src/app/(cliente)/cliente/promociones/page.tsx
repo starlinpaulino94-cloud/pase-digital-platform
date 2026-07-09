@@ -193,7 +193,7 @@ export default async function PromocionesDisponiblesPage() {
                   publiquen.
                 </p>
                 <Button asChild variant="outline" className="mt-4">
-                  <Link href="/empresas">Explorar empresas</Link>
+                  <Link href="/cliente/explorar">Explorar empresas</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -213,7 +213,7 @@ export default async function PromocionesDisponiblesPage() {
                   </p>
                 </div>
                 <Button asChild variant="outline" size="sm">
-                  <Link href="/empresas">Ver todas</Link>
+                  <Link href="/cliente/explorar">Ver todas</Link>
                 </Button>
               </div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
