@@ -30,6 +30,14 @@ interface InfixOp {
 const arithmeticBp: Record<string, number> = { '+': 40, '-': 40, '*': 50, '/': 50, '%': 50, '^': 60 }
 const comparisonOps = new Set(['==', '!=', '>', '>=', '<', '<='])
 
+// Precedencia de los operadores PREFIJO:
+// - NOT liga MÁS FLOJO que la comparación (25 < 30) → `NOT a == b` = `NOT (a == b)`,
+//   pero más fuerte que AND (25 > 20) → `NOT a AND b` = `(NOT a) AND b`.
+// - El menos unario liga más fuerte que la multiplicación (55 > 50) pero más
+//   flojo que la potencia (55 < 60) → `-2 ^ 2` = `-(2 ^ 2)` = -4.
+const NOT_BP = 25
+const NEG_BP = 55
+
 export function parse(input: string, options: ParserOptions = {}): ExpressionNode {
   const tokens = tokenize(input)
   const parser = new Parser(tokens, options.maxDepth ?? 64)
@@ -61,7 +69,7 @@ class Parser {
       throw new BelError('DEPTH_EXCEEDED', `La expresión supera la profundidad máxima (${this.maxDepth}).`)
     }
     try {
-      let left = this.parseUnary()
+      let left = this.parsePrefix()
       for (;;) {
         const op = this.peekInfixOp()
         if (!op || op.bp < minBp) break
@@ -80,19 +88,19 @@ class Parser {
     }
   }
 
-  private parseUnary(): ExpressionNode {
+  private parsePrefix(): ExpressionNode {
     const t = this.peek()
     if (t.type === 'KEYWORD' && t.value === 'NOT') {
       this.next()
-      return { kind: 'Unary', op: 'NOT', operand: this.parseUnary() }
+      return { kind: 'Unary', op: 'NOT', operand: this.parseExpression(NOT_BP) }
     }
     if (t.type === 'OP' && t.value === '-') {
       this.next()
-      return { kind: 'Unary', op: 'NEG', operand: this.parseUnary() }
+      return { kind: 'Unary', op: 'NEG', operand: this.parseExpression(NEG_BP) }
     }
     if (t.type === 'OP' && t.value === '+') {
       this.next()
-      return this.parseUnary()
+      return this.parseExpression(NEG_BP)
     }
     return this.parsePrimary()
   }
