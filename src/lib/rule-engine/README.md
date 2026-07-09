@@ -1,10 +1,16 @@
-# Motor Universal de Reglas (Rule Engine) — Fase 1
+# Motor Universal de Reglas (Rule Engine) — Fases 1 y 2
 
 Infraestructura genérica, multi-tenant y **desacoplada del negocio** para
 evaluar reglas configurables. Es la base sobre la que las fases futuras
 construirán promociones, membresías, beneficios, QR inteligentes, puntos,
 cashback, referidos, automatizaciones, cupones, campañas y gamificación **sin
 volver a tocar el núcleo**.
+
+> **Fase 1** construyó la arquitectura base (documentada abajo). **Fase 2**
+> (sección final) añade el *lenguaje universal de evaluación*: árboles de
+> condiciones AND/OR/NOT/XOR, sistema de tipos, operadores tipados, registro de
+> tipos de condición, validación estática y un `RuleResult` estructurado. Salta
+> a **[§ Fase 2](#fase-2--lenguaje-universal-de-evaluación)** para lo nuevo.
 
 > **Alcance de esta fase:** SOLO la arquitectura del motor. No hay lógica de
 > promociones ni acciones de negocio implementadas, y **ningún flujo actual de
@@ -237,3 +243,168 @@ membresías, promociones, QR ni frontend. Ningún archivo existente cambió su
 comportamiento, y **nada de la app invoca el motor todavía**. Verificado con
 `tsc --noEmit` (0 errores), `eslint` (0 warnings) y un smoke test de 20
 aserciones sobre el motor con repositorio en memoria.
+
+---
+
+# Fase 2 — Lenguaje universal de evaluación
+
+Fase 2 convierte el motor en un **lenguaje** capaz de expresar y evaluar
+condiciones de cualquier negocio sin tocar código. Todo lo de Fase 1 sigue
+funcionando igual; esto es aditivo.
+
+## Novedades
+
+| Componente | Archivo | Qué aporta |
+|------------|---------|------------|
+| **Sistema de tipos** | `domain/data-types.ts` | `DataType` (TEXT, NUMBER, DATE, TIME, BOOLEAN, LIST, OBJECT, ENUM, JSON) + compatibilidad. |
+| **Operadores tipados** | `domain/operators.ts` | 22 operadores con `supportedTypes` y `arity`. Nuevos: `not_contains`, `is_empty`, `is_not_empty`, `not_between`. |
+| **Operadores lógicos** | `domain/logical.ts` | `AND` / `OR` / `NOT` / `XOR` como funciones puras. |
+| **Árbol de condiciones** | `domain/condition-tree.ts` | Nodos grupo/hoja anidables sin límite + constructores (`and`, `or`, `not`, `xor`, `leaf`). |
+| **Condition Engine** | `domain/condition-types.ts` | Registro extensible de *tipos de condición* (`field`, `current_datetime`, `current_time`, `channel`, …). |
+| **Rule Result** | `domain/rule-result.ts` | Respuesta estructurada: validez, árbol de resultados, conteos, issues, motivo de rechazo, duración. |
+| **Tree Evaluator** | `application/tree-evaluator.ts` | Evalúa el árbol recursivamente; **nunca lanza**: los errores son datos (issues). |
+| **Rule Validator** | `application/rule-validator.ts` | Validación estática: operadores/ tipos de condición inexistentes, tipos incompatibles, config inválida. |
+| **Rule Compiler** | `application/rule-compiler.ts` | Compila regla → árbol (puente Fase 1 plano ↔ Fase 2 árbol). Punto natural de caché. |
+| **Rule Cache** | `application/ports.ts` | Puerto de caché (`NoopRuleCache` por defecto) para escalar a miles de reglas. |
+
+## Flujo de evaluación (Fase 2)
+
+```
+evaluator.evaluateToResult(rule, context)
+        │
+        ├─▶ buildConditionTree(rule)        · usa rule.conditionTree si existe
+        │                                     · si no, compila desde conditions + matchType
+        │                                       (ALL→AND, ANY→OR; vacío→AND vacío = true)
+        │
+        └─▶ TreeEvaluator.evaluate(nodo)     (recursivo, never-throw)
+                 │
+                 ├─ grupo → evalúa hijos y combina con AND/OR/NOT/XOR
+                 │
+                 └─ condición (hoja):
+                       1. ConditionType registrado?  no → issue UNKNOWN_CONDITION_TYPE
+                       2. Operador registrado?        no → issue UNKNOWN_OPERATOR
+                       3. dataType ∈ operator.supportedTypes?  no → issue INCOMPATIBLE_TYPE
+                       4. actual = conditionType.resolve(cond, context)
+                          passed = operator.evaluate(actual, expected)   (try/catch → issue)
+        │
+        ▼
+   RuleResult { valid, outcome (árbol), evaluatedConditions, passed, failed,
+                issues[], rejectionReason, durationMs, details }
+```
+
+El motor (`RuleEngine.run`) usa este `RuleResult` para decidir si ejecuta
+acciones y qué audita (motivo de rechazo + issues incluidos en el log).
+
+## Diagrama del árbol de condiciones
+
+```
+                 Rule
+                  │  conditionTree (o compilado de matchType)
+                  ▼
+             ┌─────────┐   operator: OR
+             │  GRUPO  │
+             └────┬────┘
+        ┌─────────┴──────────┐
+        ▼                    ▼
+   ┌─────────┐          ┌─────────┐  operator: NOT
+   │  GRUPO  │ AND      │  GRUPO  │
+   └────┬────┘          └────┬────┘
+    ┌───┴───┐                │
+    ▼       ▼                ▼
+ [cond]   [cond]          [cond]      ← hojas: campo·operador·valor·dataType
+ puntos   activa           vip
+
+ Persistencia: rule_condition_groups (parentId auto-referencial) + rule_conditions.groupId
+```
+
+## Cómo añadir una CONDICIÓN nueva (sin tocar el núcleo)
+
+Un "tipo de condición" sabe **resolver** el valor real desde el contexto. Para
+soportar, p. ej., "antigüedad de la membresía":
+
+```ts
+import { createDefaultConditionTypeRegistry, createRuleEngine } from '@/lib/rule-engine'
+
+const conditionTypes = createDefaultConditionTypeRegistry().register({
+  id: 'membership_age_days',
+  description: 'Días desde el alta de la membresía.',
+  dataType: 'NUMBER',
+  resolve: ({ context }) => {
+    const alta = (context.data.membresia as { altaEn?: string })?.altaEn
+    return alta ? Math.floor((context.timestamp.getTime() - new Date(alta).getTime()) / 86_400_000) : null
+  },
+})
+
+const engine = createRuleEngine({ conditionTypes })
+```
+
+La condición en BD referenciará `conditionType = "membership_age_days"`. El
+evaluador, el validador y el motor lo usan sin cambiar una línea (Open/Closed).
+
+## Cómo añadir un OPERADOR nuevo (sin tocar el núcleo)
+
+```ts
+import { createDefaultOperatorRegistry, createRuleEngine } from '@/lib/rule-engine'
+
+const operators = createDefaultOperatorRegistry().register({
+  id: 'divisible_by',
+  description: 'El número real es divisible por el esperado.',
+  arity: 'binary',
+  supportedTypes: ['NUMBER'],
+  evaluate: (actual, expected) =>
+    typeof actual === 'number' && typeof expected === 'number' && expected !== 0 && actual % expected === 0,
+})
+
+const engine = createRuleEngine({ operators })
+```
+
+`supportedTypes` hace que el validador rechace automáticamente usarlo con tipos
+que no sean `NUMBER`. Lo mismo aplica para tipos de dato nuevos: se añaden a
+`DataType` y se declaran en los operadores compatibles.
+
+## Grupos y operadores lógicos
+
+- **AND**: todos los hijos se cumplen (grupo vacío → `true`).
+- **OR**: al menos uno (grupo vacío → `false`).
+- **NOT**: negación del AND de los hijos (con un hijo = negarlo).
+- **XOR**: exactamente uno de los hijos se cumple.
+
+Se anidan sin límite para formar `(A y B) o (no C)`. Se construyen en código con
+`and()/or()/not()/xor()/leaf()` o se persisten en `rule_condition_groups`.
+
+## Tipado y validaciones automáticas
+
+Cada condición declara su `dataType`. El motor **rechaza comparaciones
+incompatibles** (ej. `gt` sobre `BOOLEAN`) devolviendo un issue
+`INCOMPATIBLE_TYPE`, nunca un resultado erróneo silencioso. `RuleValidator`
+detecta **antes de evaluar**: operador inválido, tipo de condición inexistente,
+tipo incompatible y config inválida (regex mal formada, `between` sin `[min,max]`,
+`in` sin lista). Todo se reporta como `EvaluationIssue[]`, sin excepciones.
+
+## Rendimiento (arquitectura preparada)
+
+- **Compilación**: `compileRule()` construye el árbol una vez; reutilizable.
+- **Caché**: puerto `RuleCache` (`NoopRuleCache` por defecto) + `ruleCacheKey()`;
+  el motor consulta caché antes que el repositorio. Implementación LRU/Redis con
+  invalidación por `updatedAt` = enchufar sin tocar el motor.
+- **Índices**: `rule_condition_groups(ruleId)`, `(parentId)`, `rule_conditions(groupId)`.
+- **Carga diferida**: el repositorio ya restringe por empresa/estado/grupo/ventana.
+
+## Logging
+
+`ExecutionLogSink` recibe por evaluación: hora (`createdAt`), duración
+(`durationMs`), regla, resultado (`matched`), **motivo del rechazo**, **issues**
+(condición/campo que falló y por qué), errores y snapshot del contexto. Por
+defecto no persiste (`NoopExecutionLogSink`); inyectar `PrismaExecutionLogSink`
+lo activa.
+
+## Confirmación de no-regresión (Fase 2)
+
+Aditivo y retrocompatible: se añadieron 1 enum, 1 tabla y 3 columnas con
+DEFAULT (migración `20260726_add_rule_condition_groups`), y archivos nuevos +
+extensiones al módulo `rule-engine`. Las reglas planas de Fase 1 siguen
+evaluándose igual (el compilador las envuelve en un grupo AND/OR). **Ningún
+flujo de la app invoca el motor**; nada del comportamiento existente cambió.
+Verificado con `tsc --noEmit` (0 errores), `eslint` (0 warnings) y un smoke test
+de 29 aserciones (árboles AND/OR/NOT/XOR anidados, tipado, never-throw,
+validación estática, operadores/condition-types nuevos y compatibilidad Fase 1).

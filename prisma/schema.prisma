@@ -913,10 +913,20 @@ enum RuleStatus {
   ARCHIVED // retirada; se conserva como historial, nunca se evalúa
 }
 
-/// Cómo se combinan las condiciones de una regla.
+/// Cómo se combinan las condiciones de una regla (modo plano, Fase 1). Cuando
+/// la regla usa grupos (Fase 2) este campo se ignora en favor del árbol.
 enum RuleMatchType {
   ALL // AND: todas las condiciones deben cumplirse
   ANY // OR: basta con que se cumpla una condición
+}
+
+/// Operador lógico de un grupo de condiciones (Fase 2). Permite construir
+/// árboles booleanos de profundidad ilimitada.
+enum RuleLogicalOperator {
+  AND // todas las condiciones/hijos deben cumplirse
+  OR // al menos uno debe cumplirse
+  NOT // negación del conjunto de hijos (NOT del AND de los hijos)
+  XOR // exactamente uno de los hijos debe cumplirse
 }
 
 /// Agrupa reglas por dominio funcional (ej. "Validación QR", "Membresías",
@@ -961,9 +971,10 @@ model Rule {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  conditions RuleCondition[]
-  actions    RuleAction[]
-  logs       RuleExecutionLog[]
+  conditions      RuleCondition[]
+  conditionGroups RuleConditionGroup[]
+  actions         RuleAction[]
+  logs            RuleExecutionLog[]
 
   // Consulta caliente del motor: reglas de una empresa evaluables por estado.
   @@index([companyId, status, activo])
@@ -979,15 +990,46 @@ model RuleCondition {
   id        String   @id @default(cuid())
   ruleId    String
   rule      Rule     @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  // Fase 2: grupo al que pertenece la condición dentro del árbol booleano.
+  // null = cuelga directamente de la raíz de la regla (modo plano de Fase 1).
+  groupId   String?
+  group     RuleConditionGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
   campo     String // dot-path dentro del RuleContext, ej. "cliente.membresiaActiva"
   operador  String // id del operador en el registro, ej. "eq", "gte", "in"
   valor     Json     @default("null") // valor esperado (comparación)
-  tipoValor String   @default("STRING") // STRING | NUMBER | BOOLEAN | DATE | ARRAY | NULL (coerción)
+  tipoValor String   @default("STRING") // legacy Fase 1: guía de coerción del valor JSON
+  // Fase 2: tipo de condición (registro extensible, ej. "field") y tipo de dato
+  // evaluado (TEXT|NUMBER|DATE|TIME|BOOLEAN|LIST|OBJECT|ENUM|JSON) para validar
+  // compatibilidad operador↔dato.
+  conditionType String @default("field")
+  dataType      String @default("TEXT")
   orden     Int      @default(0)
   createdAt DateTime @default(now())
 
   @@index([ruleId, orden])
+  @@index([groupId])
   @@map("rule_conditions")
+}
+
+/// Grupo de condiciones (Fase 2). Nodo interno del árbol booleano de una regla:
+/// combina sus condiciones e hijos con un RuleLogicalOperator. Se auto-referencia
+/// (`parentId`) para anidar sin límite. Un grupo sin `parentId` es una raíz.
+model RuleConditionGroup {
+  id        String              @id @default(cuid())
+  ruleId    String
+  rule      Rule                @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    RuleConditionGroup? @relation("RuleGroupTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children  RuleConditionGroup[] @relation("RuleGroupTree")
+  operator  RuleLogicalOperator @default(AND)
+  orden     Int                 @default(0)
+  createdAt DateTime            @default(now())
+
+  conditions RuleCondition[]
+
+  @@index([ruleId])
+  @@index([parentId])
+  @@map("rule_condition_groups")
 }
 
 /// Acción a ejecutar cuando la regla se cumple. En esta fase SOLO se almacena

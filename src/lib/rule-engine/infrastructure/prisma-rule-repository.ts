@@ -14,9 +14,13 @@ import type {
 } from '../application/ports'
 import { mapRule } from './mappers'
 
-/** `include` reutilizable: siempre traemos condiciones, acciones y grupo. */
+/**
+ * `include` reutilizable: condiciones, grupos de condiciones (para reconstruir
+ * el árbol), acciones y grupo funcional.
+ */
 const RULE_INCLUDE = {
   conditions: true,
+  conditionGroups: true,
   actions: true,
   group: true,
 } as const

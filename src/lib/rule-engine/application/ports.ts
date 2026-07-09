@@ -63,6 +63,34 @@ export class NoopExecutionLogSink implements ExecutionLogSink {
   }
 }
 
+/**
+ * Caché de reglas por empresa/grupo (arquitectura de rendimiento, Fase 2).
+ *
+ * Prepara el sistema para soportar miles de reglas sin golpear la BD en cada
+ * evaluación: el motor puede consultar la caché antes que el repositorio. El
+ * puerto existe ya; la implementación real (LRU, Redis, invalidación por
+ * `updatedAt`) llegará cuando el volumen lo exija, SIN tocar el motor.
+ */
+export interface RuleCache {
+  get(key: string): Promise<Rule[] | null>
+  set(key: string, rules: Rule[]): Promise<void>
+  invalidate(key: string): Promise<void>
+}
+
+/** Implementación por defecto: no cachea (siempre falla el get). */
+export class NoopRuleCache implements RuleCache {
+  async get(): Promise<Rule[] | null> {
+    return null
+  }
+  async set(): Promise<void> {}
+  async invalidate(): Promise<void> {}
+}
+
+/** Clave de caché canónica para una consulta de reglas aplicables. */
+export function ruleCacheKey(companyId: string, groupKey?: string): string {
+  return `rules:${companyId}:${groupKey ?? '*'}`
+}
+
 /** Snapshot mínimo y seguro del contexto para auditar sin volcar datos crudos. */
 export function snapshotContext(context: RuleContext): Record<string, unknown> {
   return {

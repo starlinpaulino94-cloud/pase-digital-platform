@@ -11,11 +11,15 @@
 import type { RuleContext } from '../domain/context'
 import { isRuleEvaluable, type Rule } from '../domain/types'
 import type { ActionOutcome } from '../domain/actions'
+import type { RuleResult } from '../domain/rule-result'
 import type { ActionExecutor } from './action-executor'
-import type { RuleEvaluator, RuleMatchResult } from './rule-evaluator'
+import { toMatchResult, type RuleEvaluator, type RuleMatchResult } from './rule-evaluator'
 import {
+  NoopRuleCache,
+  ruleCacheKey,
   snapshotContext,
   type ExecutionLogSink,
+  type RuleCache,
   type RuleRepository,
 } from './ports'
 
@@ -24,6 +28,8 @@ export interface RuleEngineDeps {
   readonly evaluator: RuleEvaluator
   readonly executor: ActionExecutor
   readonly logSink: ExecutionLogSink
+  /** Caché de reglas (opcional). Por defecto NoopRuleCache (sin caché). */
+  readonly cache?: RuleCache
 }
 
 export interface RuleEngineQuery {
@@ -37,6 +43,9 @@ export interface RuleEngineQuery {
 /** Resultado de evaluar UNA regla. */
 export interface RuleEvaluationResult {
   readonly rule: Rule
+  /** Resultado rico (Fase 2): árbol de resultados, issues, motivo de rechazo. */
+  readonly result: RuleResult
+  /** Resultado ligero (compat Fase 1). */
   readonly match: RuleMatchResult
   readonly actions: readonly ActionOutcome[]
   readonly durationMs: number
@@ -61,11 +70,19 @@ export class RuleEngine {
    */
   async run(query: RuleEngineQuery, context: RuleContext): Promise<RuleEngineRunResult> {
     const at = query.at ?? context.timestamp
-    const rules = await this.deps.repository.findApplicable({
-      companyId: query.companyId,
-      groupKey: query.groupKey,
-      at,
-    })
+    const cache = this.deps.cache ?? new NoopRuleCache()
+    const cacheKey = ruleCacheKey(query.companyId, query.groupKey)
+
+    // Caché → repositorio (la caché por defecto siempre falla, así que va a BD).
+    let rules = await cache.get(cacheKey)
+    if (!rules) {
+      rules = await this.deps.repository.findApplicable({
+        companyId: query.companyId,
+        groupKey: query.groupKey,
+        at,
+      })
+      await cache.set(cacheKey, rules)
+    }
 
     // Doble red de seguridad: el repositorio ya filtra, pero volvemos a validar
     // la ventana de vigencia con la definición canónica del dominio.
@@ -78,13 +95,13 @@ export class RuleEngine {
 
     for (const rule of evaluable) {
       const startedAt = Date.now()
-      let match: RuleMatchResult | null = null
+      const result = this.deps.evaluator.evaluateToResult(rule, context)
+      const match = toMatchResult(rule, result)
       let actions: readonly ActionOutcome[] = []
       let error: string | null = null
 
       try {
-        match = this.deps.evaluator.evaluate(rule, context)
-        if (match.matched) {
+        if (result.valid) {
           const report = await this.deps.executor.execute(rule, context)
           actions = report.outcomes
           matchedCount++
@@ -95,13 +112,16 @@ export class RuleEngine {
 
       const durationMs = Date.now() - startedAt
 
-      // Auditoría (el sink por defecto la descarta).
+      // Auditoría (el sink por defecto la descarta). Incluye motivo del rechazo,
+      // errores de configuración y las acciones intentadas.
       await this.deps.logSink.record({
         ruleId: rule.id,
         companyId: query.companyId,
-        matched: match?.matched ?? false,
+        matched: result.valid,
         result: {
-          matched: match?.matched ?? false,
+          matched: result.valid,
+          rejectionReason: result.rejectionReason,
+          issues: result.issues,
           actions: actions.map((a) => ({ type: a.type, status: a.status })),
           error,
         },
@@ -110,17 +130,7 @@ export class RuleEngine {
         error,
       })
 
-      results.push({
-        rule,
-        match: match ?? {
-          ruleId: rule.id,
-          matched: false,
-          matchType: rule.matchType,
-          conditionResults: [],
-        },
-        actions,
-        durationMs,
-      })
+      results.push({ rule, result, match, actions, durationMs })
     }
 
     return {

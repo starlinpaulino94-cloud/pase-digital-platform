@@ -7,6 +7,9 @@
  * el núcleo nunca conoce el detalle de persistencia (Clean Architecture).
  */
 
+import type { DataType } from './data-types'
+import type { ConditionNode } from './condition-tree'
+
 /** Ciclo de vida de una regla. Espeja el enum `RuleStatus` de Prisma. */
 export type RuleStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
 
@@ -27,12 +30,20 @@ export type ConditionValueType = 'STRING' | 'NUMBER' | 'BOOLEAN' | 'DATE' | 'ARR
  */
 export interface RuleCondition {
   readonly id: string
+  /**
+   * Tipo de condición: clave del ConditionTypeRegistry que sabe RESOLVER el
+   * valor real desde el contexto (Fase 2). Por defecto "field" (dot-path).
+   */
+  readonly conditionType: string
   /** Ruta dentro del contexto, ej. "cliente.puntos" o "$now". */
   readonly field: string
   /** Id del operador en el OperatorRegistry, ej. "gte". */
   readonly operator: string
   /** Valor esperado ya deserializado desde JSON. */
   readonly value: unknown
+  /** Tipo de dato que evalúa la condición: base de la validación de tipos. */
+  readonly dataType: DataType
+  /** Guía de coerción del valor JSON (legacy Fase 1). */
   readonly valueType: ConditionValueType
   readonly order: number
 }
@@ -72,7 +83,13 @@ export interface Rule {
   readonly matchType: RuleMatchType
   readonly validFrom: Date | null
   readonly validUntil: Date | null
+  /** Condiciones planas (Fase 1). Se combinan con `matchType` si no hay árbol. */
   readonly conditions: readonly RuleCondition[]
+  /**
+   * Árbol booleano de condiciones (Fase 2). Si es `null`, el evaluador compila
+   * uno a partir de `conditions` + `matchType` (compatibilidad hacia atrás).
+   */
+  readonly conditionTree: ConditionNode | null
   readonly actions: readonly RuleAction[]
   readonly createdAt: Date
   readonly updatedAt: Date

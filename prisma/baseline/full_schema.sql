@@ -49,6 +49,9 @@ CREATE TYPE "RuleStatus" AS ENUM ('DRAFT', 'PUBLISHED', 'ARCHIVED');
 -- CreateEnum
 CREATE TYPE "RuleMatchType" AS ENUM ('ALL', 'ANY');
 
+-- CreateEnum
+CREATE TYPE "RuleLogicalOperator" AS ENUM ('AND', 'OR', 'NOT', 'XOR');
+
 -- CreateTable
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
@@ -614,14 +617,29 @@ CREATE TABLE "rules" (
 CREATE TABLE "rule_conditions" (
     "id" TEXT NOT NULL,
     "ruleId" TEXT NOT NULL,
+    "groupId" TEXT,
     "campo" TEXT NOT NULL,
     "operador" TEXT NOT NULL,
     "valor" JSONB NOT NULL DEFAULT 'null',
     "tipoValor" TEXT NOT NULL DEFAULT 'STRING',
+    "conditionType" TEXT NOT NULL DEFAULT 'field',
+    "dataType" TEXT NOT NULL DEFAULT 'TEXT',
     "orden" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "rule_conditions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "rule_condition_groups" (
+    "id" TEXT NOT NULL,
+    "ruleId" TEXT NOT NULL,
+    "parentId" TEXT,
+    "operator" "RuleLogicalOperator" NOT NULL DEFAULT 'AND',
+    "orden" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "rule_condition_groups_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -907,6 +925,15 @@ CREATE INDEX "rules_companyId_prioridad_idx" ON "rules"("companyId", "prioridad"
 CREATE INDEX "rule_conditions_ruleId_orden_idx" ON "rule_conditions"("ruleId", "orden");
 
 -- CreateIndex
+CREATE INDEX "rule_conditions_groupId_idx" ON "rule_conditions"("groupId");
+
+-- CreateIndex
+CREATE INDEX "rule_condition_groups_ruleId_idx" ON "rule_condition_groups"("ruleId");
+
+-- CreateIndex
+CREATE INDEX "rule_condition_groups_parentId_idx" ON "rule_condition_groups"("parentId");
+
+-- CreateIndex
 CREATE INDEX "rule_actions_ruleId_orden_idx" ON "rule_actions"("ruleId", "orden");
 
 -- CreateIndex
@@ -1088,6 +1115,15 @@ ALTER TABLE "rules" ADD CONSTRAINT "rules_groupId_fkey" FOREIGN KEY ("groupId") 
 
 -- AddForeignKey
 ALTER TABLE "rule_conditions" ADD CONSTRAINT "rule_conditions_ruleId_fkey" FOREIGN KEY ("ruleId") REFERENCES "rules"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "rule_conditions" ADD CONSTRAINT "rule_conditions_groupId_fkey" FOREIGN KEY ("groupId") REFERENCES "rule_condition_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "rule_condition_groups" ADD CONSTRAINT "rule_condition_groups_ruleId_fkey" FOREIGN KEY ("ruleId") REFERENCES "rules"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "rule_condition_groups" ADD CONSTRAINT "rule_condition_groups_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "rule_condition_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "rule_actions" ADD CONSTRAINT "rule_actions_ruleId_fkey" FOREIGN KEY ("ruleId") REFERENCES "rules"("id") ON DELETE CASCADE ON UPDATE CASCADE;

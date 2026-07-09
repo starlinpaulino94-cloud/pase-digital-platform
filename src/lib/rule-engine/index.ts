@@ -25,12 +25,17 @@ import {
   createDefaultOperatorRegistry,
   type OperatorRegistry,
 } from './domain/operators'
+import {
+  ConditionTypeRegistry,
+  createDefaultConditionTypeRegistry,
+} from './domain/condition-types'
 import { ActionExecutor } from './application/action-executor'
 import { RuleEvaluator } from './application/rule-evaluator'
 import { RuleEngine } from './application/rule-engine'
 import {
   NoopExecutionLogSink,
   type ExecutionLogSink,
+  type RuleCache,
   type RuleRepository,
 } from './application/ports'
 import { PrismaRuleRepository } from './infrastructure/prisma-rule-repository'
@@ -41,28 +46,35 @@ export interface CreateRuleEngineOptions {
   repository?: RuleRepository
   /** Registro de operadores. Por defecto: catálogo estándar. */
   operators?: OperatorRegistry
+  /** Registro de tipos de condición. Por defecto: catálogo estándar (field, …). */
+  conditionTypes?: ConditionTypeRegistry
   /** Registro de acciones. Por defecto: VACÍO (Fase 1, sin handlers). */
   actions?: ActionRegistry
   /** Sumidero de auditoría. Por defecto: no-op (no persiste). */
   logSink?: ExecutionLogSink
+  /** Caché de reglas. Por defecto: sin caché. */
+  cache?: RuleCache
 }
 
 /**
  * Composition root: construye un RuleEngine con valores por defecto sensatos y
  * permite inyectar cualquier dependencia (Dependency Injection). Las fases
- * futuras pasarán un ActionRegistry con handlers y/o un PrismaExecutionLogSink.
+ * futuras pasarán un ActionRegistry con handlers, tipos de condición nuevos,
+ * una caché o un PrismaExecutionLogSink, sin tocar el núcleo.
  */
 export function createRuleEngine(options: CreateRuleEngineOptions = {}): RuleEngine {
   const operators = options.operators ?? createDefaultOperatorRegistry()
+  const conditionTypes = options.conditionTypes ?? createDefaultConditionTypeRegistry()
   const actions = options.actions ?? new ActionRegistry()
   const repository = options.repository ?? new PrismaRuleRepository(prisma)
   const logSink = options.logSink ?? new NoopExecutionLogSink()
 
   return new RuleEngine({
     repository,
-    evaluator: new RuleEvaluator(operators),
+    evaluator: new RuleEvaluator(operators, conditionTypes),
     executor: new ActionExecutor(actions),
     logSink,
+    cache: options.cache,
   })
 }
 
@@ -74,7 +86,7 @@ export {
   OperatorRegistry,
   createDefaultOperatorRegistry,
 } from './domain/operators'
-export type { Operator } from './domain/operators'
+export type { Operator, OperatorArity } from './domain/operators'
 export { ActionRegistry } from './domain/actions'
 export type {
   ActionHandler,
@@ -99,6 +111,47 @@ export {
   InvalidConditionError,
 } from './domain/errors'
 
+// Fase 2 — lenguaje universal
+export type { DataType } from './domain/data-types'
+export {
+  DATA_TYPES,
+  isDataType,
+  toDataType,
+  isOrdinal,
+  inferDataType,
+} from './domain/data-types'
+export {
+  ConditionTypeRegistry,
+  createDefaultConditionTypeRegistry,
+} from './domain/condition-types'
+export type { ConditionType, ConditionResolutionInput } from './domain/condition-types'
+export {
+  leaf,
+  group,
+  and,
+  or,
+  not,
+  xor,
+  collectConditions,
+  treeDepth,
+} from './domain/condition-tree'
+export type {
+  ConditionNode,
+  ConditionLeaf,
+  ConditionGroupNode,
+  LogicalOperator,
+} from './domain/condition-tree'
+export { combine, isLogicalOperator } from './domain/logical'
+export type {
+  RuleResult,
+  EvaluationOutcome,
+  ConditionOutcome,
+  GroupOutcome,
+  EvaluationIssue,
+  EvaluationErrorCode,
+} from './domain/rule-result'
+export { summarizeOutcome, firstFailedCondition } from './domain/rule-result'
+
 // Aplicación
 export { RuleEngine } from './application/rule-engine'
 export type {
@@ -106,11 +159,19 @@ export type {
   RuleEngineRunResult,
   RuleEvaluationResult,
 } from './application/rule-engine'
-export { RuleEvaluator } from './application/rule-evaluator'
-export type { RuleMatchResult } from './application/rule-evaluator'
+export { RuleEvaluator, toMatchResult } from './application/rule-evaluator'
+export type { RuleMatchResult, ConditionResult } from './application/rule-evaluator'
+export { TreeEvaluator } from './application/tree-evaluator'
+export type { TreeEvaluatorDeps } from './application/tree-evaluator'
+export { RuleValidator } from './application/rule-validator'
+export type { RuleValidatorDeps } from './application/rule-validator'
+export { compileRule, buildConditionTree } from './application/rule-compiler'
+export type { CompiledRule } from './application/rule-compiler'
 export { ActionExecutor } from './application/action-executor'
 export {
   NoopExecutionLogSink,
+  NoopRuleCache,
+  ruleCacheKey,
   snapshotContext,
 } from './application/ports'
 export type {
@@ -118,6 +179,7 @@ export type {
   ExecutionLogSink,
   RuleExecutionLogEntry,
   FindApplicableRulesQuery,
+  RuleCache,
 } from './application/ports'
 
 // Infraestructura
