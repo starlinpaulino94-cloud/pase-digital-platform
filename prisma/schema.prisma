@@ -91,6 +91,7 @@ enum AuditAccion {
   MEMBRESIA_RENOVADA
   QR_GENERADO
   QR_USADO
+  QR_COMPARTIDO
   COMPROBANTE_IMPRESO
   REFERIDO_COMPLETADO
   RECOMPENSA_OTORGADA
@@ -645,6 +646,10 @@ model QrToken {
   membership  Membership @relation(fields: [membresiaId], references: [id], onDelete: Cascade)
   token       String     @unique @default(cuid())
   activo      Boolean    @default(true)
+  // Compartir el QR (p. ej. por WhatsApp) no consume el token —sigue siendo de
+  // un solo uso— pero sí queda registrado: cuántas veces y cuándo la última.
+  compartidoCount  Int       @default(0)
+  ultimoCompartido DateTime?
   createdAt   DateTime   @default(now())
 
   @@index([clienteId, activo])

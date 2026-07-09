@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { getUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { format } from 'date-fns'
+import { format, differenceInCalendarDays } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -12,9 +12,9 @@ import {
   Clock,
   Infinity as InfinityIcon,
   History,
-  ShieldCheck,
+  Share2,
 } from 'lucide-react'
-import { QRDisplay } from '@/components/qr/QRDisplay'
+import { QRShareCard } from '@/components/qr/QRShareCard'
 import { ComprobanteForm } from '@/components/membresia/ComprobanteForm'
 import { formatMoney } from '@/lib/format'
 
@@ -84,6 +84,23 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
     where: { membresiaId: membresiaId, activo: true },
     orderBy: { createdAt: 'desc' },
   })
+
+  // Historial de envíos del QR (persiste aunque el token se regenere): se
+  // filtra por membresiaId dentro del payload del audit log.
+  const enviosQr = await prisma.auditLog.findMany({
+    where: {
+      accion: 'QR_COMPARTIDO',
+      payload: { path: ['membresiaId'], equals: membresiaId },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 20,
+    select: { id: true, createdAt: true },
+  }).catch(() => [])
+
+  // Días restantes explícitos para el cliente.
+  const diasRestantes = membership.fechaVencimiento
+    ? differenceInCalendarDays(membership.fechaVencimiento, now)
+    : null
 
   // ¿Necesita pago? Membresía pendiente/rechazada, o activa con cambio de plan
   // solicitado (que requiere comprobante del nuevo plan).
@@ -262,26 +279,47 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
         </div>
       )}
 
-      {/* QR protagonista */}
-      {qrToken ? (
-        <div className="mb-8 flex flex-col items-center rounded-2xl border border-border/60 bg-card px-6 py-8 text-center shadow-card">
-          <h2 className="text-h2 text-foreground">Tu código QR</h2>
-          <p className="mt-1 max-w-sm text-small text-muted-foreground">
-            Muéstralo en {company.name} para validar tu membresía al instante.
-          </p>
-          <div className="mt-6">
-            <QRDisplay token={qrToken.token} />
-          </div>
-          <p className="mt-5 inline-flex items-center gap-1.5 text-caption">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Por seguridad, el código se renueva cada vez que usas tu membresía.
-          </p>
-        </div>
-      ) : isActive ? (
+      {/* QR protagonista con opción de compartir (solo membresía activa) */}
+      {qrToken && isActive ? (
+        <QRShareCard
+          qrTokenId={qrToken.id}
+          token={qrToken.token}
+          companyName={company.name}
+          diasRestantes={diasRestantes}
+          esIlimitado={membership.plan.esIlimitado ?? false}
+          lavadosRestantes={membership.lavadosRestantes ?? 0}
+          compartidoCount={qrToken.compartidoCount}
+          ultimoCompartidoISO={qrToken.ultimoCompartido?.toISOString() ?? null}
+        />
+      ) : !qrToken && isActive ? (
         <div className="mb-8 rounded-2xl border border-border/60 bg-card p-6 text-center text-sm text-muted-foreground shadow-card">
           Tu código QR se está generando. Vuelve a cargar la página en un momento.
         </div>
       ) : null}
+
+      {/* Historial de envíos del QR */}
+      {enviosQr.length > 0 && (
+        <div className="mb-8 rounded-2xl border border-border/60 bg-card p-6 shadow-card">
+          <h2 className="text-h3 mb-4 flex items-center gap-2 text-foreground">
+            <Share2 className="h-4 w-4 text-muted-foreground" /> Envíos de tu QR
+          </h2>
+          <div className="space-y-3">
+            {enviosQr.map((envio) => (
+              <div
+                key={envio.id}
+                className="flex items-center justify-between border-b border-border/50 pb-3 text-sm last:border-b-0 last:pb-0"
+              >
+                <span className="inline-flex items-center gap-1.5 text-foreground">
+                  <Share2 className="h-3.5 w-3.5 text-emerald-600" /> QR compartido
+                </span>
+                <span className="text-muted-foreground">
+                  {format(envio.createdAt, "d 'de' MMM 'de' yyyy, HH:mm", { locale: es })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Beneficios */}
       {membership.plan.beneficios && membership.plan.beneficios.length > 0 && (
