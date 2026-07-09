@@ -20,6 +20,7 @@ import {
   Newspaper,
   TrendingUp,
   Store,
+  Compass,
   Bell,
   Flag,
   Zap,
@@ -107,6 +108,7 @@ const CLIENTE_NAV: NavGroup[] = [
   {
     label: 'Beneficios',
     items: [
+      { href: '/cliente/explorar', label: 'Explorar empresas', icon: Compass },
       { href: '/cliente/empresas', label: 'Mis empresas', icon: Building2 },
       { href: '/cliente/promociones', label: 'Promociones', icon: Megaphone },
       { href: '/cliente/referidos', label: 'Referidos', icon: Gift },
