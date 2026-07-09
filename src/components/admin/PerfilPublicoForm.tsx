@@ -93,6 +93,9 @@ export function PerfilPublicoForm({
 
   return (
     <form action={action} className="space-y-6">
+      {/* Empresa a editar: el admin de empresa se valida por sesión; el
+          superadmin usa este campo (verificado en la action). */}
+      <input type="hidden" name="companyId" value={company.id} />
       {/* Identidad visual */}
       <Card>
         <CardHeader>

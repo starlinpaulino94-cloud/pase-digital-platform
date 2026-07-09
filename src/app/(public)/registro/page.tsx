@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { CompanyGrid } from '@/components/public/CompanyGrid'
 import { CategoryTabs } from '@/components/public/CategoryTabs'
 import { getCompaniesPublic, getCategoriesPublic } from '@/modules/marketplace/queries'
@@ -33,12 +34,36 @@ export default async function RegistroPage({ searchParams }: RegistroPageProps) 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>
             <h1 className="text-4xl sm:text-5xl font-bold text-slate-900">
-              Elige tu Empresa
+              Crea tu cuenta
             </h1>
             <p className="text-slate-600 mt-2 text-lg">
-              Selecciona una empresa para crear tu membresía y acceder a beneficios exclusivos
+              Regístrate directo en una empresa, o crea tu cuenta MembeGo sin
+              compromiso y únete a las que quieras después.
             </p>
           </div>
+
+          {/* Registro general: sin empresa, sin seguir, sin membresía */}
+          <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-blue-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center">
+            <div>
+              <p className="font-semibold text-slate-900">
+                ¿Solo quieres tu cuenta MembeGo?
+              </p>
+              <p className="text-sm text-slate-600">
+                Créala sin elegir empresa: no es obligatorio seguir a nadie ni
+                tener una membresía.
+              </p>
+            </div>
+            <Link
+              href="/registro/cuenta"
+              className="inline-flex shrink-0 items-center rounded-xl bg-blue-600 px-5 py-2.5 font-semibold text-white transition hover:bg-blue-700"
+            >
+              Crear cuenta sin empresa
+            </Link>
+          </div>
+
+          <p className="text-sm font-medium uppercase tracking-wide text-slate-400">
+            O regístrate directo en una empresa
+          </p>
         </div>
       </section>
 

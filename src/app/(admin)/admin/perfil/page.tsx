@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ExternalLink, AlertCircle } from 'lucide-react'
+import { ExternalLink, AlertCircle, Building2 } from 'lucide-react'
 import { ADMIN_ROLES } from '@/types'
 import { requireRole } from '@/lib/auth/guards'
 import { prisma } from '@/lib/prisma'
@@ -15,22 +15,73 @@ import { getAppUrl } from '@/lib/site'
 
 export const dynamic = 'force-dynamic'
 
-export default async function PerfilEmpresaPage() {
+export default async function PerfilEmpresaPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
   const user = await requireRole(ADMIN_ROLES)
-  const companyId = user.metadata.companyId
+  const params = await searchParams
+  const esSuper = user.metadata.role === 'SUPERADMIN'
+
+  // El superadmin no usa la empresa de su sesión (puede no tener, o apuntar a
+  // una empresa borrada): elige cuál editar con ?empresa=<id>.
+  const companyId = esSuper
+    ? (typeof params.empresa === 'string' ? params.empresa : null)
+    : user.metadata.companyId
 
   if (!companyId) {
+    if (esSuper) {
+      const companies = await prisma.company
+        .findMany({
+          orderBy: { name: 'asc' },
+          select: { id: true, name: true, slug: true, isPublished: true },
+        })
+        .catch(() => [])
+      return (
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Perfil público</h1>
+            <p className="text-slate-500">
+              Elige la empresa cuyo perfil quieres editar.
+            </p>
+          </div>
+          {companies.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-slate-500">
+                <Building2 className="mx-auto mb-3 h-8 w-8 text-slate-300" />
+                Aún no hay empresas registradas.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {companies.map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/admin/perfil?empresa=${c.id}`}
+                  className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 transition hover:border-blue-200 hover:shadow-sm"
+                >
+                  <div>
+                    <p className="font-semibold text-slate-900">{c.name}</p>
+                    <p className="text-xs text-slate-500">
+                      {c.isPublished ? 'Publicada' : 'Sin publicar'}
+                    </p>
+                  </div>
+                  <Building2 className="h-5 w-5 text-slate-300" />
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )
+    }
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold text-slate-900">Perfil público</h1>
         <Card>
           <CardContent className="py-12 text-center text-slate-500">
             <AlertCircle className="mx-auto mb-3 h-8 w-8 text-slate-300" />
-            Esta vista es por empresa. Como superadmin, edita empresas desde{' '}
-            <Link href="/superadmin/empresas" className="text-blue-600 underline">
-              el panel de empresas
-            </Link>
-            .
+            Tu cuenta no tiene una empresa asignada. Contacta a soporte.
           </CardContent>
         </Card>
       </div>

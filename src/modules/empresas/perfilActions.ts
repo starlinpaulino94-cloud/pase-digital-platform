@@ -30,12 +30,21 @@ export async function actualizarPerfilPublico(
   const user = await requireAdminUser()
   if (!user) return { error: 'No autorizado.' }
 
-  const companyId = user.metadata.companyId
+  // El superadmin no depende de la empresa de su sesión (puede no tener o
+  // apuntar a una borrada): edita la empresa elegida en el formulario.
+  const esSuper = user.metadata.role === 'SUPERADMIN'
+  const companyId = esSuper
+    ? String(formData.get('companyId') ?? '').trim()
+    : user.metadata.companyId
   if (!companyId) {
-    return {
-      error:
-        'Esta vista es del panel de empresa. Como superadmin, edita empresas desde /superadmin/empresas.',
-    }
+    return { error: 'Empresa requerida.' }
+  }
+  if (esSuper) {
+    const existe = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: { id: true },
+    })
+    if (!existe) return { error: 'Empresa no encontrada.' }
   }
 
   const galleryImages = formData

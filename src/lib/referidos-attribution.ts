@@ -44,18 +44,25 @@ async function esRegistroSospechoso(
  * - Misma empresa: crea el Referido + evento REGISTRO.
  * - Otra empresa de la plataforma: evento REGISTRO_GLOBAL (puntos MembeGo).
  * Nunca lanza: la atribución jamás rompe el registro.
+ *
+ * `permitirCookie: false` para afiliaciones de usuarios EXISTENTES: la cookie
+ * silenciosa (30 días) solo debe atribuir cuentas realmente nuevas; una cuenta
+ * vieja uniéndose a otra empresa solo cuenta si llegó con ?ref explícito.
  */
 export async function vincularReferido(
   refCode: string,
   companyId: string,
   referidoClienteId: string,
-  ipAddress: string | null
+  ipAddress: string | null,
+  opts?: { permitirCookie?: boolean }
 ) {
   try {
     let code = refCode
-    if (!code) {
+    let viaCookie = false
+    if (!code && (opts?.permitirCookie ?? true)) {
       const cookieStore = await cookies()
       code = cookieStore.get(REF_COOKIE)?.value ?? ''
+      viaCookie = !!code
     }
     if (!code) return
 
@@ -63,8 +70,18 @@ export async function vincularReferido(
       where: { codigoReferido: code },
     })
     if (!referente) return
-    // Anti-abuso: nadie puede referirse a sí mismo.
+
+    // Anti-abuso: nadie puede referirse a sí mismo. La comparación es por
+    // PERSONA (supabaseId), no por fila de Cliente: la ficha es por empresa y
+    // comparar ids dejaba pasar el autoreferido hacia otra empresa o con la
+    // cookie puesta al probar el propio enlace.
     if (referente.id === referidoClienteId) return
+    const referidoCliente = await prisma.cliente.findUnique({
+      where: { id: referidoClienteId },
+      select: { supabaseId: true },
+    })
+    if (!referidoCliente) return
+    if (referidoCliente.supabaseId === referente.supabaseId) return
 
     const huella = hashIp(ipAddress)
 
@@ -85,7 +102,12 @@ export async function vincularReferido(
         clienteId: referente.id,
         companyId,
         tipo: 'REGISTRO',
-        meta: { referidoClienteId, ipHash: huella, ...(sospechoso ? { sospechoso: true } : {}) },
+        meta: {
+          referidoClienteId,
+          ipHash: huella,
+          ...(viaCookie ? { viaCookie: true } : {}),
+          ...(sospechoso ? { sospechoso: true } : {}),
+        },
         ...(sospechoso ? { puntos: 0 } : {}),
       })
       return
@@ -102,6 +124,7 @@ export async function vincularReferido(
         targetCompanyId: companyId,
         referidoClienteId,
         ipHash: huella,
+        ...(viaCookie ? { viaCookie: true } : {}),
         ...(sospechoso ? { sospechoso: true } : {}),
       },
       ...(sospechoso ? { puntos: 0 } : {}),

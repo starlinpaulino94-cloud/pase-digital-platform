@@ -144,7 +144,11 @@ async function afiliarUsuarioExistente(
   await fijarAppMetadata(supabaseId, existing.id, cliente.id, company.id)
 
   if (esAltaNueva) {
-    await vincularReferido(refCode, company.id, cliente.id, ipAddress)
+    // Usuario EXISTENTE afiliándose a otra empresa: solo cuenta con ?ref
+    // explícito, nunca por la cookie silenciosa.
+    await vincularReferido(refCode, company.id, cliente.id, ipAddress, {
+      permitirCookie: false,
+    })
   }
   return { kind: 'ok', dest: ROLE_HOME.CLIENTE }
 }

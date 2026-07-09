@@ -138,7 +138,11 @@ export async function registrarCliente(
         },
       })
 
-      await vincularReferido(refCode, company.id, cliente.id, ipAddress)
+      // Usuario EXISTENTE afiliándose: solo cuenta con ?ref explícito, nunca
+      // por la cookie silenciosa (evita atribuciones fantasma de 30 días).
+      await vincularReferido(refCode, company.id, cliente.id, ipAddress, {
+        permitirCookie: false,
+      })
 
       return { success: true }
     } catch (e) {
@@ -252,6 +256,111 @@ export async function registrarCliente(
   }
   } catch (e) {
     console.error('[registro] unexpected error:', e)
+    return { error: 'Ocurrió un error inesperado. Intenta de nuevo.' }
+  }
+}
+
+/**
+ * Registro general en MembeGo, SIN empresa: crea la cuenta (Supabase + User
+ * CLIENTE) sin afiliarse a ninguna empresa, sin seguirla y sin membresía.
+ * El usuario luego explora empresas dentro de la app y se afilia cuando
+ * quiera (la afiliación reutiliza el flujo existente de /registro/[slug]).
+ */
+export async function registrarCuentaGeneral(
+  _prev: RegistroState,
+  formData: FormData
+): Promise<RegistroState> {
+  try {
+    const { ipAddress } = await getRequestMeta()
+    if (!registerLimiter(ipAddress ?? 'unknown')) {
+      return { error: 'Demasiados registros desde esta conexión. Intenta de nuevo en unos minutos.' }
+    }
+
+    const nombre = String(formData.get('nombre') ?? '').trim()
+    const email = String(formData.get('email') ?? '').trim().toLowerCase()
+    const password = String(formData.get('password') ?? '')
+    const telefono = String(formData.get('telefono') ?? '').trim()
+    const aceptaTerminos = formData.get('terminos') === 'on'
+    const marketingConsent = formData.getAll('marketingConsent').at(-1) === 'on'
+
+    if (!nombre || !email || !password) {
+      return { error: 'Completa todos los campos obligatorios.' }
+    }
+    if (password.length < 6) {
+      return { error: 'La contraseña debe tener al menos 6 caracteres.' }
+    }
+    if (!aceptaTerminos) {
+      return { error: 'Debes aceptar los términos y la política de privacidad.' }
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { email } })
+    if (existingUser) {
+      return { error: 'Ya existe una cuenta con este correo. Inicia sesión.' }
+    }
+
+    const admin = createAdminClient()
+    const verificarCorreo = isEmailVerificationEnabled()
+    const { data: created, error: createError } =
+      await admin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: !verificarCorreo,
+        user_metadata: { name: nombre },
+      })
+
+    if (createError || !created.user) {
+      if (createError?.message?.toLowerCase().includes('already')) {
+        return { error: 'Ya existe una cuenta con este correo.' }
+      }
+      return { error: createError?.message ?? 'No se pudo crear la cuenta.' }
+    }
+
+    const supabaseId = created.user.id
+    await ensureEmailIdentity(supabaseId, email)
+
+    try {
+      const now = new Date()
+      const dbUser = await prisma.user.create({
+        data: {
+          supabaseId,
+          email,
+          name: nombre,
+          role: 'CLIENTE',
+          companyId: null,
+          termsAcceptedAt: now,
+          termsVersion: TERMS_VERSION,
+          marketingConsent,
+          marketingConsentAt: marketingConsent ? now : null,
+        },
+      })
+
+      // Nota: el teléfono se guarda cuando el usuario se afilie a una empresa
+      // (la ficha Cliente es por empresa); aquí solo existe la cuenta global.
+      void telefono
+
+      await admin.auth.admin.updateUserById(supabaseId, {
+        app_metadata: {
+          role: 'CLIENTE',
+          dbUserId: dbUser.id,
+          clienteId: null,
+          companyId: null,
+        },
+      })
+
+      if (verificarCorreo) {
+        await sendVerificationEmail(admin, email, nombre)
+        return { pendingVerification: true }
+      }
+      return { success: true }
+    } catch (e) {
+      await admin.auth.admin.deleteUser(supabaseId).catch((err) =>
+        console.error('[registro-general-cleanup]', err)
+      )
+      console.error('[registro-general]', e)
+      return { error: 'No se pudo completar el registro. Intenta de nuevo.' }
+    }
+  } catch (e) {
+    console.error('[registro-general] unexpected error:', e)
     return { error: 'Ocurrió un error inesperado. Intenta de nuevo.' }
   }
 }
