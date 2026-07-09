@@ -102,7 +102,7 @@ export default async function CompanyDetailPage({
   return (
     <div className="min-h-screen bg-white">
       {/* Hero / Banner */}
-      <section className="relative h-56 w-full overflow-hidden bg-gradient-to-br from-blue-700 via-sky-600 to-indigo-800 sm:h-72">
+      <section className="relative h-56 w-full overflow-hidden bg-gradient-to-br from-blue-800 via-blue-700 to-indigo-900 sm:h-72">
         {company.bannerUrl ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -114,12 +114,15 @@ export default async function CompanyDetailPage({
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent" />
           </>
         ) : (
-          <div className="absolute -top-10 right-16 h-56 w-56 rounded-full bg-sky-400/30 blur-3xl" />
+          <>
+            <div className="absolute inset-0 bg-grid-light mask-fade" />
+            <div className="absolute -top-10 right-16 h-56 w-56 rounded-full bg-sky-400/25 blur-3xl" />
+          </>
         )}
         <div className="absolute left-0 top-0 p-4 sm:p-6">
           <Link
             href="/empresas"
-            className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5 text-sm font-medium text-white backdrop-blur transition hover:bg-white/30"
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 px-3.5 py-1.5 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-white/25"
           >
             <ArrowLeft className="h-4 w-4" /> Empresas
           </Link>
@@ -128,7 +131,7 @@ export default async function CompanyDetailPage({
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Header card */}
-        <div className="relative -mt-16 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="relative -mt-16 animate-slide-up rounded-3xl border border-slate-200/80 bg-white p-6 shadow-premium-lg sm:p-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
             {/* Logo */}
             <div className="-mt-16 shrink-0 sm:-mt-20">
@@ -285,12 +288,14 @@ export default async function CompanyDetailPage({
                 return (
                   <div
                     key={plan.id}
-                    className={`relative flex flex-col rounded-2xl border bg-white p-6 shadow-sm transition hover:shadow-md ${
-                      featured ? 'border-blue-300 ring-1 ring-blue-200' : 'border-slate-200'
+                    className={`card-interactive relative flex flex-col rounded-3xl border bg-white p-6 ${
+                      featured
+                        ? 'border-blue-300 shadow-premium ring-1 ring-blue-200'
+                        : 'border-slate-200/80 shadow-card'
                     }`}
                   >
                     {featured && (
-                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 px-3 py-0.5 text-xs font-semibold text-white">
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 px-3.5 py-1 text-xs font-semibold text-white shadow-glow">
                         Más popular
                       </span>
                     )}
