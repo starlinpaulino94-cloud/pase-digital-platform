@@ -33,7 +33,9 @@ export default function GlobalError({
         }}>
           <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.5rem', fontWeight: 'bold' }}>
             <img src="/logo.svg" alt="MembeGo" width={36} height={36} />
-            MembeGo
+            <span>
+              Membe<span style={{ color: '#34d399' }}>Go</span>
+            </span>
           </div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Algo salió mal</h1>
           <p style={{ marginTop: '0.5rem', maxWidth: '28rem', color: '#94a3b8' }}>
