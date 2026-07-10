@@ -6,6 +6,7 @@ import { ensureEmailIdentity } from '@/lib/supabase/identity'
 import { registerLimiter } from '@/lib/rate-limit'
 import { getRequestMeta } from '@/lib/server-utils'
 import { vincularReferido } from '@/lib/referidos-attribution'
+import { emitirEventoEstrategia } from '@/modules/estrategias/eventos'
 import { TERMS_VERSION } from '@/lib/legal'
 import { isEmailVerificationEnabled, sendVerificationEmail } from '@/lib/auth/emailVerification'
 
@@ -144,6 +145,13 @@ export async function registrarCliente(
         permitirCookie: false,
       })
 
+      await emitirEventoEstrategia({
+        companyId: company.id,
+        type: 'cliente.registrado',
+        subjectId: cliente.id,
+        payload: { cliente: { nombre: cliente.nombre, compras: 0, visitas: 0 } },
+      })
+
       return { success: true }
     } catch (e) {
       console.error('[registro] afiliación a nueva empresa error:', e)
@@ -242,6 +250,13 @@ export async function registrarCliente(
     })
 
     await vincularReferido(refCode, company.id, result.cliente.id, ipAddress)
+
+    await emitirEventoEstrategia({
+      companyId: company.id,
+      type: 'cliente.registrado',
+      subjectId: result.cliente.id,
+      payload: { cliente: { nombre: result.cliente.nombre, compras: 0, visitas: 0 } },
+    })
 
     if (verificarCorreo) {
       await sendVerificationEmail(admin, email, nombre)

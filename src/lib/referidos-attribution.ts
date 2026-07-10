@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
+import { emitirEventoEstrategia } from '@/modules/estrategias/eventos'
 import { logReferralEvent, hashIp, REF_COOKIE } from '@/lib/referidos'
 
 /**
@@ -78,7 +79,7 @@ export async function vincularReferido(
     if (referente.id === referidoClienteId) return
     const referidoCliente = await prisma.cliente.findUnique({
       where: { id: referidoClienteId },
-      select: { supabaseId: true },
+      select: { supabaseId: true, nombre: true },
     })
     if (!referidoCliente) return
     if (referidoCliente.supabaseId === referente.supabaseId) return
@@ -110,6 +111,22 @@ export async function vincularReferido(
         },
         ...(sospechoso ? { puntos: 0 } : {}),
       })
+
+      // Bus de estrategias: un invitado se registró con el código. Solo si el
+      // vínculo NO es sospechoso (el antifraude ya lo marcó); el sujeto es el
+      // REFERENTE (a él le llegan las automatizaciones del journey).
+      if (!sospechoso) {
+        await emitirEventoEstrategia({
+          companyId,
+          type: 'referido.invitado_registrado',
+          subjectId: referente.id,
+          payload: {
+            cliente: { nombre: referente.nombre },
+            invitado: { nombre: referidoCliente.nombre, clienteId: referidoClienteId },
+            referido: { codigo: code },
+          },
+        })
+      }
       return
     }
 

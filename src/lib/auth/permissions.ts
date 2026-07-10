@@ -19,6 +19,7 @@ export const ADMIN_SECTIONS = [
   'publicaciones',
   'campanas',
   'referidos',
+  'estrategias',
   'scanner',
   'pagos',
   'perfil',
@@ -42,7 +43,7 @@ export type AdminSection = (typeof ADMIN_SECTIONS)[number]
 // MARKETING = difusión; SUPERVISOR = operación. Ambos incluyen 'dashboard'
 // como aterrizaje. Todo lo no listado queda denegado (fail-closed).
 const RESTRICTED_ACCESS: Partial<Record<AppRole, AdminSection[]>> = {
-  MARKETING: ['dashboard', 'promociones', 'publicaciones', 'campanas', 'audiencia', 'notificaciones'],
+  MARKETING: ['dashboard', 'promociones', 'publicaciones', 'campanas', 'audiencia', 'notificaciones', 'estrategias'],
   SUPERVISOR: ['dashboard', 'reportes', 'clientes', 'membresias', 'pagos', 'scanner'],
 }
 

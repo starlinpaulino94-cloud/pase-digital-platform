@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import { emitirEventoEstrategia } from '@/modules/estrategias/eventos'
 import { getUser } from '@/lib/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -143,6 +144,13 @@ export async function afiliarmeAEmpresa(
           create: { userId: dbUser.id, companyId: company.id },
         })
         .catch((e) => console.error('[cliente] afiliar auto-follow error:', e))
+
+      await emitirEventoEstrategia({
+        companyId: company.id,
+        type: 'cliente.registrado',
+        subjectId: cliente.id,
+        payload: { cliente: { nombre: previa?.nombre ?? dbUser.name, compras: 0, visitas: 0 } },
+      })
     }
 
     // Cambia el contexto activo a esta empresa.

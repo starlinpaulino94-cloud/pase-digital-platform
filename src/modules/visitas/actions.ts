@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
+import { emitirEventoEstrategia } from '@/modules/estrategias/eventos'
 import { getUser } from '@/lib/auth'
 import { getRequestMeta } from '@/lib/server-utils'
 import { qrScanLimiter } from '@/lib/rate-limit'
@@ -415,6 +416,31 @@ export async function confirmarVisita(
 
       return { restantes, visitId: visit.id }
     })
+
+    // Bus de estrategias: la visita quedó confirmada. Se emite fuera de la
+    // transacción y nunca rompe el flujo (el helper captura sus errores).
+    const totalVisitas = await prisma.visit
+      .count({ where: { clienteId: membership.clienteId } })
+      .catch(() => 0)
+    const factsCliente = {
+      nombre: membership.cliente.nombre,
+      visitas: totalVisitas,
+      totalVisitas,
+    }
+    await emitirEventoEstrategia({
+      companyId: membership.companyId,
+      type: 'cliente.visita',
+      subjectId: membership.clienteId,
+      payload: { cliente: factsCliente, visita: { servicio, sucursalId } },
+    })
+    if (totalVisitas === 1) {
+      await emitirEventoEstrategia({
+        companyId: membership.companyId,
+        type: 'cliente.primera_visita',
+        subjectId: membership.clienteId,
+        payload: { cliente: factsCliente },
+      })
+    }
 
     return { success: true, restantes: result.restantes, visitId: result.visitId, servicio }
   } catch (e) {
