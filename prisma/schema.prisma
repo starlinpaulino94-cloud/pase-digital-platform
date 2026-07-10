@@ -255,6 +255,9 @@ model Company {
   // legacy (Car Wash). Ningún flujo existente lo consulta.
   membershipPlans     MembershipPlan[]
   membershipInstances MembershipInstance[]
+  // Benefit Transformation Engine (Fase E1.7).
+  benefitTransformations  BenefitTransformation[]
+  transformationPolicies  TransformationPolicy[]
 
   @@index([isPublished, isFeatured])
   @@index([ciudad, provincia])
@@ -1516,6 +1519,9 @@ model Benefit {
   updatedAt      DateTime    @updatedAt
 
   grants BenefitGrant[]
+  // Benefit Transformation Engine (Fase E1.7). Relaciones inversas.
+  transformationsAsSource BenefitTransformation[] @relation("TransformationSource")
+  transformationsAsTarget BenefitTransformation[] @relation("TransformationTarget")
 
   @@index([companyId, status])
   @@index([companyId, categoria])
@@ -1544,6 +1550,112 @@ model BenefitGrant {
   @@index([subscriberId])
   @@index([companyId, sourceModule])
   @@map("benefit_grants")
+}
+
+// ─────────────────────────────────────────────
+// FASE E1.7 · BENEFIT TRANSFORMATION ENGINE
+// Motor universal de transformación de beneficios: upgrade, downgrade, exchange,
+// replacement, customization, split, merge. Historial inmutable, resolución
+// automática de fondeo (puntos, créditos, cupones, promociones, pago) y
+// políticas configurables por empresa. Sin lógica de industria.
+// ─────────────────────────────────────────────
+
+enum TransformationType {
+  UPGRADE       // mejora (básico → premium)
+  DOWNGRADE     // rebaja (premium → básico)
+  EXCHANGE      // intercambio (A → B + C)
+  REPLACEMENT   // reemplazo autorizado
+  CUSTOMIZATION // personalización antes de consumir
+  SPLIT         // dividir un beneficio en varios (arquitectura preparada)
+  MERGE         // combinar varios en uno (arquitectura preparada)
+}
+
+enum TransformationStatus {
+  REQUESTED        // cliente lo solicitó
+  RESOLVING        // calculando mejor forma de fondear
+  RESOLVED         // resolución encontrada, esperando acción
+  PENDING_APPROVAL // requiere aprobación administrativa
+  APPROVED         // aprobado, pendiente de ejecución/pago
+  PENDING_PAYMENT  // esperando pago de diferencia
+  EXECUTING        // ejecutando la transformación
+  COMPLETED        // completada exitosamente
+  REJECTED         // rechazada por admin
+  CANCELLED        // cancelada por cliente
+  FAILED           // falló durante ejecución
+}
+
+/// Registro inmutable de una transformación de beneficio. Cada operación genera
+/// un registro independiente: nunca se sobrescribe el beneficio original.
+model BenefitTransformation {
+  id               String               @id @default(cuid())
+  companyId        String
+  company          Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  subscriberId     String
+  subscriberKind   String               @default("CLIENT")
+  type             TransformationType
+  status           TransformationStatus @default(REQUESTED)
+
+  // Beneficio origen
+  sourceBenefitId  String
+  sourceBenefit    Benefit              @relation("TransformationSource", fields: [sourceBenefitId], references: [id])
+  sourceGrantId    String?
+
+  // Beneficio destino (null hasta que se resuelva)
+  targetBenefitId  String?
+  targetBenefit    Benefit?             @relation("TransformationTarget", fields: [targetBenefitId], references: [id])
+  targetGrantId    String?
+
+  // Economía
+  sourceValue      Decimal?             @db.Decimal(10, 2)
+  targetValue      Decimal?             @db.Decimal(10, 2)
+  differenceAmount Decimal?             @db.Decimal(10, 2) // diferencia bruta
+  resolvedAmount   Decimal?             @db.Decimal(10, 2) // monto final tras aplicar fondeos
+
+  // Resolución: detalle de qué fuentes se usaron (puntos, créditos, promos…)
+  resolution       Json                 @default("{}")
+  // Política que autorizó la transformación
+  policyId         String?
+  requiresApproval Boolean              @default(false)
+  approvedById     String?
+  approvedAt       DateTime?
+  rejectionReason  String?
+
+  // Contexto
+  sucursalId       String?
+  requestedById    String?
+  config           Json                 @default("{}")
+  metadata         Json                 @default("{}")
+
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  completedAt      DateTime?
+
+  @@index([companyId, status])
+  @@index([companyId, type])
+  @@index([subscriberId])
+  @@index([sourceBenefitId])
+  @@index([targetBenefitId])
+  @@map("benefit_transformations")
+}
+
+/// Política de transformación configurable por empresa. Define qué
+/// transformaciones están permitidas, con qué restricciones y métodos de fondeo.
+model TransformationPolicy {
+  id          String             @id @default(cuid())
+  companyId   String
+  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  nombre      String
+  descripcion String?
+  tipo        TransformationType
+  activa      Boolean            @default(true)
+  prioridad   Int                @default(0)
+  config      Json               @default("{}") // TransformationPolicyConfig
+  metadata    Json               @default("{}")
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([companyId, tipo, activa])
+  @@map("transformation_policies")
 }
 
 // ─────────────────────────────────────────────

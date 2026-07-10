@@ -100,6 +100,14 @@ export const AUTOMATION_EVENTS = {
   PROMOTION_DELETED: 'promocion.eliminada',
   PROMOTION_DUPLICATED: 'promocion.duplicada',
   PROMOTION_UPDATED: 'promocion.actualizada',
+  // Transformación de beneficios — universales, cualquier tipo.
+  TRANSFORMATION_REQUESTED: 'transformacion.solicitada',
+  TRANSFORMATION_RESOLVED: 'transformacion.resuelta',
+  TRANSFORMATION_APPROVED: 'transformacion.aprobada',
+  TRANSFORMATION_REJECTED: 'transformacion.rechazada',
+  TRANSFORMATION_COMPLETED: 'transformacion.completada',
+  TRANSFORMATION_CANCELLED: 'transformacion.cancelada',
+  TRANSFORMATION_FAILED: 'transformacion.fallida',
   // Emitidos por el propio motor.
   AUTOMATION_STARTED: 'automatizacion.iniciada',
   AUTOMATION_FINISHED: 'automatizacion.finalizada',
@@ -200,6 +208,13 @@ export const AUTOMATION_EVENT_CATALOG: readonly AutomationEventDef[] = [
   { id: AUTOMATION_EVENTS.PROMOTION_DELETED, name: 'Promoción eliminada', description: 'Se eliminó una promoción.' },
   { id: AUTOMATION_EVENTS.PROMOTION_DUPLICATED, name: 'Promoción duplicada', description: 'Se duplicó una promoción existente.' },
   { id: AUTOMATION_EVENTS.PROMOTION_UPDATED, name: 'Promoción actualizada', description: 'Se actualizó una promoción existente.' },
+  { id: AUTOMATION_EVENTS.TRANSFORMATION_REQUESTED, name: 'Transformación solicitada', description: 'Un cliente solicitó transformar un beneficio.' },
+  { id: AUTOMATION_EVENTS.TRANSFORMATION_RESOLVED, name: 'Transformación resuelta', description: 'Se resolvió el fondeo de una transformación.' },
+  { id: AUTOMATION_EVENTS.TRANSFORMATION_APPROVED, name: 'Transformación aprobada', description: 'Un administrador aprobó una transformación.' },
+  { id: AUTOMATION_EVENTS.TRANSFORMATION_REJECTED, name: 'Transformación rechazada', description: 'Un administrador rechazó una transformación.' },
+  { id: AUTOMATION_EVENTS.TRANSFORMATION_COMPLETED, name: 'Transformación completada', description: 'Se completó exitosamente una transformación de beneficio.' },
+  { id: AUTOMATION_EVENTS.TRANSFORMATION_CANCELLED, name: 'Transformación cancelada', description: 'Se canceló una transformación de beneficio.' },
+  { id: AUTOMATION_EVENTS.TRANSFORMATION_FAILED, name: 'Transformación fallida', description: 'Falló la ejecución de una transformación de beneficio.' },
   { id: AUTOMATION_EVENTS.AUTOMATION_STARTED, name: 'Automatización iniciada', description: 'Comenzó una ejecución.' },
   { id: AUTOMATION_EVENTS.AUTOMATION_FINISHED, name: 'Automatización finalizada', description: 'Terminó una ejecución.' },
 ]
