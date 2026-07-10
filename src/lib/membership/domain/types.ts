@@ -78,23 +78,73 @@ export interface MembershipRenewal {
   readonly freeMonths?: number
 }
 
+export type WeekDay = 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI' | 'SAT' | 'SUN'
+
+/** Ventana de disponibilidad del plan (días/horarios permitidos). */
+export interface MembershipSchedule {
+  /** Días en los que aplica (vacío/undefined = todos). */
+  readonly allowedDays?: readonly WeekDay[]
+  /** Franja horaria permitida, formato "HH:MM" 24h. */
+  readonly allowedHours?: { readonly from: string; readonly to: string }
+}
+
+/**
+ * Reglas de ciclo de vida configurables. Cada regla opcional puede llevar
+ * expresiones BEL (`rules`) evaluadas por el Rule Engine; nada hardcodeado.
+ */
+export interface MembershipLifecycleRules {
+  readonly upgrade?: { readonly allowed?: boolean; readonly rules?: readonly string[] }
+  readonly downgrade?: { readonly allowed?: boolean; readonly rules?: readonly string[] }
+  readonly suspension?: {
+    readonly allowed?: boolean
+    readonly maxDays?: number
+    readonly rules?: readonly string[]
+  }
+  readonly cancellation?: {
+    readonly allowed?: boolean
+    /** Aviso previo requerido (días). */
+    readonly noticeDays?: number
+    /** Penalización por cancelación anticipada (monto o %, según config). */
+    readonly penalty?: number
+    readonly rules?: readonly string[]
+  }
+}
+
 /**
  * Configuración flexible del plan. Aquí vive todo lo específico del modelo sin
  * columnas por caso: servicios incluidos, límites, beneficios, segmentos, etc.
  */
 export interface MembershipConfig {
   readonly includedServices?: readonly string[]
+  /** Servicios explícitamente excluidos (aunque estén incluidos por defecto). */
+  readonly excludedServices?: readonly string[]
   readonly limits?: MembershipLimits
-  /** Referencias a beneficios (Benefit Engine, pendiente). */
+  /** Referencias a beneficios incluidos (Benefit Engine). */
   readonly benefits?: readonly string[]
+  /** Beneficios opcionales que el cliente puede añadir (add-ons). */
+  readonly optionalBenefits?: readonly string[]
+  /** Recompensas asociadas (Reward Engine, pendiente). */
+  readonly rewards?: readonly string[]
   /** Segmentos de cliente permitidos (ej. "estudiantes", "taxistas"). */
   readonly segments?: readonly string[]
+  /** Tipos de vehículo admitidos (vacío = todos). */
+  readonly vehicleTypes?: readonly string[]
+  /** Sucursales donde aplica (ids; vacío/undefined = todas). */
+  readonly branches?: readonly string[]
+  /** Días/horarios permitidos. */
+  readonly schedule?: MembershipSchedule
   readonly restrictions?: readonly string[]
   readonly renewal?: MembershipRenewal
+  /** Reglas de upgrade/downgrade/suspensión/cancelación (BEL, Rule Engine). */
+  readonly lifecycle?: MembershipLifecycleRules
   /** Métricas a seguir (claves del catálogo de métricas). */
   readonly metrics?: readonly string[]
-  /** Automatizaciones asociadas (Automation Engine, pendiente). */
+  /** Automatizaciones asociadas (Automation Engine). */
   readonly automations?: readonly string[]
+  /** Prioridad de resolución cuando varias membresías/plantillas compiten. */
+  readonly priority?: number
+  /** Variables custom por empresa (evaluables por BEL). */
+  readonly variables?: Readonly<Record<string, unknown>>
   readonly [extra: string]: unknown
 }
 

@@ -274,6 +274,120 @@ export const CARWASH_MEMBERSHIP_TEMPLATES: readonly MembershipTemplate[] = [
       metrics: ['retencion', 'ltv', 'uso_promedio'],
     },
   },
+
+  // ── Variantes adicionales de modelos insignia (múltiples por modelo) ──
+  {
+    key: 'carwash.unlimited_wash_vacuum',
+    industry: 'carwash', name: 'Unlimited Lavado + Aspirado', tier: 'basic',
+    description: 'Exterior y aspirado ilimitados (máx. 1 por día).',
+    type: 'UNLIMITED', suggestedPrice: 1199, currency: 'DOP', periodicity: 'MONTHLY', unlimited: true,
+    config: {
+      includedServices: [SERVICES.EXTERIOR, SERVICES.ASPIRADO],
+      limits: { maxPerPeriod: { count: 1, period: 'DAY' }, minIntervalMinutes: 720 },
+      renewal: { auto: true, graceDays: 5 }, metrics: ['uso_promedio', 'rentabilidad_por_miembro'],
+    },
+  },
+  {
+    key: 'carwash.unlimited_wash_wax',
+    industry: 'carwash', name: 'Unlimited Lavado + Cera', tier: 'basic',
+    description: 'Lavado premium con cera ilimitado.',
+    type: 'UNLIMITED', suggestedPrice: 1699, currency: 'DOP', periodicity: 'MONTHLY', unlimited: true,
+    config: {
+      includedServices: [SERVICES.EXTERIOR, SERVICES.PREMIUM],
+      limits: { maxPerPeriod: { count: 1, period: 'DAY' }, minIntervalMinutes: 720 },
+      benefits: ['encerado_incluido'], renewal: { auto: true, graceDays: 5 },
+      metrics: ['uso_promedio', 'visitas_promedio'],
+    },
+  },
+  {
+    key: 'carwash.unlimited_complete',
+    industry: 'carwash', name: 'Unlimited Completo', tier: 'basic',
+    description: 'Todos los servicios de lavado ilimitados.',
+    type: 'UNLIMITED', suggestedPrice: 1899, currency: 'DOP', periodicity: 'MONTHLY', unlimited: true,
+    config: {
+      includedServices: [SERVICES.EXTERIOR, SERVICES.INTERIOR, SERVICES.ASPIRADO, SERVICES.PREMIUM],
+      limits: { maxPerPeriod: { count: 1, period: 'DAY' }, minIntervalMinutes: 720 },
+      renewal: { auto: true, graceDays: 5 }, metrics: ['uso_promedio', 'rentabilidad_por_miembro', 'retencion'],
+    },
+  },
+  {
+    key: 'carwash.unlimited_vip',
+    industry: 'carwash', name: 'Unlimited VIP', tier: 'advanced',
+    description: 'Ilimitado premium + detailing con línea rápida y prioridad.',
+    type: 'UNLIMITED', suggestedPrice: 3499, currency: 'DOP', periodicity: 'MONTHLY', unlimited: true,
+    config: {
+      includedServices: [SERVICES.PREMIUM, SERVICES.DETAILING],
+      limits: { maxPerPeriod: { count: 1, period: 'DAY' } },
+      benefits: ['linea_rapida', 'atencion_prioritaria'], renewal: { auto: true, graceDays: 5 },
+      metrics: ['retencion', 'ltv', 'rentabilidad_por_miembro'],
+    },
+  },
+  {
+    key: 'carwash.credits_premium',
+    industry: 'carwash', name: 'Wash Credits · Premium', tier: 'basic',
+    description: '5 lavados premium al mes.',
+    type: 'CREDITS', suggestedPrice: 1600, currency: 'DOP', periodicity: 'MONTHLY', credits: 5,
+    config: {
+      includedServices: [SERVICES.PREMIUM],
+      limits: { maxCreditsRollover: 2, creditsTransferable: false }, renewal: { auto: true },
+      metrics: ['uso_promedio', 'rentabilidad_por_miembro'],
+    },
+  },
+  {
+    key: 'carwash.credits_max',
+    industry: 'carwash', name: 'Wash Credits · Max', tier: 'basic',
+    description: '10 lavados al mes con acumulación amplia.',
+    type: 'CREDITS', suggestedPrice: 1800, currency: 'DOP', periodicity: 'MONTHLY', credits: 10,
+    config: {
+      includedServices: [SERVICES.EXTERIOR, SERVICES.INTERIOR],
+      limits: { maxCreditsRollover: 5, creditsTransferable: true }, renewal: { auto: true },
+      metrics: ['uso_promedio', 'cancelaciones'],
+    },
+  },
+  {
+    key: 'carwash.family_premium',
+    industry: 'carwash', name: 'Family Premium', tier: 'advanced',
+    description: 'Hasta 4 vehículos con lavados premium ilimitados.',
+    type: 'FAMILY', suggestedPrice: 3500, currency: 'DOP', periodicity: 'MONTHLY', unlimited: true,
+    config: {
+      includedServices: [SERVICES.PREMIUM, SERVICES.ASPIRADO],
+      limits: { maxVehicles: 4, maxPerPeriod: { count: 2, period: 'DAY' } },
+      renewal: { auto: true }, metrics: ['uso_promedio', 'visitas_promedio', 'retencion'],
+    },
+  },
+  {
+    key: 'carwash.fleet_small',
+    industry: 'carwash', name: 'Fleet Small', tier: 'advanced',
+    description: 'Flotas pequeñas (hasta 5 vehículos) con reporte mensual.',
+    type: 'FLEET', suggestedPrice: 8000, currency: 'DOP', periodicity: 'MONTHLY', unlimited: true,
+    config: {
+      includedServices: [SERVICES.EXTERIOR, SERVICES.INTERIOR],
+      limits: { maxVehicles: 5 }, segments: ['empresas', 'dealers'],
+      automations: ['reporte_mensual_flota'], metrics: ['uso_promedio', 'rentabilidad_por_miembro'],
+    },
+  },
+  {
+    key: 'carwash.premium_detailing',
+    industry: 'carwash', name: 'Premium Detailing', tier: 'advanced',
+    description: '4 detailing al mes + protección para vehículos de alta gama.',
+    type: 'PREMIUM', suggestedPrice: 6999, currency: 'DOP', periodicity: 'MONTHLY', credits: 4,
+    config: {
+      includedServices: [SERVICES.DETAILING, SERVICES.PREMIUM], segments: ['lujo', 'ejecutivos'],
+      vehicleTypes: ['lujo', 'suv'], benefits: ['proteccion_ceramica', 'linea_rapida'],
+      metrics: ['rentabilidad_por_miembro', 'ltv'],
+    },
+  },
+  {
+    key: 'carwash.vip_platinum',
+    industry: 'carwash', name: 'VIP Platinum', tier: 'advanced',
+    description: 'Máxima experiencia: todo incluido, eventos y concierge.',
+    type: 'VIP', suggestedPrice: 9999, currency: 'DOP', periodicity: 'MONTHLY', unlimited: true,
+    config: {
+      includedServices: [SERVICES.PREMIUM, SERVICES.DETAILING, SERVICES.INTERIOR, SERVICES.ASPIRADO],
+      benefits: ['linea_rapida', 'atencion_prioritaria', 'regalos', 'eventos', 'concierge'],
+      metrics: ['retencion', 'ltv'],
+    },
+  },
 ]
 
 /** Índice por clave para instanciar rápido. */

@@ -47,7 +47,7 @@ export type {
   MembershipPlan, MembershipInstance, MembershipUsageRecord, MembershipVehicle,
   MembershipPlanType, MembershipPeriodicity, MembershipPlanStatus,
   MembershipInstanceStatus, MembershipConfig, MembershipLimits, MembershipRenewal,
-  UsagePeriod,
+  UsagePeriod, WeekDay, MembershipSchedule, MembershipLifecycleRules,
 } from './domain/types'
 export {
   MEMBERSHIP_TRANSITIONS, canTransition, validateTransition,
