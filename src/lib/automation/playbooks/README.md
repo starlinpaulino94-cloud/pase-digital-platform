@@ -62,7 +62,27 @@ Definida en [`types.ts`](./types.ts) — `AutomationPlaybook`:
 | E1.2 | `onboarding` (activación) | [`onboarding.ts`](./onboarding.ts) | `ONB-001`…`ONB-018` (18) |
 | E1.3 | `primera_compra` (conversión) | [`first-purchase.ts`](./first-purchase.ts) | `FP-001`…`FP-012` (12) |
 | E1.4 | `frecuencia` (hábito/LTV) | [`frequency.ts`](./frequency.ts) | `FREQ-001`…`FREQ-016` (16) |
-| E1.5–E1.10 | recuperación, membresías, referidos, campañas, gamificación, IA | _(próximas)_ | — |
+| E1.5 | `recuperacion` (churn/win-back) | [`recovery.ts`](./recovery.ts) | `REC-001`…`REC-016` (16) |
+| E1.6–E1.10 | membresías, referidos, campañas, gamificación, IA | _(próximas)_ | — |
+
+### E1.5 — Recuperación
+
+Detecta la caída de actividad, previene el abandono y recupera inactivos con
+estrategias **escalonadas por nivel de riesgo** (no solo "30 días sin visitar").
+Incluye un framework de estados universal (`RECOVERY_STATES`: activo →
+riesgo_bajo → riesgo_medio → riesgo_alto → inactivo → recuperado) cuyas reglas
+de transición son configurables vía Rule Engine. Cubre alerta de riesgo,
+inactividad con selección de estrategia, recuperación escalonada, VIP en riesgo,
+membresía vencida, beneficio por vencer, cliente que ignora campañas,
+recuperación conductual, por puntos/XP, estacional, última oportunidad, reingreso
+confirmado, encuesta de abandono, dunning por pago fallido, recuperación
+predictiva con IA y reactivación de exmiembros.
+
+Amplió el catálogo de eventos con eventos **universales** de recuperación
+(aditivos): `cliente.cambio_nivel_riesgo`, `cliente.inactivo`,
+`cliente.recuperado`, `cliente.ignoro_campana`, `membresia.vencida`,
+`beneficio.por_vencer`. Añadió `nivelesRiesgo` y `tiempoInactividad` a las
+opciones editables.
 
 ### E1.4 — Frecuencia
 

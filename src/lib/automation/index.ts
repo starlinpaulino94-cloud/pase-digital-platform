@@ -136,6 +136,10 @@ export {
   FREQUENCY_PLAYBOOKS, frequencyPlaybooks, getFrequencyPlaybook,
 } from './playbooks/frequency'
 export {
+  RECOVERY_PLAYBOOKS, recoveryPlaybooks, getRecoveryPlaybook, RECOVERY_STATES,
+} from './playbooks/recovery'
+export type { RecoveryState } from './playbooks/recovery'
+export {
   ALL_PLAYBOOKS, getPlaybook, playbooksByCategory, playbooksForIndustry,
 } from './playbooks'
 

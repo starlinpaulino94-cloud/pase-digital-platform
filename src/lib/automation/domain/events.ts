@@ -38,6 +38,13 @@ export const AUTOMATION_EVENTS = {
   CLIENT_BEHAVIOR_CHANGED: 'cliente.cambio_comportamiento',
   CLIENT_BENEFIT_UNDERUSED: 'cliente.no_usa_beneficios',
   CLIENT_CHURN_RISK: 'cliente.riesgo_abandono',
+  // Recuperación / retención — universales, ninguna industria.
+  CLIENT_RISK_LEVEL_CHANGED: 'cliente.cambio_nivel_riesgo',
+  CLIENT_INACTIVE: 'cliente.inactivo',
+  CLIENT_RECOVERED: 'cliente.recuperado',
+  CLIENT_CAMPAIGN_IGNORED: 'cliente.ignoro_campana',
+  MEMBERSHIP_EXPIRED: 'membresia.vencida',
+  BENEFIT_EXPIRING: 'beneficio.por_vencer',
   // Emitidos por el propio motor.
   AUTOMATION_STARTED: 'automatizacion.iniciada',
   AUTOMATION_FINISHED: 'automatizacion.finalizada',
@@ -83,6 +90,12 @@ export const AUTOMATION_EVENT_CATALOG: readonly AutomationEventDef[] = [
   { id: AUTOMATION_EVENTS.CLIENT_BEHAVIOR_CHANGED, name: 'Cliente cambió su comportamiento', description: 'Cambió el patrón de horario, sucursal o gasto del cliente.' },
   { id: AUTOMATION_EVENTS.CLIENT_BENEFIT_UNDERUSED, name: 'Cliente no aprovecha beneficios', description: 'El cliente usa poco los beneficios disponibles.' },
   { id: AUTOMATION_EVENTS.CLIENT_CHURN_RISK, name: 'Cliente en riesgo de abandono', description: 'El comportamiento del cliente sugiere riesgo de abandono.' },
+  { id: AUTOMATION_EVENTS.CLIENT_RISK_LEVEL_CHANGED, name: 'Cliente cambió de nivel de riesgo', description: 'El cliente pasó a otro estado del framework de recuperación.' },
+  { id: AUTOMATION_EVENTS.CLIENT_INACTIVE, name: 'Cliente inactivo', description: 'El cliente no compra/visita desde el período configurado.' },
+  { id: AUTOMATION_EVENTS.CLIENT_RECOVERED, name: 'Cliente recuperado', description: 'Un cliente en riesgo/inactivo volvió a estar activo.' },
+  { id: AUTOMATION_EVENTS.CLIENT_CAMPAIGN_IGNORED, name: 'Cliente ignoró una campaña', description: 'El cliente no interactuó con una campaña dirigida.' },
+  { id: AUTOMATION_EVENTS.MEMBERSHIP_EXPIRED, name: 'Membresía vencida', description: 'La membresía/suscripción del cliente expiró.' },
+  { id: AUTOMATION_EVENTS.BENEFIT_EXPIRING, name: 'Beneficio por vencer', description: 'Un beneficio del cliente está próximo a expirar.' },
   { id: AUTOMATION_EVENTS.AUTOMATION_STARTED, name: 'Automatización iniciada', description: 'Comenzó una ejecución.' },
   { id: AUTOMATION_EVENTS.AUTOMATION_FINISHED, name: 'Automatización finalizada', description: 'Terminó una ejecución.' },
 ]

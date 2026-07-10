@@ -9,6 +9,7 @@ import { ACQUISITION_PLAYBOOKS } from './acquisition'
 import { ONBOARDING_PLAYBOOKS } from './onboarding'
 import { FIRST_PURCHASE_PLAYBOOKS } from './first-purchase'
 import { FREQUENCY_PLAYBOOKS } from './frequency'
+import { RECOVERY_PLAYBOOKS } from './recovery'
 import { isCompatibleWith, type AutomationPlaybook, type IndustryKey, type PlaybookCategory } from './types'
 
 /** Todos los playbooks registrados de todas las categorías. */
@@ -17,6 +18,7 @@ export const ALL_PLAYBOOKS: readonly AutomationPlaybook[] = [
   ...ONBOARDING_PLAYBOOKS,
   ...FIRST_PURCHASE_PLAYBOOKS,
   ...FREQUENCY_PLAYBOOKS,
+  ...RECOVERY_PLAYBOOKS,
 ]
 
 const BY_ID = new Map(ALL_PLAYBOOKS.map((p) => [p.id, p]))
