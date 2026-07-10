@@ -10,6 +10,7 @@ import { procesarReferidoCompletado } from '@/modules/referidos/actions'
 import { activarMembresia } from '@/modules/pagos/activacion'
 import { paymentLimiter } from '@/lib/rate-limit'
 import { ensureEmailIdentity } from '@/lib/supabase/identity'
+import { INVITABLE_ROLES, type AppRole } from '@/types'
 
 /** Ensure the membership belongs to the admin's company (superadmin = any). */
 async function assertOwnership(
@@ -440,7 +441,7 @@ export async function renovarMembresia(
   }
 }
 
-/** Create an EMPLEADO: Supabase auth user + DB User in the admin's company. */
+/** Create a team member (rol elegible): Supabase auth user + DB User in the admin's company. */
 export async function crearEmpleado(
   _prev: AdminActionState,
   formData: FormData
@@ -458,6 +459,13 @@ export async function crearEmpleado(
     const nombre = String(formData.get('nombre') ?? '').trim()
     const email = String(formData.get('email') ?? '').trim().toLowerCase()
     const password = String(formData.get('password') ?? '')
+    // Rol elegible (antes siempre EMPLEADO): el rol de la BD y el de la
+    // sesión (app_metadata) se escriben JUNTOS — si divergen, el usuario ve
+    // el panel equivocado aunque la tabla diga "Administrador".
+    const rolRaw = String(formData.get('rol') ?? 'EMPLEADO').trim() as AppRole
+    if (!INVITABLE_ROLES.includes(rolRaw)) {
+      return { error: 'Rol inválido.' }
+    }
 
     if (!nombre || !email || !password) {
       return { error: 'Todos los campos son obligatorios.' }
@@ -496,7 +504,7 @@ export async function crearEmpleado(
           supabaseId,
           email,
           name: nombre,
-          role: 'EMPLEADO',
+          role: rolRaw,
           companyId,
         },
       })
@@ -508,7 +516,7 @@ export async function crearEmpleado(
 
     await supabase.auth.admin.updateUserById(supabaseId, {
       app_metadata: {
-        role: 'EMPLEADO',
+        role: rolRaw,
         dbUserId: dbUser.id,
         companyId,
       },
@@ -536,8 +544,13 @@ export async function eliminarEmpleado(
     const empleado = await prisma.user.findUnique({
       where: { id: empleadoId },
     })
-    if (!empleado || empleado.role !== 'EMPLEADO') {
-      return { error: 'Empleado no encontrado.' }
+    // El equipo ahora puede tener cualquier rol invitable (no solo EMPLEADO).
+    // SUPERADMIN y CLIENTE siguen fuera del alcance de esta acción.
+    if (!empleado || !INVITABLE_ROLES.includes(empleado.role)) {
+      return { error: 'Miembro del equipo no encontrado.' }
+    }
+    if (empleado.id === user.metadata.dbUserId) {
+      return { error: 'No puedes eliminar tu propia cuenta.' }
     }
     if (
       user.metadata.role !== 'SUPERADMIN' &&

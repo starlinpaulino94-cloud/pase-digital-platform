@@ -27,13 +27,23 @@ import {
 
 const initial: AdminActionState = {}
 
+const ROL_LABEL: Record<string, string> = {
+  ADMINISTRADOR: 'Administrador (acceso total al panel)',
+  GERENTE: 'Gerente (acceso total al panel)',
+  CAJERO: 'Cajero (acceso total al panel)',
+  RECEPCION: 'Recepción (solo escáner)',
+  MARKETING: 'Marketing (difusión)',
+  SUPERVISOR: 'Supervisor (operación)',
+  EMPLEADO: 'Empleado (solo escáner)',
+}
+
 export function NuevoEmpleadoForm() {
   const router = useRouter()
   const [state, action, pending] = useActionState(crearEmpleado, initial)
 
   useEffect(() => {
     if (state.success) {
-      toast.success('Empleado creado correctamente.')
+      toast.success('Miembro del equipo creado correctamente.')
       router.push('/admin/empleados')
       router.refresh()
     }
@@ -71,9 +81,29 @@ export function NuevoEmpleadoForm() {
           placeholder="Mínimo 6 caracteres"
         />
       </div>
+      <div className="space-y-2">
+        <Label htmlFor="rol">Rol</Label>
+        <select
+          id="rol"
+          name="rol"
+          defaultValue="EMPLEADO"
+          required
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+        >
+          {Object.entries(ROL_LABEL).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-slate-500">
+          Administrador, Gerente y Cajero pueden aprobar pagos y usar todos los
+          módulos del panel.
+        </p>
+      </div>
       <Button type="submit" disabled={pending} className="w-full">
         {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Crear empleado
+        Crear miembro
       </Button>
     </form>
   )
