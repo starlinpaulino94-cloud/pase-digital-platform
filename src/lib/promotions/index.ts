@@ -106,6 +106,19 @@ export {
 } from './templates/service'
 export { CARWASH_PROMOTION_TEMPLATES, getCarwashPromo } from './templates/carwash'
 
+// Fase F1.2 — Promotion Strategy Library (estrategias por objetivo comercial)
+export {
+  PROMOTION_STRATEGY_CATEGORIES, PROMOTION_STRATEGY_CATALOG,
+} from './templates/strategy-taxonomy'
+export type {
+  PromotionStrategyCategory, PromotionComplexity, EngineId, StrategyCategoryEntry,
+} from './templates/strategy-taxonomy'
+export type { PromotionStrategy } from './templates/strategy-types'
+export {
+  CARWASH_PROMOTION_STRATEGIES, getPromotionStrategy, promotionStrategyForCategory,
+  strategyPromotions, promotionStrategiesBySegment,
+} from './templates/carwash-strategies'
+
 // Infraestructura
 export { PrismaPromotionRepository } from './infrastructure/prisma-promotion-repository'
 export { mapPromotion } from './infrastructure/mappers'

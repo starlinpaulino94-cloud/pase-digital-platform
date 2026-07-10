@@ -213,8 +213,26 @@ templates/
 ├── taxonomy.ts        # objetivos (12), segmentos, tipos de beneficio, triggers, canales, métricas
 ├── template-types.ts  # PromotionTemplate + instantiatePromotionTemplate (beneficio→acción)
 ├── service.ts         # createPromotionFromTemplate + recommendByGoal (recomendador)
-└── carwash.ts         # BIBLIOTECA Car Wash: 36 promos (CAR-001..036) en 12 categorías
+├── carwash.ts         # BIBLIOTECA Car Wash: 54 promos (CAR-001..054)
+├── strategy-taxonomy.ts   # F1.2: 15 categorías de objetivo comercial
+├── strategy-types.ts      # F1.2: PromotionStrategy (25 campos)
+└── carwash-strategies.ts  # F1.2: 15 estrategias por objetivo → variantes instalables
 ```
+
+### Capa de estrategia (Fase F1.2)
+
+Encima de las plantillas, las promociones se organizan **por objetivo comercial**
+(no por tipo de descuento) en `carwash-strategies.ts`: 15 estrategias
+(`PromotionStrategy`) documentadas con los 25 campos de F1.2 (problema, resultado
+esperado, cuándo usar/no, segmento, duración/frecuencia recomendadas, complejidad,
+motores, playbooks, beneficios/membresías/gamificación/campañas compatibles, KPIs,
+buenas prácticas, errores comunes, riesgos, variantes, versión, notas). Categorías:
+captación, activación, frecuencia, retención, recuperación, ticket promedio,
+upselling, cross-selling, membresías, referidos, horarios de baja demanda,
+temporadas, eventos, fidelización, celebraciones. Cada estrategia apunta por
+`variantKeys` a ≥2 `PromotionTemplate`; `strategyPromotions(s)` las resuelve.
+Descubrimiento: `promotionStrategyForCategory`, `promotionStrategiesBySegment`,
+`getPromotionStrategy`.
 
 ## Cómo una plantilla se vuelve una promoción real
 
