@@ -93,6 +93,7 @@ export type EngineRef =
   | 'campaign'
   | 'gamification'
   | 'analytics'
+  | 'automation'
   | 'template'
 
 export type PlaybookComplexity = 'basic' | 'intermediate' | 'advanced'
@@ -152,6 +153,8 @@ export interface AutomationPlaybook {
   readonly compatibleMembershipModels?: readonly MembershipModelKey[]
   /** Modelos de programa de referido compatibles (E1.7+; `['any']` = cualquiera). */
   readonly compatibleReferralModels?: readonly ReferralModelKey[]
+  /** Mecánicas de gamificación compatibles (E1.8+; puntos, XP, niveles, misiones, rachas…). */
+  readonly compatibleGamification?: readonly string[]
   /** Beneficios compatibles (códigos del Benefit Engine). */
   readonly compatibleBenefits: readonly string[]
   /** Promociones compatibles (códigos/objetivos del Promotion Engine). */

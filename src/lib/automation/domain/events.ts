@@ -67,6 +67,14 @@ export const AUTOMATION_EVENTS = {
   REFERRAL_FRAUD_DETECTED: 'referido.fraude_detectado',
   REFERRAL_REJECTED: 'referido.rechazado',
   REFERRAL_AMBASSADOR_REACHED: 'referido.embajador_detectado',
+  // Orquestación de campañas — universales, ninguna industria.
+  CAMPAIGN_LAUNCHED: 'campana.lanzada',
+  CAMPAIGN_PARTICIPATED: 'campana.participacion',
+  CAMPAIGN_CONVERTED: 'campana.conversion',
+  CAMPAIGN_PAUSED: 'campana.pausada',
+  CAMPAIGN_RESUMED: 'campana.reanudada',
+  CAMPAIGN_FINISHED: 'campana.finalizada',
+  CAMPAIGN_CHILD_STARTED: 'campana.hija_iniciada',
   // Emitidos por el propio motor.
   AUTOMATION_STARTED: 'automatizacion.iniciada',
   AUTOMATION_FINISHED: 'automatizacion.finalizada',
@@ -138,6 +146,13 @@ export const AUTOMATION_EVENT_CATALOG: readonly AutomationEventDef[] = [
   { id: AUTOMATION_EVENTS.REFERRAL_FRAUD_DETECTED, name: 'Fraude de referido detectado', description: 'El antifraude marcó un referido como sospechoso.' },
   { id: AUTOMATION_EVENTS.REFERRAL_REJECTED, name: 'Referido rechazado', description: 'Un referido fue rechazado por reglas/antifraude.' },
   { id: AUTOMATION_EVENTS.REFERRAL_AMBASSADOR_REACHED, name: 'Embajador detectado', description: 'Un cliente alcanzó el desempeño para ser embajador.' },
+  { id: AUTOMATION_EVENTS.CAMPAIGN_LAUNCHED, name: 'Campaña lanzada', description: 'Se activó una campaña orquestada.' },
+  { id: AUTOMATION_EVENTS.CAMPAIGN_PARTICIPATED, name: 'Participación en campaña', description: 'Un cliente participó en una campaña.' },
+  { id: AUTOMATION_EVENTS.CAMPAIGN_CONVERTED, name: 'Conversión de campaña', description: 'Un cliente convirtió dentro de una campaña.' },
+  { id: AUTOMATION_EVENTS.CAMPAIGN_PAUSED, name: 'Campaña pausada', description: 'Se pausó una campaña.' },
+  { id: AUTOMATION_EVENTS.CAMPAIGN_RESUMED, name: 'Campaña reanudada', description: 'Se reanudó una campaña pausada.' },
+  { id: AUTOMATION_EVENTS.CAMPAIGN_FINISHED, name: 'Campaña finalizada', description: 'Una campaña terminó su ejecución.' },
+  { id: AUTOMATION_EVENTS.CAMPAIGN_CHILD_STARTED, name: 'Campaña hija iniciada', description: 'Una campaña disparó una campaña hija/derivada.' },
   { id: AUTOMATION_EVENTS.AUTOMATION_STARTED, name: 'Automatización iniciada', description: 'Comenzó una ejecución.' },
   { id: AUTOMATION_EVENTS.AUTOMATION_FINISHED, name: 'Automatización finalizada', description: 'Terminó una ejecución.' },
 ]

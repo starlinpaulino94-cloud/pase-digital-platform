@@ -65,7 +65,30 @@ Definida en [`types.ts`](./types.ts) — `AutomationPlaybook`:
 | E1.5 | `recuperacion` (churn/win-back) | [`recovery.ts`](./recovery.ts) | `REC-001`…`REC-016` (16) |
 | E1.6 | `membresias` (ciclo de vida) | [`membership.ts`](./membership.ts) | `MEM-001`…`MEM-020` (20) |
 | E1.7 | `referidos` (journey) | [`referral.ts`](./referral.ts) | `REF-001`…`REF-020` (20) |
-| E1.8–E1.10 | campañas, gamificación, IA | _(próximas)_ | — |
+| E1.8 | `campanas` (orquestación) | [`campaign.ts`](./campaign.ts) | `CAMP-001`…`CAMP-020` (20) |
+| E1.9–E1.10 | gamificación, IA | _(próximas)_ | — |
+
+### E1.8 — Campañas (orquestación)
+
+No es un sistema de notificaciones: es un **Campaign Orchestration Framework**.
+Cada campaña coordina **varios motores** (Promotion, Membership, Benefit, Reward,
+Referral, Gamification, Automation, Analytics) para ejecutar una estrategia
+completa: evento → Rule Engine → segmentación → selección de estrategia →
+ejecución multi-motor → notificaciones → medición → optimización. La coordinación
+se hace siempre por eventos/reglas/acciones reutilizables (`INVOKE_MODULE`,
+`RUN_WORKFLOW`, `CREATE_EVENT`), nunca con lógica aislada. Incluye el ciclo de
+vida (crear/programar/segmentar/ejecutar/seguir/**optimizar**: pausar/reanudar/
+clonar), y campañas de bienvenida, estacional, cumpleaños, aniversario, clima,
+ubicación, comportamiento, inactividad, membresías, upgrades, referidos, puntos,
+objetivos, lanzamiento, flash, happy hour, fechas comerciales (Black Friday/
+Navidad/Verano), fidelización, optimización e IA.
+
+Estos playbooks incluyen los apartados **`compatibleMembershipModels`** y
+**`compatibleGamification`** (25 apartados). Amplió el catálogo de eventos con la
+orquestación (aditivos): `campana.lanzada`, `campana.participacion`,
+`campana.conversion`, `campana.pausada`, `campana.reanudada`,
+`campana.finalizada`, `campana.hija_iniciada`. Se añadió `automation` como
+`EngineRef` (una campaña puede orquestar el Automation Engine).
 
 ### E1.7 — Referidos (journey)
 

@@ -147,6 +147,9 @@ export {
   REFERRAL_PLAYBOOKS, referralPlaybooks, getReferralPlaybook,
 } from './playbooks/referral'
 export {
+  CAMPAIGN_PLAYBOOKS, campaignPlaybooks, getCampaignPlaybook,
+} from './playbooks/campaign'
+export {
   ALL_PLAYBOOKS, getPlaybook, playbooksByCategory, playbooksForIndustry,
 } from './playbooks'
 
