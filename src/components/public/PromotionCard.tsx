@@ -9,7 +9,7 @@ interface PromotionCardProps {
 }
 
 function fechaCorta(d: string | Date) {
-  return new Intl.DateTimeFormat('es-DO', { day: 'numeric', month: 'short' }).format(
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', day: 'numeric', month: 'short' }).format(
     new Date(d)
   )
 }

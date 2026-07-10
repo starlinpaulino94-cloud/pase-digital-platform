@@ -17,7 +17,7 @@ const TIPO_META: Record<string, { label: string; icon: LucideIcon; chip: string 
 }
 
 function fmtFecha(d: Date) {
-  return new Intl.DateTimeFormat('es-DO', { dateStyle: 'medium' }).format(new Date(d))
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', dateStyle: 'medium' }).format(new Date(d))
 }
 
 /** Feed compacto de novedades de las empresas que el cliente sigue. */

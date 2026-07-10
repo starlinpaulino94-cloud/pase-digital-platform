@@ -34,7 +34,7 @@ const ACCION_LABEL: Record<string, string> = {
 }
 
 function fmtHora(d: Date) {
-  return new Intl.DateTimeFormat('es-DO', {
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo',
     day: 'numeric',
     month: 'short',
     hour: 'numeric',

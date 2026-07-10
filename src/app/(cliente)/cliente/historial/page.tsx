@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic'
 const PAGE_SIZE = 20
 
 function fmtDateTime(d: Date) {
-  return new Intl.DateTimeFormat('es-DO', {
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo',
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(d)

@@ -27,7 +27,7 @@ const TIPO_META: Record<string, { label: string; icon: LucideIcon; chip: string 
 
 function fmtFecha(d: Date | null) {
   if (!d) return null
-  return new Intl.DateTimeFormat('es-DO', {
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo',
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(d))

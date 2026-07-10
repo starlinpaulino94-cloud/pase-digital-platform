@@ -31,7 +31,7 @@ import { cn } from '@/lib/utils'
 export const dynamic = 'force-dynamic'
 
 function fmtDate(d: Date) {
-  return new Intl.DateTimeFormat('es-DO', { dateStyle: 'medium' }).format(d)
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', dateStyle: 'medium' }).format(d)
 }
 
 const ESTADO_HISTORIAL = {

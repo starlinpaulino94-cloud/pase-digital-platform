@@ -56,7 +56,12 @@ export function formatDate(
       ...options,
     }).format(d)
   } catch {
-    return new Intl.DateTimeFormat(DEFAULT_IDIOMA, options).format(d)
+    // Locale o zona horaria inválidos: degradar al default de plataforma
+    // SIN perder la zona horaria (el servidor corre en UTC).
+    return new Intl.DateTimeFormat(DEFAULT_IDIOMA, {
+      timeZone: DEFAULT_TZ,
+      ...options,
+    }).format(d)
   }
 }
 

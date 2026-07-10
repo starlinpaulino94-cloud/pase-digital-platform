@@ -47,7 +47,7 @@ const ACCION_LABEL: Record<string, string> = {
 }
 
 function fmtHora(d: Date) {
-  return new Intl.DateTimeFormat('es-DO', {
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo',
     day: 'numeric',
     month: 'short',
     hour: 'numeric',
@@ -128,7 +128,7 @@ export default async function AdminDashboard() {
           <h1 className="text-h1 mt-1 text-foreground">{companyName}</h1>
         </div>
         <p className="hidden text-sm text-muted-foreground sm:block">
-          {new Intl.DateTimeFormat('es-DO', { dateStyle: 'long' }).format(new Date())}
+          {new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', dateStyle: 'long' }).format(new Date())}
         </p>
       </div>
 

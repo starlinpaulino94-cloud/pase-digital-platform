@@ -24,7 +24,7 @@ export const dynamic = 'force-dynamic'
 
 function fmtDate(d: Date | null) {
   if (!d) return '—'
-  return new Intl.DateTimeFormat('es-DO', { dateStyle: 'medium' }).format(d)
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', dateStyle: 'medium' }).format(d)
 }
 
 export default async function ClienteDetailPage({

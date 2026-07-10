@@ -420,7 +420,7 @@ export default async function CompanyDetailPage({
                     </span>
                     <span className="text-[10px] font-semibold uppercase">
                       {e.fechaEvento
-                        ? new Intl.DateTimeFormat('es-DO', { month: 'short' }).format(
+                        ? new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', month: 'short' }).format(
                             new Date(e.fechaEvento)
                           )
                         : ''}
@@ -435,7 +435,7 @@ export default async function CompanyDetailPage({
                       {e.fechaEvento && (
                         <span className="inline-flex items-center gap-1">
                           <CalendarDays className="h-3.5 w-3.5" />
-                          {new Intl.DateTimeFormat('es-DO', {
+                          {new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo',
                             dateStyle: 'medium',
                             timeStyle: 'short',
                           }).format(new Date(e.fechaEvento))}
@@ -468,7 +468,7 @@ export default async function CompanyDetailPage({
                 >
                   <div className="flex items-center gap-2 text-xs text-slate-400">
                     <Newspaper className="h-3.5 w-3.5" />
-                    {new Intl.DateTimeFormat('es-DO', { dateStyle: 'long' }).format(
+                    {new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', dateStyle: 'long' }).format(
                       new Date(n.publicadaEn)
                     )}
                   </div>

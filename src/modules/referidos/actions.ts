@@ -543,8 +543,8 @@ export async function getEmpresaReferidosDashboard(
     Number(historicosCountRows[0]?.n ?? 0) - embajadoresActivos
   )
 
-  const fmtMes = new Intl.DateTimeFormat('es-DO', { month: 'short', year: '2-digit' })
-  const fmtDia = new Intl.DateTimeFormat('es-DO', { day: '2-digit', month: 'short' })
+  const fmtMes = new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', month: 'short', year: '2-digit' })
+  const fmtDia = new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', day: '2-digit', month: 'short' })
 
   return {
     kpis: {

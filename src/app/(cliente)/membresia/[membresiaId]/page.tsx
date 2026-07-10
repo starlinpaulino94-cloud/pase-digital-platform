@@ -1,8 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { getUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { format, differenceInCalendarDays } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { differenceInCalendarDays } from 'date-fns'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
@@ -30,6 +29,24 @@ const ESTADO_LABEL: Record<string, string> = {
   CANCELADA: 'Cancelada',
   RECHAZADA: 'Rechazada',
 }
+
+// El servidor corre en UTC: sin zona horaria explícita las horas salen 4h
+// adelantadas para RD. Formateo siempre en la zona de la plataforma.
+const TZ = 'America/Santo_Domingo'
+const fmtFechaLarga = (d: Date) =>
+  new Intl.DateTimeFormat('es-DO', { timeZone: TZ, dateStyle: 'long' }).format(d)
+const fmtFechaHora = (d: Date) =>
+  new Intl.DateTimeFormat('es-DO', {
+    timeZone: TZ,
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(d)
+const fmtFechaHoraCorta = (d: Date) =>
+  new Intl.DateTimeFormat('es-DO', {
+    timeZone: TZ,
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(d)
 
 export default async function MembershipDetail({ params }: { params: Promise<{ membresiaId: string }> }) {
   const { membresiaId } = await params
@@ -186,7 +203,7 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
               <span className="inline-flex items-center gap-1.5">
                 <Clock className="h-4 w-4" />
                 {isActive ? 'Vence' : 'Venció'} el{' '}
-                {format(membership.fechaVencimiento, "d 'de' MMMM 'de' yyyy", { locale: es })}
+                {fmtFechaLarga(membership.fechaVencimiento)}
               </span>
             )}
             {isActive &&
@@ -313,7 +330,7 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
                   <Share2 className="h-3.5 w-3.5 text-emerald-600" /> QR compartido
                 </span>
                 <span className="text-muted-foreground">
-                  {format(envio.createdAt, "d 'de' MMM 'de' yyyy, HH:mm", { locale: es })}
+                  {fmtFechaHora(envio.createdAt)}
                 </span>
               </div>
             ))}
@@ -346,7 +363,7 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Fecha de inicio</span>
               <span className="text-foreground">
-                {format(membership.fechaInicio, "d 'de' MMMM 'de' yyyy", { locale: es })}
+                {fmtFechaLarga(membership.fechaInicio)}
               </span>
             </div>
           )}
@@ -354,7 +371,7 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Fecha de vencimiento</span>
               <span className="text-foreground">
-                {format(membership.fechaVencimiento, "d 'de' MMMM 'de' yyyy", { locale: es })}
+                {fmtFechaLarga(membership.fechaVencimiento)}
               </span>
             </div>
           )}
@@ -394,7 +411,7 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
                   )}
                 </div>
                 <span className="text-muted-foreground">
-                  {format(visit.fechaVisita, 'd/M/yyyy HH:mm', { locale: es })}
+                  {fmtFechaHoraCorta(visit.fechaVisita)}
                 </span>
               </div>
             ))}

@@ -26,7 +26,7 @@ export const dynamic = 'force-dynamic'
 
 function fmtDate(d: Date | null) {
   if (!d) return '—'
-  return new Intl.DateTimeFormat('es-DO', {
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo',
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(d)
