@@ -17,6 +17,13 @@ export const AUTOMATION_EVENTS = {
   CLIENT_REFERRED_FRIEND: 'cliente.recomendo_amigo',
   CLIENT_MISSION_COMPLETED: 'cliente.completo_mision',
   CLIENT_PURCHASE: 'cliente.compro_servicio',
+  // Ciclo de vida temprano (onboarding) — universales, ninguna industria.
+  CLIENT_PROFILE_COMPLETED: 'cliente.completo_perfil',
+  CLIENT_VERIFIED: 'cliente.verifico_cuenta',
+  CLIENT_PREFERENCES_SET: 'cliente.configuro_preferencias',
+  CLIENT_CONSENT_GIVEN: 'cliente.acepto_consentimiento',
+  CLIENT_FIRST_VISIT: 'cliente.primera_visita',
+  CLIENT_ONBOARDING_COMPLETED: 'cliente.completo_onboarding',
   // Emitidos por el propio motor.
   AUTOMATION_STARTED: 'automatizacion.iniciada',
   AUTOMATION_FINISHED: 'automatizacion.finalizada',
@@ -44,6 +51,12 @@ export const AUTOMATION_EVENT_CATALOG: readonly AutomationEventDef[] = [
   { id: AUTOMATION_EVENTS.CLIENT_REFERRED_FRIEND, name: 'Cliente recomendó un amigo', description: 'El cliente refirió a alguien.' },
   { id: AUTOMATION_EVENTS.CLIENT_MISSION_COMPLETED, name: 'Cliente completó una misión', description: 'El cliente terminó una misión de gamificación.' },
   { id: AUTOMATION_EVENTS.CLIENT_PURCHASE, name: 'Cliente compró un servicio', description: 'El cliente adquirió un servicio.' },
+  { id: AUTOMATION_EVENTS.CLIENT_PROFILE_COMPLETED, name: 'Cliente completó su perfil', description: 'El cliente terminó de completar la información de su perfil.' },
+  { id: AUTOMATION_EVENTS.CLIENT_VERIFIED, name: 'Cliente verificó su cuenta', description: 'El cliente confirmó su cuenta (correo/teléfono).' },
+  { id: AUTOMATION_EVENTS.CLIENT_PREFERENCES_SET, name: 'Cliente configuró preferencias', description: 'El cliente indicó sus preferencias (servicios, sucursal, horarios).' },
+  { id: AUTOMATION_EVENTS.CLIENT_CONSENT_GIVEN, name: 'Cliente aceptó consentimiento', description: 'El cliente aceptó términos, políticas o preferencias de comunicación.' },
+  { id: AUTOMATION_EVENTS.CLIENT_FIRST_VISIT, name: 'Cliente hizo su primera visita', description: 'El cliente realizó su primera visita/compra tras registrarse.' },
+  { id: AUTOMATION_EVENTS.CLIENT_ONBOARDING_COMPLETED, name: 'Cliente completó el onboarding', description: 'El cliente terminó su proceso de activación inicial.' },
   { id: AUTOMATION_EVENTS.AUTOMATION_STARTED, name: 'Automatización iniciada', description: 'Comenzó una ejecución.' },
   { id: AUTOMATION_EVENTS.AUTOMATION_FINISHED, name: 'Automatización finalizada', description: 'Terminó una ejecución.' },
 ]

@@ -127,6 +127,9 @@ export {
   ACQUISITION_PLAYBOOKS, acquisitionPlaybooks, getAcquisitionPlaybook,
 } from './playbooks/acquisition'
 export {
+  ONBOARDING_PLAYBOOKS, onboardingPlaybooks, getOnboardingPlaybook,
+} from './playbooks/onboarding'
+export {
   ALL_PLAYBOOKS, getPlaybook, playbooksByCategory, playbooksForIndustry,
 } from './playbooks'
 

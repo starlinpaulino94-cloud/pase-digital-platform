@@ -64,7 +64,7 @@ vive en los motores, nunca en los módulos de UI.
 | **Reward Engine** | ⛔ Pendiente | Puntos, créditos, servicios, regalos, beneficios digitales. |
 | **Referral Engine (universal)** | ✅ Construido (FD) | `src/lib/referral` — 10 modelos por configuración, flujo de estados editable, escalado, límites, antifraude toggleable; reutiliza el Benefit Engine para recompensas. 15 plantillas Car Wash. |
 | **Automation Engine** | ✅ Construido (FE1) | `src/lib/automation` — motor universal: trigger + condiciones (Rule/BEL) + acciones (Action Engine) + esperas + variables + eventos + encadenado + auditoría/métricas. Plantillas por objetivo en E1.1–E1.10. |
-| **Automation Playbooks** | ✅ E1.1 (captación) | `src/lib/automation/playbooks` — estrategias comerciales instalables (24 apartados del Documento Maestro) que envuelven automatizaciones reales de E1. E1.1 aporta 20 playbooks de captación (`ACQ-001`…`ACQ-020`), universales y editables. Sin migración: reutiliza las tablas de E1. Próximas: E1.2–E1.10. |
+| **Automation Playbooks** | ✅ E1.1–E1.2 | `src/lib/automation/playbooks` — estrategias comerciales instalables (24 apartados del Documento Maestro) que envuelven automatizaciones reales de E1. E1.1: 20 playbooks de captación (`ACQ-001`…`ACQ-020`). E1.2: 18 playbooks de onboarding (`ONB-001`…`ONB-018`) + eventos universales de ciclo de vida temprano. Universales y editables. Sin migración: reutiliza las tablas de E1. Próximas: E1.3–E1.10. |
 | **Campaign Engine** | ⛔ Pendiente | Objetivo + segmento + oferta + reglas + duración + métricas. |
 | **Gamification Engine** | ⛔ Pendiente | Niveles, XP, insignias, misiones, rachas, rankings. **XP ≠ puntos.** |
 | **Recommendation Engine** | ⛔ Pendiente | Sugerencias de estrategia/beneficio por datos. |

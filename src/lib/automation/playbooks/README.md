@@ -59,7 +59,23 @@ Definida en [`types.ts`](./types.ts) — `AutomationPlaybook`:
 | Fase | Categoría | Archivo | Playbooks |
 | --- | --- | --- | --- |
 | E1.1 | `captacion` (adquisición) | [`acquisition.ts`](./acquisition.ts) | `ACQ-001`…`ACQ-020` (20) |
-| E1.2–E1.10 | onboarding, primera_compra, frecuencia, recuperación, membresías, referidos, campañas, gamificación, IA | _(próximas)_ | — |
+| E1.2 | `onboarding` (activación) | [`onboarding.ts`](./onboarding.ts) | `ONB-001`…`ONB-018` (18) |
+| E1.3–E1.10 | primera_compra, frecuencia, recuperación, membresías, referidos, campañas, gamificación, IA | _(próximas)_ | — |
+
+### E1.2 — Onboarding
+
+Convierte a un usuario recién registrado en un cliente activo durante sus
+primeros días: bienvenida, completar perfil, verificación de cuenta, primer
+beneficio con expiración, descubrimiento de funciones, primera visita,
+presentación de membresías/puntos/referidos, preferencias, consentimientos,
+encuesta inicial, tutorial in-app, primer hito, onboarding multicanal, drip de
+bienvenida, rescate de onboarding estancado y graduación.
+
+Esta fase amplió el catálogo de eventos del Automation Engine con eventos
+**universales** de ciclo de vida temprano (aditivos, ninguna industria):
+`cliente.completo_perfil`, `cliente.verifico_cuenta`,
+`cliente.configuro_preferencias`, `cliente.acepto_consentimiento`,
+`cliente.primera_visita`, `cliente.completo_onboarding`.
 
 Cada fase futura registra su archivo en [`index.ts`](./index.ts) sin tocar las
 anteriores (aditivo).

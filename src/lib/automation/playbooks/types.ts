@@ -88,6 +88,8 @@ export interface AutomationPlaybook {
   readonly flow: readonly string[]
   /** Acciones (tipos del Action Engine). */
   readonly actions: readonly string[]
+  /** Esperas del flujo (resumen legible; las reales están en `config.steps[].wait`). */
+  readonly esperas?: readonly string[]
   /** Eventos generados. */
   readonly events: readonly string[]
   /** Excepciones / casos a considerar. */
