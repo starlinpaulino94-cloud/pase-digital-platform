@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { requireRole } from '@/lib/auth/guards'
 import { CompanyProfile } from '@/components/marketplace/CompanyProfile'
 import {
   getCompanyPublic,
@@ -9,15 +10,21 @@ import {
 } from '@/modules/marketplace/queries'
 import { getRegionalPrefs } from '@/modules/empresas/regional'
 
-interface CompanyDetailPageProps {
+export const dynamic = 'force-dynamic'
+
+interface ClienteEmpresaPageProps {
   params: Promise<{ companySlug: string }>
 }
 
-export const revalidate = 3600
-
-export default async function CompanyDetailPage({
+/**
+ * Perfil de empresa INTERNO. Misma información que el perfil público pero
+ * renderizado dentro del AppShell: el cliente autenticado nunca sale a la
+ * Landing. Reutiliza <CompanyProfile mode="app" />.
+ */
+export default async function ClienteEmpresaPage({
   params,
-}: CompanyDetailPageProps) {
+}: ClienteEmpresaPageProps) {
+  const user = await requireRole('CLIENTE')
   const { companySlug } = await params
 
   const company = await getCompanyPublic(companySlug)
@@ -31,15 +38,22 @@ export default async function CompanyDetailPage({
     getRegionalPrefs(company.id),
   ])
 
+  // Solo si es la empresa activa del cliente puede elegir/cambiar plan desde
+  // aquí (la pantalla de planes está acotada a esa empresa). Para el resto, el
+  // perfil es informativo + seguir; no se envía a la Landing de registro.
+  const planesHref =
+    company.id === user.metadata.companyId ? '/cliente/planes' : null
+
   return (
     <CompanyProfile
-      mode="public"
+      mode="app"
       company={company}
       stats={stats}
       planes={planes}
       promotions={promotions}
       posts={posts}
       prefs={prefs}
+      planesHref={planesHref}
     />
   )
 }

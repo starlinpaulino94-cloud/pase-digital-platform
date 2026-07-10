@@ -5,14 +5,23 @@ import type { PromotionPublic } from '@/modules/marketplace/types'
 interface PromotionCardProps {
   promotion: PromotionPublic
   variant?: 'default' | 'compact'
+  /**
+   * Base de la ruta del detalle. Público = '/promocion' (Landing); dentro de la
+   * app se pasa '/cliente/promociones' para no salir del contexto autenticado.
+   */
+  hrefBase?: string
 }
 
-export function PromotionCard({ promotion, variant = 'default' }: PromotionCardProps) {
+export function PromotionCard({
+  promotion,
+  variant = 'default',
+  hrefBase = '/promocion',
+}: PromotionCardProps) {
   const isExpired = promotion.vigenciaHasta && new Date(promotion.vigenciaHasta) < new Date()
 
   if (variant === 'compact') {
     return (
-      <Link href={`/promocion/${promotion.id}`}>
+      <Link href={`${hrefBase}/${promotion.id}`}>
         <div className="group overflow-hidden rounded-lg border border-neutral-200 bg-white transition-all duration-300 hover:shadow-md">
           {promotion.imagenUrl && (
             <div className="relative h-24 w-full overflow-hidden bg-neutral-100">
@@ -40,7 +49,7 @@ export function PromotionCard({ promotion, variant = 'default' }: PromotionCardP
   }
 
   return (
-    <Link href={`/promocion/${promotion.id}`}>
+    <Link href={`${hrefBase}/${promotion.id}`}>
       <div className="group relative overflow-hidden rounded-lg border border-neutral-200 bg-white transition-all duration-300 hover:shadow-lg">
         {/* Image */}
         {promotion.imagenUrl && (

@@ -5,6 +5,11 @@ import type { CompanyPublic } from '@/modules/marketplace/types'
 
 interface CompanyCardProps {
   company: CompanyPublic
+  /**
+   * Base de la ruta del perfil. Público = '/empresas' (Landing); dentro de la
+   * app se pasa '/cliente/empresas' para no salir del contexto autenticado.
+   */
+  hrefBase?: string
 }
 
 const TIPO_LABEL: Record<string, string> = {
@@ -14,11 +19,11 @@ const TIPO_LABEL: Record<string, string> = {
   salon: 'Salón',
 }
 
-export function CompanyCard({ company }: CompanyCardProps) {
+export function CompanyCard({ company, hrefBase = '/empresas' }: CompanyCardProps) {
   const initials = company.name.slice(0, 2).toUpperCase()
 
   return (
-    <Link href={`/empresas/${company.slug}`} className="group block">
+    <Link href={`${hrefBase}/${company.slug}`} className="group block">
       <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg">
         {/* Banner o gradiente de marca */}
         <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-blue-600 to-sky-500">

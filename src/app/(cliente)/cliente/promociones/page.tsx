@@ -38,7 +38,7 @@ function PromoGridConGuardar({
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {promociones.map((p) => (
         <div key={p.id} className="relative">
-          <PromotionCard promotion={p} />
+          <PromotionCard promotion={p} hrefBase="/cliente/promociones" />
           <SavePromoButton promocionId={p.id} guardada={guardadasIds.has(p.id)} />
         </div>
       ))}
@@ -193,7 +193,7 @@ export default async function PromocionesDisponiblesPage() {
                   publiquen.
                 </p>
                 <Button asChild variant="outline" className="mt-4">
-                  <Link href="/empresas">Explorar empresas</Link>
+                  <Link href="/cliente/descubrir">Explorar empresas</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -213,12 +213,12 @@ export default async function PromocionesDisponiblesPage() {
                   </p>
                 </div>
                 <Button asChild variant="outline" size="sm">
-                  <Link href="/empresas">Ver todas</Link>
+                  <Link href="/cliente/descubrir">Ver todas</Link>
                 </Button>
               </div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {feed.empresasRecomendadas.map((c) => (
-                  <CompanyCard key={c.id} company={c} />
+                  <CompanyCard key={c.id} company={c} hrefBase="/cliente/empresas" />
                 ))}
               </div>
             </section>

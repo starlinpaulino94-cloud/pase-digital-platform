@@ -6,6 +6,8 @@ interface PromotionGridProps {
   isLoading?: boolean
   variant?: 'default' | 'compact'
   emptyMessage?: string
+  /** Base de la ruta del detalle (se propaga a cada PromotionCard). */
+  hrefBase?: string
 }
 
 export function PromotionGrid({
@@ -13,6 +15,7 @@ export function PromotionGrid({
   isLoading = false,
   variant = 'default',
   emptyMessage = 'No se encontraron promociones',
+  hrefBase,
 }: PromotionGridProps) {
   if (isLoading) {
     const cols = variant === 'compact' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
@@ -47,6 +50,7 @@ export function PromotionGrid({
           key={promotion.id}
           promotion={promotion}
           variant={variant}
+          hrefBase={hrefBase}
         />
       ))}
     </div>

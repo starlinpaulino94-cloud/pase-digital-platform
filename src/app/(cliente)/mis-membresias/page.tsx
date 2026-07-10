@@ -53,7 +53,7 @@ export default async function MisMembresias() {
           </p>
         </div>
         <Button asChild variant="outline">
-          <Link href="/empresas">
+          <Link href="/cliente/descubrir">
             <Compass className="mr-2 h-4 w-4" />
             Explorar más empresas
           </Link>
@@ -98,10 +98,10 @@ export default async function MisMembresias() {
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button asChild>
-              <Link href="/empresas">Explorar Empresas</Link>
+              <Link href="/cliente/descubrir">Explorar Empresas</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/promociones">Ver Promociones</Link>
+              <Link href="/cliente/promociones">Ver Promociones</Link>
             </Button>
           </div>
         </div>
@@ -128,7 +128,7 @@ export default async function MisMembresias() {
               </p>
             </div>
             <Button asChild className="bg-blue-600 hover:bg-blue-700">
-              <Link href="/empresas">Explorar más empresas</Link>
+              <Link href="/cliente/descubrir">Explorar más empresas</Link>
             </Button>
           </div>
         </div>
