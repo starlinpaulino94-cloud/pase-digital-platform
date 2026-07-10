@@ -107,7 +107,7 @@ export default async function MisMembresias() {
               <Link href="/cliente/explorar">Explorar Empresas</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/promociones">Ver Promociones</Link>
+              <Link href="/cliente/promociones">Ver Promociones</Link>
             </Button>
           </div>
         </div>

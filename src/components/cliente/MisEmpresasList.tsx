@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Star, Gift, MapPin, ExternalLink, UserMinus, Loader2 } from 'lucide-react'
+import { Star, Gift, MapPin, ArrowRight, UserMinus, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   toggleSeguirEmpresa,
@@ -112,10 +112,10 @@ export function MisEmpresasList({ empresas }: { empresas: EmpresaSeguida[] }) {
               {/* Acciones */}
               <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3">
                 <Link
-                  href={`/empresas/${company.slug}`}
+                  href={`/cliente/empresas/${company.slug}`}
                   className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
                 >
-                  Ver perfil <ExternalLink className="h-3.5 w-3.5" />
+                  Ver perfil <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
                 <button
                   onClick={() => toggleFavorita(company.id)}

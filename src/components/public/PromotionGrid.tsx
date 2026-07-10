@@ -11,6 +11,8 @@ interface PromotionGridProps {
   isLoading?: boolean
   variant?: 'default' | 'compact'
   emptyMessage?: string
+  /** Base de la ruta del detalle (se propaga a cada PromotionCard). */
+  hrefBase?: string
 }
 
 export function PromotionGrid({
@@ -18,6 +20,7 @@ export function PromotionGrid({
   isLoading = false,
   variant = 'default',
   emptyMessage = 'No se encontraron promociones',
+  hrefBase,
 }: PromotionGridProps) {
   const cols =
     variant === 'compact'
@@ -52,7 +55,7 @@ export function PromotionGrid({
   return (
     <div className={`grid ${cols} gap-5`}>
       {promotions.map((promotion) => (
-        <PromotionCard key={promotion.id} promotion={promotion} variant={variant} />
+        <PromotionCard key={promotion.id} promotion={promotion} variant={variant} hrefBase={hrefBase} />
       ))}
     </div>
   )

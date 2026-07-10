@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Gift, MapPin, Plus, Check, Loader2, ExternalLink, Users } from 'lucide-react'
+import { Gift, MapPin, Plus, Check, Loader2, ArrowRight, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { toggleSeguirEmpresa } from '@/modules/social/actions'
 
@@ -146,10 +146,10 @@ export function ExplorarEmpresasList({
                   {siguiendo ? 'Siguiendo' : 'Seguir'}
                 </button>
                 <Link
-                  href={`/empresas/${company.slug}`}
+                  href={`/cliente/empresas/${company.slug}`}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:border-blue-200 hover:text-blue-700"
                 >
-                  Ver perfil <ExternalLink className="h-3.5 w-3.5" />
+                  Ver perfil <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
             </div>

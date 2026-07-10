@@ -568,7 +568,7 @@ export async function getNovedadesInicio(
         companyName: p.company.name,
         companySlug: p.company.slug,
         fecha: p.publicadaEn,
-        href: `/promocion/${p.id}`,
+        href: `/cliente/promociones/${p.id}`,
       })),
       ...posts.map((p) => ({
         id: p.id,
@@ -577,7 +577,7 @@ export async function getNovedadesInicio(
         companyName: p.company.name,
         companySlug: p.company.slug,
         fecha: p.tipo === 'EVENTO' && p.fechaEvento ? p.fechaEvento : p.publicadaEn,
-        href: `/empresas/${p.company.slug}`,
+        href: `/cliente/empresas/${p.company.slug}`,
       })),
     ]
 
@@ -652,14 +652,14 @@ export async function getOnboardingCliente(
       key: 'seguidas',
       label: 'Sigues al menos una empresa',
       done: follows > 0,
-      href: '/empresas',
+      href: '/cliente/explorar',
       cta: 'Descubrir empresas',
     },
     {
       key: 'membresia',
       label: 'Primera membresía',
       done: memberships > 0,
-      href: '/empresas',
+      href: '/cliente/explorar',
       cta: 'Explorar planes',
     },
   ]
