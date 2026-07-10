@@ -27,8 +27,8 @@ export default async function ScannerPage() {
   return (
     <div className="space-y-6 animate-fade-up">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Escáner de visitas</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-h1 text-foreground">Escáner de visitas</h1>
+        <p className="mt-1 text-small text-muted-foreground">
           Escanea el QR del cliente para registrar su visita.
         </p>
       </div>

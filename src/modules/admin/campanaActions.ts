@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { requireAdminUser, requireSection } from '@/lib/auth/guards'
+import { resolveCompanyId } from '@/lib/auth/company-context'
 
 // F4.6: CRUD de campañas. Cada empresa administra solo las suyas; al
 // eliminar, las promociones/publicaciones quedan sin campaña (SetNull).
@@ -63,7 +64,7 @@ export async function crearCampana(
   const user = await requireSection('campanas')
   if (!user) return { error: 'No autorizado.' }
 
-  const companyId = user.metadata.companyId
+  const companyId = await resolveCompanyId(user, formData)
   if (!companyId) return { error: 'Esta función es del panel de empresa.' }
 
   const parsed = parseCampana(formData)

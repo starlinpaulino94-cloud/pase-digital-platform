@@ -18,7 +18,7 @@ export function PublicarEmpresaButton({ habilitado }: { habilitado: boolean }) {
 
   useEffect(() => {
     if (state.success) {
-      toast.success('¡Tu empresa ya está publicada en el marketplace! 🎉')
+      toast.success('¡Tu empresa ya está publicada en el marketplace!')
       router.refresh()
     }
     if (state.error) toast.error(state.error)

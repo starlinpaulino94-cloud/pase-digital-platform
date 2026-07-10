@@ -93,12 +93,14 @@ export default withSentryConfig(nextConfig, {
   silent: !process.env.CI,
   widenClientFileUpload: true,
   tunnelRoute: '/monitoring',
-  disableLogger: true,
-  automaticVercelMonitors: true,
   sourcemaps: {
     deleteSourcemapsAfterUpload: true,
   },
-  reactComponentAnnotation: {
-    enabled: true,
+  // Ubicación nueva de estas opciones desde @sentry/nextjs 10 (antes vivían
+  // en la raíz y emitían deprecation warnings en cada build).
+  webpack: {
+    treeshake: { removeDebugLogging: true },
+    automaticVercelMonitors: true,
+    reactComponentAnnotation: { enabled: true },
   },
 })

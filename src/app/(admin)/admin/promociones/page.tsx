@@ -9,13 +9,14 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DeletePromocionButton } from '@/components/admin/DeletePromocionButton'
 import { PromoControls } from '@/components/admin/PromoControls'
+import { CompartirOfertaButton } from '@/components/admin/CompartirOfertaButton'
 import { Gift, Plus, Pencil, Lock, Globe, Eye, Share2, Heart, Archive } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
 function fmtDate(d: Date | null) {
   if (!d) return null
-  return new Intl.DateTimeFormat('es-DO', {
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo',
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(d))
@@ -103,6 +104,20 @@ function PromoCard({ p, showCompany }: { p: PromoRow; showCompany: boolean }) {
           </span>
 
           <div className="ml-auto flex items-center gap-1">
+            <CompartirOfertaButton
+              path={`/promocion/${p.id}`}
+              titulo={p.titulo}
+              texto={`${p.titulo} — promoción de ${p.company.name} en MembeGo.`}
+              advertencia={
+                p.archivada || !p.activo
+                  ? 'La promoción no está activa: el enlace no será visible hasta que la actives.'
+                  : p.vigenciaHasta && new Date(p.vigenciaHasta) < new Date()
+                    ? 'La promoción ya venció: el enlace no será visible.'
+                    : p.visibilidad === 'privada'
+                      ? 'Es privada: solo la verán clientes de tu empresa con sesión iniciada.'
+                      : null
+              }
+            />
             <PromoControls
               id={p.id}
               titulo={p.titulo}

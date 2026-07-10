@@ -121,16 +121,18 @@ function ErrorScreen({
   const Icon = config.icon
 
   return (
-    <div className={`rounded-xl border p-6 text-center space-y-4 ${config.bgColor}`}>
-      <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm`}>
+    <div
+      className={`animate-scale-in space-y-4 rounded-2xl border p-6 text-center ${config.bgColor}`}
+    >
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-premium">
         <Icon className={`h-7 w-7 ${config.color}`} />
       </div>
       <div>
-        <h3 className={`text-lg font-bold ${config.color}`}>{config.title}</h3>
+        <h3 className={`text-lg font-bold tracking-tight ${config.color}`}>{config.title}</h3>
         <p className="mt-1 text-sm text-muted-foreground">{errorMessage}</p>
       </div>
       <p className="text-sm text-foreground/80">{config.action}</p>
-      <Button onClick={onRetry} variant="outline" className="gap-2">
+      <Button onClick={onRetry} variant="outline" size="lg" className="w-full gap-2 sm:w-auto">
         <RefreshCw className="h-4 w-4" />
         Escanear otro QR
       </Button>
@@ -201,38 +203,45 @@ export function ScannerClient({ sucursales = [] }: { sucursales?: Sucursal[] }) 
       )}
 
       {/* Camera scanner */}
-      <Card className="overflow-hidden border-border/60">
-        <div className="bg-gradient-to-b from-slate-900 to-slate-800 p-6 text-center">
-          <ScanLine className="mx-auto mb-4 h-10 w-10 text-sky-400" />
-          <h2 className="text-lg font-bold text-white">Escanear QR</h2>
-          <p className="mt-1 text-sm text-slate-400">
-            Apunta la cámara al código QR del cliente
-          </p>
+      <Card className="overflow-hidden rounded-3xl border-border/60 py-0 shadow-premium">
+        <div className="relative bg-gradient-to-b from-slate-950 via-blue-950 to-slate-900 p-7 text-center sm:p-8">
+          <div className="pointer-events-none absolute inset-0 bg-grid-light opacity-40" />
+          <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-64 -translate-x-1/2 rounded-full bg-sky-500/15 blur-3xl" />
 
-          {scanning ? (
-            <div className="mt-5">
-              <QRScanner onScan={lookup} />
+          <div className="relative">
+            <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 backdrop-blur">
+              <ScanLine className="h-7 w-7 text-sky-400" />
+            </span>
+            <h2 className="text-xl font-bold tracking-tight text-white">Escanear QR</h2>
+            <p className="mt-1 text-sm text-slate-400">
+              Apunta la cámara al código QR del cliente
+            </p>
+
+            {scanning ? (
+              <div className="mt-6">
+                <QRScanner onScan={lookup} />
+                <Button
+                  variant="outline"
+                  className="mt-4 border-white/20 bg-white/10 text-white hover:bg-white/20"
+                  onClick={() => setScanning(false)}
+                >
+                  Detener cámara
+                </Button>
+              </div>
+            ) : (
               <Button
-                variant="outline"
-                className="mt-4 border-white/20 bg-white/10 text-white hover:bg-white/20"
-                onClick={() => setScanning(false)}
+                className="mt-6 w-full bg-sky-500 font-semibold text-white shadow-glow hover:bg-sky-400 sm:w-auto sm:px-10"
+                onClick={() => setScanning(true)}
+                disabled={pending}
+                size="xl"
               >
-                Detener cámara
+                {pending
+                  ? <Loader2 className="h-5 w-5 animate-spin" />
+                  : 'Abrir cámara'
+                }
               </Button>
-            </div>
-          ) : (
-            <Button
-              className="mt-5 bg-sky-500 hover:bg-sky-400 text-white font-semibold px-8"
-              onClick={() => setScanning(true)}
-              disabled={pending}
-              size="lg"
-            >
-              {pending
-                ? <Loader2 className="h-5 w-5 animate-spin" />
-                : 'Abrir cámara'
-              }
-            </Button>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Manual entry toggle */}

@@ -16,6 +16,8 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
+import { isGoogleAuthEnabled } from '@/lib/auth/googleAuth'
 import { safeInternalPath } from '@/lib/utils'
 import { ROLE_HOME, type AppRole } from '@/types'
 
@@ -97,7 +99,17 @@ export function LoginForm({
   // Avisos del flujo de verificación de correo (Fase 1 · O-1).
   const verificaPendiente = searchParams.get('verifica') === '1'
   const verificado = searchParams.get('verificado') === '1'
-  const errorVerify = searchParams.get('error') === 'verify'
+  const errorParam = searchParams.get('error')
+  const errorVerify = errorParam === 'verify'
+  // Avisos del login social con Google (Fase 5 · O-16).
+  const GOOGLE_ERRORS: Record<string, string> = {
+    google: 'No se pudo iniciar sesión con Google. Intenta de nuevo.',
+    google_email: 'Ya existe una cuenta con ese correo. Inicia sesión con tu contraseña.',
+    google_company: 'El enlace de registro no es válido. Vuelve a intentarlo desde la empresa.',
+    google_off: 'El acceso con Google no está disponible en este momento.',
+    google_rate: 'Demasiados registros desde esta conexión. Intenta de nuevo en unos minutos.',
+  }
+  const errorGoogle = errorParam ? (GOOGLE_ERRORS[errorParam] ?? null) : null
 
   return (
     <Card className="border-white/10 bg-white/5 text-white">
@@ -133,6 +145,11 @@ export function LoginForm({
               El enlace de confirmación no es válido o expiró. Intenta
               registrarte de nuevo o solicita uno nuevo.
             </AlertDescription>
+          </Alert>
+        )}
+        {errorGoogle && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{errorGoogle}</AlertDescription>
           </Alert>
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -174,6 +191,16 @@ export function LoginForm({
             Entrar
           </Button>
         </form>
+        {!isStaff && isGoogleAuthEnabled() && (
+          <div className="mt-4 space-y-4">
+            <div className="flex items-center gap-3 text-xs text-slate-500">
+              <span className="h-px flex-1 bg-white/10" />
+              o
+              <span className="h-px flex-1 bg-white/10" />
+            </div>
+            <GoogleSignInButton />
+          </div>
+        )}
         <p className="mt-4 text-center text-sm text-slate-400">
           <Link href="/recuperar" className="text-sky-400 hover:underline">
             ¿Olvidaste tu contraseña?
@@ -182,7 +209,7 @@ export function LoginForm({
         {!isStaff && (
           <p className="mt-2 text-center text-sm text-slate-400">
             ¿No tienes cuenta?{' '}
-            <Link href="/empresas" className="text-sky-400 hover:underline">
+            <Link href="/registro" className="text-sky-400 hover:underline">
               Regístrate
             </Link>
           </p>

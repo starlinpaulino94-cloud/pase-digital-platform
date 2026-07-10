@@ -10,6 +10,7 @@ import {
 import { requireRole } from '@/lib/auth/guards'
 import { prisma } from '@/lib/prisma'
 import { getFaqs, listTicketsCliente, getComunicacionConfig } from '@/modules/soporte/queries'
+import { getOnboardingCliente } from '@/modules/social/queries'
 import { renderPlantilla, buildWaLink, horarioLegible, estadoLabel, estadoBadgeClass } from '@/lib/soporte'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -21,6 +22,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { OnboardingClienteCard } from '@/components/cliente/OnboardingClienteCard'
 import { ReportarProblemaForm } from '@/components/cliente/ReportarProblemaForm'
 
 export const dynamic = 'force-dynamic'
@@ -30,13 +32,17 @@ export default async function AyudaPage() {
   const companyId = user.metadata.companyId
   const clienteId = user.metadata.clienteId
 
+  const dbUserId = user.metadata.dbUserId
+  const supabaseId = user.supabaseId
+
   let config: Awaited<ReturnType<typeof getComunicacionConfig>> = null
   let cliente: { nombre: string; company: { name: string } } | null = null
   let faqs: Awaited<ReturnType<typeof getFaqs>> = []
   let tickets: Awaited<ReturnType<typeof listTicketsCliente>> = []
+  let onboarding: Awaited<ReturnType<typeof getOnboardingCliente>> | null = null
 
   try {
-    const [c, cl, f, t] = await Promise.all([
+    const [c, cl, f, t, ob] = await Promise.all([
       companyId ? getComunicacionConfig(companyId).catch(() => null) : null,
       clienteId
         ? prisma.cliente
@@ -48,11 +54,15 @@ export default async function AyudaPage() {
         : null,
       getFaqs(companyId ?? null, { activeOnly: true }).catch(() => []),
       clienteId ? listTicketsCliente(clienteId).catch(() => []) : [],
+      dbUserId && supabaseId
+        ? getOnboardingCliente(dbUserId, supabaseId).catch(() => null)
+        : null,
     ])
     config = c
     cliente = cl
     faqs = f
     tickets = t
+    onboarding = ob
   } catch (e) {
     console.error('[cliente-ayuda]', e)
   }
@@ -78,6 +88,11 @@ export default async function AyudaPage() {
           Contáctanos o encuentra respuestas rápidas · {empresaNombre}
         </p>
       </div>
+
+      {/* Primeros pasos (onboarding) */}
+      {onboarding && onboarding.completados < onboarding.total && (
+        <OnboardingClienteCard onboarding={onboarding} />
+      )}
 
       {/* Contacto rápido */}
       <div className="grid gap-4 sm:grid-cols-2">

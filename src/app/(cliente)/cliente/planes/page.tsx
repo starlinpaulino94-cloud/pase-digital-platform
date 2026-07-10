@@ -23,13 +23,19 @@ export default async function PlanesPage() {
       where: { id: user.metadata.clienteId },
       select: {
         id: true,
-        company: { select: { id: true, name: true, moneda: true, idioma: true } },
+        company: {
+          select: {
+            id: true, name: true, moneda: true, idioma: true,
+            bienvenidaActiva: true, bienvenidaTipo: true, bienvenidaValor: true,
+          },
+        },
         memberships: {
           select: {
             id: true,
             estado: true,
             planId: true,
             planIdSolicitado: true,
+            fechaInicio: true,
             plan: { select: { nombre: true, precio: true } },
             planSolicitado: { select: { nombre: true } },
           },
@@ -71,6 +77,18 @@ export default async function PlanesPage() {
 
   const membership = cliente.memberships[0] ?? null
   const isActive = membership?.estado === 'ACTIVA'
+  // O-13: el beneficio de bienvenida aplica solo si el cliente nunca activó
+  // una membresía en esta empresa (fechaInicio null = jamás activada).
+  const elegibleBienvenida = !membership || membership.fechaInicio == null
+  const bienvenida =
+    elegibleBienvenida &&
+    cliente.company.bienvenidaActiva &&
+    cliente.company.bienvenidaValor != null
+      ? {
+          tipo: cliente.company.bienvenidaTipo,
+          valor: Number(cliente.company.bienvenidaValor),
+        }
+      : null
   const pendingPayment =
     membership && PENDIENTE_PAGO_ESTADOS.includes(membership.estado) ? membership : null
   const pendingChange = isActive && membership?.planIdSolicitado ? membership : null
@@ -174,6 +192,7 @@ export default async function PlanesPage() {
           activeMembershipId={membership?.id ?? null}
           currentPlanPrecio={isActive ? Number(membership!.plan.precio) : null}
           prefs={cliente.company}
+          bienvenida={bienvenida}
         />
       )}
     </div>

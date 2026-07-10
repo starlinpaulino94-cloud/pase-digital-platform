@@ -1,6 +1,7 @@
 'use server'
 
 import { requireAdminUser } from '@/lib/auth/guards'
+import { resolveCompanyId } from '@/lib/auth/company-context'
 import {
   ejecutarAutomatizacionesEmpresa,
   type ResultadoAutomatizaciones,
@@ -20,7 +21,7 @@ export async function ejecutarAutomatizaciones(
   const user = await requireAdminUser()
   if (!user) return { error: 'No autorizado.' }
 
-  const companyId = user.metadata.companyId
+  const companyId = await resolveCompanyId(user)
   if (!companyId) return { error: 'Esta función es del panel de empresa.' }
 
   try {

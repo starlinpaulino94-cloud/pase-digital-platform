@@ -1,0 +1,71 @@
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
+import { requireRole } from '@/lib/auth/guards'
+import { prisma } from '@/lib/prisma'
+import { UsuarioStaffForm } from '@/components/superadmin/UsuarioStaffForm'
+
+export const dynamic = 'force-dynamic'
+
+export default async function EditarUsuarioStaffPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  await requireRole('SUPERADMIN')
+  const { id } = await params
+
+  const [usuario, companies] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        companyId: true,
+        empresasAcceso: { select: { companyId: true } },
+      },
+    }),
+    prisma.company.findMany({
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true },
+    }),
+  ])
+
+  // Solo staff: las cuentas SUPERADMIN y CLIENTE no se editan desde aquí.
+  if (!usuario || usuario.role === 'SUPERADMIN' || usuario.role === 'CLIENTE') {
+    notFound()
+  }
+
+  return (
+    <div className="space-y-6">
+      <Link
+        href="/superadmin/usuarios"
+        className="inline-flex items-center gap-1.5 text-sm text-slate-500 transition hover:text-slate-900"
+      >
+        <ArrowLeft className="h-4 w-4" /> Usuarios de staff
+      </Link>
+
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Editar usuario</h1>
+        <p className="text-slate-500">
+          Controla su rol, sus empresas y su acceso. Los cambios aplican en su
+          próxima navegación.
+        </p>
+      </div>
+
+      <UsuarioStaffForm
+        usuario={{
+          id: usuario.id,
+          name: usuario.name,
+          email: usuario.email,
+          role: usuario.role,
+          companyId: usuario.companyId,
+          accesoIds: usuario.empresasAcceso.map((a) => a.companyId),
+        }}
+        companies={companies}
+      />
+    </div>
+  )
+}

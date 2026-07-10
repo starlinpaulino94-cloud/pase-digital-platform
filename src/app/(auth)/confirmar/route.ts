@@ -1,17 +1,17 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import type { EmailOtpType } from '@supabase/supabase-js'
-import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env'
+import { createRouteClient, redirectWithCookies } from '@/lib/supabase/route-client'
 import { getAppUrl } from '@/lib/site'
 import { ROLE_HOME, type AppRole } from '@/types'
-
-type CookieToSet = { name: string; value: string; options?: CookieOptions }
 
 /**
  * Callback de verificación de correo (Fase 1 · O-1). El enlace del correo de
  * confirmación apunta aquí con `token_hash` + `type`. Verificamos el token
  * (abre sesión) y redirigimos al home según el rol. Las cookies de sesión se
- * escriben sobre el objeto de respuesta del redirect para no perderlas.
+ * acumulan en un carrier y viajan en el redirect final para no perderlas.
+ *
+ * Aquí sí usamos getAppUrl: el enlace del correo se construyó con ese mismo
+ * dominio canónico, así que request y destino comparten host.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -22,21 +22,9 @@ export async function GET(request: NextRequest) {
 
   if (!tokenHash || !type) return loginError
 
-  // Redirect final; las cookies de sesión se adjuntan a ESTE objeto.
-  const response = NextResponse.redirect(new URL('/login?verificado=1', getAppUrl()))
-
-  const supabase = createServerClient(getSupabaseUrl(), getSupabaseAnonKey(), {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll()
-      },
-      setAll(cookiesToSet: CookieToSet[]) {
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options)
-        )
-      },
-    },
-  })
+  // Acumulador de cookies de sesión; el redirect final las conserva.
+  const carrier = NextResponse.next()
+  const supabase = createRouteClient(request, carrier)
 
   const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash })
   if (error) {
@@ -49,7 +37,5 @@ export async function GET(request: NextRequest) {
   const role = (data.user?.app_metadata?.role ?? 'CLIENTE') as AppRole
   const dest = ROLE_HOME[role] ?? '/mis-membresias'
 
-  const home = NextResponse.redirect(new URL(dest, getAppUrl()))
-  response.cookies.getAll().forEach((c) => home.cookies.set(c))
-  return home
+  return redirectWithCookies(new URL(dest, getAppUrl()), carrier)
 }

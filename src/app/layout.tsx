@@ -32,20 +32,77 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
     url: getAppUrl(),
     locale: 'es_ES',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'MembeGo — Conecta. Disfruta. Ahorra.',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
+    images: ['/og-image.png'],
   },
   icons: {
+    // Google exige un favicon de al menos 48x48 (múltiplo de 48) para
+    // mostrar el logo del sitio en los resultados de búsqueda.
     icon: [
       { url: '/favicon.ico', sizes: '32x32' },
+      { url: '/icon-48.png', sizes: '48x48', type: 'image/png' },
       { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/logo.svg', type: 'image/svg+xml' },
     ],
     apple: '/apple-touch-icon.png',
   },
   manifest: '/manifest.json',
+}
+
+/**
+ * Datos estructurados (JSON-LD): así Google asocia el logo a la marca y
+ * puede mostrarlo en los resultados de búsqueda y el panel de conocimiento.
+ */
+function StructuredData() {
+  const base = getAppUrl()
+  const organization = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: SITE_NAME,
+    url: base,
+    logo: `${base}/icon-512.png`,
+    description: SITE_DESCRIPTION,
+    slogan: 'Conecta. Disfruta. Ahorra.',
+  }
+  const website = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: SITE_NAME,
+    url: base,
+    inLanguage: 'es',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${base}/empresas?search={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  }
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organization) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(website) }}
+      />
+    </>
+  )
 }
 
 export default function RootLayout({
@@ -56,6 +113,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <StructuredData />
         {children}
         <Toaster richColors position="top-center" />
       </body>

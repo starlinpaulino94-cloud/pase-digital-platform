@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
 import { notificarAdmins } from '@/modules/notificaciones/service'
 import { formSubmitLimiter } from '@/lib/rate-limit'
+import { calcularDescuentoBienvenida } from '@/lib/bienvenida'
 
 export interface SeleccionState {
   error?: string
@@ -33,6 +34,15 @@ export async function seleccionarPlan(
 
     const cliente = await prisma.cliente.findUnique({
       where: { id: user.metadata.clienteId },
+      include: {
+        company: {
+          select: {
+            bienvenidaActiva: true,
+            bienvenidaTipo: true,
+            bienvenidaValor: true,
+          },
+        },
+      },
     })
     if (!cliente) return { error: 'Cliente no encontrado.' }
 
@@ -58,12 +68,27 @@ export async function seleccionarPlan(
       }
     }
 
+    // O-13: beneficio de bienvenida — solo para la PRIMERA activación. Una
+    // fila nunca activada tiene fechaInicio null (la activación lo fija y la
+    // renovación jamás lo vuelve a null). Se congela aquí el importe para que
+    // cambios posteriores de configuración no alteren solicitudes en curso.
+    const elegibleBienvenida = !existing || existing.fechaInicio == null
+    const descuento = elegibleBienvenida
+      ? calcularDescuentoBienvenida(cliente.company, Number(plan.precio))
+      : 0
+    const descuentoBienvenida = descuento > 0 ? descuento : null
+
     let membershipId: string
     if (existing) {
       // Reuse existing membership (PENDIENTE or PENDIENTE_PAGO)
       await prisma.membership.update({
         where: { id: existing.id },
-        data: { planId: plan.id, montoPagado: null, pagoConfirmado: false },
+        data: {
+          planId: plan.id,
+          montoPagado: null,
+          pagoConfirmado: false,
+          descuentoBienvenida,
+        },
       })
       membershipId = existing.id
     } else {
@@ -75,6 +100,7 @@ export async function seleccionarPlan(
           planId: plan.id,
           userId: user.metadata.dbUserId || null,
           estado: 'PENDIENTE',
+          descuentoBienvenida,
         },
       })
       membershipId = created.id

@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DeletePlanButton } from '@/components/admin/DeletePlanButton'
+import { BienvenidaConfigForm } from '@/components/admin/BienvenidaConfigForm'
+import { CompartirOfertaButton } from '@/components/admin/CompartirOfertaButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,6 +20,13 @@ export default async function PlanesPage() {
   const companyId = companyFilter(user)
   const prefs = await getRegionalPrefs(companyId)
 
+  // Para compartir la sección de planes del perfil público de la empresa.
+  const empresa = companyId
+    ? await prisma.company
+        .findUnique({ where: { id: companyId }, select: { name: true, slug: true } })
+        .catch(() => null)
+    : null
+
   let planes: {
     id: string; nombre: string; precio: unknown; esIlimitado: boolean;
     lavadosIncluidos: number; activo: boolean; descripcion: string | null;
@@ -25,6 +34,27 @@ export default async function PlanesPage() {
     condiciones: string | null; color: string | null; orden: number;
     company: { name: string }; _count: { memberships: number }
   }[] = []
+
+  // O-13: configuración del beneficio de bienvenida (solo vista por empresa;
+  // el superadmin gestiona empresas desde su propio panel).
+  let bienvenida: { activa: boolean; tipo: string; valor: number | null } | null = null
+  if (companyId) {
+    try {
+      const company = await prisma.company.findUnique({
+        where: { id: companyId },
+        select: { bienvenidaActiva: true, bienvenidaTipo: true, bienvenidaValor: true },
+      })
+      if (company) {
+        bienvenida = {
+          activa: company.bienvenidaActiva,
+          tipo: company.bienvenidaTipo,
+          valor: company.bienvenidaValor == null ? null : Number(company.bienvenidaValor),
+        }
+      }
+    } catch (e) {
+      console.error('[admin-planes] bienvenida', e)
+    }
+  }
 
   try {
     planes = await prisma.plan.findMany({
@@ -52,13 +82,26 @@ export default async function PlanesPage() {
             Crea y administra los planes de membresía de tu empresa.
           </p>
         </div>
-        <Link href="/admin/planes/nuevo">
-          <Button className="bg-sky-500 hover:bg-sky-400">
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo plan
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          {empresa && (
+            <CompartirOfertaButton
+              variant="full"
+              label="Compartir planes"
+              path={`/empresas/${empresa.slug}#membresias`}
+              titulo={`Planes de ${empresa.name}`}
+              texto={`Conoce los planes de membresía de ${empresa.name} en MembeGo.`}
+            />
+          )}
+          <Link href="/admin/planes/nuevo">
+            <Button className="bg-sky-500 hover:bg-sky-400">
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo plan
+            </Button>
+          </Link>
+        </div>
       </div>
+
+      {bienvenida && <BienvenidaConfigForm bienvenida={bienvenida} />}
 
       {planes.length === 0 ? (
         <Card>

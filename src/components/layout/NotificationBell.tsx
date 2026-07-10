@@ -2,7 +2,18 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, CheckCheck, ExternalLink } from 'lucide-react'
+import {
+  AlertTriangle,
+  BadgeCheck,
+  Bell,
+  CheckCheck,
+  CheckCircle2,
+  ExternalLink,
+  FileText,
+  Gift,
+  XCircle,
+  type LucideIcon,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   getNotificaciones,
@@ -11,14 +22,14 @@ import {
 } from '@/modules/notificaciones/actions'
 import type { Notificacion } from '@prisma/client'
 
-const TIPO_ICON: Record<string, string> = {
-  PAGO_APROBADO: '✅',
-  PAGO_RECHAZADO: '❌',
-  NUEVO_COMPROBANTE: '📄',
-  MEMBRESIA_POR_VENCER: '⚠️',
-  MEMBRESIA_ACTIVADA: '🎉',
-  PROMOCION_NUEVA: '🎁',
-  SISTEMA: '🔔',
+const TIPO_ICON: Record<string, { icon: LucideIcon; cls: string }> = {
+  PAGO_APROBADO: { icon: CheckCircle2, cls: 'bg-emerald-500/10 text-emerald-600' },
+  PAGO_RECHAZADO: { icon: XCircle, cls: 'bg-red-500/10 text-red-600' },
+  NUEVO_COMPROBANTE: { icon: FileText, cls: 'bg-sky-500/10 text-sky-600' },
+  MEMBRESIA_POR_VENCER: { icon: AlertTriangle, cls: 'bg-amber-500/10 text-amber-600' },
+  MEMBRESIA_ACTIVADA: { icon: BadgeCheck, cls: 'bg-emerald-500/10 text-emerald-600' },
+  PROMOCION_NUEVA: { icon: Gift, cls: 'bg-violet-500/10 text-violet-600' },
+  SISTEMA: { icon: Bell, cls: 'bg-slate-500/10 text-slate-600' },
 }
 
 function timeAgo(date: Date) {
@@ -54,6 +65,8 @@ export function NotificationBell({ initialCount }: { initialCount: number }) {
       await marcarTodasLeidas()
       setNotifs((prev) => prev?.map((n) => ({ ...n, leida: true })) ?? null)
       setCount(0)
+      // Sincroniza el resto de la app (contadores/listas) sin recargar.
+      router.refresh()
     })
   }
 
@@ -65,6 +78,7 @@ export function NotificationBell({ initialCount }: { initialCount: number }) {
           prev?.map((n) => (n.id === notif.id ? { ...n, leida: true } : n)) ?? null
         )
         setCount((c) => Math.max(0, c - 1))
+        router.refresh()
       })
     }
     setOpen(false)
@@ -128,9 +142,20 @@ export function NotificationBell({ initialCount }: { initialCount: number }) {
                         )}
                       >
                         <div className="flex items-start gap-3">
-                          <span className="mt-0.5 text-base leading-none">
-                            {TIPO_ICON[n.tipo] ?? '🔔'}
-                          </span>
+                          {(() => {
+                            const t = TIPO_ICON[n.tipo] ?? TIPO_ICON.SISTEMA
+                            const Icon = t.icon
+                            return (
+                              <span
+                                className={cn(
+                                  'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
+                                  t.cls
+                                )}
+                              >
+                                <Icon className="h-4 w-4" />
+                              </span>
+                            )
+                          })()}
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center justify-between gap-2">
                               <p className={cn('truncate text-sm', !n.leida ? 'font-semibold text-slate-900' : 'font-medium text-slate-700')}>

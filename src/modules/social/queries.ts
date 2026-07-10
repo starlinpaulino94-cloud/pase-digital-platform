@@ -652,14 +652,14 @@ export async function getOnboardingCliente(
       key: 'seguidas',
       label: 'Sigues al menos una empresa',
       done: follows > 0,
-      href: '/cliente/descubrir',
+      href: '/cliente/explorar',
       cta: 'Descubrir empresas',
     },
     {
       key: 'membresia',
       label: 'Primera membresía',
       done: memberships > 0,
-      href: '/cliente/descubrir',
+      href: '/cliente/explorar',
       cta: 'Explorar planes',
     },
   ]

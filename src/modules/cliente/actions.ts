@@ -71,6 +71,100 @@ export async function switchCompany(companyId: string): Promise<ClienteActionSta
   redirect('/mis-membresias')
 }
 
+export interface AfiliacionState {
+  error?: string
+}
+
+/**
+ * Afilia al cliente logueado a OTRA empresa sin volver a registrarse.
+ * Un mismo usuario (User/supabaseId) puede tener una cuenta de Cliente por
+ * empresa; esta acción crea la que falte, la sigue, cambia el contexto activo
+ * y lo lleva a elegir su membresía. Si ya es miembro, solo cambia el contexto.
+ */
+export async function afiliarmeAEmpresa(
+  _prev: AfiliacionState,
+  formData: FormData
+): Promise<AfiliacionState> {
+  const destino = '/cliente/planes'
+  try {
+    const user = await getUser()
+    if (!user || user.metadata.role !== 'CLIENTE') {
+      return { error: 'Inicia sesión con tu cuenta de cliente.' }
+    }
+
+    const companySlug = String(formData.get('companySlug') ?? '').trim()
+    if (!companySlug) return { error: 'Empresa no especificada.' }
+
+    const company = await prisma.company.findUnique({
+      where: { slug: companySlug },
+      select: { id: true, isActive: true },
+    })
+    if (!company || !company.isActive) {
+      return { error: 'Empresa no encontrada o no disponible.' }
+    }
+
+    const dbUser = await prisma.user.findUnique({
+      where: { supabaseId: user.supabaseId },
+      select: { id: true, name: true },
+    })
+    if (!dbUser) return { error: 'No se encontró tu cuenta.' }
+
+    // ¿Ya tiene cuenta de cliente en esta empresa? Si no, la creamos.
+    let cliente = await prisma.cliente.findUnique({
+      where: {
+        supabaseId_companyId: { supabaseId: user.supabaseId, companyId: company.id },
+      },
+      select: { id: true, telefono: true },
+    })
+
+    if (!cliente) {
+      // Reutiliza nombre/teléfono de una cuenta existente del mismo usuario.
+      const previa = await prisma.cliente.findFirst({
+        where: { supabaseId: user.supabaseId },
+        select: { nombre: true, telefono: true },
+        orderBy: { createdAt: 'asc' },
+      })
+      cliente = await prisma.cliente.create({
+        data: {
+          companyId: company.id,
+          supabaseId: user.supabaseId,
+          nombre: previa?.nombre ?? dbUser.name,
+          email: user.email,
+          telefono: previa?.telefono ?? null,
+        },
+        select: { id: true, telefono: true },
+      })
+
+      // Seguir la empresa (no bloquea si falla).
+      await prisma.companyFollow
+        .upsert({
+          where: { userId_companyId: { userId: dbUser.id, companyId: company.id } },
+          update: {},
+          create: { userId: dbUser.id, companyId: company.id },
+        })
+        .catch((e) => console.error('[cliente] afiliar auto-follow error:', e))
+    }
+
+    // Cambia el contexto activo a esta empresa.
+    const admin = createAdminClient()
+    await admin.auth.admin.updateUserById(user.supabaseId, {
+      app_metadata: {
+        role: 'CLIENTE',
+        dbUserId: dbUser.id,
+        clienteId: cliente.id,
+        companyId: company.id,
+      },
+    })
+
+    revalidatePath('/', 'layout')
+  } catch (e) {
+    console.error('[cliente] afiliarmeAEmpresa error:', e)
+    return { error: 'No se pudo completar. Intenta de nuevo.' }
+  }
+  // El redirect va fuera del try: lanza NEXT_REDIRECT y no debe capturarse.
+  redirect(destino)
+}
+
 /** Update the logged-in cliente's nombre and telefono. */
 export async function actualizarPerfil(
   _prev: ClienteActionState,

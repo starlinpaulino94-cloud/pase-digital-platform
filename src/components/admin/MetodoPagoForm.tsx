@@ -34,9 +34,25 @@ interface Existing {
   activo: boolean
 }
 
+interface Company {
+  id: string
+  name: string
+}
+
 const init: MetodoPagoState = {}
 
-export function MetodoPagoForm({ existing }: { existing?: Existing }) {
+/**
+ * Form de método de pago. Con `companies` (superadmin, alta) muestra el
+ * selector de empresa; sin él (panel de empresa) la action usa la empresa
+ * de la sesión.
+ */
+export function MetodoPagoForm({
+  existing,
+  companies,
+}: {
+  existing?: Existing
+  companies?: Company[]
+}) {
   const router = useRouter()
   const action = existing ? actualizarMetodoPago : crearMetodoPago
   const [state, formAction, pending] = useActionState(action, init)
@@ -57,6 +73,24 @@ export function MetodoPagoForm({ existing }: { existing?: Existing }) {
         <Alert variant="destructive">
           <AlertDescription>{state.error}</AlertDescription>
         </Alert>
+      )}
+
+      {!existing && companies && (
+        <div className="space-y-2">
+          <Label htmlFor="companyId">Empresa *</Label>
+          <Select name="companyId" required>
+            <SelectTrigger id="companyId">
+              <SelectValue placeholder="Selecciona la empresa" />
+            </SelectTrigger>
+            <SelectContent>
+              {companies.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       )}
 
       {!existing && (

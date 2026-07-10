@@ -295,11 +295,13 @@ export async function getReferidosDashboard(
   const byTipo = new Map(eventos.map((e) => [e.tipo, e]))
   const compartidos = byTipo.get('SHARE')?._count._all ?? 0
   const clicks = byTipo.get('CLICK')?._count._all ?? 0
-  // Registros/membresías: la fuente autoritativa son las filas de Referido
-  // (los eventos existen para puntos/canales, pero pueden faltar en datos viejos).
-  const registros = referidos.length
-  const membresias = referidos.filter((r) => r.estado === 'COMPLETADO').length
-  const recompensas = referidos.filter((r) => r.recompensaAplicada).length
+  // Registros/membresías: la fuente autoritativa son las filas de Referido, pero
+  // SOLO las legítimas. Las sospechosas (autoreferido / huella repetida) se
+  // conservan para auditoría pero no inflan el embudo ni la conversión.
+  const legitimos = referidos.filter((r) => !r.sospechoso)
+  const registros = legitimos.length
+  const membresias = legitimos.filter((r) => r.estado === 'COMPLETADO').length
+  const recompensas = legitimos.filter((r) => r.recompensaAplicada).length
   const puntos = eventos.reduce((acc, e) => acc + (e._sum.puntos ?? 0), 0)
   const conversionPct = clicks > 0 ? Math.round((membresias / clicks) * 100) : 0
 
@@ -323,7 +325,7 @@ export async function getReferidosDashboard(
 
   return {
     stats: { compartidos, clicks, registros, membresias, conversionPct, recompensas, puntos },
-    historial: referidos.map((r) => ({
+    historial: legitimos.map((r) => ({
       id: r.id,
       nombre: r.referidoCliente.nombre,
       fecha: r.createdAt,
@@ -411,8 +413,9 @@ export async function getEmpresaReferidosDashboard(
       where: { ...whereRef, tipo: { in: TIPOS_EMPRESA } },
       _count: { _all: true },
     }),
-    prisma.referido.count({ where: whereRef }),
-    prisma.referido.count({ where: { ...whereRef, estado: 'COMPLETADO' } }),
+    // Solo referidos legítimos cuentan en el embudo (los sospechosos van aparte).
+    prisma.referido.count({ where: { ...whereRef, sospechoso: false } }),
+    prisma.referido.count({ where: { ...whereRef, estado: 'COMPLETADO', sospechoso: false } }),
     prisma.referido.count({ where: { ...whereRef, recompensaAplicada: true } }),
     prisma.referralEvent.groupBy({
       by: ['tipo', 'canal'],
@@ -444,7 +447,7 @@ export async function getEmpresaReferidosDashboard(
   const clicks = countTipo('CLICK')
 
   // Ronda 2: agregados y series (independientes entre sí; antes secuenciales).
-  const [ingresosAgg, sospechososRows, campanaRows, diariosRows, mensualRows, historicosCountRows] =
+  const [ingresosAgg, sospechosos, campanaRows, diariosRows, mensualRows, historicosCountRows] =
     await Promise.all([
       // Ingresos atribuibles: membresías pagadas de clientes que llegaron
       // referidos. Filtro por relación (sin materializar la lista de IDs).
@@ -460,10 +463,7 @@ export async function getEmpresaReferidosDashboard(
         _sum: { montoPagado: true },
       }),
       // Registros marcados sospechosos por el anti-fraude (huella repetida).
-      prisma.$queryRaw<{ n: bigint }[]>(
-        Prisma.sql`SELECT count(*)::bigint AS n FROM "referral_events"
-          WHERE ${companySql} AND (meta->>'sospechoso')::boolean IS TRUE`
-      ),
+      prisma.referido.count({ where: { ...whereRef, sospechoso: true } }),
       // Clics por campaña (utm_campaign capturado en /r/[code]).
       prisma.$queryRaw<{ campana: string; n: bigint }[]>(
         Prisma.sql`SELECT meta->>'campana' AS campana, count(*)::bigint AS n
@@ -474,7 +474,7 @@ export async function getEmpresaReferidosDashboard(
       // Registros por día (últimos 30 días).
       prisma.$queryRaw<{ dia: Date; n: bigint }[]>(
         Prisma.sql`SELECT date_trunc('day', "createdAt") AS dia, count(*)::bigint AS n
-          FROM "referidos" WHERE ${companySql} AND "createdAt" >= ${hace30d}
+          FROM "referidos" WHERE ${companySql} AND "sospechoso" = false AND "createdAt" >= ${hace30d}
           GROUP BY 1 ORDER BY 1`
       ),
       // Evolución mensual (últimos 6 meses).
@@ -482,7 +482,7 @@ export async function getEmpresaReferidosDashboard(
         Prisma.sql`SELECT date_trunc('month', "createdAt") AS mes,
             count(*)::bigint AS registros,
             count(*) FILTER (WHERE estado = 'COMPLETADO')::bigint AS membresias
-          FROM "referidos" WHERE ${companySql} AND "createdAt" >= ${hace6m}
+          FROM "referidos" WHERE ${companySql} AND "sospechoso" = false AND "createdAt" >= ${hace6m}
           GROUP BY 1 ORDER BY 1`
       ),
       prisma.$queryRaw<{ n: bigint }[]>(
@@ -492,7 +492,6 @@ export async function getEmpresaReferidosDashboard(
     ])
 
   const ingresosReferidos = Number(ingresosAgg._sum.montoPagado ?? 0)
-  const sospechosos = Number(sospechososRows[0]?.n ?? 0)
 
   // Nombres + registros/membresías de los tops.
   const clicksPor = new Map<string, number>()
@@ -544,8 +543,8 @@ export async function getEmpresaReferidosDashboard(
     Number(historicosCountRows[0]?.n ?? 0) - embajadoresActivos
   )
 
-  const fmtMes = new Intl.DateTimeFormat('es-DO', { month: 'short', year: '2-digit' })
-  const fmtDia = new Intl.DateTimeFormat('es-DO', { day: '2-digit', month: 'short' })
+  const fmtMes = new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', month: 'short', year: '2-digit' })
+  const fmtDia = new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', day: '2-digit', month: 'short' })
 
   return {
     kpis: {

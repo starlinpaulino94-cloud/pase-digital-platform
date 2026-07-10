@@ -123,7 +123,7 @@ export async function ejecutarAutomatizacionesEmpresa(
       proximasAVencer.flatMap((m) => {
         const userId = usuarios.get(m.cliente.supabaseId)
         if (!userId || !m.fechaVencimiento) return []
-        const fechaStr = new Intl.DateTimeFormat('es-DO', { dateStyle: 'long' }).format(
+        const fechaStr = new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', dateStyle: 'long' }).format(
           m.fechaVencimiento
         )
         const marca = m.fechaVencimiento.toISOString().slice(0, 10)

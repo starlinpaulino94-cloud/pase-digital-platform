@@ -86,6 +86,9 @@ export async function toggleSeguirEmpresa(
     }
 
     revalidatePath('/cliente/empresas')
+    revalidatePath('/cliente/explorar')
+    revalidatePath('/mis-membresias')
+    revalidatePath('/cliente/ayuda')
     return { following }
   } catch (e) {
     console.error('[social] toggleSeguirEmpresa', e)

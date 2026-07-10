@@ -582,19 +582,9 @@ INCIDENT RESPONSE
 - POST `/membresia/enviarComprobante` — Rate limited: 20/min, CSRF protected
 
 ### Test Credentials (Staging)
-```
-Cliente:
-  Email: cliente@example.com
-  Password: password123
-
-Admin:
-  Email: admin@example.com
-  Password: password123
-
-Superadmin:
-  Email: superadmin@example.com
-  Password: password123
-```
+Las credenciales de prueba NO se documentan aquí (higiene de secretos).
+Usa las cuentas del seed local (`prisma/seed.ts`) SOLO en entornos de
+desarrollo/staging; nunca ejecutes el seed contra producción.
 
 ### Environment Variables (Production)
 ```

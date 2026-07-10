@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 export const dynamic = 'force-dynamic'
 
 function fmtDate(d: Date) {
-  return new Intl.DateTimeFormat('es-DO', { dateStyle: 'medium' }).format(d)
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', dateStyle: 'medium' }).format(d)
 }
 
 export default async function EmpleadoDetailPage({

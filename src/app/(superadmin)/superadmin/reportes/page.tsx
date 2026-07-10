@@ -10,7 +10,7 @@ function fmtMoney(n: number) {
 
 function fmtDate(d: Date | null) {
   if (!d) return '—'
-  return new Intl.DateTimeFormat('es-DO', { dateStyle: 'medium' }).format(d)
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', dateStyle: 'medium' }).format(d)
 }
 
 function activasTotal(data: ReportesData) {
@@ -39,7 +39,7 @@ export default async function SuperadminReportesPage() {
 
   const cards = [
     { label: 'Ingresos del mes', value: fmtMoney(total.ingresosMes) },
-    { label: 'Lavados este mes', value: String(total.lavadosMes) },
+    { label: 'Usos este mes', value: String(total.lavadosMes) },
     { label: 'Membresías activas', value: String(activasTotal(total)) },
     {
       label: 'Por vencer (7 días)',
@@ -89,7 +89,7 @@ export default async function SuperadminReportesPage() {
                     value={fmtMoney(emp.data.ingresosMes)}
                   />
                   <Metric
-                    label="Lavados este mes"
+                    label="Usos este mes"
                     value={String(emp.data.lavadosMes)}
                   />
                   <Metric

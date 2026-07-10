@@ -73,7 +73,7 @@ export function ComprobanteReceipt({ cliente, visitId, servicio, restantes, onDo
 
   async function handleShare() {
     const text = [
-      `✓ Visita confirmada — ${cliente.empresa}`,
+      `Visita confirmada — ${cliente.empresa}`,
       `Cliente: ${cliente.nombre}`,
       `Servicio: ${servicio}`,
       `Código: ${codigoOperacion}`,

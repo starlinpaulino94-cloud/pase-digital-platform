@@ -26,7 +26,7 @@ export const dynamic = 'force-dynamic'
 
 function fmtDate(d: Date | null) {
   if (!d) return '—'
-  return new Intl.DateTimeFormat('es-DO', {
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo',
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(d)
@@ -47,6 +47,9 @@ interface PendienteRow {
   cliente: { nombre: string; email: string; company: { name: string } }
   plan: { nombre: string; precio: unknown }
   metodoPago: { nombre: string } | null
+  // O-13: descuento de bienvenida congelado (solo aplica si nunca se activó).
+  descuentoBienvenida: unknown | null
+  fechaInicio: Date | null
 }
 
 export default async function PagosPage() {
@@ -78,6 +81,8 @@ export default async function PagosPage() {
           comprobanteUrl: true,
           comprobanteNota: true,
           adminNota: true,
+          descuentoBienvenida: true,
+          fechaInicio: true,
           cliente: {
             select: { nombre: true, email: true, company: { select: { name: true } } },
           },
@@ -272,10 +277,35 @@ export default async function PagosPage() {
                     <span className="text-slate-500">Plan:</span>{' '}
                     <strong>{m.plan.nombre}</strong>
                   </p>
-                  <p>
-                    <span className="text-slate-500">Precio:</span>{' '}
-                    <strong>{fmtMoney(Number(m.plan.precio))}</strong>
-                  </p>
+                  {(() => {
+                    // O-13: monto esperado neto del descuento de bienvenida
+                    // (solo si la membresía nunca se activó).
+                    const desc =
+                      m.fechaInicio == null ? Number(m.descuentoBienvenida ?? 0) : 0
+                    if (desc <= 0) {
+                      return (
+                        <p>
+                          <span className="text-slate-500">Precio:</span>{' '}
+                          <strong>{fmtMoney(Number(m.plan.precio))}</strong>
+                        </p>
+                      )
+                    }
+                    return (
+                      <>
+                        <p>
+                          <span className="text-slate-500">Precio:</span>{' '}
+                          <span className="line-through">{fmtMoney(Number(m.plan.precio))}</span>{' '}
+                          <span className="text-emerald-600">
+                            −{fmtMoney(desc)} bienvenida
+                          </span>
+                        </p>
+                        <p>
+                          <span className="text-slate-500">Monto esperado:</span>{' '}
+                          <strong>{fmtMoney(Math.max(0, Number(m.plan.precio) - desc))}</strong>
+                        </p>
+                      </>
+                    )
+                  })()}
                   {m.metodoPago && (
                     <p>
                       <span className="text-slate-500">Método:</span>{' '}

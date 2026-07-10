@@ -89,6 +89,8 @@ export function FollowButton({ companyId, redirectTo }: FollowButtonProps) {
           ? 'Ahora sigues esta empresa. Recibirás sus promociones y novedades.'
           : 'Dejaste de seguir esta empresa.'
       )
+      // Refresca la vista actual (feed, listas, contadores) sin recargar.
+      router.refresh()
     })
   }
 
@@ -107,6 +109,7 @@ export function FollowButton({ companyId, redirectTo }: FollowButtonProps) {
       toast.success(
         res.esFavorita ? 'Marcada como favorita.' : 'Quitada de favoritas.'
       )
+      router.refresh()
     })
   }
 

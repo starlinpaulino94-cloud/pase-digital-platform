@@ -23,7 +23,7 @@ export const dynamic = 'force-dynamic'
 
 function fmtFecha(d: Date | null) {
   if (!d) return null
-  return new Intl.DateTimeFormat('es-DO', { dateStyle: 'medium' }).format(new Date(d))
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', dateStyle: 'medium' }).format(new Date(d))
 }
 
 export default async function CampanasPage() {

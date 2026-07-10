@@ -32,6 +32,19 @@ export async function registrarShare(canal: string): Promise<{ ok: boolean }> {
     })
     if (!cliente) return { ok: false }
 
+    // Dedupe en BD (el rate limiter en memoria no cubre múltiples lambdas):
+    // un mismo gesto de compartir puede disparar el tracking más de una vez
+    // (ej. abrir el QR + elegir canal). Solo cuenta 1 share por minuto.
+    const reciente = await prisma.referralEvent.findFirst({
+      where: {
+        clienteId: cliente.id,
+        tipo: 'SHARE',
+        createdAt: { gte: new Date(Date.now() - 60 * 1000) },
+      },
+      select: { id: true },
+    })
+    if (reciente) return { ok: true }
+
     const canalLimpio = String(canal).slice(0, 30)
     await logReferralEvent({
       clienteId: cliente.id,

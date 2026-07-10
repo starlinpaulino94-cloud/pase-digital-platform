@@ -47,7 +47,7 @@ const ACCION_LABEL: Record<string, string> = {
 }
 
 function fmtHora(d: Date) {
-  return new Intl.DateTimeFormat('es-DO', {
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo',
     day: 'numeric',
     month: 'short',
     hour: 'numeric',
@@ -124,16 +124,47 @@ export default async function AdminDashboard() {
       {/* Header */}
       <div className="flex items-end justify-between">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">Centro de control</p>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">{companyName}</h1>
+          <p className="text-overline">Centro de control</p>
+          <h1 className="text-h1 mt-1 text-foreground">{companyName}</h1>
         </div>
-        <p className="text-sm text-muted-foreground">
-          {new Intl.DateTimeFormat('es-DO', { dateStyle: 'long' }).format(new Date())}
+        <p className="hidden text-sm text-muted-foreground sm:block">
+          {new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', dateStyle: 'long' }).format(new Date())}
         </p>
       </div>
 
       {/* Onboarding (F5.1): guía hasta publicar el perfil */}
       {onboarding && <OnboardingChecklist onboarding={onboarding} />}
+
+      {/* Acciones rápidas: lo que el equipo hace a diario, a un clic */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          { href: '/admin/scanner', label: 'Escanear QR', icon: CalendarCheck },
+          { href: '/admin/promociones/nuevo', label: 'Nueva promoción', icon: Gift },
+          {
+            href: '/admin/pagos',
+            label: 'Validar pagos',
+            icon: Wallet,
+            badge: d.pagosPendientes > 0 ? d.pagosPendientes : undefined,
+          },
+          { href: '/admin/notificaciones', label: 'Enviar notificación', icon: Share2 },
+        ].map((a) => (
+          <Link
+            key={a.href}
+            href={a.href}
+            className="card-interactive group relative flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-4 shadow-card"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 ring-1 ring-blue-500/20 transition-colors group-hover:bg-blue-600 group-hover:text-white dark:text-blue-400">
+              <a.icon className="h-5 w-5" />
+            </span>
+            <span className="text-sm font-medium text-foreground">{a.label}</span>
+            {a.badge !== undefined && (
+              <span className="absolute right-3 top-3 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[11px] font-bold text-white">
+                {a.badge}
+              </span>
+            )}
+          </Link>
+        ))}
+      </div>
 
       {/* Clientes y membresías */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -238,13 +269,13 @@ export default async function AdminDashboard() {
               {d.visitasPorDia.map((v) => (
                 <div
                   key={v.fecha}
-                  className="group relative flex-1 rounded-t bg-sky-200 transition hover:bg-sky-400"
+                  className="group relative flex-1 rounded-t-md bg-gradient-to-t from-blue-500 to-sky-400 opacity-70 transition-opacity hover:opacity-100"
                   style={{ height: `${Math.max(4, (v.total / maxVisitas) * 100)}%` }}
                   title={`${v.fecha}: ${v.total} visita(s)`}
                 />
               ))}
             </div>
-            <div className="mt-2 flex justify-between text-xs text-slate-400">
+            <div className="mt-2 flex justify-between text-xs text-muted-foreground/70">
               <span>{d.visitasPorDia[0]?.fecha.slice(5)}</span>
               <span>{d.visitasPorDia.at(-1)?.fecha.slice(5)}</span>
             </div>
@@ -300,25 +331,41 @@ export default async function AdminDashboard() {
               Alertas
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="flex items-center justify-between rounded-lg bg-amber-50 p-3">
-              <span className="flex items-center gap-2 text-amber-800">
-                <Clock className="h-4 w-4" /> Pagos por validar
+          <CardContent className="space-y-2.5 text-sm">
+            {/* Cada alerta lleva directo al módulo donde se resuelve. */}
+            <Link
+              href="/admin/pagos"
+              className="flex items-center justify-between rounded-xl bg-warning/10 p-3 transition-colors hover:bg-warning/20"
+            >
+              <span className="flex items-center gap-2 font-medium text-warning-foreground">
+                <Clock className="h-4 w-4 text-warning" /> Pagos por validar
               </span>
-              <span className="font-bold text-amber-900">{d.pagosPendientes}</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg bg-red-50 p-3">
-              <span className="flex items-center gap-2 text-red-800">
+              <span className="inline-flex items-center gap-1 font-bold text-warning-foreground">
+                {d.pagosPendientes} <ArrowRight className="h-3.5 w-3.5" />
+              </span>
+            </Link>
+            <Link
+              href="/admin/membresias"
+              className="flex items-center justify-between rounded-xl bg-destructive/10 p-3 transition-colors hover:bg-destructive/15"
+            >
+              <span className="flex items-center gap-2 font-medium text-destructive">
                 <Clock className="h-4 w-4" /> Membresías por vencer (7 días)
               </span>
-              <span className="font-bold text-red-900">{d.porVencer7d}</span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
-              <span className="flex items-center gap-2 text-slate-700">
-                <UserX className="h-4 w-4" /> Clientes en riesgo (30 días sin visitas)
+              <span className="inline-flex items-center gap-1 font-bold text-destructive">
+                {d.porVencer7d} <ArrowRight className="h-3.5 w-3.5" />
               </span>
-              <span className="font-bold text-slate-900">{d.clientesEnRiesgo}</span>
-            </div>
+            </Link>
+            <Link
+              href="/admin/clientes"
+              className="flex items-center justify-between rounded-xl bg-muted p-3 transition-colors hover:bg-muted/70"
+            >
+              <span className="flex items-center gap-2 font-medium text-foreground">
+                <UserX className="h-4 w-4 text-muted-foreground" /> Clientes en riesgo (30 días sin visitas)
+              </span>
+              <span className="inline-flex items-center gap-1 font-bold text-foreground">
+                {d.clientesEnRiesgo} <ArrowRight className="h-3.5 w-3.5" />
+              </span>
+            </Link>
           </CardContent>
         </Card>
 

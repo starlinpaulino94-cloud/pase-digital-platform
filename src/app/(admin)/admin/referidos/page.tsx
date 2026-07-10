@@ -63,6 +63,7 @@ function Bar({ value, max, className }: { value: number; max: number; className?
 export default async function ReferidosPage() {
   const user = await requireRole(ADMIN_ROLES)
   const companyId = companyFilter(user)
+  const isSuperadmin = user.metadata.role === 'SUPERADMIN'
   const where = companyId ? { companyId } : {}
   const prefs = await getRegionalPrefs(companyId)
   const fmtMoney = (n: number) => formatMoney(n, prefs)
@@ -70,10 +71,23 @@ export default async function ReferidosPage() {
   let dash: EmpresaReferidosDashboard | null = null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let reglas: any[] = []
+  // El superadmin no tiene empresa propia: debe elegir a cuál aplica la regla.
+  let companies: { id: string; name: string }[] = []
   try {
-    ;[dash, reglas] = await Promise.all([
+    ;[dash, reglas, companies] = await Promise.all([
       getEmpresaReferidosDashboard(companyId ?? null),
-      prisma.reglaRecompensa.findMany({ where, orderBy: { valorCondicion: 'asc' } }),
+      prisma.reglaRecompensa.findMany({
+        where,
+        orderBy: { valorCondicion: 'asc' },
+        include: { company: { select: { name: true } } },
+      }),
+      isSuperadmin
+        ? prisma.company.findMany({
+            where: { isActive: true },
+            select: { id: true, name: true },
+            orderBy: { name: 'asc' },
+          })
+        : Promise.resolve([]),
     ])
   } catch (e) {
     console.error('[admin-referidos]', e)
@@ -270,8 +284,16 @@ export default async function ReferidosPage() {
               <ul className="space-y-2">
                 {dash.topEmbajadores.map((t, i) => (
                   <li key={t.nombre + i} className="flex items-center justify-between text-sm">
-                    <span className="text-slate-700">
-                      {['🥇', '🥈', '🥉'][i] ?? `${i + 1}.`} {t.nombre}
+                    <span className="flex items-center gap-2 text-slate-700">
+                      <span
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums ${
+                          ['bg-amber-400 text-amber-950', 'bg-slate-300 text-slate-700', 'bg-orange-300 text-orange-900'][i] ??
+                          'bg-slate-100 text-slate-500'
+                        }`}
+                      >
+                        {i + 1}
+                      </span>
+                      {t.nombre}
                     </span>
                     <span className="text-xs text-slate-500">
                       {t.puntos} pts · {t.registros} reg · {t.membresias} memb
@@ -313,6 +335,11 @@ export default async function ReferidosPage() {
       <Card>
         <CardHeader>
           <CardTitle>Reglas de recompensa</CardTitle>
+          <p className="text-sm text-slate-500">
+            {isSuperadmin
+              ? 'Define los premios por referidos para cada empresa. Elige la empresa a la que aplica cada regla.'
+              : 'Define los premios que reciben tus clientes al referir más personas.'}
+          </p>
         </CardHeader>
         <CardContent className="space-y-6">
           {reglas.length > 0 && (
@@ -323,7 +350,14 @@ export default async function ReferidosPage() {
                   className="flex items-center justify-between rounded-lg border border-slate-100 p-3"
                 >
                   <div>
-                    <p className="font-medium text-slate-900">{r.nombre}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium text-slate-900">{r.nombre}</p>
+                      {isSuperadmin && r.company?.name && (
+                        <Badge variant="secondary" className="text-xs">
+                          {r.company.name}
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-xs text-slate-500">
                       {r.valorCondicion} referidos completados → {Number(r.valorRecompensa)}{' '}
                       {TIPO_LABEL[r.tipoRecompensa]}
@@ -334,7 +368,7 @@ export default async function ReferidosPage() {
               ))}
             </div>
           )}
-          <ReglaRecompensaForm />
+          <ReglaRecompensaForm companies={isSuperadmin ? companies : undefined} />
         </CardContent>
       </Card>
     </div>

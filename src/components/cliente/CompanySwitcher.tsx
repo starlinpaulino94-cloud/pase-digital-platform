@@ -64,7 +64,7 @@ export function CompanySwitcher({ companies }: { companies: CompanyOption[] }) {
             ))}
             <div className="mt-1 border-t border-slate-100 pt-1">
               <Link
-                href="/cliente/descubrir"
+                href="/cliente/explorar"
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-sky-600 transition hover:bg-sky-50"
               >

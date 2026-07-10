@@ -40,6 +40,13 @@ export async function activarMembresia(
   const now = new Date()
   const vigenciaDias = membership.plan.vigenciaDias ?? 30
 
+  // O-13: el descuento de bienvenida solo aplica en la PRIMERA activación de
+  // esta membresía (fechaInicio aún null); reactivaciones tras VENCIDA o
+  // renovaciones pagan el precio completo aunque el campo siga con valor.
+  const descuentoBienvenida =
+    membership.fechaInicio == null ? Number(membership.descuentoBienvenida ?? 0) : 0
+  const montoNeto = Math.max(0, Number(membership.plan.precio) - descuentoBienvenida)
+
   // esPrimera se calcula dentro de la transacción para evitar race condition
   // con activaciones concurrentes del mismo cliente EN ESTA EMPRESA.
   const { esPrimera } = await prisma.$transaction(async (tx) => {
@@ -59,7 +66,7 @@ export async function activarMembresia(
         fechaInicio: now,
         fechaVencimiento: periodEnd(now, vigenciaDias),
         lavadosRestantes: membership.plan.esIlimitado ? 0 : membership.plan.lavadosIncluidos,
-        montoPagado: Number(membership.plan.precio),
+        montoPagado: montoNeto,
         pagoConfirmado: true,
         rechazadoReason: null,
         adminNota: null,

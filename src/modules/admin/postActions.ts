@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import type { PostTipo } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requireSection } from '@/lib/auth/guards'
+import { resolveCompanyId } from '@/lib/auth/company-context'
 import { notificarSeguidoresEmpresa } from '@/modules/notificaciones/service'
 
 // F3.3: CRUD de publicaciones de empresa (eventos, noticias, beneficios).
@@ -82,9 +83,9 @@ export async function crearPost(
   if (!user) return { error: 'No autorizado.' }
 
   const companyId =
-    user.metadata.role === 'SUPERADMIN'
-      ? String(formData.get('companyId') ?? '').trim()
-      : (user.metadata.companyId ?? '')
+    // Superadmin: companyId del form o, si no viene, la empresa ACTIVA del
+    // selector del panel. Staff: siempre la de su sesión.
+    (await resolveCompanyId(user, formData)) ?? ''
   if (!companyId) return { error: 'Empresa requerida.' }
 
   const parsed = parsePost(formData)

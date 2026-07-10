@@ -94,7 +94,7 @@ export default async function SuperadminPlanesPage() {
                     <span className="text-sm font-normal text-slate-500">/mes</span>
                   </p>
                   {!plan.esIlimitado && (
-                    <p className="text-xs text-slate-500">{plan.lavadosIncluidos} lavados incluidos</p>
+                    <p className="text-xs text-slate-500">{plan.lavadosIncluidos} usos incluidos</p>
                   )}
                   {plan.descripcion && (
                     <p className="text-sm text-slate-600">{plan.descripcion}</p>

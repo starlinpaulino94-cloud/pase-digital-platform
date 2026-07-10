@@ -11,14 +11,14 @@ export default function TermsPage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 prose prose-neutral">
-        <h1 className="text-3xl font-bold text-neutral-900">Términos y Condiciones</h1>
-        <p className="text-neutral-500 text-sm mt-1">
+        <h1 className="text-3xl font-bold text-slate-900">Términos y Condiciones</h1>
+        <p className="text-slate-500 text-sm mt-1">
           Última actualización: {new Date().getFullYear()}
         </p>
 
-        <section className="mt-8 space-y-6 text-neutral-700 leading-relaxed">
+        <section className="mt-8 space-y-6 text-slate-700 leading-relaxed">
           <div>
-            <h2 className="text-xl font-semibold text-neutral-900">1. Aceptación</h2>
+            <h2 className="text-xl font-semibold text-slate-900">1. Aceptación</h2>
             <p>
               Al acceder y utilizar MembeGo aceptas estos Términos y Condiciones.
               Si no estás de acuerdo, no utilices la plataforma.
@@ -26,7 +26,7 @@ export default function TermsPage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold text-neutral-900">2. Uso del servicio</h2>
+            <h2 className="text-xl font-semibold text-slate-900">2. Uso del servicio</h2>
             <p>
               MembeGo permite a las empresas gestionar membresías digitales y a los
               clientes activar y usar dichas membresías mediante un código QR. Te
@@ -36,7 +36,7 @@ export default function TermsPage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold text-neutral-900">3. Cuentas y seguridad</h2>
+            <h2 className="text-xl font-semibold text-slate-900">3. Cuentas y seguridad</h2>
             <p>
               Eres responsable de mantener la confidencialidad de tus credenciales y
               de toda actividad realizada desde tu cuenta.
@@ -44,7 +44,7 @@ export default function TermsPage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold text-neutral-900">4. Membresías y pagos</h2>
+            <h2 className="text-xl font-semibold text-slate-900">4. Membresías y pagos</h2>
             <p>
               Las condiciones, precios y beneficios de cada membresía los define la
               empresa correspondiente. MembeGo actúa como plataforma tecnológica y no
@@ -53,7 +53,7 @@ export default function TermsPage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold text-neutral-900">5. Contacto</h2>
+            <h2 className="text-xl font-semibold text-slate-900">5. Contacto</h2>
             <p>
               Para cualquier consulta sobre estos términos, escríbenos a{' '}
               <a href="mailto:contacto@membego.com" className="text-blue-600 hover:underline">

@@ -1,5 +1,16 @@
 import Link from 'next/link'
-import { Building2, Users, CheckCircle2, Clock, ArrowRight } from 'lucide-react'
+import Image from 'next/image'
+import {
+  Building2,
+  Users,
+  CheckCircle2,
+  Clock,
+  ArrowRight,
+  UserPlus,
+  Activity,
+  LifeBuoy,
+  EyeOff,
+} from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
 import { prisma } from '@/lib/prisma'
 import { StatCard } from '@/components/ui/stat-card'
@@ -8,27 +19,73 @@ import { Badge } from '@/components/ui/badge'
 
 export const dynamic = 'force-dynamic'
 
+const ACCION_LABEL: Record<string, string> = {
+  VISITA_CONFIRMADA: 'Visita confirmada',
+  PAGO_APROBADO: 'Pago aprobado',
+  PAGO_RECHAZADO: 'Pago rechazado',
+  MEMBRESIA_CANCELADA: 'Membresía cancelada',
+  MEMBRESIA_RENOVADA: 'Membresía renovada',
+  QR_GENERADO: 'QR generado',
+  QR_USADO: 'QR usado',
+  COMPROBANTE_IMPRESO: 'Comprobante impreso',
+  REFERIDO_COMPLETADO: 'Referido completado',
+  RECOMPENSA_OTORGADA: 'Recompensa otorgada',
+  NOTA_INTERNA: 'Nota interna',
+}
+
+function fmtHora(d: Date) {
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo',
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(d))
+}
+
 export default async function SuperadminDashboard() {
   await requireRole('SUPERADMIN')
 
-  // 3 queries totales (antes 1 + 2 por empresa): los conteos de membresías
-  // salen de un solo groupBy por companyId/estado.
-  const [companies, membershipCounts] = await Promise.all([
-    prisma.company.findMany({
-      orderBy: { name: 'asc' },
-      select: {
-        id: true, name: true, slug: true, type: true, isActive: true,
-        _count: { select: { clientes: true, plans: true } },
-      },
-    }),
-    prisma.membership
-      .groupBy({
-        by: ['companyId', 'estado'],
-        where: { estado: { in: ['ACTIVA', 'PENDIENTE_PAGO'] } },
-        _count: { _all: true },
-      })
-      .catch(() => []),
-  ])
+  const hace30d = new Date()
+  hace30d.setDate(hace30d.getDate() - 30)
+
+  // Conteos agregados en pocas queries: los de membresías salen de un solo
+  // groupBy por companyId/estado.
+  const [companies, membershipCounts, clientesNuevos30d, ticketsAbiertos, actividad] =
+    await Promise.all([
+      prisma.company.findMany({
+        orderBy: { name: 'asc' },
+        select: {
+          id: true, name: true, slug: true, type: true,
+          isActive: true, isPublished: true, logoUrl: true,
+          _count: { select: { clientes: true, plans: true } },
+        },
+      }),
+      prisma.membership
+        .groupBy({
+          by: ['companyId', 'estado'],
+          where: { estado: { in: ['ACTIVA', 'PENDIENTE_PAGO'] } },
+          _count: { _all: true },
+        })
+        .catch(() => []),
+      prisma.cliente.count({ where: { createdAt: { gte: hace30d } } }).catch(() => 0),
+      prisma.supportTicket
+        .count({ where: { estado: { in: ['NUEVO', 'EN_PROCESO', 'ESPERANDO_CLIENTE'] } } })
+        .catch(() => 0),
+      prisma.auditLog
+        .findMany({
+          orderBy: { createdAt: 'desc' },
+          take: 8,
+          select: {
+            id: true,
+            accion: true,
+            entidadTipo: true,
+            createdAt: true,
+            company: { select: { name: true } },
+            user: { select: { name: true } },
+          },
+        })
+        .catch(() => []),
+    ])
 
   const countFor = (companyId: string, estado: string) =>
     membershipCounts.find((g) => g.companyId === companyId && g.estado === estado)
@@ -43,69 +100,187 @@ export default async function SuperadminDashboard() {
   const totalClientes = perCompany.reduce((s, c) => s + c._count.clientes, 0)
   const totalActivas = perCompany.reduce((s, c) => s + c.activas, 0)
   const totalPendientes = perCompany.reduce((s, c) => s + c.pendientes, 0)
+  const sinPublicar = perCompany.filter((c) => !c.isPublished).length
 
   return (
     <div className="space-y-8 animate-fade-up">
       <div>
-        <p className="text-sm font-medium text-muted-foreground">Superadmin</p>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Resumen general</h1>
+        <p className="text-overline">Plataforma</p>
+        <h1 className="text-h1 mt-1 text-foreground">Centro de control</h1>
       </div>
 
+      {/* Estadísticas globales */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Empresas" value={companies.length} icon={Building2} accent="sky" />
         <StatCard label="Clientes totales" value={totalClientes} icon={Users} accent="indigo" />
         <StatCard label="Membresías activas" value={totalActivas} icon={CheckCircle2} accent="green" />
         <StatCard
-          label="Pagos pendientes"
-          value={totalPendientes}
-          icon={Clock}
-          accent="amber"
-          sub={totalPendientes > 0 ? 'Requieren revisión' : 'Sin pendientes'}
+          label="Clientes nuevos"
+          value={clientesNuevos30d}
+          icon={UserPlus}
+          accent="violet"
+          sub="Últimos 30 días"
         />
       </div>
 
+      {/* Salud de la plataforma: cada alerta lleva a donde se resuelve */}
       <div>
-        <h2 className="mb-4 text-base font-semibold text-foreground">Por empresa</h2>
-        <div className="grid gap-4 md:grid-cols-2">
-          {perCompany.map((c) => (
-            <Card key={c.id} className="border-border/60 shadow-card transition hover:shadow-card-hover">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">{c.name}</CardTitle>
-                  <div className="flex gap-2">
-                    {c.pendientes > 0 && (
-                      <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">
-                        {c.pendientes} pendiente{c.pendientes !== 1 ? 's' : ''}
-                      </Badge>
-                    )}
-                    <Badge variant="secondary" className="text-xs capitalize">
-                      {c.type}
-                    </Badge>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  {[
-                    { label: 'Clientes', value: c._count.clientes },
-                    { label: 'Planes', value: c._count.plans },
-                    { label: 'Activas', value: c.activas },
-                  ].map((s) => (
-                    <div key={s.label} className="rounded-xl bg-muted/40 py-3">
-                      <p className="text-2xl font-bold tabular-nums text-foreground">{s.value}</p>
-                      <p className="text-xs text-muted-foreground">{s.label}</p>
-                    </div>
-                  ))}
-                </div>
+        <h2 className="text-h4 mb-3 text-foreground">Salud de la plataforma</h2>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Link
+            href="/superadmin/operaciones"
+            className={`card-interactive flex items-center justify-between rounded-2xl border p-4 ${
+              totalPendientes > 0
+                ? 'border-warning/30 bg-warning/10'
+                : 'border-border/60 bg-card shadow-card'
+            }`}
+          >
+            <span className="flex items-center gap-2.5 text-sm font-medium text-foreground">
+              <Clock className={`h-4 w-4 ${totalPendientes > 0 ? 'text-warning' : 'text-muted-foreground'}`} />
+              Pagos por validar
+            </span>
+            <span className="inline-flex items-center gap-1 text-lg font-bold tabular-nums text-foreground">
+              {totalPendientes} <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+            </span>
+          </Link>
+          <Link
+            href="/superadmin/empresas"
+            className={`card-interactive flex items-center justify-between rounded-2xl border p-4 ${
+              sinPublicar > 0
+                ? 'border-info/30 bg-info/10'
+                : 'border-border/60 bg-card shadow-card'
+            }`}
+          >
+            <span className="flex items-center gap-2.5 text-sm font-medium text-foreground">
+              <EyeOff className={`h-4 w-4 ${sinPublicar > 0 ? 'text-info' : 'text-muted-foreground'}`} />
+              Empresas sin publicar
+            </span>
+            <span className="inline-flex items-center gap-1 text-lg font-bold tabular-nums text-foreground">
+              {sinPublicar} <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+            </span>
+          </Link>
+          <Link
+            href="/admin/tickets"
+            className={`card-interactive flex items-center justify-between rounded-2xl border p-4 ${
+              ticketsAbiertos > 0
+                ? 'border-destructive/30 bg-destructive/10'
+                : 'border-border/60 bg-card shadow-card'
+            }`}
+          >
+            <span className="flex items-center gap-2.5 text-sm font-medium text-foreground">
+              <LifeBuoy className={`h-4 w-4 ${ticketsAbiertos > 0 ? 'text-destructive' : 'text-muted-foreground'}`} />
+              Tickets abiertos
+            </span>
+            <span className="inline-flex items-center gap-1 text-lg font-bold tabular-nums text-foreground">
+              {ticketsAbiertos} <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+            </span>
+          </Link>
+        </div>
+      </div>
 
-                {c.pendientes > 0 && (
-                  <Link href="/admin/pagos" className="mt-3 flex items-center justify-end gap-1 text-xs text-amber-600 hover:underline">
-                    Ver pagos pendientes <ArrowRight className="h-3 w-3" />
-                  </Link>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        {/* Empresas */}
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-h4 text-foreground">Empresas</h2>
+            <Link
+              href="/superadmin/empresas"
+              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            >
+              Administrar <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {perCompany.map((c) => (
+              <Card key={c.id} className="card-interactive border-border/60 shadow-card">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      {c.logoUrl ? (
+                        <span className="relative block h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-border/60">
+                          <Image src={c.logoUrl} alt="" fill className="object-cover" />
+                        </span>
+                      ) : (
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-[10px] font-bold text-white">
+                          {c.name.slice(0, 2).toUpperCase()}
+                        </span>
+                      )}
+                      <CardTitle className="truncate text-base">{c.name}</CardTitle>
+                    </div>
+                    <div className="flex shrink-0 gap-1.5">
+                      {!c.isActive ? (
+                        <Badge variant="destructive">Inactiva</Badge>
+                      ) : !c.isPublished ? (
+                        <Badge variant="warning">Sin publicar</Badge>
+                      ) : (
+                        <Badge variant="success">Publicada</Badge>
+                      )}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    {[
+                      { label: 'Clientes', value: c._count.clientes },
+                      { label: 'Planes', value: c._count.plans },
+                      { label: 'Activas', value: c.activas },
+                    ].map((s) => (
+                      <div key={s.label} className="rounded-xl bg-muted/40 py-3">
+                        <p className="text-2xl font-bold tabular-nums text-foreground">{s.value}</p>
+                        <p className="text-xs text-muted-foreground">{s.label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {c.pendientes > 0 && (
+                    <Link
+                      href="/superadmin/operaciones"
+                      className="mt-3 flex items-center justify-end gap-1 text-xs font-medium text-warning-foreground hover:underline"
+                    >
+                      {c.pendientes} pago{c.pendientes !== 1 ? 's' : ''} pendiente
+                      {c.pendientes !== 1 ? 's' : ''} <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Actividad global */}
+        <div>
+          <h2 className="text-h4 mb-3 text-foreground">Actividad reciente</h2>
+          <Card className="border-border/60 shadow-card">
+            <CardContent className="pt-5">
+              {actividad.length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted-foreground">
+                  La actividad de todas las empresas aparecerá aquí.
+                </p>
+              ) : (
+                <ul className="divide-y divide-border/50">
+                  {actividad.map((a) => (
+                    <li key={a.id} className="flex items-center gap-3 py-2.5 text-sm">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                        <Activity className="h-3.5 w-3.5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium text-foreground">
+                          {ACCION_LABEL[a.accion] ?? a.accion}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {a.company?.name ?? 'Plataforma'}
+                          {a.user?.name ? ` · ${a.user.name}` : ''}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-xs text-muted-foreground/70">
+                        {fmtHora(a.createdAt)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

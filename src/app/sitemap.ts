@@ -9,7 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const base = getAppUrl()
   const now = new Date()
 
-  const routes = ['', '/empresas', '/promociones', '/login', '/registro']
+  const routes = ['', '/empresas', '/promociones', '/registro-empresa', '/login', '/registro']
 
   return routes.map((path) => ({
     url: `${base}${path}`,

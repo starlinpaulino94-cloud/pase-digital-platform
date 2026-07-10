@@ -31,7 +31,7 @@ import { cn } from '@/lib/utils'
 export const dynamic = 'force-dynamic'
 
 function fmtDate(d: Date) {
-  return new Intl.DateTimeFormat('es-DO', { dateStyle: 'medium' }).format(d)
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', dateStyle: 'medium' }).format(d)
 }
 
 const ESTADO_HISTORIAL = {
@@ -52,7 +52,25 @@ const ESTADO_HISTORIAL = {
   },
 } as const
 
-const MEDALLAS = ['🥇', '🥈', '🥉']
+/* Top 3 del ranking: círculos oro / plata / bronce (sin emojis). */
+const MEDALLA_CLASE = [
+  'bg-amber-400 text-amber-950',
+  'bg-slate-300 text-slate-700',
+  'bg-orange-300 text-orange-900',
+]
+
+function RankBadge({ posicion }: { posicion: number }) {
+  const medalla = MEDALLA_CLASE[posicion - 1]
+  return (
+    <span
+      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums ${
+        medalla ?? 'bg-slate-100 text-slate-500'
+      }`}
+    >
+      {posicion}
+    </span>
+  )
+}
 
 function ErrorReferidos({ detalle }: { detalle: string }) {
   return (
@@ -170,7 +188,9 @@ export default async function ReferidosClientePage() {
         <CardContent className="py-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <span className="text-3xl">{nivel.emoji}</span>
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 ring-1 ring-amber-500/20">
+                <Trophy className="h-6 w-6" />
+              </span>
               <div>
                 <p className="font-semibold text-slate-900">{nivel.nombre}</p>
                 <p className="text-sm text-slate-500">{nivel.descripcion}</p>
@@ -186,14 +206,13 @@ export default async function ReferidosClientePage() {
               <Progress value={progresoPct} />
               <p className="text-xs text-slate-500">
                 {siguiente.minPuntos - stats.puntos} puntos para{' '}
-                <strong>
-                  {siguiente.emoji} {siguiente.nombre}
-                </strong>
+                <strong>{siguiente.nombre}</strong>
               </p>
             </div>
           ) : (
-            <p className="mt-4 text-sm font-medium text-amber-600">
-              👑 Nivel máximo alcanzado. ¡Eres leyenda en {cliente.company.name}!
+            <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-amber-600">
+              <Trophy className="h-4 w-4" /> Nivel máximo alcanzado. ¡Eres leyenda
+              en {cliente.company.name}!
             </p>
           )}
           <p className="mt-3 text-xs text-slate-400">
@@ -265,9 +284,11 @@ export default async function ReferidosClientePage() {
               return (
                 <div key={r.id} className="space-y-1.5">
                   <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                    <p className="font-medium text-slate-800">
+                    <p className="inline-flex items-center gap-1.5 font-medium text-slate-800">
                       {r.nombre}
-                      {completado && ' 🎉'}
+                      {completado && (
+                        <CheckCircle2 className="h-4 w-4 text-success" />
+                      )}
                     </p>
                     <span className="text-xs text-slate-500">
                       {r.progreso}/{r.meta} membresías · gana {r.recompensa}
@@ -337,9 +358,7 @@ export default async function ReferidosClientePage() {
                     )}
                   >
                     <span className="flex items-center gap-2">
-                      <span className="w-6 text-center">
-                        {MEDALLAS[r.posicion - 1] ?? `${r.posicion}.`}
-                      </span>
+                      <RankBadge posicion={r.posicion} />
                       {r.nombre}
                       {r.esYo && <Badge variant="secondary">Tú</Badge>}
                     </span>

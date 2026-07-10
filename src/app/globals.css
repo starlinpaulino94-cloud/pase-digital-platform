@@ -34,6 +34,15 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  /* Estados semánticos (usar SIEMPRE estos, nunca colores sueltos por página) */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-danger: var(--destructive);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -75,6 +84,14 @@
   /* Destructive */
   --destructive: oklch(0.577 0.245 27.325);
 
+  /* Estados semánticos */
+  --success: oklch(0.60 0.15 160);
+  --success-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.75 0.16 75);
+  --warning-foreground: oklch(0.25 0.06 75);
+  --info: oklch(0.62 0.14 230);
+  --info-foreground: oklch(0.99 0 0);
+
   /* Borders */
   --border: oklch(0.914 0.005 264);
   --input: oklch(0.914 0.005 264);
@@ -107,6 +124,12 @@
   --accent: oklch(0.24 0.04 200);
   --accent-foreground: oklch(0.72 0.15 200);
   --destructive: oklch(0.704 0.191 22.216);
+  --success: oklch(0.70 0.15 160);
+  --success-foreground: oklch(0.15 0.03 160);
+  --warning: oklch(0.80 0.15 80);
+  --warning-foreground: oklch(0.22 0.06 80);
+  --info: oklch(0.70 0.13 230);
+  --info-foreground: oklch(0.15 0.03 230);
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 12%);
   --ring: oklch(0.62 0.20 230);
@@ -162,10 +185,165 @@
     box-shadow: 0 24px 64px -12px rgb(0 0 0 / 0.18);
   }
 
+  /* Premium — sombras suaves en múltiples capas (estilo Stripe/Linear) */
+  .shadow-premium {
+    box-shadow:
+      0 1px 2px rgb(15 23 42 / 0.04),
+      0 4px 12px -2px rgb(15 23 42 / 0.06),
+      0 12px 32px -8px rgb(15 23 42 / 0.08);
+  }
+  .shadow-premium-lg {
+    box-shadow:
+      0 2px 4px rgb(15 23 42 / 0.04),
+      0 8px 24px -4px rgb(15 23 42 / 0.08),
+      0 24px 56px -12px rgb(15 23 42 / 0.14);
+  }
+  /* Glow de marca para CTAs y elementos flotantes */
+  .shadow-glow {
+    box-shadow: 0 8px 30px -6px rgb(37 99 235 / 0.45);
+  }
+  .shadow-glow-strong {
+    box-shadow: 0 12px 44px -8px rgb(37 99 235 / 0.6);
+  }
+
+  /* Texturas sutiles de fondo */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgb(15 23 42 / 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(15 23 42 / 0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .bg-grid-light {
+    background-image:
+      linear-gradient(to right, rgb(255 255 255 / 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.06) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .bg-dots {
+    background-image: radial-gradient(rgb(15 23 42 / 0.06) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* Máscara de desvanecido radial para texturas */
+  .mask-fade {
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 40%, transparent 100%);
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 40%, transparent 100%);
+  }
+
   /* Glass */
   .glass {
     backdrop-filter: blur(12px) saturate(160%);
     -webkit-backdrop-filter: blur(12px) saturate(160%);
+  }
+  .glass-strong {
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+
+  /* ── Escala tipográfica del sistema ─────────────────────────────────
+     Usar estas clases en vez de combinar text-*/font-* a mano, para que
+     todas las pantallas compartan exactamente la misma jerarquía. */
+  .text-display {          /* Héroes / landing */
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+  }
+  .text-h1 {               /* Título de página */
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+  .text-h2 {               /* Título de sección */
+    font-size: 1.375rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+  }
+  .text-h3 {               /* Título de tarjeta */
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+  }
+  .text-h4 {               /* Subtítulo / grupo */
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+  .text-body {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+  .text-small {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+  .text-caption {
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--muted-foreground);
+  }
+  .text-overline {         /* Etiquetas de sección en mayúsculas */
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+
+  /* ── Elevaciones (alias semánticos de las sombras) ──────────────────
+     elevation-1: reposo · elevation-2: hover/dropdown · elevation-3: modal */
+  .elevation-1 {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  }
+  .elevation-2 {
+    box-shadow:
+      0 1px 2px rgb(15 23 42 / 0.04),
+      0 4px 12px -2px rgb(15 23 42 / 0.06),
+      0 12px 32px -8px rgb(15 23 42 / 0.08);
+  }
+  .elevation-3 {
+    box-shadow:
+      0 2px 4px rgb(15 23 42 / 0.04),
+      0 8px 24px -4px rgb(15 23 42 / 0.08),
+      0 24px 56px -12px rgb(15 23 42 / 0.14);
+  }
+
+  /* Skeleton con shimmer (en vez de spinners) */
+  .skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+    background: color-mix(in oklch, var(--muted) 80%, transparent);
+  }
+  .skeleton-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklch, var(--background) 60%, transparent),
+      transparent
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-shimmer::after { animation: none; }
+  }
+
+  /* Tarjeta interactiva estándar: única forma de hover para cards */
+  .card-interactive {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  .card-interactive:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 1px 2px rgb(15 23 42 / 0.04),
+      0 4px 12px -2px rgb(15 23 42 / 0.06),
+      0 12px 32px -8px rgb(15 23 42 / 0.08);
   }
 
   /* Gradient text — matches MembeGo logo gradient */
@@ -211,15 +389,43 @@
   from { background-position: -200% center; }
   to   { background-position: 200% center; }
 }
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-8px) rotate(1.5deg); }
+}
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 0.7; }
+}
 
 @layer utilities {
   .animate-fade-up    { animation: fade-up 0.35s ease both; }
   .animate-fade-in    { animation: fade-in 0.25s ease both; }
   .animate-scale-in   { animation: scale-in 0.2s ease both; }
+  .animate-slide-up   { animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .animate-float      { animation: float 6s ease-in-out infinite; }
+  .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
+  .animate-pulse-glow { animation: pulse-glow 5s ease-in-out infinite; }
 
   .delay-75  { animation-delay: 75ms; }
   .delay-100 { animation-delay: 100ms; }
   .delay-150 { animation-delay: 150ms; }
   .delay-200 { animation-delay: 200ms; }
   .delay-300 { animation-delay: 300ms; }
+  .delay-500 { animation-delay: 500ms; }
+
+  /* Respeta la preferencia de reducir movimiento */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-float,
+    .animate-float-slow,
+    .animate-pulse-glow { animation: none; }
+  }
 }

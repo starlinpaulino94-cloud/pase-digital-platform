@@ -1,8 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, Search, ChevronRight, X } from 'lucide-react'
+import { Menu, Search, X } from 'lucide-react'
 import { navForRole, allLinks } from '@/components/layout/nav-config'
 import { NotificationBell } from '@/components/layout/NotificationBell'
 import { CompanySwitcher, type CompanyOption } from '@/components/cliente/CompanySwitcher'
@@ -23,10 +23,11 @@ export function AppHeader({
   const router = useRouter()
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const links = useMemo(() => allLinks(navForRole(role)), [role])
 
-  // Resolve current page for breadcrumb
+  // Página actual para el breadcrumb.
   const current = useMemo(() => {
     const matches = links
       .filter((l) => pathname === l.href || pathname.startsWith(l.href + '/'))
@@ -40,6 +41,23 @@ export function AppHeader({
     return links.filter((l) => l.label.toLowerCase().includes(q)).slice(0, 6)
   }, [links, query])
 
+  // Atajo "/" para enfocar el buscador (estándar en SaaS modernos).
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement
+      const typing =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      if (e.key === '/' && !typing) {
+        e.preventDefault()
+        inputRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   function go(href: string) {
     setQuery('')
     setOpen(false)
@@ -47,39 +65,32 @@ export function AppHeader({
   }
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border/70 bg-white/80 px-4 glass md:px-6">
-      {/* Mobile menu */}
+    <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border/60 bg-background/80 px-4 glass md:px-6">
+      {/* Menú móvil */}
       <button
         type="button"
         onClick={onMenuClick}
-        className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 lg:hidden"
+        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted lg:hidden"
         aria-label="Abrir menú"
       >
         <Menu className="h-5 w-5" />
       </button>
 
-      {/* Breadcrumbs */}
-      <div className="hidden min-w-0 items-center gap-1.5 text-sm md:flex">
-        <span className="flex items-center gap-1.5 text-slate-400">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="" width={20} height={20} />
-          MembeGo
+      {/* Breadcrumb mínimo: contexto + página actual */}
+      <div className="hidden min-w-0 items-baseline gap-2 md:flex">
+        <span className="text-caption">MembeGo</span>
+        <span className="text-border">/</span>
+        <span className="truncate text-h4 text-foreground">
+          {current?.label ?? ''}
         </span>
-        {current && (
-          <>
-            <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-            <span className="truncate font-medium text-slate-900">
-              {current.label}
-            </span>
-          </>
-        )}
       </div>
 
-      {/* Global search */}
+      {/* Buscador global */}
       <div className="relative ml-auto w-full max-w-xs md:mx-auto md:ml-0">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
           <input
+            ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => {
@@ -88,22 +99,27 @@ export function AppHeader({
             }}
             onFocus={() => setOpen(true)}
             onBlur={() => setTimeout(() => setOpen(false), 150)}
-            placeholder="Buscar módulo..."
-            className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-8 text-sm text-slate-700 outline-none transition focus:border-sky-300 focus:bg-white focus:ring-2 focus:ring-sky-100"
+            placeholder="Buscar…"
+            className="h-9 w-full rounded-xl border border-transparent bg-muted/70 pl-9 pr-12 text-sm text-foreground outline-none transition-all duration-150 placeholder:text-muted-foreground/50 focus:border-ring focus:bg-background focus:ring-2 focus:ring-ring/20"
           />
-          {query && (
+          {query ? (
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground"
+              aria-label="Limpiar búsqueda"
             >
               <X className="h-4 w-4" />
             </button>
+          ) : (
+            <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded-md border border-border/70 bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground/60 sm:block">
+              /
+            </kbd>
           )}
         </div>
 
         {open && results.length > 0 && (
-          <div className="absolute left-0 right-0 top-11 z-50 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg">
+          <div className="absolute left-0 right-0 top-11 z-50 animate-scale-in rounded-xl border border-border/70 bg-popover p-1.5 elevation-2">
             {results.map((r) => {
               const Icon = r.icon
               return (
@@ -112,9 +128,9 @@ export function AppHeader({
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => go(r.href)}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
                 >
-                  <Icon className="h-4 w-4 text-slate-400" />
+                  <Icon className="h-4 w-4 text-muted-foreground/60" />
                   {r.label}
                 </button>
               )
@@ -123,7 +139,7 @@ export function AppHeader({
         )}
       </div>
 
-      {/* Right actions */}
+      {/* Acciones */}
       <div className="flex shrink-0 items-center gap-1">
         {companies && <CompanySwitcher companies={companies} />}
         <NotificationBell initialCount={notifCount} />

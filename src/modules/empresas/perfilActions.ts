@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { requireAdminUser } from '@/lib/auth/guards'
+import { resolveCompanyId } from '@/lib/auth/company-context'
 
 // F4.1: la empresa administra su propio perfil público del marketplace.
 // Solo puede tocar campos de presentación — nunca isActive/isPublished/
@@ -30,12 +31,11 @@ export async function actualizarPerfilPublico(
   const user = await requireAdminUser()
   if (!user) return { error: 'No autorizado.' }
 
-  const companyId = user.metadata.companyId
+  // Superadmin: empresa del formulario o, si no viene, la ACTIVA del
+  // selector del panel (verificada). Staff: siempre la de su sesión.
+  const companyId = await resolveCompanyId(user, formData)
   if (!companyId) {
-    return {
-      error:
-        'Esta vista es del panel de empresa. Como superadmin, edita empresas desde /superadmin/empresas.',
-    }
+    return { error: 'Empresa requerida.' }
   }
 
   const galleryImages = formData

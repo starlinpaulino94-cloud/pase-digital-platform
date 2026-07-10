@@ -34,9 +34,9 @@ export function AppShell({
   }, [mobileOpen])
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
       {/* Desktop sidebar — fixed */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 lg:block">
         <AppSidebar role={role} title={title} userEmail={userEmail} />
       </aside>
 
@@ -56,7 +56,7 @@ export function AppShell({
         />
         <aside
           className={cn(
-            'absolute inset-y-0 left-0 w-64 transition-transform duration-300',
+            'absolute inset-y-0 left-0 w-64 overflow-hidden rounded-r-2xl elevation-3 transition-transform duration-300',
             mobileOpen ? 'translate-x-0' : '-translate-x-full'
           )}
         >
@@ -78,14 +78,14 @@ export function AppShell({
       </div>
 
       {/* Main column */}
-      <div className="lg:pl-64">
+      <div className="lg:pl-60">
         <AppHeader
           role={role}
           notifCount={notifCount}
           companies={companies}
           onMenuClick={() => setMobileOpen(true)}
         />
-        <main className="mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8">
+        <main className="mx-auto max-w-7xl px-4 py-8 md:px-6 lg:px-8">
           {children}
         </main>
       </div>

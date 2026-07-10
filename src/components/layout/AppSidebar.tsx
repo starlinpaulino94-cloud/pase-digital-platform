@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { logout } from '@/modules/auth/actions'
-import { navForRole, roleLabel, ROLE_ICONS } from '@/components/layout/nav-config'
+import { navForRole, roleLabel } from '@/components/layout/nav-config'
 import type { AppRole } from '@/types'
 
 function isActive(pathname: string, href: string) {
@@ -25,32 +25,32 @@ export function AppSidebar({
 }) {
   const pathname = usePathname()
   const groups = navForRole(role)
-  const RoleIcon = ROLE_ICONS[role]
+  const inicial = (userEmail[0] ?? 'U').toUpperCase()
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       {/* Brand */}
-      <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-sidebar-border px-5">
+      <div className="flex h-14 shrink-0 items-center gap-2.5 px-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.svg" alt="MembeGo" width={32} height={32} className="rounded-lg" />
+        <img src="/logo.svg" alt="MembeGo" width={28} height={28} className="rounded-lg" />
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold tracking-tight text-white">
+          <p className="truncate text-[13px] font-semibold tracking-tight text-white">
             {title}
           </p>
-          <p className="truncate text-[11px] text-sidebar-foreground/60">
+          <p className="truncate text-[10px] uppercase tracking-wider text-sidebar-foreground/45">
             {roleLabel(role)}
           </p>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 overflow-y-auto px-2.5 pb-4 pt-2">
         {groups.map((group) => (
-          <div key={group.label} className="mb-5">
-            <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
+          <div key={group.label} className="mb-4">
+            <p className="mb-1 px-2.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-sidebar-foreground/35">
               {group.label}
             </p>
-            <ul className="space-y-0.5">
+            <ul className="space-y-px">
               {group.items.map((item) => {
                 const active = isActive(pathname, item.href)
                 const Icon = item.icon
@@ -64,21 +64,21 @@ export function AppSidebar({
                       prefetch={false}
                       onClick={onNavigate}
                       className={cn(
-                        'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                        'group relative flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] font-medium transition-colors duration-150',
                         active
-                          ? 'bg-sidebar-accent text-white'
-                          : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-white'
+                          ? 'bg-white/[0.08] text-white'
+                          : 'text-sidebar-foreground/70 hover:bg-white/[0.05] hover:text-white'
                       )}
                     >
                       {active && (
-                        <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-sidebar-primary" />
+                        <span className="absolute -left-2.5 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-sidebar-primary" />
                       )}
                       <Icon
                         className={cn(
-                          'h-4 w-4 shrink-0 transition-colors',
+                          'h-[15px] w-[15px] shrink-0 transition-colors duration-150',
                           active
                             ? 'text-sidebar-primary'
-                            : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground/80'
+                            : 'text-sidebar-foreground/45 group-hover:text-sidebar-foreground/80'
                         )}
                       />
                       <span className="truncate">{item.label}</span>
@@ -92,14 +92,14 @@ export function AppSidebar({
       </nav>
 
       {/* User footer */}
-      <div className="shrink-0 border-t border-sidebar-border p-3">
-        <div className="flex items-center gap-2.5 rounded-lg px-2 py-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent">
-            <RoleIcon className="h-4 w-4 text-sidebar-foreground/70" />
+      <div className="shrink-0 border-t border-sidebar-border/60 p-2.5">
+        <div className="flex items-center gap-2.5 rounded-xl px-1.5 py-1.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-blue-600 text-xs font-semibold text-white">
+            {inicial}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-medium text-white">{userEmail}</p>
-            <p className="truncate text-[11px] text-sidebar-foreground/50">
+            <p className="truncate text-[10px] text-sidebar-foreground/45">
               {roleLabel(role)}
             </p>
           </div>
@@ -107,7 +107,8 @@ export function AppSidebar({
             <button
               type="submit"
               title="Cerrar sesión"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-sidebar-foreground/60 transition hover:bg-sidebar-accent hover:text-white"
+              aria-label="Cerrar sesión"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-sidebar-foreground/50 transition-colors duration-150 hover:bg-white/[0.06] hover:text-white"
             >
               <LogOut className="h-4 w-4" />
             </button>

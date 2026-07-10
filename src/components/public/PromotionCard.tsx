@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { ArrowRight, Clock, Gift } from 'lucide-react'
 import type { PromotionPublic } from '@/modules/marketplace/types'
 
 interface PromotionCardProps {
@@ -12,36 +13,48 @@ interface PromotionCardProps {
   hrefBase?: string
 }
 
+function fechaCorta(d: string | Date) {
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', day: 'numeric', month: 'short' }).format(
+    new Date(d)
+  )
+}
+
 export function PromotionCard({
   promotion,
   variant = 'default',
   hrefBase = '/promocion',
 }: PromotionCardProps) {
-  const isExpired = promotion.vigenciaHasta && new Date(promotion.vigenciaHasta) < new Date()
+  const isExpired =
+    promotion.vigenciaHasta && new Date(promotion.vigenciaHasta) < new Date()
 
   if (variant === 'compact') {
     return (
-      <Link href={`${hrefBase}/${promotion.id}`}>
-        <div className="group overflow-hidden rounded-lg border border-neutral-200 bg-white transition-all duration-300 hover:shadow-md">
-          {promotion.imagenUrl && (
-            <div className="relative h-24 w-full overflow-hidden bg-neutral-100">
+      <Link href={`${hrefBase}/${promotion.id}`} className="group block">
+        <div className="card-interactive overflow-hidden rounded-2xl border border-border/60 bg-card">
+          <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-blue-600 to-sky-500">
+            {promotion.imagenUrl ? (
               <Image
                 src={promotion.imagenUrl}
                 alt={promotion.titulo}
                 fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
-            </div>
-          )}
-          <div className="p-2">
-            <p className="font-semibold text-neutral-900 text-sm line-clamp-1">
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Gift className="h-6 w-6 text-white/60" />
+              </div>
+            )}
+            {promotion.descuento && (
+              <span className="absolute right-2 top-2 rounded-full bg-white/95 px-2 py-0.5 text-xs font-bold text-blue-700 shadow-sm">
+                -{promotion.descuento}%
+              </span>
+            )}
+          </div>
+          <div className="p-3">
+            <p className="line-clamp-1 text-small font-semibold text-foreground">
               {promotion.titulo}
             </p>
-            {promotion.descuento && (
-              <p className="text-xs text-blue-600 font-bold">
-                -{promotion.descuento}%
-              </p>
-            )}
+            <p className="mt-0.5 line-clamp-1 text-caption">{promotion.company.name}</p>
           </div>
         </div>
       </Link>
@@ -49,117 +62,124 @@ export function PromotionCard({
   }
 
   return (
-    <Link href={`${hrefBase}/${promotion.id}`}>
-      <div className="group relative overflow-hidden rounded-lg border border-neutral-200 bg-white transition-all duration-300 hover:shadow-lg">
-        {/* Image */}
-        {promotion.imagenUrl && (
-          <div className="relative h-48 w-full overflow-hidden bg-neutral-100">
+    <Link href={`${hrefBase}/${promotion.id}`} className="group block h-full">
+      <div className="card-interactive relative flex h-full flex-col overflow-hidden rounded-3xl border border-border/60 bg-card">
+        {/* Imagen protagonista */}
+        <div className="relative h-44 w-full overflow-hidden bg-gradient-to-br from-blue-600 via-blue-500 to-sky-500">
+          {promotion.imagenUrl ? (
             <Image
               src={promotion.imagenUrl}
               alt={promotion.titulo}
               fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
-          </div>
-        )}
+          ) : (
+            <>
+              <div className="absolute inset-0 bg-grid-light opacity-50" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Gift className="h-10 w-10 text-white/50" />
+              </div>
+            </>
+          )}
 
-        {/* Content */}
-        <div className="p-4 space-y-2">
-          {/* Company */}
-          <div className="flex items-center gap-2">
-            {promotion.company.logoUrl && (
-              <div className="relative h-6 w-6 overflow-hidden rounded-full bg-neutral-100">
+          {/* Empresa: chip glass sobre la imagen */}
+          <div className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-white/90 py-1 pl-1 pr-3 shadow-sm backdrop-blur">
+            {promotion.company.logoUrl ? (
+              <span className="relative block h-5 w-5 overflow-hidden rounded-full">
                 <Image
                   src={promotion.company.logoUrl}
-                  alt={promotion.company.name}
+                  alt=""
                   fill
                   className="object-cover"
                 />
-              </div>
+              </span>
+            ) : (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white">
+                {promotion.company.name.slice(0, 1).toUpperCase()}
+              </span>
             )}
-            <span className="text-xs text-neutral-600 font-medium">
+            <span className="max-w-36 truncate text-xs font-medium text-slate-700">
               {promotion.company.name}
             </span>
           </div>
 
-          {/* Title */}
-          <h3 className="font-semibold text-neutral-900 line-clamp-2">
+          {/* Descuento / destacada */}
+          <div className="absolute right-3 top-3 flex flex-col items-end gap-1.5">
+            {promotion.descuento && (
+              <span className="rounded-full bg-white/95 px-2.5 py-1 text-sm font-bold text-blue-700 shadow-sm">
+                -{promotion.descuento}%
+              </span>
+            )}
+            {promotion.isFeatured && !isExpired && (
+              <span className="rounded-full bg-blue-600/90 px-2.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur">
+                Destacada
+              </span>
+            )}
+          </div>
+
+          {/* Expirada */}
+          {isExpired && (
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/55 backdrop-blur-[2px]">
+              <span className="rounded-full border border-white/30 px-4 py-1.5 text-sm font-semibold text-white">
+                Expirada
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Contenido */}
+        <div className="flex flex-1 flex-col p-5">
+          <h3 className="text-h3 line-clamp-2 text-foreground transition-colors group-hover:text-blue-700">
             {promotion.titulo}
           </h3>
 
-          {/* Description */}
           {promotion.descripcion && (
-            <p className="text-sm text-neutral-600 line-clamp-2">
+            <p className="mt-1.5 line-clamp-2 text-small text-muted-foreground">
               {promotion.descripcion}
             </p>
           )}
 
-          {/* Discount Badge */}
-          {promotion.descuento && (
-            <div className="inline-block rounded-full bg-red-100 text-red-700 px-3 py-1 text-sm font-bold">
-              -{promotion.descuento}%
-            </div>
-          )}
-
-          {/* Code */}
           {promotion.codigo && (
-            <div className="flex items-center gap-2 rounded-lg bg-neutral-50 p-2">
-              <span className="text-xs text-neutral-600">Código:</span>
-              <code className="font-mono font-bold text-neutral-900 text-sm">
+            <div className="mt-3 inline-flex w-fit items-center gap-2 rounded-lg border border-dashed border-border bg-muted/50 px-2.5 py-1">
+              <span className="text-caption">Código</span>
+              <code className="font-mono text-xs font-bold text-foreground">
                 {promotion.codigo}
               </code>
             </div>
           )}
 
-          {/* Validity */}
-          <div className="text-xs text-neutral-500 space-y-1">
-            {promotion.vigenciaDesde && (
-              <div>
-                Desde: {new Date(promotion.vigenciaDesde).toLocaleDateString('es-ES')}
-              </div>
-            )}
-            {promotion.vigenciaHasta && (
-              <div className={isExpired ? 'text-red-600 font-semibold' : ''}>
-                Hasta: {new Date(promotion.vigenciaHasta).toLocaleDateString('es-ES')}
-                {isExpired && ' (Expirada)'}
-              </div>
-            )}
-          </div>
-
-          {/* Tags */}
           {promotion.tags && promotion.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1">
+            <div className="mt-3 flex flex-wrap gap-1.5">
               {promotion.tags.slice(0, 3).map((tag) => (
                 <span
                   key={tag}
-                  className="inline-block rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-xs"
+                  className="rounded-full bg-blue-500/8 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300"
                 >
-                  #{tag}
+                  {tag}
                 </span>
               ))}
             </div>
           )}
 
-          {/* Stats */}
-          <div className="flex justify-between border-t border-neutral-100 pt-2 text-xs text-neutral-500">
-            <span>👁 {promotion.viewCount}</span>
-            <span>📤 {promotion.shareCount}</span>
+          {/* Pie: vigencia + CTA */}
+          <div className="mt-auto flex items-center justify-between pt-4">
+            {promotion.vigenciaHasta ? (
+              <span
+                className={`inline-flex items-center gap-1.5 text-xs ${
+                  isExpired ? 'font-medium text-destructive' : 'text-muted-foreground'
+                }`}
+              >
+                <Clock className="h-3.5 w-3.5" />
+                {isExpired ? 'Expiró' : 'Hasta'} el {fechaCorta(promotion.vigenciaHasta)}
+              </span>
+            ) : (
+              <span />
+            )}
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              Ver promoción <ArrowRight className="h-3.5 w-3.5" />
+            </span>
           </div>
         </div>
-
-        {/* Featured Badge */}
-        {promotion.isFeatured && (
-          <div className="absolute top-2 right-2 rounded-full bg-blue-500 text-white px-2 py-1 text-xs font-semibold">
-            Destacada
-          </div>
-        )}
-
-        {/* Expired Overlay */}
-        {isExpired && (
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-            <div className="text-white font-bold text-lg">Expirada</div>
-          </div>
-        )}
       </div>
     </Link>
   )

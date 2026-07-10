@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { requireAdminUser } from '@/lib/auth/guards'
+import { resolveCompanyId } from '@/lib/auth/company-context'
 
 export interface ReglaRecompensaState {
   error?: string
@@ -17,9 +18,9 @@ export async function crearReglaRecompensa(
   if (!user) return { error: 'No autorizado.' }
 
   const companyId =
-    user.metadata.role === 'SUPERADMIN'
-      ? String(formData.get('companyId') ?? '').trim()
-      : (user.metadata.companyId ?? '')
+    // Superadmin: companyId del form o, si no viene, la empresa ACTIVA del
+    // selector del panel. Staff: siempre la de su sesión.
+    (await resolveCompanyId(user, formData)) ?? ''
   if (!companyId) return { error: 'Empresa requerida.' }
 
   const nombre = String(formData.get('nombre') ?? '').trim()

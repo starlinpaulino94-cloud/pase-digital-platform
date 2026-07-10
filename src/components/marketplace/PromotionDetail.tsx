@@ -33,10 +33,10 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
         </Link>
 
         {/* Main Card */}
-        <div className="mt-8 rounded-lg border border-neutral-200 overflow-hidden shadow-lg">
+        <div className="mt-8 overflow-hidden rounded-3xl border border-slate-200/80 shadow-premium">
           {/* Image */}
           {promotion.imagenUrl && (
-            <div className="relative h-96 w-full overflow-hidden bg-neutral-100">
+            <div className="relative h-96 w-full overflow-hidden bg-slate-100">
               <Image
                 src={promotion.imagenUrl}
                 alt={promotion.titulo}
@@ -51,14 +51,14 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
               <div className="flex-1">
-                <h1 className="text-4xl font-bold text-neutral-900">
+                <h1 className="text-4xl font-bold text-slate-900">
                   {promotion.titulo}
                 </h1>
 
                 {/* Company */}
                 <div className="flex items-center gap-3 mt-4">
                   {promotion.company.logoUrl && (
-                    <div className="relative h-10 w-10 overflow-hidden rounded-full bg-neutral-100">
+                    <div className="relative h-10 w-10 overflow-hidden rounded-full bg-slate-100">
                       <Image
                         src={promotion.company.logoUrl}
                         alt={promotion.company.name}
@@ -68,7 +68,7 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
                     </div>
                   )}
                   <div>
-                    <p className="font-semibold text-neutral-900">
+                    <p className="font-semibold text-slate-900">
                       {promotion.company.name}
                     </p>
                     <Link
@@ -95,14 +95,14 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
             </div>
 
             {/* Main Info */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-6 border-y border-neutral-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-6 border-y border-slate-200">
               {/* Discount */}
               {promotion.descuento && (
                 <div className="bg-red-50 p-4 rounded-lg text-center">
                   <div className="text-3xl font-bold text-red-600">
                     -{promotion.descuento}%
                   </div>
-                  <div className="text-sm text-neutral-600">Descuento</div>
+                  <div className="text-sm text-slate-600">Descuento</div>
                 </div>
               )}
 
@@ -112,35 +112,35 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
                   <code className="text-2xl font-bold text-blue-600">
                     {promotion.codigo}
                   </code>
-                  <div className="text-sm text-neutral-600">Código</div>
+                  <div className="text-sm text-slate-600">Código</div>
                 </div>
               )}
 
               {/* Type */}
-              <div className="bg-neutral-50 p-4 rounded-lg text-center">
-                <div className="text-lg font-bold text-neutral-900 capitalize">
+              <div className="rounded-xl bg-slate-50 p-4 text-center">
+                <div className="text-lg font-bold text-slate-900 capitalize">
                   {promotion.tipo}
                 </div>
-                <div className="text-sm text-neutral-600">Tipo</div>
+                <div className="text-sm text-slate-600">Tipo</div>
               </div>
             </div>
 
             {/* Description */}
             {promotion.descripcion && (
               <div>
-                <h2 className="text-xl font-semibold text-neutral-900 mb-3">
+                <h2 className="text-xl font-semibold text-slate-900 mb-3">
                   Descripción
                 </h2>
-                <p className="text-neutral-700 leading-relaxed whitespace-pre-wrap">
+                <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
                   {promotion.descripcion}
                 </p>
               </div>
             )}
 
             {/* Validity */}
-            <div className="bg-neutral-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-neutral-900 mb-2">Vigencia</h3>
-              <div className="space-y-1 text-sm text-neutral-700">
+            <div className="rounded-xl bg-slate-50 p-4">
+              <h3 className="font-semibold text-slate-900 mb-2">Vigencia</h3>
+              <div className="space-y-1 text-sm text-slate-700">
                 {promotion.vigenciaDesde && (
                   <div>
                     <span className="font-semibold">Desde:</span>{' '}
@@ -168,7 +168,7 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
             {/* Tags */}
             {promotion.tags && promotion.tags.length > 0 && (
               <div>
-                <h3 className="font-semibold text-neutral-900 mb-2">Categorías</h3>
+                <h3 className="font-semibold text-slate-900 mb-2">Categorías</h3>
                 <div className="flex flex-wrap gap-2">
                   {promotion.tags.map((tag) => (
                     <span
@@ -184,7 +184,7 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
 
             {/* Stats + compartir */}
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex gap-4 text-sm text-neutral-600">
+              <div className="flex gap-4 text-sm text-slate-600">
                 <span>{promotion.viewCount} vistas</span>
                 <span>{promotion.shareCount} compartidas</span>
               </div>
@@ -219,11 +219,11 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
         </div>
 
         {/* Related Company Info */}
-        <div className="mt-12 bg-neutral-50 rounded-lg p-6">
-          <h2 className="text-2xl font-bold text-neutral-900 mb-4">
+        <div className="mt-12 rounded-2xl bg-slate-50 p-6">
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">
             Más sobre {promotion.company.name}
           </h2>
-          <p className="text-neutral-700 mb-4">
+          <p className="text-slate-700 mb-4">
             Descubre todas las promociones y beneficios que ofrece esta empresa
           </p>
           <Link

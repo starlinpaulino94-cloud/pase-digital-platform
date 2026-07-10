@@ -56,7 +56,7 @@ export default async function ReportesPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-500">
-              Lavados realizados este mes
+              Usos registrados este mes
             </CardTitle>
           </CardHeader>
           <CardContent>

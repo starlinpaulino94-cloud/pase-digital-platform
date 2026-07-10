@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { requireAdminUser, requireSection } from '@/lib/auth/guards'
+import { resolveCompanyId } from '@/lib/auth/company-context'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getRequestMeta, periodEnd } from '@/lib/server-utils'
 import { crearNotificacion } from '@/modules/notificaciones/service'
@@ -10,6 +11,7 @@ import { procesarReferidoCompletado } from '@/modules/referidos/actions'
 import { activarMembresia } from '@/modules/pagos/activacion'
 import { paymentLimiter } from '@/lib/rate-limit'
 import { ensureEmailIdentity } from '@/lib/supabase/identity'
+import { INVITABLE_ROLES, type AppRole } from '@/types'
 
 /** Ensure the membership belongs to the admin's company (superadmin = any). */
 async function assertOwnership(
@@ -440,7 +442,7 @@ export async function renovarMembresia(
   }
 }
 
-/** Create an EMPLEADO: Supabase auth user + DB User in the admin's company. */
+/** Create a team member (rol elegible): Supabase auth user + DB User in the admin's company. */
 export async function crearEmpleado(
   _prev: AdminActionState,
   formData: FormData
@@ -458,6 +460,13 @@ export async function crearEmpleado(
     const nombre = String(formData.get('nombre') ?? '').trim()
     const email = String(formData.get('email') ?? '').trim().toLowerCase()
     const password = String(formData.get('password') ?? '')
+    // Rol elegible (antes siempre EMPLEADO): el rol de la BD y el de la
+    // sesión (app_metadata) se escriben JUNTOS — si divergen, el usuario ve
+    // el panel equivocado aunque la tabla diga "Administrador".
+    const rolRaw = String(formData.get('rol') ?? 'EMPLEADO').trim() as AppRole
+    if (!INVITABLE_ROLES.includes(rolRaw)) {
+      return { error: 'Rol inválido.' }
+    }
 
     if (!nombre || !email || !password) {
       return { error: 'Todos los campos son obligatorios.' }
@@ -496,7 +505,7 @@ export async function crearEmpleado(
           supabaseId,
           email,
           name: nombre,
-          role: 'EMPLEADO',
+          role: rolRaw,
           companyId,
         },
       })
@@ -508,7 +517,7 @@ export async function crearEmpleado(
 
     await supabase.auth.admin.updateUserById(supabaseId, {
       app_metadata: {
-        role: 'EMPLEADO',
+        role: rolRaw,
         dbUserId: dbUser.id,
         companyId,
       },
@@ -536,8 +545,13 @@ export async function eliminarEmpleado(
     const empleado = await prisma.user.findUnique({
       where: { id: empleadoId },
     })
-    if (!empleado || empleado.role !== 'EMPLEADO') {
-      return { error: 'Empleado no encontrado.' }
+    // El equipo ahora puede tener cualquier rol invitable (no solo EMPLEADO).
+    // SUPERADMIN y CLIENTE siguen fuera del alcance de esta acción.
+    if (!empleado || !INVITABLE_ROLES.includes(empleado.role)) {
+      return { error: 'Miembro del equipo no encontrado.' }
+    }
+    if (empleado.id === user.metadata.dbUserId) {
+      return { error: 'No puedes eliminar tu propia cuenta.' }
     }
     if (
       user.metadata.role !== 'SUPERADMIN' &&
@@ -674,5 +688,55 @@ export async function guardarNotaInterna(
   } catch (e) {
     console.error('[admin-notes]', e)
     return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
+}
+
+/**
+ * O-13: guarda la configuración del beneficio de bienvenida de la empresa.
+ * Config de precios → solo admin PLENO de una empresa (no roles acotados,
+ * no superadmin sin empresa).
+ */
+export async function guardarBienvenida(
+  _prev: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const user = await requireAdminUser()
+    if (!user) return { error: 'No autorizado.' }
+    const companyId = await resolveCompanyId(user, formData)
+    if (!companyId) return { error: 'Esta configuración es por empresa.' }
+
+    const activa = formData.get('activa') === 'on'
+    const tipo = String(formData.get('tipo') ?? 'PORCENTAJE')
+    const valorRaw = String(formData.get('valor') ?? '').trim()
+    const valor = valorRaw ? Number(valorRaw) : null
+
+    if (!['PORCENTAJE', 'MONTO'].includes(tipo)) {
+      return { error: 'Tipo de beneficio no válido.' }
+    }
+    if (activa) {
+      if (valor == null || !Number.isFinite(valor) || valor <= 0) {
+        return { error: 'Indica un valor mayor que 0 para activar el beneficio.' }
+      }
+      if (tipo === 'PORCENTAJE' && valor > 100) {
+        return { error: 'El porcentaje no puede superar 100.' }
+      }
+    }
+
+    await prisma.company.update({
+      where: { id: companyId },
+      data: {
+        bienvenidaActiva: activa,
+        bienvenidaTipo: tipo,
+        bienvenidaValor: valor,
+      },
+    })
+
+    revalidatePath('/admin/planes')
+    revalidatePath('/cliente/planes')
+    return { success: true }
+  } catch (e) {
+    console.error('[admin] guardarBienvenida error:', e)
+    return { error: 'Ocurrió un error inesperado. Intenta de nuevo.' }
   }
 }

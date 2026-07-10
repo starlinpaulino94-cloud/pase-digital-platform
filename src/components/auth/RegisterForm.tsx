@@ -1,9 +1,10 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2, CheckCircle2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 import { registrarCliente, type RegistroState } from '@/modules/registro/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,17 +17,8 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-
-interface Plan {
-  id: string
-  nombre: string
-  precio: number
-  lavadosIncluidos: number
-  esIlimitado: boolean
-  descripcion: string | null
-  beneficios: string[]
-  vigenciaDias: number
-}
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
+import { isGoogleAuthEnabled } from '@/lib/auth/googleAuth'
 
 const initial: RegistroState = {}
 
@@ -34,77 +26,75 @@ export function RegisterForm({
   companySlug,
   companyName,
   isCarwash,
-  plans = [],
+  colorPrimario = null,
 }: {
   companySlug: string
   companyName: string
   isCarwash: boolean
-  plans?: Plan[]
+  colorPrimario?: string | null
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const refCode = searchParams.get('ref') ?? ''
   const [state, formAction, pending] = useActionState(registrarCliente, initial)
+  // Al enviar guardamos las credenciales para iniciar sesión automáticamente
+  // en cuanto el registro se complete (sin volver a la pantalla de login).
+  const credsRef = useRef<{ email: string; password: string } | null>(null)
+  const handledRef = useRef(false)
+  const [redirecting, setRedirecting] = useState(false)
+
+  function captureCreds(e: React.FormEvent<HTMLFormElement>) {
+    const fd = new FormData(e.currentTarget)
+    credsRef.current = {
+      email: String(fd.get('email') ?? '').trim().toLowerCase(),
+      password: String(fd.get('password') ?? ''),
+    }
+  }
 
   useEffect(() => {
+    if (handledRef.current) return
+
+    // Cuenta pendiente de confirmar el correo: no se puede autenticar todavía.
     if (state.pendingVerification) {
+      handledRef.current = true
       toast.success(
         'Te enviamos un enlace de confirmación a tu correo. Ábrelo para activar tu cuenta.'
       )
       router.replace('/login?verifica=1')
       return
     }
+
     if (state.success) {
-      toast.success('Cuenta creada. Inicia sesión para continuar.')
-      router.replace('/login?redirect=/cliente/membresia')
+      handledRef.current = true
+      const creds = credsRef.current
+      if (!creds) {
+        router.replace('/login?redirect=/cliente/membresia')
+        return
+      }
+      // Auto-login: crea la sesión en el navegador y entra directo a la plataforma.
+      setRedirecting(true)
+      const supabase = createClient()
+      supabase.auth
+        .signInWithPassword({ email: creds.email, password: creds.password })
+        .then(({ error }) => {
+          if (error) {
+            // Si por cualquier motivo no se pudo iniciar sesión, caemos al login.
+            toast.success('Cuenta creada. Inicia sesión para continuar.')
+            router.replace('/login?redirect=/cliente/membresia')
+            return
+          }
+          toast.success('¡Bienvenido! Tu cuenta está lista.')
+          router.replace('/cliente/membresia')
+          router.refresh()
+        })
+        .catch(() => {
+          router.replace('/login?redirect=/cliente/membresia')
+        })
     }
   }, [state.success, state.pendingVerification, router])
 
   return (
     <div className="space-y-6">
-      {/* Plans preview */}
-      {plans.length > 0 && (
-        <div className="space-y-3">
-          <p className="text-center text-sm font-medium text-slate-300">
-            Planes disponibles en {companyName}
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {plans.map((plan) => (
-              <div
-                key={plan.id}
-                className="rounded-xl border border-white/10 bg-white/5 p-4"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-semibold text-white">{plan.nombre}</p>
-                  <p className="shrink-0 text-lg font-bold text-sky-400">
-                    ${plan.precio.toFixed(2)}
-                  </p>
-                </div>
-                <p className="mt-1 text-xs text-slate-400">
-                  {plan.esIlimitado
-                    ? 'Usos ilimitados'
-                    : `${plan.lavadosIncluidos} uso${plan.lavadosIncluidos !== 1 ? 's' : ''}`}{' '}
-                  · {plan.vigenciaDias} días
-                </p>
-                {plan.beneficios.length > 0 && (
-                  <ul className="mt-2 space-y-0.5">
-                    {plan.beneficios.map((b) => (
-                      <li key={b} className="flex items-center gap-1.5 text-xs text-slate-300">
-                        <CheckCircle2 className="h-3 w-3 shrink-0 text-sky-400" />
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-          </div>
-          <p className="text-center text-xs text-slate-500">
-            Seleccionarás tu plan después de registrarte.
-          </p>
-        </div>
-      )}
-
       <Card className="border-white/10 bg-white/5 text-white">
         <CardHeader>
           <CardTitle className="text-2xl">Crear cuenta</CardTitle>
@@ -113,7 +103,7 @@ export function RegisterForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={formAction} className="space-y-4">
+          <form action={formAction} onSubmit={captureCreds} className="space-y-4">
             <input type="hidden" name="companySlug" value={companySlug} />
             {refCode && <input type="hidden" name="refCode" value={refCode} />}
             {state.error && (
@@ -254,13 +244,35 @@ export function RegisterForm({
 
             <Button
               type="submit"
-              disabled={pending}
+              disabled={pending || redirecting}
               className="w-full bg-sky-500 hover:bg-sky-400"
+              style={colorPrimario ? { backgroundColor: colorPrimario } : undefined}
             >
-              {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Crear cuenta
+              {(pending || redirecting) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {redirecting ? 'Entrando…' : 'Crear cuenta'}
             </Button>
           </form>
+          {isGoogleAuthEnabled() && (
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center gap-3 text-xs text-slate-500">
+                <span className="h-px flex-1 bg-white/10" />
+                o
+                <span className="h-px flex-1 bg-white/10" />
+              </div>
+              <GoogleSignInButton companySlug={companySlug} refCode={refCode || null} />
+              <p className="text-center text-xs text-slate-500">
+                Al continuar con Google aceptas los{' '}
+                <a href="/terms" target="_blank" className="text-sky-400 hover:underline">
+                  términos
+                </a>{' '}
+                y la{' '}
+                <a href="/privacy" target="_blank" className="text-sky-400 hover:underline">
+                  política de privacidad
+                </a>
+                .
+              </p>
+            </div>
+          )}
           <p className="mt-4 text-center text-sm text-slate-400">
             ¿Ya tienes cuenta?{' '}
             <a href="/login" className="text-sky-400 hover:underline">

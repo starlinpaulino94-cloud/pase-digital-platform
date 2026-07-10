@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
-import { Loader2 } from 'lucide-react'
 
+/**
+ * QR del sistema: protagonista, con marco de gradiente de marca.
+ * El interior se mantiene blanco puro con módulos oscuros para no
+ * comprometer la lectura del escáner.
+ */
 export function QRDisplay({
   token,
   size = 240,
@@ -15,7 +19,11 @@ export function QRDisplay({
 
   useEffect(() => {
     let active = true
-    QRCode.toDataURL(token, { width: size, margin: 1 })
+    QRCode.toDataURL(token, {
+      width: size * 2, // 2x para nitidez en pantallas retina
+      margin: 1,
+      color: { dark: '#0f172a', light: '#ffffff' },
+    })
       .then((url) => {
         if (active) setDataUrl(url)
       })
@@ -26,16 +34,27 @@ export function QRDisplay({
   }, [token, size])
 
   return (
-    <div
-      className="flex items-center justify-center rounded-xl bg-white p-4"
-      style={{ width: size + 32, height: size + 32 }}
-    >
-      {dataUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={dataUrl} alt="Código QR de membresía" width={size} height={size} />
-      ) : (
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-      )}
+    <div className="rounded-[1.75rem] bg-gradient-to-br from-blue-600 via-sky-500 to-indigo-600 p-[3px] shadow-premium-lg">
+      <div
+        className="flex items-center justify-center rounded-3xl bg-white p-4"
+        style={{ width: size + 32, height: size + 32 }}
+      >
+        {dataUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={dataUrl}
+            alt="Código QR de membresía"
+            width={size}
+            height={size}
+            className="animate-scale-in"
+          />
+        ) : (
+          <div
+            className="skeleton-shimmer rounded-xl"
+            style={{ width: size, height: size }}
+          />
+        )}
+      </div>
     </div>
   )
 }

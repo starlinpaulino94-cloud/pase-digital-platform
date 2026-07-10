@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DeletePostButton } from '@/components/admin/DeletePostButton'
+import { CompartirOfertaButton } from '@/components/admin/CompartirOfertaButton'
 import {
   Newspaper,
   CalendarDays,
@@ -25,9 +26,16 @@ const TIPO_META: Record<string, { label: string; icon: LucideIcon; chip: string 
   BENEFICIO: { label: 'Beneficio', icon: BadgeCheck, chip: 'bg-emerald-100 text-emerald-700' },
 }
 
+// Sección del perfil público donde se muestra cada tipo de publicación.
+const TIPO_ANCLA: Record<string, string> = {
+  EVENTO: 'eventos',
+  NOTICIA: 'noticias',
+  BENEFICIO: 'beneficios',
+}
+
 function fmtFecha(d: Date | null) {
   if (!d) return null
-  return new Intl.DateTimeFormat('es-DO', {
+  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo',
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(d))
@@ -41,7 +49,7 @@ export default async function PublicacionesPage() {
   async function query() {
     return prisma.companyPost.findMany({
       where: companyId ? { companyId } : {},
-      include: { company: { select: { name: true } } },
+      include: { company: { select: { name: true, slug: true } } },
       orderBy: { createdAt: 'desc' },
     })
   }
@@ -128,6 +136,16 @@ export default async function PublicacionesPage() {
                   )}
 
                   <div className="mt-4 flex items-center justify-end gap-1 border-t border-slate-100 pt-3">
+                    <CompartirOfertaButton
+                      path={`/empresas/${p.company.slug}#${TIPO_ANCLA[p.tipo] ?? 'informacion'}`}
+                      titulo={p.titulo}
+                      texto={`${p.titulo} — ${meta.label.toLowerCase()} de ${p.company.name} en MembeGo.`}
+                      advertencia={
+                        p.activo
+                          ? null
+                          : 'La publicación está oculta: no se verá en tu página pública hasta activarla.'
+                      }
+                    />
                     <Link href={`/admin/publicaciones/${p.id}/editar`}>
                       <Button size="icon" variant="ghost">
                         <Pencil className="h-4 w-4 text-slate-500" />

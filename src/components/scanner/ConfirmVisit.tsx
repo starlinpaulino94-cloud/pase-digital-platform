@@ -55,6 +55,14 @@ const SERVICIOS_RESTAURANTE = [
   'Postre',
   'Consumo general',
 ]
+// Cualquier otro tipo de negocio: opciones neutras, sin asumir la industria.
+const SERVICIOS_GENERICOS = [
+  'Uso de membresía',
+  'Servicio estándar',
+  'Servicio premium',
+  'Producto incluido',
+  'Otro beneficio',
+]
 
 const initial: ConfirmState = {}
 
@@ -104,8 +112,15 @@ export function ConfirmVisit({
   const alertas = cliente.alertas ?? []
   const visitasRecientes = cliente.visitasRecientes ?? []
 
+  // Los servicios sugeridos dependen del tipo de negocio; nunca se asume
+  // Car Wash por defecto: cualquier industria no contemplada usa la lista
+  // genérica.
   const isCarwash = cliente.empresaType === 'carwash' || vehiculos.length > 0
-  const servicios = isCarwash ? SERVICIOS_CARWASH : SERVICIOS_RESTAURANTE
+  const servicios = isCarwash
+    ? SERVICIOS_CARWASH
+    : cliente.empresaType === 'restaurante'
+      ? SERVICIOS_RESTAURANTE
+      : SERVICIOS_GENERICOS
   const isValid = cliente.puedeUsar
 
   useEffect(() => {
