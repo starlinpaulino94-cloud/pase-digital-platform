@@ -50,7 +50,10 @@ export class EventDispatcher {
         subjectId: input.subjectId ?? null,
         subjectKind: input.subjectKind,
         triggeredBy: `event:${input.type}`,
-        triggerData: { event: { type: input.type, ...input.payload } },
+        // El payload va en la RAÍZ para que las condiciones/variables de los
+        // playbooks (`cliente.*`, `membresia.*`, `evento.*`…) resuelvan igual
+        // que en una ejecución directa; `event` conserva el tipo del evento.
+        triggerData: { ...input.payload, event: { type: input.type, ...input.payload } },
       })
       outcomes.push(outcome)
     }
