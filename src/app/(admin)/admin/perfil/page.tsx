@@ -9,6 +9,7 @@ import {
 } from '@/modules/empresas/queries'
 import { PerfilPublicoForm } from '@/components/admin/PerfilPublicoForm'
 import { CompanyQRRegistro } from '@/components/admin/CompanyQRRegistro'
+import { CompartirOfertaButton } from '@/components/admin/CompartirOfertaButton'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { getAppUrl } from '@/lib/site'
@@ -136,11 +137,20 @@ export default async function PerfilEmpresaPage({
             aquí se refleja en tu página pública.
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link href={`/empresas/${company.slug}`} target="_blank">
-            Ver mi página pública <ExternalLink className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <CompartirOfertaButton
+            variant="full"
+            label="Compartir página"
+            path={`/empresas/${company.slug}`}
+            titulo={company.name}
+            texto={`Conoce ${company.name} en MembeGo: membresías, promociones y beneficios.`}
+          />
+          <Button asChild variant="outline">
+            <Link href={`/empresas/${company.slug}`} target="_blank">
+              Ver mi página pública <ExternalLink className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <PerfilPublicoForm

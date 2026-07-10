@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DeletePlanButton } from '@/components/admin/DeletePlanButton'
 import { BienvenidaConfigForm } from '@/components/admin/BienvenidaConfigForm'
+import { CompartirOfertaButton } from '@/components/admin/CompartirOfertaButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,6 +19,13 @@ export default async function PlanesPage() {
   const user = await requireRole(ADMIN_ROLES)
   const companyId = companyFilter(user)
   const prefs = await getRegionalPrefs(companyId)
+
+  // Para compartir la sección de planes del perfil público de la empresa.
+  const empresa = companyId
+    ? await prisma.company
+        .findUnique({ where: { id: companyId }, select: { name: true, slug: true } })
+        .catch(() => null)
+    : null
 
   let planes: {
     id: string; nombre: string; precio: unknown; esIlimitado: boolean;
@@ -74,12 +82,23 @@ export default async function PlanesPage() {
             Crea y administra los planes de membresía de tu empresa.
           </p>
         </div>
-        <Link href="/admin/planes/nuevo">
-          <Button className="bg-sky-500 hover:bg-sky-400">
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo plan
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          {empresa && (
+            <CompartirOfertaButton
+              variant="full"
+              label="Compartir planes"
+              path={`/empresas/${empresa.slug}#membresias`}
+              titulo={`Planes de ${empresa.name}`}
+              texto={`Conoce los planes de membresía de ${empresa.name} en MembeGo.`}
+            />
+          )}
+          <Link href="/admin/planes/nuevo">
+            <Button className="bg-sky-500 hover:bg-sky-400">
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo plan
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {bienvenida && <BienvenidaConfigForm bienvenida={bienvenida} />}
