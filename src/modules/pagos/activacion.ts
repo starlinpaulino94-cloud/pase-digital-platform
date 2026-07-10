@@ -11,6 +11,7 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import { emitirEventoEstrategia } from '@/modules/estrategias/eventos'
 import { periodEnd } from '@/lib/server-utils'
 
 type Meta = { ipAddress: string | null; userAgent: string | null }
@@ -110,6 +111,32 @@ export async function activarMembresia(
     })
 
     return { esPrimera }
+  })
+
+  // Bus de estrategias: pago aprobado = compra + membresía activa. Se emite
+  // fuera de la transacción y nunca rompe la activación (el helper captura
+  // sus propios errores).
+  const factsCliente = { nombre: membership.cliente.nombre, compras: esPrimera ? 1 : 2 }
+  const factsMembresia = { plan: membership.plan.nombre }
+  await emitirEventoEstrategia({
+    companyId: membership.companyId,
+    type: 'cliente.compro_servicio',
+    subjectId: membership.clienteId,
+    payload: { cliente: factsCliente, membresia: factsMembresia, compra: { tipo: 'membresia', monto: montoNeto } },
+  })
+  if (esPrimera) {
+    await emitirEventoEstrategia({
+      companyId: membership.companyId,
+      type: 'cliente.primera_compra',
+      subjectId: membership.clienteId,
+      payload: { cliente: factsCliente, membresia: factsMembresia, compra: { tipo: 'membresia', monto: montoNeto } },
+    })
+  }
+  await emitirEventoEstrategia({
+    companyId: membership.companyId,
+    type: 'membresia.activada',
+    subjectId: membership.clienteId,
+    payload: { cliente: factsCliente, membresia: factsMembresia },
   })
 
   return {
