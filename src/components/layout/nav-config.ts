@@ -24,6 +24,7 @@ import {
   Bell,
   Flag,
   Zap,
+  Sparkles,
   type LucideIcon,
 } from 'lucide-react'
 import type { AppRole } from '@/types'
@@ -53,6 +54,7 @@ const ADMIN_NAV: NavGroup[] = [
       { href: '/admin/promociones', label: 'Promociones', icon: Megaphone },
       { href: '/admin/publicaciones', label: 'Publicaciones', icon: Newspaper },
       { href: '/admin/campanas', label: 'Campañas', icon: Flag },
+      { href: '/admin/estrategias', label: 'Estrategias', icon: Sparkles },
       { href: '/admin/referidos', label: 'Referidos', icon: Gift },
     ],
   },
@@ -148,6 +150,7 @@ const SUPERADMIN_NAV: NavGroup[] = [
       { href: '/admin/promociones', label: 'Promociones', icon: Megaphone },
       { href: '/admin/publicaciones', label: 'Publicaciones', icon: Newspaper },
       { href: '/admin/campanas', label: 'Campañas', icon: Flag },
+      { href: '/admin/estrategias', label: 'Estrategias', icon: Sparkles },
       { href: '/admin/referidos', label: 'Referidos', icon: Gift },
     ],
   },
