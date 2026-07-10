@@ -29,7 +29,7 @@ src/lib/membership/
 │   └── usage-tracker.ts              # registrar uso + enforcement de límites (+ reglas BEL)
 ├── templates/
 │   ├── types.ts                      # MembershipTemplate + instantiateTemplate
-│   └── carwash.ts                    # BIBLIOTECA Car Wash (16 plantillas)
+│   └── carwash.ts                    # BIBLIOTECA Car Wash (23 plantillas, 20 modelos)
 └── infrastructure/
     ├── prisma-membership-repository.ts
     └── mappers.ts
@@ -82,10 +82,43 @@ con `CANCELLED` terminal. `validateTransition` rechaza movimientos inválidos.
 
 ## 6. Plantillas de industria (Car Wash)
 
-`CARWASH_MEMBERSHIP_TEMPLATES` (16 plantillas, en 3 niveles):
-- **Básico:** Unlimited Básico/Premium, Wash Credits, Silver/Gold/Platinum, Hybrid, Family.
-- **Avanzado:** Fleet, Corporate, Premium Service, VIP, Seasonal.
-- **Inteligente:** Custom Builder, Membership + Rewards.
+`CARWASH_MEMBERSHIP_TEMPLATES` (23 plantillas, en 3 niveles) — **cobertura
+completa de los 20 modelos** de `MembershipPlanType`:
+- **Básico:** Unlimited Básico/Premium, Wash Credits, Silver/Gold/Platinum, Hybrid,
+  Family, Mantenimiento, Pay Per Visit, Club de Fidelidad, Prepago Anual,
+  Prueba 7 días, Plan Estudiante.
+- **Avanzado:** Fleet, Corporate, Premium Service, VIP, Seasonal, Plan Conductor.
+- **Inteligente:** Custom Builder, Membership + Rewards, Wash Box Mensual.
+
+Descubrimiento: `carwashMembershipByType(type)`, `carwashMembershipByTier(tier)` y
+`CARWASH_MEMBERSHIP_BY_TYPE` (mapa por modelo; su `satisfies Record<MembershipPlanType,…>`
+garantiza en compilación que ningún modelo quede sin plantilla).
+
+### 6.1 Strategy Library (Fase F1.1)
+
+Encima de las variantes vive la **capa de estrategia**: cada uno de los 20 modelos
+está documentado profesionalmente en `templates/carwash-strategies.ts` como
+`MembershipStrategy`, con los 24 campos del estándar F1.1 (problema que resuelve,
+cuándo usar/no, ventajas, desventajas, riesgos, complejidad, servicios y vehículos
+compatibles, motores usados, playbooks, beneficios/promociones/campañas/gamificación
+compatibles, KPIs, buenas prácticas, errores comunes, variantes y versión).
+
+- **Taxonomía** (`templates/taxonomy.ts`): objetivo comercial (`MembershipObjective`)
+  y público objetivo (`MembershipAudience`), más complejidad y tipos de vehículo.
+- **Estrategia → variantes**: cada estrategia apunta por `variantKeys` a las
+  `MembershipTemplate` instalables; `strategyVariants(strategy)` las resuelve.
+- **Descubrimiento**: `membershipStrategyForModel(model)`,
+  `membershipStrategiesByObjective(obj)`, `membershipStrategiesByAudience(aud)`,
+  `getMembershipStrategy(id)`.
+- **Config editable**: `MembershipConfig` cubre los ~22 campos configurables de F1.1
+  (servicios incluidos/excluidos, beneficios incluidos/opcionales, límites, días y
+  horarios, sucursales, tipos de vehículo, renovación, reglas de ciclo de vida
+  —upgrade/downgrade/suspensión/cancelación—, recompensas, segmentos, variables,
+  prioridad). Nada hardcodeado.
+
+Las estrategias declaran integración con Reward/Campaign/Gamification/Analytics/
+Decision Engines (pendientes): son referencias de metadato, listas para cuando esos
+motores existan (F1.5, F1.8, F1.9, F1.13).
 
 ```ts
 import { createMembershipService, CARWASH_MEMBERSHIP_TEMPLATES, instantiateTemplate } from '@/lib/membership'

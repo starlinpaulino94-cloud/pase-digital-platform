@@ -47,7 +47,7 @@ export type {
   MembershipPlan, MembershipInstance, MembershipUsageRecord, MembershipVehicle,
   MembershipPlanType, MembershipPeriodicity, MembershipPlanStatus,
   MembershipInstanceStatus, MembershipConfig, MembershipLimits, MembershipRenewal,
-  UsagePeriod,
+  UsagePeriod, WeekDay, MembershipSchedule, MembershipLifecycleRules,
 } from './domain/types'
 export {
   MEMBERSHIP_TRANSITIONS, canTransition, validateTransition,
@@ -69,7 +69,24 @@ export type {
 
 export { instantiateTemplate } from './templates/types'
 export type { MembershipTemplate, InstantiateOverrides } from './templates/types'
-export { CARWASH_MEMBERSHIP_TEMPLATES, getCarwashTemplate } from './templates/carwash'
+export {
+  CARWASH_MEMBERSHIP_TEMPLATES, getCarwashTemplate, CARWASH_MEMBERSHIP_BY_TYPE,
+  carwashMembershipByType, carwashMembershipByTier,
+} from './templates/carwash'
+
+// ── Membership Strategy Library (Fase F1.1) ──
+export type { MembershipStrategy } from './templates/strategy-types'
+export type {
+  MembershipObjective, MembershipAudience, StrategyComplexity, EngineId,
+  CarwashVehicleType, TaxonomyEntry,
+} from './templates/taxonomy'
+export {
+  MEMBERSHIP_OBJECTIVES, MEMBERSHIP_AUDIENCES, CARWASH_VEHICLE_TYPES, STRATEGY_COMPLEXITY,
+} from './templates/taxonomy'
+export {
+  CARWASH_MEMBERSHIP_STRATEGIES, getMembershipStrategy, membershipStrategyForModel,
+  strategyVariants, membershipStrategiesByObjective, membershipStrategiesByAudience,
+} from './templates/carwash-strategies'
 
 export { PrismaMembershipRepository } from './infrastructure/prisma-membership-repository'
 export { mapPlan, mapInstance, mapUsage } from './infrastructure/mappers'
