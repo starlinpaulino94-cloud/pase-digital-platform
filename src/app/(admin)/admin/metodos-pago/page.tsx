@@ -91,7 +91,7 @@ export default async function MetodosPagoPage() {
                       </Badge>
                     )}
                     <Link href={`/admin/metodos-pago/${m.id}/editar`}>
-                      <Button size="icon" variant="ghost">
+                      <Button size="icon" variant="ghost" aria-label="Editar" title="Editar">
                         <Pencil className="h-4 w-4" />
                       </Button>
                     </Link>

@@ -122,13 +122,15 @@ export function FaqManager({
                       disabled={isPending}
                       onCheckedChange={(v) => onToggle(f.id, v)}
                     />
-                    <Button variant="ghost" size="icon" onClick={() => setEditingId(f.id)}>
+                    <Button variant="ghost" size="icon" aria-label="Editar pregunta" title="Editar" onClick={() => setEditingId(f.id)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       disabled={isPending}
+                      aria-label="Eliminar pregunta"
+                      title="Eliminar"
                       onClick={() => onDelete(f.id)}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />

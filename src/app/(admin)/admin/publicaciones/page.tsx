@@ -147,7 +147,7 @@ export default async function PublicacionesPage() {
                       }
                     />
                     <Link href={`/admin/publicaciones/${p.id}/editar`}>
-                      <Button size="icon" variant="ghost">
+                      <Button size="icon" variant="ghost" aria-label="Editar" title="Editar">
                         <Pencil className="h-4 w-4 text-muted-foreground" />
                       </Button>
                     </Link>

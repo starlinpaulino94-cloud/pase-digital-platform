@@ -88,7 +88,7 @@ export default async function SucursalesPage() {
                       <Badge variant="secondary" className="text-xs">Inactiva</Badge>
                     )}
                     <Link href={`/admin/sucursales/${s.id}/editar`}>
-                      <Button size="icon" variant="ghost">
+                      <Button size="icon" variant="ghost" aria-label="Editar" title="Editar">
                         <Pencil className="h-4 w-4" />
                       </Button>
                     </Link>
