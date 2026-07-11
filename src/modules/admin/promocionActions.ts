@@ -31,6 +31,15 @@ function parsePromocion(formData: FormData): { error: string } | {
     maxCanjes: number | null
     prioridad: number
     campanaId: string | null
+    // Fase E5: venta como producto comercial
+    esComprable: boolean
+    precio: number | null
+    usosPorCompra: number
+    beneficioVigenciaDias: number | null
+    beneficioVigenciaHasta: Date | null
+    diasPermitidos: number[]
+    horaDesde: string | null
+    horaHasta: string | null
   }
 } {
   const titulo = String(formData.get('titulo') ?? '').trim()
@@ -70,6 +79,44 @@ function parsePromocion(formData: FormData): { error: string } | {
     return { error: 'La fecha de fin debe ser posterior a la de inicio.' }
   }
 
+  // ── Fase E5: venta como producto comercial ─────────────────────────────────
+  const esComprable = String(formData.get('esComprable') ?? 'false') === 'true'
+  const precioRaw = String(formData.get('precio') ?? '').trim()
+  const precio = precioRaw ? Number(precioRaw) : null
+  const usosRaw = String(formData.get('usosPorCompra') ?? '').trim()
+  const usosPorCompra = usosRaw ? Number(usosRaw) : 1
+  const benefDiasRaw = String(formData.get('beneficioVigenciaDias') ?? '').trim()
+  const beneficioVigenciaDias = benefDiasRaw ? Number(benefDiasRaw) : null
+  const benefHastaRaw = String(formData.get('beneficioVigenciaHasta') ?? '').trim()
+  const beneficioVigenciaHasta = benefHastaRaw ? new Date(benefHastaRaw) : null
+  const diasPermitidos = formData
+    .getAll('diasPermitidos')
+    .map((d) => Number(d))
+    .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+  const horaRe = /^([01]\d|2[0-3]):[0-5]\d$/
+  const horaDesdeRaw = String(formData.get('horaDesde') ?? '').trim()
+  const horaHastaRaw = String(formData.get('horaHasta') ?? '').trim()
+  const horaDesde = horaRe.test(horaDesdeRaw) ? horaDesdeRaw : null
+  const horaHasta = horaRe.test(horaHastaRaw) ? horaHastaRaw : null
+
+  if (esComprable) {
+    if (precio == null || Number.isNaN(precio) || precio < 0) {
+      return { error: 'Indica el precio de venta (0 = gratis).' }
+    }
+    if (Number.isNaN(usosPorCompra) || usosPorCompra < 1) {
+      return { error: 'Los usos por compra deben ser al menos 1.' }
+    }
+    if (beneficioVigenciaDias != null && (Number.isNaN(beneficioVigenciaDias) || beneficioVigenciaDias < 1)) {
+      return { error: 'La vigencia del beneficio debe ser al menos 1 día.' }
+    }
+    if (beneficioVigenciaHasta && Number.isNaN(beneficioVigenciaHasta.getTime())) {
+      return { error: 'La fecha fija de vigencia no es válida.' }
+    }
+    if (horaDesde && horaHasta && horaHasta <= horaDesde) {
+      return { error: 'El horario "hasta" debe ser posterior al "desde".' }
+    }
+  }
+
   return {
     data: {
       titulo,
@@ -84,6 +131,14 @@ function parsePromocion(formData: FormData): { error: string } | {
       maxCanjes,
       prioridad,
       campanaId,
+      esComprable,
+      precio: esComprable ? precio : null,
+      usosPorCompra: esComprable ? usosPorCompra : 1,
+      beneficioVigenciaDias: esComprable ? beneficioVigenciaDias : null,
+      beneficioVigenciaHasta: esComprable ? beneficioVigenciaHasta : null,
+      diasPermitidos: esComprable ? diasPermitidos : [],
+      horaDesde: esComprable ? horaDesde : null,
+      horaHasta: esComprable ? horaHasta : null,
     },
   }
 }
