@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Camera, CameraOff, Flashlight, FlashlightOff, Keyboard, RefreshCw, ShieldAlert } from 'lucide-react'
+import { Camera, CameraOff, Flashlight, FlashlightOff, ScanBarcode, RefreshCw, ShieldAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
@@ -70,11 +70,12 @@ interface TorchCapable {
  */
 export function QRScanner({
   onScan,
-  onRequestManual,
+  onUseReader,
 }: {
   onScan: (text: string) => void
   /** Abre la entrada manual (CTA de los estados de error de cámara). */
-  onRequestManual?: () => void
+  /** Fase E7: pasar a modo lector físico desde la vista de cámara. */
+  onUseReader?: () => void
 }) {
   const containerId = 'qr-reader'
   const handledRef = useRef(false)
@@ -192,14 +193,14 @@ export function QRScanner({
               Reintentar
             </Button>
           )}
-          {onRequestManual && (
+          {onUseReader && (
             <Button
               variant="outline"
               className="gap-2 border-white/20 bg-white/10 text-white hover:bg-white/20"
-              onClick={onRequestManual}
+              onClick={onUseReader}
             >
-              <Keyboard className="h-4 w-4" />
-              Ingresar código manual
+              <ScanBarcode className="h-4 w-4" />
+              Usar lector físico
             </Button>
           )}
         </div>

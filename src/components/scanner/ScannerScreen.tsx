@@ -15,21 +15,30 @@ import { Skeleton } from '@/components/ui/skeleton'
 export async function ScannerScreen({
   companyId,
   empleadoId,
+  puedeConfigurar = false,
 }: {
   companyId?: string
   empleadoId?: string
+  /** Fase E7: el usuario (admin) puede fijar el modo predeterminado de la empresa. */
+  puedeConfigurar?: boolean
 }) {
   let sucursales: { id: string; nombre: string }[] = []
+  let modoDefault: 'camara' | 'lector' = 'camara'
   try {
     if (companyId) {
-      sucursales = await prisma.sucursal.findMany({
-        where: { companyId, activa: true },
-        orderBy: { nombre: 'asc' },
-        select: { id: true, nombre: true },
-      })
+      const [suc, company] = await Promise.all([
+        prisma.sucursal.findMany({
+          where: { companyId, activa: true },
+          orderBy: { nombre: 'asc' },
+          select: { id: true, nombre: true },
+        }),
+        prisma.company.findUnique({ where: { id: companyId }, select: { escanerModo: true } }),
+      ])
+      sucursales = suc
+      if (company?.escanerModo === 'lector') modoDefault = 'lector'
     }
   } catch (e) {
-    console.error('[scanner] sucursales error:', e)
+    console.error('[scanner] datos escáner error:', e)
   }
 
   return (
@@ -42,7 +51,7 @@ export async function ScannerScreen({
       </div>
 
       <ScannerErrorBoundary>
-        <ScannerClient sucursales={sucursales} />
+        <ScannerClient sucursales={sucursales} modoDefault={modoDefault} puedeConfigurar={puedeConfigurar} />
       </ScannerErrorBoundary>
 
       {companyId && (
