@@ -1,6 +1,14 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+/**
+ * Comprobante en pantalla tras confirmar un uso (Fase E4). Muestra los
+ * identificadores oficiales (TX-… y ticket) y delega la impresión al Receipt
+ * Engine (ReceiptTicket: plantilla por empresa, 58/80 mm, QR de la
+ * transacción). La primera impresión se registra automáticamente; las
+ * siguientes desde esta pantalla quedan auditadas como COPIA.
+ */
+
+import { useEffect, useRef, useState } from 'react'
 import {
   Printer,
   CheckCircle2,
@@ -15,8 +23,11 @@ import {
   Gift,
   Shield,
   Hash,
+  Ticket,
 } from 'lucide-react'
 import { registrarImpresion } from '@/modules/visitas/actions'
+import { registrarImpresionTx, type TicketPayload } from '@/modules/transacciones/actions'
+import { ReceiptTicket } from '@/components/scanner/ReceiptTicket'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import type { ClienteLookup } from '@/modules/visitas/actions'
@@ -26,6 +37,11 @@ interface Props {
   visitId: string
   servicio: string
   restantes: number
+  /** Fase E4: registro oficial + payload del ticket (Receipt Engine). */
+  transaccionId?: string
+  codigo?: string
+  ticketNumero?: string
+  ticket?: TicketPayload
   onDone: () => void
   /** Vuelve directo a la cámara para el siguiente cliente. */
   onScanNext?: () => void
@@ -57,20 +73,46 @@ function InfoRow({ label, value, icon: Icon }: { label: string; value: string; i
   )
 }
 
-export function ComprobanteReceipt({ cliente, visitId, servicio, restantes, onDone, onScanNext }: Props) {
+export function ComprobanteReceipt({
+  cliente,
+  visitId,
+  servicio,
+  restantes,
+  transaccionId,
+  codigo,
+  ticketNumero,
+  ticket,
+  onDone,
+  onScanNext,
+}: Props) {
   const hasLogged = useRef(false)
-  const codigoOperacion = `MBGO-${visitId.slice(-8).toUpperCase()}`
-  const now = new Date()
+  const [printCount, setPrintCount] = useState(0)
+  const [copiaNumero, setCopiaNumero] = useState<number | undefined>()
+  // Compatibilidad: si el servidor aún no devolvió transacción (bundle viejo),
+  // se conserva el código derivado de la visita.
+  const codigoOperacion = codigo ?? `MBGO-${visitId.slice(-8).toUpperCase()}`
+  const now = ticket ? new Date(ticket.transaccion.fecha) : new Date()
 
   useEffect(() => {
     if (!hasLogged.current) {
       hasLogged.current = true
+      // Registro legado por visita (métricas existentes) — se mantiene.
       registrarImpresion(visitId).catch(() => {})
     }
   }, [visitId])
 
   function handlePrint() {
-    window.print()
+    if (transaccionId) {
+      // Cada impresión queda auditada; de la 2ª en adelante es COPIA #N.
+      registrarImpresionTx(transaccionId, printCount > 0 ? 'Reimpresión desde el comprobante' : undefined)
+        .then((r) => {
+          if (r.numero != null) setCopiaNumero(r.numero)
+        })
+        .catch(() => {})
+    }
+    setPrintCount((c) => c + 1)
+    // Deja montar el ticket (y renderizar su QR) antes de abrir el diálogo.
+    setTimeout(() => window.print(), printCount === 0 ? 350 : 0)
   }
 
   async function handleShare() {
@@ -78,7 +120,8 @@ export function ComprobanteReceipt({ cliente, visitId, servicio, restantes, onDo
       `Visita confirmada — ${cliente.empresa}`,
       `Cliente: ${cliente.nombre}`,
       `Servicio: ${servicio}`,
-      `Código: ${codigoOperacion}`,
+      `Transacción: ${codigoOperacion}`,
+      ...(ticketNumero ? [`Ticket: ${ticketNumero}`] : []),
       `Fecha: ${fmtDateTime(now)}`,
     ].join('\n')
 
@@ -91,6 +134,7 @@ export function ComprobanteReceipt({ cliente, visitId, servicio, restantes, onDo
     await navigator.clipboard.writeText(text).catch(() => {})
   }
 
+  const esCopia = printCount > 1
   return (
     <>
       {/* Screen view */}
@@ -112,7 +156,8 @@ export function ComprobanteReceipt({ cliente, visitId, servicio, restantes, onDo
           <InfoRow label="Servicio utilizado" value={servicio} icon={Gift} />
           <InfoRow label="Fecha" value={fmtDate(now)} icon={Calendar} />
           <InfoRow label="Hora" value={fmtTime(now)} icon={Clock} />
-          <InfoRow label="Código de operación" value={codigoOperacion} icon={Hash} />
+          <InfoRow label="Transacción" value={codigoOperacion} icon={Hash} />
+          {ticketNumero && <InfoRow label="Ticket" value={ticketNumero} icon={Ticket} />}
           <InfoRow
             label="Usos restantes"
             value={cliente.esIlimitado ? 'Ilimitado' : String(restantes)}
@@ -143,7 +188,7 @@ export function ComprobanteReceipt({ cliente, visitId, servicio, restantes, onDo
             className="flex-col gap-1 h-auto py-3"
           >
             <Printer className="h-5 w-5" />
-            <span className="text-xs">Imprimir</span>
+            <span className="text-xs">{printCount > 0 ? 'Reimprimir' : 'Imprimir'}</span>
           </Button>
           <Button
             onClick={handleShare}
@@ -164,72 +209,78 @@ export function ComprobanteReceipt({ cliente, visitId, servicio, restantes, onDo
         </div>
       </div>
 
-      {/* Printable receipt */}
-      <div className="hidden print:block">
-        <style>{`
-          @media print {
-            body * { visibility: hidden !important; }
-            .receipt-print, .receipt-print * { visibility: visible !important; }
-            .receipt-print { position: fixed; top: 0; left: 0; width: 80mm; }
-          }
-        `}</style>
-        <div
-          className="receipt-print mx-auto font-mono text-black"
-          style={{ width: '80mm', fontSize: '12px', lineHeight: '1.5' }}
-        >
-          <div className="text-center border-b border-black pb-2 mb-3">
-            <p className="font-bold text-base">{cliente.empresa}</p>
-            <p className="text-xs">COMPROBANTE DE VISITA</p>
-          </div>
-
-          <div className="space-y-1 mb-3">
-            <div className="flex justify-between">
-              <span>No.:</span>
-              <span className="font-bold">{codigoOperacion}</span>
+      {/* Ticket imprimible: Receipt Engine (plantilla de la empresa, QR TX-…) */}
+      {ticket ? (
+        <ReceiptTicket
+          ticket={ticket}
+          esCopia={esCopia}
+          copiaNumero={esCopia ? copiaNumero : undefined}
+          logoUrl={ticket.empresa.logoUrl}
+        />
+      ) : (
+        /* Fallback legado si el servidor no devolvió el payload del ticket */
+        <div className="hidden print:block">
+          <style>{`
+            @media print {
+              body * { visibility: hidden !important; }
+              .receipt-print, .receipt-print * { visibility: visible !important; }
+              .receipt-print { position: fixed; top: 0; left: 0; width: 80mm; }
+            }
+          `}</style>
+          <div
+            className="receipt-print mx-auto font-mono text-black"
+            style={{ width: '80mm', fontSize: '12px', lineHeight: '1.5' }}
+          >
+            <div className="text-center border-b border-black pb-2 mb-3">
+              <p className="font-bold text-base">{cliente.empresa}</p>
+              <p className="text-xs">COMPROBANTE DE VISITA</p>
             </div>
-            <div className="flex justify-between">
-              <span>Fecha:</span>
-              <span>{fmtDateTime(now)}</span>
-            </div>
-          </div>
-
-          <div className="border-t border-dashed border-black pt-2 mt-2 space-y-1 mb-3">
-            <div className="flex justify-between">
-              <span>Cliente:</span>
-              <span className="font-bold">{cliente.nombre}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Plan:</span>
-              <span>{cliente.planNombre ?? '—'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Servicio:</span>
-              <span>{servicio}</span>
-            </div>
-          </div>
-
-          <div className="border-t border-dashed border-black pt-2 mt-2 mb-3">
-            {cliente.esIlimitado ? (
-              <div className="flex justify-between font-bold">
-                <span>Usos:</span>
-                <span>ILIMITADO</span>
+            <div className="space-y-1 mb-3">
+              <div className="flex justify-between">
+                <span>No.:</span>
+                <span className="font-bold">{codigoOperacion}</span>
               </div>
-            ) : (
-              <div className="flex justify-between font-bold">
-                <span>Usos restantes:</span>
-                <span>{restantes}</span>
+              <div className="flex justify-between">
+                <span>Fecha:</span>
+                <span>{fmtDateTime(now)}</span>
               </div>
-            )}
-          </div>
-
-          <div className="border-t border-black pt-2 text-center text-xs">
-            <p>Gracias por tu preferencia.</p>
-            <p className="mt-1 text-[10px] text-gray-500">
-              Ref: {visitId.slice(-12).toUpperCase()}
-            </p>
+            </div>
+            <div className="border-t border-dashed border-black pt-2 mt-2 space-y-1 mb-3">
+              <div className="flex justify-between">
+                <span>Cliente:</span>
+                <span className="font-bold">{cliente.nombre}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Plan:</span>
+                <span>{cliente.planNombre ?? '—'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Servicio:</span>
+                <span>{servicio}</span>
+              </div>
+            </div>
+            <div className="border-t border-dashed border-black pt-2 mt-2 mb-3">
+              {cliente.esIlimitado ? (
+                <div className="flex justify-between font-bold">
+                  <span>Usos:</span>
+                  <span>ILIMITADO</span>
+                </div>
+              ) : (
+                <div className="flex justify-between font-bold">
+                  <span>Usos restantes:</span>
+                  <span>{restantes}</span>
+                </div>
+              )}
+            </div>
+            <div className="border-t border-black pt-2 text-center text-xs">
+              <p>Gracias por tu preferencia.</p>
+              <p className="mt-1 text-[10px] text-gray-500">
+                Ref: {visitId.slice(-12).toUpperCase()}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   )
 }

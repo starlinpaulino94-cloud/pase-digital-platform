@@ -10,6 +10,8 @@ import {
 import { PerfilPublicoForm } from '@/components/admin/PerfilPublicoForm'
 import { CompanyQRRegistro } from '@/components/admin/CompanyQRRegistro'
 import { CompartirOfertaButton } from '@/components/admin/CompartirOfertaButton'
+import { ReceiptTemplateEditor } from '@/components/admin/ReceiptTemplateEditor'
+import type { ReceiptTemplateConfig } from '@/lib/receipts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { getAppUrl } from '@/lib/site'
@@ -92,12 +94,19 @@ export default async function PerfilEmpresaPage({
   let company: Awaited<ReturnType<typeof prisma.company.findUnique>> = null
   let categories: Awaited<ReturnType<typeof getActiveCategories>> = []
   let selectedCategoryIds: string[] = []
+  let receiptConfig: ReceiptTemplateConfig = {}
   try {
-    ;[company, categories, selectedCategoryIds] = await Promise.all([
+    let plantilla: { config: unknown } | null = null
+    ;[company, categories, selectedCategoryIds, plantilla] = await Promise.all([
       prisma.company.findUnique({ where: { id: companyId } }),
       getActiveCategories(),
       getCompanyCategoryIds(companyId),
+      prisma.receiptTemplate.findUnique({
+        where: { companyId },
+        select: { config: true },
+      }),
     ])
+    receiptConfig = (plantilla?.config ?? {}) as ReceiptTemplateConfig
   } catch (e) {
     console.error('[admin-perfil]', e)
     return (
@@ -207,6 +216,19 @@ export default async function PerfilEmpresaPage({
           />
         </CardContent>
       </Card>
+
+      {/* Fase E4: plantilla del comprobante impreso, por empresa y sin código */}
+      <ReceiptTemplateEditor
+        companyId={company.id}
+        initial={receiptConfig}
+        empresa={{
+          nombre: company.name,
+          direccion: company.direccion,
+          telefono: company.telefono,
+          web: company.website,
+          logoUrl: company.logoUrl,
+        }}
+      />
     </div>
   )
 }

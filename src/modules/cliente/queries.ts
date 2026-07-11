@@ -157,6 +157,8 @@ export interface VisitaHistorial {
   empleado: string | null
   planNombre: string | null
   vehiculo: { marca: string; modelo: string; placa: string | null } | null
+  /** Fase E4: registro oficial de la operación (si la visita generó uno). */
+  transaccion: { codigo: string; ticketNumero: string; estado: string } | null
 }
 
 export interface HistorialVisitas {
@@ -191,6 +193,7 @@ export async function getClienteVisitas(
         empleado: { select: { name: true } },
         membership: { select: { plan: { select: { nombre: true } } } },
         vehiculo: { select: { marca: true, modelo: true, placa: true } },
+        transaccion: { select: { codigo: true, ticketNumero: true, estado: true } },
       },
       orderBy: { fechaVisita: 'desc' },
       skip,
@@ -213,6 +216,9 @@ export async function getClienteVisitas(
       planNombre: v.membership?.plan?.nombre ?? null,
       vehiculo: v.vehiculo
         ? { marca: v.vehiculo.marca, modelo: v.vehiculo.modelo, placa: v.vehiculo.placa }
+        : null,
+      transaccion: v.transaccion
+        ? { codigo: v.transaccion.codigo, ticketNumero: v.transaccion.ticketNumero, estado: v.transaccion.estado }
         : null,
     })),
   }

@@ -1,12 +1,26 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- FASE E1.7 · Benefit Transformation Engine — versión IDEMPOTENTE
+-- Segura de ejecutar aunque una corrida anterior haya creado parte de los
+-- objetos ("type already exists", etc.): solo crea lo que falte.
+-- Al final imprime una verificación del estado.
+-- ═══════════════════════════════════════════════════════════════════════════
 
--- CreateEnum
-CREATE TYPE "TransformationType" AS ENUM ('UPGRADE', 'DOWNGRADE', 'EXCHANGE', 'REPLACEMENT', 'CUSTOMIZATION', 'SPLIT', 'MERGE');
+-- Enums (CREATE TYPE no soporta IF NOT EXISTS: se captura duplicate_object)
+DO $$ BEGIN
+  CREATE TYPE "TransformationType" AS ENUM
+    ('UPGRADE', 'DOWNGRADE', 'EXCHANGE', 'REPLACEMENT', 'CUSTOMIZATION', 'SPLIT', 'MERGE');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- CreateEnum
-CREATE TYPE "TransformationStatus" AS ENUM ('REQUESTED', 'RESOLVING', 'RESOLVED', 'PENDING_APPROVAL', 'APPROVED', 'PENDING_PAYMENT', 'EXECUTING', 'COMPLETED', 'REJECTED', 'CANCELLED', 'FAILED');
+DO $$ BEGIN
+  CREATE TYPE "TransformationStatus" AS ENUM
+    ('REQUESTED', 'RESOLVING', 'RESOLVED', 'PENDING_APPROVAL', 'APPROVED',
+     'PENDING_PAYMENT', 'EXECUTING', 'COMPLETED', 'REJECTED', 'CANCELLED', 'FAILED');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- CreateTable
-CREATE TABLE "benefit_transformations" (
+-- Tablas
+CREATE TABLE IF NOT EXISTS "benefit_transformations" (
     "id" TEXT NOT NULL,
     "companyId" TEXT NOT NULL,
     "subscriberId" TEXT NOT NULL,
@@ -38,8 +52,7 @@ CREATE TABLE "benefit_transformations" (
     CONSTRAINT "benefit_transformations_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "transformation_policies" (
+CREATE TABLE IF NOT EXISTS "transformation_policies" (
     "id" TEXT NOT NULL,
     "companyId" TEXT NOT NULL,
     "nombre" TEXT NOT NULL,
@@ -55,33 +68,62 @@ CREATE TABLE "transformation_policies" (
     CONSTRAINT "transformation_policies_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
-CREATE INDEX "benefit_transformations_companyId_status_idx" ON "benefit_transformations"("companyId", "status");
+-- Índices
+CREATE INDEX IF NOT EXISTS "benefit_transformations_companyId_status_idx"
+  ON "benefit_transformations"("companyId", "status");
+CREATE INDEX IF NOT EXISTS "benefit_transformations_companyId_type_idx"
+  ON "benefit_transformations"("companyId", "type");
+CREATE INDEX IF NOT EXISTS "benefit_transformations_subscriberId_idx"
+  ON "benefit_transformations"("subscriberId");
+CREATE INDEX IF NOT EXISTS "benefit_transformations_sourceBenefitId_idx"
+  ON "benefit_transformations"("sourceBenefitId");
+CREATE INDEX IF NOT EXISTS "benefit_transformations_targetBenefitId_idx"
+  ON "benefit_transformations"("targetBenefitId");
+CREATE INDEX IF NOT EXISTS "transformation_policies_companyId_tipo_activa_idx"
+  ON "transformation_policies"("companyId", "tipo", "activa");
 
--- CreateIndex
-CREATE INDEX "benefit_transformations_companyId_type_idx" ON "benefit_transformations"("companyId", "type");
+-- Foreign keys (ADD CONSTRAINT no soporta IF NOT EXISTS: se captura el duplicado)
+DO $$ BEGIN
+  ALTER TABLE "benefit_transformations"
+    ADD CONSTRAINT "benefit_transformations_companyId_fkey"
+    FOREIGN KEY ("companyId") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- CreateIndex
-CREATE INDEX "benefit_transformations_subscriberId_idx" ON "benefit_transformations"("subscriberId");
+DO $$ BEGIN
+  ALTER TABLE "benefit_transformations"
+    ADD CONSTRAINT "benefit_transformations_sourceBenefitId_fkey"
+    FOREIGN KEY ("sourceBenefitId") REFERENCES "benefits"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- CreateIndex
-CREATE INDEX "benefit_transformations_sourceBenefitId_idx" ON "benefit_transformations"("sourceBenefitId");
+DO $$ BEGIN
+  ALTER TABLE "benefit_transformations"
+    ADD CONSTRAINT "benefit_transformations_targetBenefitId_fkey"
+    FOREIGN KEY ("targetBenefitId") REFERENCES "benefits"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- CreateIndex
-CREATE INDEX "benefit_transformations_targetBenefitId_idx" ON "benefit_transformations"("targetBenefitId");
+DO $$ BEGIN
+  ALTER TABLE "transformation_policies"
+    ADD CONSTRAINT "transformation_policies_companyId_fkey"
+    FOREIGN KEY ("companyId") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- CreateIndex
-CREATE INDEX "transformation_policies_companyId_tipo_activa_idx" ON "transformation_policies"("companyId", "tipo", "activa");
-
--- AddForeignKey
-ALTER TABLE "benefit_transformations" ADD CONSTRAINT "benefit_transformations_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "benefit_transformations" ADD CONSTRAINT "benefit_transformations_sourceBenefitId_fkey" FOREIGN KEY ("sourceBenefitId") REFERENCES "benefits"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "benefit_transformations" ADD CONSTRAINT "benefit_transformations_targetBenefitId_fkey" FOREIGN KEY ("targetBenefitId") REFERENCES "benefits"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "transformation_policies" ADD CONSTRAINT "transformation_policies_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Verificación: debe devolver 4 filas OK (2 enums + 2 tablas) y 4 FKs.
+-- ═══════════════════════════════════════════════════════════════════════════
+SELECT 'enum ' || typname AS objeto, 'OK' AS estado
+  FROM pg_type WHERE typname IN ('TransformationType', 'TransformationStatus')
+UNION ALL
+SELECT 'tabla ' || tablename, 'OK'
+  FROM pg_tables
+ WHERE schemaname = 'public'
+   AND tablename IN ('benefit_transformations', 'transformation_policies')
+UNION ALL
+SELECT 'fk ' || conname, 'OK'
+  FROM pg_constraint
+ WHERE conname LIKE 'benefit_transformations_%_fkey'
+    OR conname LIKE 'transformation_policies_%_fkey'
+ORDER BY 1;

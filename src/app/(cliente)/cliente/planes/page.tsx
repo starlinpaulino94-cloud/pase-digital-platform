@@ -96,7 +96,7 @@ export default async function PlanesPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Oportunidades disponibles</h1>
+        <h1 className="text-2xl font-bold text-foreground">Planes disponibles</h1>
         <p className="mt-1 text-muted-foreground">
           Elige o cambia el plan que mejor se adapte a ti en {cliente.company.name}
         </p>

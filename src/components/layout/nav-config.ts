@@ -36,76 +36,106 @@ export interface NavLink {
 }
 
 export interface NavGroup {
+  /** Id estable del grupo (persistencia del estado colapsado). */
+  id: string
   label: string
   items: NavLink[]
 }
 
+/**
+ * Navegación del panel de empresa (Fase 2 UX): agrupada por ÁREA DE TRABAJO,
+ * no por relaciones técnicas entre módulos. Cada grupo responde a una tarea:
+ * ¿quién es mi cliente? (Clientes) · ¿qué ofrezco para retener? (Fidelización)
+ * · ¿qué comunico? (Marketing) · el mostrador (Operaciones) · ¿qué dicen los
+ * números? (Análisis) · atender (Soporte) · configurar (Empresa).
+ */
 const ADMIN_NAV: NavGroup[] = [
   {
+    id: 'inicio',
     label: 'Inicio',
     items: [{ href: '/admin/dashboard', label: 'Resumen', icon: LayoutDashboard }],
   },
   {
+    id: 'clientes',
     label: 'Clientes',
     items: [
       { href: '/admin/clientes', label: 'Clientes', icon: Users },
       { href: '/admin/membresias', label: 'Membresías', icon: CreditCard },
+    ],
+  },
+  {
+    id: 'fidelizacion',
+    label: 'Fidelización',
+    items: [
+      { href: '/admin/planes', label: 'Planes', icon: Package },
       { href: '/admin/promociones', label: 'Promociones', icon: Megaphone },
-      { href: '/admin/publicaciones', label: 'Publicaciones', icon: Newspaper },
-      { href: '/admin/campanas', label: 'Campañas', icon: Flag },
       { href: '/admin/referidos', label: 'Referidos', icon: Gift },
     ],
   },
   {
+    id: 'marketing',
+    label: 'Marketing',
+    items: [
+      { href: '/admin/campanas', label: 'Campañas', icon: Flag },
+      { href: '/admin/publicaciones', label: 'Publicaciones', icon: Newspaper },
+      { href: '/admin/notificaciones', label: 'Notificaciones', icon: Bell },
+      { href: '/admin/automatizaciones', label: 'Automatizaciones', icon: Zap },
+    ],
+  },
+  {
+    id: 'operaciones',
     label: 'Operaciones',
     items: [
       { href: '/admin/scanner', label: 'Escáner QR', icon: ScanLine },
       { href: '/admin/pagos', label: 'Pagos', icon: Wallet },
-    ],
-  },
-  {
-    label: 'Empresa',
-    items: [
-      { href: '/admin/perfil', label: 'Perfil público', icon: Store },
       { href: '/admin/sucursales', label: 'Sucursales', icon: Building2 },
-      { href: '/admin/metodos-pago', label: 'Métodos de pago', icon: Landmark },
-      { href: '/admin/planes', label: 'Planes', icon: Package },
     ],
   },
   {
+    id: 'analisis',
+    label: 'Análisis',
+    items: [
+      { href: '/admin/reportes', label: 'Reportes', icon: BarChart3 },
+      { href: '/admin/audiencia', label: 'Audiencia', icon: TrendingUp },
+    ],
+  },
+  {
+    id: 'soporte',
     label: 'Soporte',
     items: [
-      { href: '/admin/notificaciones', label: 'Notificaciones', icon: Bell },
-      { href: '/admin/automatizaciones', label: 'Automatizaciones', icon: Zap },
-      { href: '/admin/comunicacion', label: 'Comunicación y Soporte', icon: MessageCircle },
+      { href: '/admin/comunicacion', label: 'Comunicación', icon: MessageCircle },
       { href: '/admin/tickets', label: 'Tickets', icon: LifeBuoy },
     ],
   },
   {
-    label: 'Configuración',
+    id: 'empresa',
+    label: 'Empresa',
     items: [
+      { href: '/admin/perfil', label: 'Perfil público', icon: Store },
+      { href: '/admin/metodos-pago', label: 'Métodos de pago', icon: Landmark },
       { href: '/admin/empleados', label: 'Empleados', icon: UserCog },
-      { href: '/admin/reportes', label: 'Reportes', icon: BarChart3 },
-      { href: '/admin/audiencia', label: 'Audiencia', icon: TrendingUp },
     ],
   },
 ]
 
 const CLIENTE_NAV: NavGroup[] = [
   {
+    id: 'inicio',
     label: 'Inicio',
     // Enlace directo a la vista real (evita el salto de redirect por
     // /cliente/dashboard -> /mis-membresias).
     items: [{ href: '/mis-membresias', label: 'Mis membresías', icon: LayoutDashboard }],
   },
   {
+    id: 'membresia',
     label: 'Membresía',
     items: [
-      { href: '/cliente/planes', label: 'Oportunidades', icon: Package },
+      { href: '/cliente/planes', label: 'Planes', icon: Package },
       { href: '/cliente/pagos', label: 'Mis pagos', icon: Wallet },
     ],
   },
   {
+    id: 'beneficios',
     label: 'Beneficios',
     items: [
       { href: '/cliente/explorar', label: 'Explorar empresas', icon: Compass },
@@ -115,6 +145,7 @@ const CLIENTE_NAV: NavGroup[] = [
     ],
   },
   {
+    id: 'cuenta',
     label: 'Cuenta',
     items: [
       { href: '/cliente/historial', label: 'Historial', icon: History },
@@ -129,10 +160,12 @@ const CLIENTE_NAV: NavGroup[] = [
 // añade automáticamente aquí (antes era una copia manual que divergía).
 const SUPERADMIN_NAV: NavGroup[] = [
   {
+    id: 'inicio',
     label: 'Inicio',
     items: [{ href: '/superadmin/dashboard', label: 'Resumen', icon: LayoutDashboard }],
   },
   {
+    id: 'plataforma',
     label: 'Plataforma',
     items: [
       { href: '/superadmin/empresas', label: 'Empresas', icon: Building2 },
@@ -144,11 +177,12 @@ const SUPERADMIN_NAV: NavGroup[] = [
     ],
   },
   // Panel de empresa completo, sin el grupo "Inicio" (el superadmin ya tiene el suyo).
-  ...ADMIN_NAV.filter((g) => g.label !== 'Inicio'),
+  ...ADMIN_NAV.filter((g) => g.id !== 'inicio'),
 ]
 
 const EMPLEADO_NAV: NavGroup[] = [
   {
+    id: 'operaciones',
     label: 'Operaciones',
     items: [{ href: '/empleado/scanner', label: 'Escanear QR', icon: ScanLine }],
   },

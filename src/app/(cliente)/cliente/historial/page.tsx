@@ -7,6 +7,7 @@ import {
   MapPin,
   User,
   Car,
+  Hash,
 } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
 import { getClienteVisitas, type HistorialVisitas } from '@/modules/cliente/queries'
@@ -130,11 +131,19 @@ export default async function HistorialPage({
                         {v.planNombre && <span>Plan: {v.planNombre}</span>}
                       </div>
 
+                      {/* Fase E4: identificador oficial de la operación */}
+                      {v.transaccion && (
+                        <p className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
+                          <Hash className="h-3 w-3" />
+                          {v.transaccion.codigo} · {v.transaccion.ticketNumero}
+                        </p>
+                      )}
+
                       {v.notas && (
                         <p className="mt-1 text-xs italic text-muted-foreground">“{v.notas}”</p>
                       )}
                     </div>
-                    <div className="shrink-0">
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
                       {v.descontado ? (
                         <Badge variant="secondary" className="bg-destructive/10 text-xs text-destructive">
                           −1 uso
@@ -142,6 +151,15 @@ export default async function HistorialPage({
                       ) : (
                         <Badge variant="secondary" className="bg-success/10 text-xs text-success">
                           Sin descuento
+                        </Badge>
+                      )}
+                      {v.transaccion && v.transaccion.estado !== 'APPLIED' && (
+                        <Badge variant="secondary" className="bg-warning/15 text-[10px] text-warning-foreground">
+                          {v.transaccion.estado === 'REVERTED'
+                            ? 'Revertida'
+                            : v.transaccion.estado === 'CANCELLED'
+                              ? 'Cancelada'
+                              : v.transaccion.estado}
                         </Badge>
                       )}
                     </div>
