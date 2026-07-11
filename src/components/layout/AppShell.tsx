@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AppSidebar } from '@/components/layout/AppSidebar'
@@ -24,6 +24,7 @@ export function AppShell({
   children: React.ReactNode
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const drawerRef = useRef<HTMLElement>(null)
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -31,6 +32,17 @@ export function AppShell({
     return () => {
       document.body.style.overflow = ''
     }
+  }, [mobileOpen])
+
+  // A11y del drawer: cerrar con Escape y mover el foco al abrirlo.
+  useEffect(() => {
+    if (!mobileOpen) return
+    drawerRef.current?.querySelector<HTMLElement>('a, button')?.focus()
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setMobileOpen(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
   }, [mobileOpen])
 
   return (
@@ -50,11 +62,15 @@ export function AppShell({
         <div
           onClick={() => setMobileOpen(false)}
           className={cn(
-            'absolute inset-0 bg-slate-900/50 transition-opacity',
+            'absolute inset-0 bg-black/50 transition-opacity',
             mobileOpen ? 'opacity-100' : 'opacity-0'
           )}
         />
         <aside
+          ref={drawerRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menú de navegación"
           className={cn(
             'absolute inset-y-0 left-0 w-64 overflow-hidden rounded-r-2xl elevation-3 transition-transform duration-300',
             mobileOpen ? 'translate-x-0' : '-translate-x-full'

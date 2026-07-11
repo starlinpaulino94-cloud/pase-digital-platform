@@ -422,10 +422,15 @@
   .delay-300 { animation-delay: 300ms; }
   .delay-500 { animation-delay: 500ms; }
 
-  /* Respeta la preferencia de reducir movimiento */
+  /* Respeta la preferencia de reducir movimiento (todas las animaciones custom) */
   @media (prefers-reduced-motion: reduce) {
     .animate-float,
     .animate-float-slow,
-    .animate-pulse-glow { animation: none; }
+    .animate-pulse-glow,
+    .animate-fade-up,
+    .animate-fade-in,
+    .animate-slide-up,
+    .animate-scale-in,
+    .skeleton-shimmer { animation: none; }
   }
 }

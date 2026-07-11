@@ -66,18 +66,22 @@ export function DataTable<TData extends Record<string, unknown>, TValue>({
     },
   })
 
+  function csvEscape(value: unknown): string {
+    const s = String(value ?? '')
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+  }
+
   function exportCSV() {
     const headers = columns
       .filter((col) => col.header)
-      .map((col) => (typeof col.header === 'string' ? col.header : col.id ?? ''))
+      .map((col) => csvEscape(typeof col.header === 'string' ? col.header : (col.id ?? '')))
 
-    const rows = table.getRowModel().rows.map((row) =>
+    // Exporta el VALOR crudo de cada celda (cell.getValue()), no el ReactElement
+    // renderizado — String(ReactElement) produce "[object Object]".
+    const rows = table.getFilteredRowModel().rows.map((row) =>
       row
         .getVisibleCells()
-        .map((cell) => {
-          const value = flexRender(cell.column.columnDef.cell, cell.getContext())
-          return String(value ?? '')
-        })
+        .map((cell) => csvEscape(cell.getValue()))
         .join(',')
     )
 
@@ -96,7 +100,7 @@ export function DataTable<TData extends Record<string, unknown>, TValue>({
       {/* Toolbar */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={searchPlaceholder}
             value={globalFilter ?? ''}
@@ -119,15 +123,15 @@ export function DataTable<TData extends Record<string, unknown>, TValue>({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-border/70 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-lg border border-border/70 bg-card shadow-sm">
         <table className="w-full">
-          <thead className="border-b border-border/70 bg-slate-50/50">
+          <thead className="border-b border-border/70 bg-muted/50">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider"
+                    className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider"
                   >
                     {header.isPlaceholder
                       ? null
@@ -142,7 +146,7 @@ export function DataTable<TData extends Record<string, unknown>, TValue>({
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="px-4 py-8 text-center text-sm text-slate-500"
+                  className="px-4 py-8 text-center text-sm text-muted-foreground"
                 >
                   Sin resultados.
                 </td>
@@ -154,12 +158,12 @@ export function DataTable<TData extends Record<string, unknown>, TValue>({
                   onClick={() => onRowClick?.(row.original)}
                   className={cn(
                     'border-b border-border/40 transition',
-                    striped && idx % 2 === 1 ? 'bg-slate-50/30' : '',
-                    onRowClick ? 'cursor-pointer hover:bg-slate-50' : ''
+                    striped && idx % 2 === 1 ? 'bg-muted/30' : '',
+                    onRowClick ? 'cursor-pointer hover:bg-muted/50' : ''
                   )}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 py-3 text-sm text-slate-900">
+                    <td key={cell.id} className="px-4 py-3 text-sm text-foreground">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
@@ -172,7 +176,7 @@ export function DataTable<TData extends Record<string, unknown>, TValue>({
 
       {/* Pagination */}
       <div className="flex items-center justify-between gap-2 px-2 py-4">
-        <div className="text-xs text-slate-600">
+        <div className="text-xs text-muted-foreground">
           Mostrando <strong>{table.getRowModel().rows.length}</strong> de{' '}
           <strong>{table.getFilteredRowModel().rows.length}</strong> resultados
         </div>
@@ -196,7 +200,7 @@ export function DataTable<TData extends Record<string, unknown>, TValue>({
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-xs font-medium text-slate-700 px-2">
+          <span className="text-xs font-medium text-muted-foreground px-2">
             Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
           </span>
           <Button

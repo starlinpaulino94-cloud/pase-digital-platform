@@ -124,6 +124,9 @@ const CLIENTE_NAV: NavGroup[] = [
   },
 ]
 
+// El superadmin ve su sección de plataforma + el panel de empresa completo.
+// Derivado por composición de ADMIN_NAV: añadir una sección al panel admin la
+// añade automáticamente aquí (antes era una copia manual que divergía).
 const SUPERADMIN_NAV: NavGroup[] = [
   {
     label: 'Inicio',
@@ -140,50 +143,8 @@ const SUPERADMIN_NAV: NavGroup[] = [
       { href: '/superadmin/reportes', label: 'Reportes globales', icon: BarChart3 },
     ],
   },
-  {
-    label: 'Clientes',
-    items: [
-      { href: '/admin/clientes', label: 'Clientes', icon: Users },
-      { href: '/admin/membresias', label: 'Membresías', icon: CreditCard },
-      { href: '/admin/promociones', label: 'Promociones', icon: Megaphone },
-      { href: '/admin/publicaciones', label: 'Publicaciones', icon: Newspaper },
-      { href: '/admin/campanas', label: 'Campañas', icon: Flag },
-      { href: '/admin/referidos', label: 'Referidos', icon: Gift },
-    ],
-  },
-  {
-    label: 'Operaciones',
-    items: [
-      { href: '/admin/scanner', label: 'Escáner QR', icon: ScanLine },
-      { href: '/admin/pagos', label: 'Pagos', icon: Wallet },
-    ],
-  },
-  {
-    label: 'Empresa',
-    items: [
-      { href: '/admin/perfil', label: 'Perfil público', icon: Store },
-      { href: '/admin/sucursales', label: 'Sucursales', icon: Building2 },
-      { href: '/admin/metodos-pago', label: 'Métodos de pago', icon: Landmark },
-      { href: '/admin/planes', label: 'Planes', icon: Package },
-    ],
-  },
-  {
-    label: 'Soporte',
-    items: [
-      { href: '/admin/notificaciones', label: 'Notificaciones', icon: Bell },
-      { href: '/admin/automatizaciones', label: 'Automatizaciones', icon: Zap },
-      { href: '/admin/comunicacion', label: 'Comunicación y Soporte', icon: MessageCircle },
-      { href: '/admin/tickets', label: 'Tickets', icon: LifeBuoy },
-    ],
-  },
-  {
-    label: 'Configuración',
-    items: [
-      { href: '/admin/empleados', label: 'Empleados', icon: UserCog },
-      { href: '/admin/reportes', label: 'Reportes', icon: BarChart3 },
-      { href: '/admin/audiencia', label: 'Audiencia', icon: TrendingUp },
-    ],
-  },
+  // Panel de empresa completo, sin el grupo "Inicio" (el superadmin ya tiene el suyo).
+  ...ADMIN_NAV.filter((g) => g.label !== 'Inicio'),
 ]
 
 const EMPLEADO_NAV: NavGroup[] = [

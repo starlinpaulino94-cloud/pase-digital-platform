@@ -127,17 +127,17 @@ export function estadoLabel(e: string): string {
   )[e] ?? e
 }
 
-/** Clases de color (tailwind) para el badge de estado. */
+/** Clases de color para el badge de estado (tokens semánticos del design system). */
 export function estadoBadgeClass(e: string): string {
   return (
     {
-      NUEVO: 'bg-sky-100 text-sky-700',
-      EN_PROCESO: 'bg-amber-100 text-amber-700',
-      ESPERANDO_CLIENTE: 'bg-violet-100 text-violet-700',
-      RESUELTO: 'bg-emerald-100 text-emerald-700',
-      CERRADO: 'bg-slate-200 text-slate-600',
+      NUEVO: 'bg-info/10 text-info',
+      EN_PROCESO: 'bg-warning/15 text-warning-foreground',
+      ESPERANDO_CLIENTE: 'bg-primary/10 text-primary',
+      RESUELTO: 'bg-success/10 text-success',
+      CERRADO: 'bg-muted text-muted-foreground',
     } as Record<string, string>
-  )[e] ?? 'bg-slate-100 text-slate-600'
+  )[e] ?? 'bg-muted text-muted-foreground'
 }
 
 export function categoriaLabel(c: string): string {

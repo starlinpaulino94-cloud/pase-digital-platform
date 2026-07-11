@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { logout } from '@/modules/auth/actions'
+import { Logo } from '@/components/layout/Logo'
 import { navForRole, roleLabel } from '@/components/layout/nav-config'
 import type { AppRole } from '@/types'
 
@@ -31,8 +32,7 @@ export function AppSidebar({
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       {/* Brand */}
       <div className="flex h-14 shrink-0 items-center gap-2.5 px-4">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.svg" alt="MembeGo" width={28} height={28} className="rounded-lg" />
+        <Logo size={28} className="rounded-lg" />
         <div className="min-w-0">
           <p className="truncate text-[13px] font-semibold tracking-tight text-white">
             {title}
