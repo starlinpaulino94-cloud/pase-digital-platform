@@ -5,8 +5,12 @@ import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AppSidebar } from '@/components/layout/AppSidebar'
 import { AppHeader } from '@/components/layout/AppHeader'
+import { BottomNav } from '@/components/layout/BottomNav'
 import type { CompanyOption } from '@/components/cliente/CompanySwitcher'
 import type { AppRole } from '@/types'
+
+/** Roles con navegación inferior en móvil (experiencia principalmente táctil). */
+const BOTTOM_NAV_ROLES: readonly AppRole[] = ['CLIENTE']
 
 export function AppShell({
   role,
@@ -25,6 +29,7 @@ export function AppShell({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const drawerRef = useRef<HTMLElement>(null)
+  const hasBottomNav = BOTTOM_NAV_ROLES.includes(role)
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -101,10 +106,18 @@ export function AppShell({
           companies={companies}
           onMenuClick={() => setMobileOpen(true)}
         />
-        <main className="mx-auto max-w-7xl px-4 py-8 md:px-6 lg:px-8">
+        <main
+          className={cn(
+            'mx-auto max-w-7xl px-4 py-8 md:px-6 lg:px-8',
+            // Espacio para que la barra inferior no tape el contenido en móvil.
+            hasBottomNav && 'pb-24 lg:pb-8'
+          )}
+        >
           {children}
         </main>
       </div>
+
+      {hasBottomNav && <BottomNav role={role} />}
     </div>
   )
 }
