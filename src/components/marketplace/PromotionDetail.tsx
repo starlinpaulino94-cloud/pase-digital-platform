@@ -11,9 +11,11 @@ export interface PromotionDetailProps {
    */
   mode: 'public' | 'app'
   promotion: PromotionPublic
+  /** Fase E5: CTA de compra directa (lo inyecta la página del cliente). */
+  comprarSlot?: React.ReactNode
 }
 
-export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
+export function PromotionDetail({ mode, promotion, comprarSlot }: PromotionDetailProps) {
   const isApp = mode === 'app'
   const isExpired =
     promotion.vigenciaHasta && new Date(promotion.vigenciaHasta) < new Date()
@@ -197,8 +199,10 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
 
             {/* CTA */}
             {!isExpired && (
-              <div className="pt-4">
-                {isApp ? (
+              <div className="pt-4 space-y-3">
+                {/* Fase E5: compra directa (inyectada por la página del cliente) */}
+                {comprarSlot}
+                {isApp && comprarSlot ? null : isApp ? (
                   <Link
                     href={empresaHref}
                     className="w-full block text-center bg-primary text-white px-6 py-4 rounded-lg hover:bg-primary transition-colors font-bold text-lg"

@@ -3,6 +3,7 @@ import { requireRole } from '@/lib/auth/guards'
 import { recordPromotionView } from '@/modules/marketplace/actions'
 import { getPromotionDetail } from '@/modules/marketplace/queries'
 import { PromotionDetail } from '@/components/marketplace/PromotionDetail'
+import { ComprarPromoButton } from '@/components/cliente/ComprarPromoButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,5 +27,19 @@ export default async function ClientePromocionPage({
   // Registrar vista (no bloqueante)
   recordPromotionView(id).catch(console.error)
 
-  return <PromotionDetail mode="app" promotion={promotion} />
+  return (
+    <PromotionDetail
+      mode="app"
+      promotion={promotion}
+      comprarSlot={
+        promotion.venta ? (
+          <ComprarPromoButton
+            promocionId={promotion.id}
+            precio={promotion.venta.precio}
+            agotada={promotion.venta.agotada}
+          />
+        ) : undefined
+      }
+    />
+  )
 }

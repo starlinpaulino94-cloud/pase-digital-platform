@@ -24,6 +24,7 @@ import {
   Bell,
   Flag,
   Zap,
+  Ticket,
   type LucideIcon,
 } from 'lucide-react'
 import type { AppRole } from '@/types'
@@ -141,6 +142,7 @@ const CLIENTE_NAV: NavGroup[] = [
       { href: '/cliente/explorar', label: 'Explorar empresas', icon: Compass },
       { href: '/cliente/empresas', label: 'Mis empresas', icon: Building2 },
       { href: '/cliente/promociones', label: 'Promociones', icon: Megaphone },
+      { href: '/cliente/mis-promociones', label: 'Mis promociones', icon: Ticket },
       { href: '/cliente/referidos', label: 'Referidos', icon: Gift },
     ],
   },
