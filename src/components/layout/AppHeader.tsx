@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Menu, Search, X } from 'lucide-react'
 import { navForRole, allLinks } from '@/components/layout/nav-config'
 import { NotificationBell } from '@/components/layout/NotificationBell'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { CompanySwitcher, type CompanyOption } from '@/components/cliente/CompanySwitcher'
 import type { AppRole } from '@/types'
 
@@ -142,6 +143,7 @@ export function AppHeader({
       {/* Acciones */}
       <div className="flex shrink-0 items-center gap-1">
         {companies && <CompanySwitcher companies={companies} />}
+        <ThemeToggle />
         <NotificationBell initialCount={notifCount} />
       </div>
     </header>

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
+import { ThemeProvider } from '@/components/ThemeProvider'
 import { SITE_NAME, SITE_DESCRIPTION, getAppUrl } from '@/lib/site'
 import './globals.css'
 
@@ -109,13 +110,17 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es">
+    // suppressHydrationWarning: next-themes escribe la clase del tema en <html>
+    // antes de hidratar (evita el flash de tema incorrecto).
+    <html lang="es" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <StructuredData />
-        {children}
-        <Toaster richColors position="top-center" />
+        <ThemeProvider>
+          <StructuredData />
+          {children}
+          <Toaster richColors position="top-center" />
+        </ThemeProvider>
       </body>
     </html>
   )
