@@ -196,6 +196,10 @@ model Company {
   moneda                String   @default("DOP") // ISO 4217: DOP, USD, EUR…
   zonaHoraria           String   @default("America/Santo_Domingo") // IANA
   idioma                String   @default("es-DO") // locale BCP 47
+  // Fase E7: método de escaneo predeterminado del escáner ("camara" | "lector").
+  // El operador puede cambiarlo en pantalla sin recargar; esto es solo el valor
+  // inicial que la empresa configura.
+  escanerModo           String   @default("camara")
   colorPrimario         String? // hex de marca, ej. "#0ea5e9"
   politicaCancelacion   String?
   politicaPrivacidad    String?
