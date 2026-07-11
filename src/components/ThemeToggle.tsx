@@ -1,19 +1,23 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { useTheme } from 'next-themes'
 import { Moon, Sun } from 'lucide-react'
 
+const emptySubscribe = () => () => {}
+
 /**
- * Toggle claro/oscuro del header. Renderiza un placeholder estable hasta
- * montar (next-themes solo conoce el tema real en cliente) para evitar
- * mismatch de hidratación.
+ * Toggle claro/oscuro del header. next-themes solo conoce el tema real en el
+ * cliente: `mounted` (useSyncExternalStore) es false en SSR y true tras
+ * hidratar, sin efectos ni mismatch.
  */
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => setMounted(true), [])
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  )
 
   const isDark = mounted && resolvedTheme === 'dark'
 
