@@ -138,6 +138,10 @@ export function ConfirmVisit({
         visitId={state.visitId}
         servicio={state.servicio ?? servicio}
         restantes={state.restantes ?? 0}
+        transaccionId={state.transaccionId}
+        codigo={state.codigo}
+        ticketNumero={state.ticketNumero}
+        ticket={state.ticket}
         onDone={onDone}
         onScanNext={onScanNext}
       />
