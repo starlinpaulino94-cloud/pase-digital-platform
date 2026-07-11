@@ -1,9 +1,11 @@
-import { AlertCircle, Cake, Clock, UserX, ShieldCheck } from 'lucide-react'
+import Link from 'next/link'
+import { AlertCircle, Cake, Clock, UserX, ShieldCheck, LayoutTemplate } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { ADMIN_ROLES } from '@/types'
 import { requireRole } from '@/lib/auth/guards'
 import { EjecutarAutomatizaciones } from '@/components/admin/EjecutarAutomatizaciones'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/ui/page-header'
 import { EmptyState } from '@/components/ui/empty-state'
 import { StatusBanner } from '@/components/ui/status-banner'
@@ -62,7 +64,17 @@ export default async function AutomatizacionesPage() {
       <PageHeader
         title="Automatizaciones"
         description="Avisos automáticos a tus clientes según su actividad. Son idempotentes: nunca se envían dos veces."
-        action={<EjecutarAutomatizaciones />}
+        action={
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline">
+              <Link href="/admin/automatizaciones/plantillas">
+                <LayoutTemplate className="mr-2 h-4 w-4" />
+                Plantillas
+              </Link>
+            </Button>
+            <EjecutarAutomatizaciones />
+          </div>
+        }
       />
 
       <div className="grid gap-4 md:grid-cols-3">

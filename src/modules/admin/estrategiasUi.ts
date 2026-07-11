@@ -1,7 +1,7 @@
 import type { PlaybookCategory, PlaybookComplexity } from '@/lib/automation'
 
 /**
- * Presentación del Marketplace de Estrategias: etiquetas legibles para las
+ * Presentación de las Plantillas de automatización (playbooks): etiquetas legibles para las
  * categorías/complejidad/estado de los Automation Playbooks. Solo datos de UI;
  * la biblioteca vive en `@/lib/automation/playbooks`.
  */
@@ -52,8 +52,8 @@ export const ESTADO_LABELS: Record<string, string> = {
 
 /** Clases de badge por estado de la automatización instalada. */
 export const ESTADO_BADGE: Record<string, string> = {
-  DRAFT: 'bg-slate-100 text-slate-700',
-  PUBLISHED: 'bg-emerald-100 text-emerald-700',
-  PAUSED: 'bg-amber-100 text-amber-700',
-  ARCHIVED: 'bg-slate-100 text-slate-400',
+  DRAFT: 'bg-muted text-muted-foreground',
+  PUBLISHED: 'bg-success/10 text-success',
+  PAUSED: 'bg-warning/15 text-warning-foreground',
+  ARCHIVED: 'bg-muted text-muted-foreground/60',
 }

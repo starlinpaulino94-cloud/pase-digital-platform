@@ -30,12 +30,12 @@ import {
 export const dynamic = 'force-dynamic'
 
 /**
- * Marketplace de Estrategias: biblioteca de los 180 Automation Playbooks
+ * Plantillas de automatización: biblioteca de los 180 Automation Playbooks
  * (E1.1–E1.10) instalables por la empresa sin escribir código. La pestaña
  * "Instaladas" administra las automatizaciones creadas desde la biblioteca
  * (activar/pausar/desinstalar) sobre el Automation Engine real.
  */
-export default async function EstrategiasPage({
+export default async function PlantillasAutomatizacionPage({
   searchParams,
 }: {
   searchParams: Promise<{ categoria?: string; vista?: string }>
@@ -47,12 +47,12 @@ export default async function EstrategiasPage({
   if (!companyId) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-slate-900">Estrategias</h1>
+        <h1 className="text-h1 text-foreground">Plantillas de automatización</h1>
         <Card>
-          <CardContent className="py-12 text-center text-slate-500">
-            <AlertCircle className="mx-auto mb-3 h-8 w-8 text-slate-300" />
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <AlertCircle className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" />
             Esta vista es por empresa. Selecciona una empresa activa para usar el
-            marketplace de estrategias.
+            catálogo de plantillas.
           </CardContent>
         </Card>
       </div>
@@ -87,27 +87,27 @@ export default async function EstrategiasPage({
       {/* Encabezado + métricas */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900">
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-foreground">
             <Sparkles className="h-6 w-6 text-primary" />
-            Estrategias
+            Plantillas de automatización
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Biblioteca de estrategias comerciales listas para instalar: elige una,
-            actívala y el sistema la ejecuta por ti.
+          <p className="mt-1 text-sm text-muted-foreground">
+            Automatizaciones listas para usar: elige una plantilla, actívala y el
+            sistema la ejecuta por ti.
           </p>
         </div>
         <div className="flex gap-3">
-          <div className="rounded-lg border bg-white px-4 py-2 text-center">
-            <p className="text-lg font-bold text-slate-900">{ALL_PLAYBOOKS.length}</p>
-            <p className="text-xs text-slate-500">disponibles</p>
+          <div className="rounded-lg border bg-card px-4 py-2 text-center">
+            <p className="text-lg font-bold text-foreground">{ALL_PLAYBOOKS.length}</p>
+            <p className="text-xs text-muted-foreground">disponibles</p>
           </div>
-          <div className="rounded-lg border bg-white px-4 py-2 text-center">
-            <p className="text-lg font-bold text-slate-900">{instaladas.length}</p>
-            <p className="text-xs text-slate-500">instaladas</p>
+          <div className="rounded-lg border bg-card px-4 py-2 text-center">
+            <p className="text-lg font-bold text-foreground">{instaladas.length}</p>
+            <p className="text-xs text-muted-foreground">instaladas</p>
           </div>
-          <div className="rounded-lg border bg-white px-4 py-2 text-center">
-            <p className="text-lg font-bold text-emerald-600">{activas}</p>
-            <p className="text-xs text-slate-500">activas</p>
+          <div className="rounded-lg border bg-card px-4 py-2 text-center">
+            <p className="text-lg font-bold text-success">{activas}</p>
+            <p className="text-xs text-muted-foreground">activas</p>
           </div>
         </div>
       </div>
@@ -115,21 +115,21 @@ export default async function EstrategiasPage({
       {/* Pestañas: Biblioteca / Instaladas */}
       <div className="flex gap-2 border-b">
         <Link
-          href="/admin/estrategias"
+          href="/admin/automatizaciones/plantillas"
           className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${
             !mostrarInstaladas
               ? 'border-primary text-primary'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
           Biblioteca
         </Link>
         <Link
-          href="/admin/estrategias?vista=instaladas"
+          href="/admin/automatizaciones/plantillas?vista=instaladas"
           className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${
             mostrarInstaladas
               ? 'border-primary text-primary'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
           Instaladas ({instaladas.length})
@@ -142,7 +142,7 @@ export default async function EstrategiasPage({
         <>
           {/* Filtro por categoría */}
           <div className="flex flex-wrap gap-2">
-            <Link href="/admin/estrategias">
+            <Link href="/admin/automatizaciones/plantillas">
               <Badge
                 variant={categoriaActiva === null ? 'default' : 'outline'}
                 className="cursor-pointer"
@@ -153,7 +153,7 @@ export default async function EstrategiasPage({
             {CATEGORIAS_ORDEN.map((cat) => {
               const n = ALL_PLAYBOOKS.filter((p) => p.category === cat).length
               return (
-                <Link key={cat} href={`/admin/estrategias?categoria=${cat}`}>
+                <Link key={cat} href={`/admin/automatizaciones/plantillas?categoria=${cat}`}>
                   <Badge
                     variant={categoriaActiva === cat ? 'default' : 'outline'}
                     className="cursor-pointer"
@@ -166,7 +166,7 @@ export default async function EstrategiasPage({
           </div>
 
           {categoriaActiva ? (
-            <p className="text-sm text-slate-500">{CATEGORIA_DESCRIPCION[categoriaActiva]}</p>
+            <p className="text-sm text-muted-foreground">{CATEGORIA_DESCRIPCION[categoriaActiva]}</p>
           ) : null}
 
           {/* Grid de playbooks */}
@@ -193,7 +193,7 @@ function PlaybookCard({
   instalada: string | null
 }) {
   return (
-    <Link href={`/admin/estrategias/${playbook.id}`} className="group">
+    <Link href={`/admin/automatizaciones/plantillas/${playbook.id}`} className="group">
       <Card className="h-full transition-shadow hover:shadow-md">
         <CardContent className="flex h-full flex-col gap-3 p-4">
           <div className="flex items-center justify-between gap-2">
@@ -216,13 +216,13 @@ function PlaybookCard({
           </div>
 
           <div className="flex-1">
-            <h3 className="font-semibold text-slate-900 group-hover:text-primary">
+            <h3 className="font-semibold text-foreground group-hover:text-primary">
               {playbook.name}
             </h3>
-            <p className="mt-1 line-clamp-2 text-sm text-slate-500">{playbook.objective}</p>
+            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{playbook.objective}</p>
           </div>
 
-          <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <Target className="h-3.5 w-3.5" />
               {COMPLEJIDAD_LABELS[playbook.complexity]}
@@ -255,9 +255,9 @@ function InstaladasLista({
   if (instaladas.length === 0) {
     return (
       <Card>
-        <CardContent className="py-12 text-center text-slate-500">
-          <Sparkles className="mx-auto mb-3 h-8 w-8 text-slate-300" />
-          Aún no has instalado ninguna estrategia. Explora la biblioteca y elige la
+        <CardContent className="py-12 text-center text-muted-foreground">
+          <Sparkles className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" />
+          Aún no has instalado ninguna plantilla. Explora la biblioteca y elige la
           primera.
         </CardContent>
       </Card>
@@ -287,8 +287,8 @@ function InstaladasLista({
                     {ESTADO_LABELS[a.status] ?? a.status}
                   </span>
                 </div>
-                <p className="mt-1 truncate font-medium text-slate-900">{a.nombre}</p>
-                <p className="text-xs text-slate-400">
+                <p className="mt-1 truncate font-medium text-foreground">{a.nombre}</p>
+                <p className="text-xs text-muted-foreground">
                   Instalada el {fmt.format(new Date(a.createdAt))}
                 </p>
               </div>
@@ -301,7 +301,7 @@ function InstaladasLista({
                 <ArchivarEstrategiaButton id={a.id} nombre={a.nombre} />
                 {playbookId ? (
                   <Link
-                    href={`/admin/estrategias/${playbookId}`}
+                    href={`/admin/automatizaciones/plantillas/${playbookId}`}
                     className="text-xs font-medium text-primary hover:underline"
                   >
                     Ver detalle

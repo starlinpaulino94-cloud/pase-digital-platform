@@ -80,8 +80,13 @@ core ya están preparados para registrar más `ModuleStrategyLibrary`.
 
 ## 4. Checklist de validación E3
 
-- [x] Módulo "Estrategias" fuera del panel — verificado: **nunca existió ruta ni
-      entrada de navegación** (`nav-config.ts`, `src/app/**`); nada que eliminar.
+- [x] Módulo "Estrategias" fuera del panel. Nota histórica: una rama paralela
+      (Marketplace de Estrategias, 180 playbooks) añadió `/admin/estrategias` +
+      ítem de menú; al fusionarse se resolvió el conflicto conforme a esta fase:
+      la ruta se movió a **`/admin/automatizaciones/plantillas`** (los playbooks
+      son plantillas de automatización), el ítem "Estrategias" se eliminó del
+      menú y de permisos (MARKETING conserva acceso vía sección
+      `automatizaciones`), y el copy visible dice "plantilla", nunca "estrategia".
 - [x] Business Strategy Library solo como componente interno (`src/lib/business-strategy-core/`).
 - [x] Cada módulo con motor disponible incorpora su catálogo de plantillas
       (Promociones ✔, Planes ✔; resto pendiente de sus motores).

@@ -68,8 +68,8 @@ export default async function EstrategiaDetallePage({
       {/* Volver + encabezado */}
       <div>
         <Link
-          href={`/admin/estrategias?categoria=${playbook.category}`}
-          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
+          href={`/admin/automatizaciones/plantillas?categoria=${playbook.category}`}
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" /> Volver a la biblioteca
         </Link>
@@ -88,8 +88,8 @@ export default async function EstrategiaDetallePage({
                 </span>
               ) : null}
             </div>
-            <h1 className="mt-2 text-2xl font-bold text-slate-900">{playbook.name}</h1>
-            <p className="mt-1 text-slate-500">{playbook.objective}</p>
+            <h1 className="mt-2 text-2xl font-bold text-foreground">{playbook.name}</h1>
+            <p className="mt-1 text-muted-foreground">{playbook.objective}</p>
           </div>
           <div className="flex items-center gap-2">
             {!instalada ? (
@@ -111,10 +111,10 @@ export default async function EstrategiaDetallePage({
       {/* Qué resuelve y cuándo usarla */}
       <div className="grid gap-4 sm:grid-cols-2">
         <Seccion icon={AlertTriangle} titulo="Problema que resuelve">
-          <p className="text-sm text-slate-600">{playbook.problem}</p>
+          <p className="text-sm text-muted-foreground">{playbook.problem}</p>
         </Seccion>
         <Seccion icon={Clock} titulo="Cuándo utilizarla">
-          <p className="text-sm text-slate-600">{playbook.whenToUse}</p>
+          <p className="text-sm text-muted-foreground">{playbook.whenToUse}</p>
         </Seccion>
       </div>
 
@@ -122,7 +122,7 @@ export default async function EstrategiaDetallePage({
       <Seccion icon={GitBranch} titulo="Cómo funciona (flujo)">
         <ol className="space-y-2">
           {playbook.flow.map((paso, i) => (
-            <li key={i} className="flex items-start gap-3 text-sm text-slate-600">
+            <li key={i} className="flex items-start gap-3 text-sm text-muted-foreground">
               <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
                 {i + 1}
               </span>
@@ -141,7 +141,7 @@ export default async function EstrategiaDetallePage({
           {playbook.conditions.length > 0 ? (
             <Lista items={playbook.conditions} />
           ) : (
-            <p className="text-sm text-slate-400">Sin condiciones adicionales.</p>
+            <p className="text-sm text-muted-foreground">Sin condiciones adicionales.</p>
           )}
         </Seccion>
       </div>
@@ -153,7 +153,7 @@ export default async function EstrategiaDetallePage({
             {playbook.esperas && playbook.esperas.length > 0 ? (
               <Lista items={playbook.esperas} />
             ) : (
-              <p className="text-sm text-slate-400">Se ejecuta de inmediato.</p>
+              <p className="text-sm text-muted-foreground">Se ejecuta de inmediato.</p>
             )}
           </Seccion>
           <Seccion icon={AlertTriangle} titulo="Casos que se excluyen">
@@ -186,26 +186,26 @@ export default async function EstrategiaDetallePage({
 
       {/* Compatibilidades y dependencias */}
       <Seccion icon={Link2} titulo="Se integra con">
-        <div className="space-y-2 text-sm text-slate-600">
+        <div className="space-y-2 text-sm text-muted-foreground">
           <p>
-            <span className="font-medium text-slate-700">Motores:</span>{' '}
+            <span className="font-medium text-foreground">Motores:</span>{' '}
             {playbook.engines.join(', ')}
           </p>
           {playbook.compatibleBenefits.length > 0 ? (
             <p>
-              <span className="font-medium text-slate-700">Beneficios compatibles:</span>{' '}
+              <span className="font-medium text-foreground">Beneficios compatibles:</span>{' '}
               {playbook.compatibleBenefits.join(', ')}
             </p>
           ) : null}
           {playbook.compatiblePromotions.length > 0 ? (
             <p>
-              <span className="font-medium text-slate-700">Promociones compatibles:</span>{' '}
+              <span className="font-medium text-foreground">Promociones compatibles:</span>{' '}
               {playbook.compatiblePromotions.join(', ')}
             </p>
           ) : null}
           {playbook.dependencies.length > 0 ? (
             <p>
-              <span className="font-medium text-slate-700">Requiere:</span>{' '}
+              <span className="font-medium text-foreground">Requiere:</span>{' '}
               {playbook.dependencies.join('; ')}
             </p>
           ) : null}
@@ -219,7 +219,7 @@ export default async function EstrategiaDetallePage({
 
       {/* Nota técnica */}
       {playbook.notes ? (
-        <p className="rounded-lg bg-slate-50 p-4 text-xs text-slate-500">
+        <p className="rounded-lg bg-muted p-4 text-xs text-muted-foreground">
           <span className="font-medium">Nota técnica:</span> {playbook.notes}
         </p>
       ) : null}
@@ -239,7 +239,7 @@ function Seccion({
   return (
     <Card>
       <CardContent className="p-4">
-        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900">
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
           <Icon className="h-4 w-4 text-primary" />
           {titulo}
         </h2>
@@ -253,8 +253,8 @@ function Lista({ items }: { items: readonly string[] }) {
   return (
     <ul className="space-y-1.5">
       {items.map((item, i) => (
-        <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
-          <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-slate-300" />
+        <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+          <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40" />
           {item}
         </li>
       ))}
