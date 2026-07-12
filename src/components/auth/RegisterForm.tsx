@@ -36,6 +36,8 @@ export function RegisterForm({
   const router = useRouter()
   const searchParams = useSearchParams()
   const refCode = searchParams.get('ref') ?? ''
+  // Growth Engine 3.0: código del enlace de invitación (landing) si vino de uno.
+  const glCode = searchParams.get('gl') ?? ''
   const [state, formAction, pending] = useActionState(registrarCliente, initial)
   // Al enviar guardamos las credenciales para iniciar sesión automáticamente
   // en cuanto el registro se complete (sin volver a la pantalla de login).
@@ -84,14 +86,15 @@ export function RegisterForm({
             return
           }
           toast.success('¡Bienvenido! Tu cuenta está lista.')
-          router.replace('/cliente/membresia')
+          // Growth Engine 3.0: si vino de una invitación, celebra el beneficio.
+          router.replace(glCode ? '/cliente/celebracion' : '/cliente/membresia')
           router.refresh()
         })
         .catch(() => {
           router.replace('/login?redirect=/cliente/membresia')
         })
     }
-  }, [state.success, state.pendingVerification, router])
+  }, [state.success, state.pendingVerification, router, glCode])
 
   return (
     <div className="space-y-6">
@@ -106,6 +109,7 @@ export function RegisterForm({
           <form action={formAction} onSubmit={captureCreds} className="space-y-4">
             <input type="hidden" name="companySlug" value={companySlug} />
             {refCode && <input type="hidden" name="refCode" value={refCode} />}
+            {glCode && <input type="hidden" name="glCode" value={glCode} />}
             {state.error && (
               <Alert variant="destructive">
                 <AlertDescription>{state.error}</AlertDescription>

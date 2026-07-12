@@ -6,6 +6,7 @@ import { ensureEmailIdentity } from '@/lib/supabase/identity'
 import { registerLimiter } from '@/lib/rate-limit'
 import { getRequestMeta } from '@/lib/server-utils'
 import { vincularReferido } from '@/lib/referidos-attribution'
+import { procesarRegistroGrowth } from '@/modules/growth/registro'
 import { emitirEventoEstrategia } from '@/modules/estrategias/eventos'
 import { TERMS_VERSION } from '@/lib/legal'
 import { isEmailVerificationEnabled, sendVerificationEmail } from '@/lib/auth/emailVerification'
@@ -37,6 +38,9 @@ export async function registrarCliente(
   const password = String(formData.get('password') ?? '')
   const telefono = String(formData.get('telefono') ?? '').trim()
   const refCode = String(formData.get('refCode') ?? '').trim()
+  // Growth Engine 3.0: código del enlace de invitación (landing) que trajo al
+  // usuario. Atribuye el registro al enlace y dispara el beneficio/recompensas.
+  const glCode = String(formData.get('glCode') ?? '').trim()
   // F5.2: auto-seguir con opción de desmarcar. El hidden "off" va primero;
   // si el checkbox está marcado, el último valor es "on".
   const seguirEmpresa = formData.getAll('seguirEmpresa').at(-1) !== 'off'
@@ -250,6 +254,14 @@ export async function registrarCliente(
     })
 
     await vincularReferido(refCode, company.id, result.cliente.id, ipAddress)
+
+    // Growth Engine 3.0: atribución al enlace + beneficio de bienvenida +
+    // reglas del evento REGISTRO (no bloquea el registro si falla).
+    if (glCode) {
+      await procesarRegistroGrowth(glCode, company.id, result.cliente.id).catch((e) =>
+        console.error('[registro] growth:', e)
+      )
+    }
 
     await emitirEventoEstrategia({
       companyId: company.id,

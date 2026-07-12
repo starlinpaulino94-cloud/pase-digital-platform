@@ -23,6 +23,10 @@ import {
   type ReferidosDashboard,
 } from '@/modules/referidos/actions'
 import { ReferralShareCard } from '@/components/cliente/ReferralShareCard'
+import { GenerarInvitacionCard } from '@/components/growth/GenerarInvitacionCard'
+import { getPromosParaInvitar, getGrowthWallet } from '@/modules/growth/queries'
+import { GROWTH_DURACIONES, getGrowthConfig } from '@/modules/growth/config'
+import { Coins, Sparkles } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -148,6 +152,14 @@ export default async function ReferidosClientePage() {
   }
 
   const shareUrl = absoluteUrl(`/r/${codigoCorto}`)
+
+  // Growth Engine 3.0: beneficios ofrecibles, duración por defecto y wallet.
+  const [promosInvitar, growthCfg, wallet] = await Promise.all([
+    getPromosParaInvitar(cliente.companyId),
+    getGrowthConfig(cliente.companyId),
+    getGrowthWallet(cliente.companyId, cliente.id),
+  ])
+
   const { stats, historial, ranking, miPosicion, retos, global } = dashboard
   const { nivel, siguiente, progresoPct } = calcularNivel(stats.puntos)
   const logros = calcularLogros({
@@ -182,6 +194,39 @@ export default async function ReferidosClientePage() {
           <ReferralShareCard url={shareUrl} companyName={cliente.company.name} />
         </CardContent>
       </Card>
+
+      {/* Growth Engine 3.0: crear invitación con beneficio + wallet */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <GenerarInvitacionCard
+          promos={promosInvitar}
+          duraciones={GROWTH_DURACIONES}
+          duracionDefault={growthCfg.duracionHorasDefault}
+        />
+        <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-card">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-warning/15">
+              <Coins className="h-4 w-4 text-warning-foreground" />
+            </span>
+            <h3 className="font-semibold text-foreground">Mi wallet de recompensas</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl bg-muted p-4 text-center">
+              <p className="text-2xl font-bold text-foreground">{wallet.puntos}</p>
+              <p className="text-xs text-muted-foreground">puntos</p>
+            </div>
+            <div className="rounded-xl bg-muted p-4 text-center">
+              <p className="text-2xl font-bold text-foreground">
+                {new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP', maximumFractionDigits: 0 }).format(wallet.creditos)}
+              </p>
+              <p className="text-xs text-muted-foreground">créditos</p>
+            </div>
+          </div>
+          <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            Ganas recompensas según el programa de {cliente.company.name}.
+          </p>
+        </div>
+      </div>
 
       {/* Nivel de embajador */}
       <Card>

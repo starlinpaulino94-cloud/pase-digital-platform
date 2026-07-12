@@ -11,6 +11,7 @@ import {
   VISITOR_COOKIE,
   VISITOR_COOKIE_DIAS,
 } from '@/lib/referidos'
+import { resolverGrowthLink } from '@/modules/growth/links'
 import { createRateLimiter, getClientIdentifier } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -22,11 +23,16 @@ const clickLimiter = createRateLimiter({
   maxRequests: 5,
 })
 
+const BOT_RE =
+  /whatsapp|facebookexternalhit|telegrambot|twitterbot|slackbot|discordbot|linkedinbot|skypeuripreview|viber|pinterest|googlebot|bingbot|applebot|yandex|ahrefs|semrush|bot\b|crawler|spider|preview|fetch|monitor|curl|wget|python|node-fetch|axios|okhttp|java\/|headless/i
+
 /**
  * GET /r/[code] — enlace inteligente de referidos.
- * Registra el clic (canal, dispositivo) y redirige al registro de la empresa
- * del referente con su código largo (?ref=), que es el que valida el registro.
- * Acepta tanto el código corto (/r/8HJ2KL) como el largo.
+ *
+ * Growth Engine 3.0: si el código es un GrowthLink, redirige a la LANDING de
+ * invitación (`/i/[code]`) en vez de al registro (venta del beneficio
+ * primero). Si es el código legacy del cliente, mantiene el comportamiento
+ * anterior (redirige al registro con ?ref). Ambos registran el clic.
  */
 export async function GET(
   req: NextRequest,
@@ -36,6 +42,52 @@ export async function GET(
   const base = getAppUrl()
   const clean = code.trim()
 
+  const ip = getClientIdentifier(req)
+  const ua = req.headers.get('user-agent') ?? ''
+  const esBot = BOT_RE.test(ua)
+  const canal = req.nextUrl.searchParams.get('c')
+  const campana = req.nextUrl.searchParams.get('utm_campaign')
+  const dispositivo = /mobile|android|iphone|ipad/i.test(ua) ? 'móvil' : 'escritorio'
+  const visitorId = req.cookies.get(VISITOR_COOKIE)?.value || randomUUID()
+
+  // ── Growth Engine 3.0: enlace de invitación con landing propia ──────────────
+  const growth = await resolverGrowthLink(clean).catch(() => null)
+  if (growth) {
+    // ¿El propio dueño abriendo su enlace? No cuenta.
+    let esDuenno = false
+    const tieneSesion = req.cookies
+      .getAll()
+      .some((c) => c.name.startsWith('sb-') && c.name.includes('auth-token'))
+    if (tieneSesion) {
+      const sessionUser = await getUser().catch(() => null)
+      esDuenno = sessionUser?.metadata.clienteId === growth.clienteId
+    }
+
+    if (!esBot && !esDuenno && clickLimiter(`refclick:${ip}:${growth.id}`)) {
+      await logReferralEvent({
+        clienteId: growth.clienteId,
+        companyId: growth.companyId,
+        tipo: 'CLICK',
+        canal,
+        visitorId,
+        growthLinkId: growth.id,
+        meta: { dispositivo, ipHash: hashIp(ip), ...(campana ? { campana } : {}) },
+      })
+    }
+
+    const res = NextResponse.redirect(`${base}/i/${growth.code}`)
+    if (!esDuenno) {
+      res.cookies.set(VISITOR_COOKIE, visitorId, {
+        maxAge: VISITOR_COOKIE_DIAS * 24 * 60 * 60,
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+      })
+    }
+    return res
+  }
+
+  // ── Legacy: código único del cliente → registro directo (sin romper nada) ───
   const cliente = await prisma.cliente
     .findFirst({
       where: {
@@ -55,19 +107,7 @@ export async function GET(
     return NextResponse.redirect(`${base}/empresas`)
   }
 
-  const ip = getClientIdentifier(req)
-  const ua = req.headers.get('user-agent') ?? ''
-  // Los bots de vista previa (WhatsApp, Telegram, Facebook, etc.) visitan el
-  // enlace al generar el preview e inflaban el conteo de clics. Se les
-  // redirige igual, pero no cuentan.
-  const esBot =
-    /whatsapp|facebookexternalhit|telegrambot|twitterbot|slackbot|discordbot|linkedinbot|skypeuripreview|viber|pinterest|googlebot|bingbot|applebot|yandex|ahrefs|semrush|bot\b|crawler|spider|preview|fetch|monitor|curl|wget|python|node-fetch|axios|okhttp|java\/|headless/i.test(
-      ua
-    )
-
-  // Autoclic: el propio referente abriendo su enlace (para probarlo o copiarlo)
-  // NO debe contar como clic ni inflar el embudo. Solo consultamos la sesión si
-  // hay cookie de auth, para no penalizar al visitante referido (anónimo).
+  // Autoclic: el propio referente abriendo su enlace no cuenta.
   let esDuenno = false
   const tieneSesion = req.cookies
     .getAll()
@@ -77,25 +117,14 @@ export async function GET(
     esDuenno = sessionUser?.metadata.clienteId === cliente.id
   }
 
-  // Fase E6 · Attribution Tracking: identificador anónimo del visitante.
-  // Se reutiliza si ya existe (visitas ÚNICAS reales entre clics repetidos)
-  // y viaja en cookie hasta el registro para unir todo el recorrido.
-  const visitorId = req.cookies.get(VISITOR_COOKIE)?.value || randomUUID()
-
   if (!esBot && !esDuenno && clickLimiter(`refclick:${ip}:${cliente.id}`)) {
-    const canal = req.nextUrl.searchParams.get('c')
-    const campana = req.nextUrl.searchParams.get('utm_campaign')
     await logReferralEvent({
       clienteId: cliente.id,
       companyId: cliente.companyId,
       tipo: 'CLICK',
       canal,
       visitorId,
-      meta: {
-        dispositivo: /mobile|android|iphone|ipad/i.test(ua) ? 'móvil' : 'escritorio',
-        ipHash: hashIp(ip),
-        ...(campana ? { campana } : {}),
-      },
+      meta: { dispositivo, ipHash: hashIp(ip), ...(campana ? { campana } : {}) },
     })
   }
 
@@ -109,11 +138,6 @@ export async function GET(
       sameSite: 'lax',
       path: '/',
     })
-  }
-  // Atribución del Centro global MembeGo: si la persona termina registrándose
-  // en OTRA empresa de la plataforma, el referente igual gana puntos globales.
-  // No se coloca para el propio dueño del enlace (evita autoatribución).
-  if (!esDuenno) {
     res.cookies.set(REF_COOKIE, cliente.codigoReferido, {
       maxAge: REF_COOKIE_DIAS * 24 * 60 * 60,
       httpOnly: true,

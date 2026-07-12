@@ -13,6 +13,7 @@
 import { prisma } from '@/lib/prisma'
 import { emitirEventoEstrategia } from '@/modules/estrategias/eventos'
 import { procesarReferidoCompletado } from '@/modules/referidos/actions'
+import { procesarConversionGrowth } from '@/modules/growth/registro'
 import { periodEnd } from '@/lib/server-utils'
 
 type Meta = { ipAddress: string | null; userAgent: string | null }
@@ -149,6 +150,12 @@ export async function activarMembresia(
       monto: montoNeto,
     }).catch(() => {})
   }
+  // Growth Engine 3.0: recompensas configurables del evento MEMBRESIA (incluye
+  // reglas por plan específico, ej. Plan Gold → créditos). No bloquea.
+  await procesarConversionGrowth(membership.clienteId, membership.companyId, {
+    trigger: 'MEMBRESIA',
+    planId: membership.planId,
+  }).catch(() => {})
 
   return {
     ok: true,

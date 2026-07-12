@@ -13,6 +13,7 @@ import { prisma } from '@/lib/prisma'
 import { crearNotificacion } from '@/modules/notificaciones/service'
 import { emitirEventoEstrategia } from '@/modules/estrategias/eventos'
 import { procesarReferidoCompletado } from '@/modules/referidos/actions'
+import { procesarConversionGrowth } from '@/modules/growth/registro'
 import {
   calcularVencimientoBeneficio,
   registrarTransicionCompra,
@@ -169,6 +170,10 @@ export async function activarCompraPromocion(
         monto,
       })
     }
+    // Growth Engine 3.0: recompensas configurables del evento COMPRA.
+    await procesarConversionGrowth(compra.clienteId, compra.companyId, {
+      trigger: 'COMPRA',
+    })
   } catch (e) {
     console.error('[pagos] referido en compra:', e)
   }

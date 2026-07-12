@@ -19,6 +19,7 @@ export const ADMIN_SECTIONS = [
   'publicaciones',
   'campanas',
   'referidos',
+  'crecimiento',
   'scanner',
   'pagos',
   'perfil',
