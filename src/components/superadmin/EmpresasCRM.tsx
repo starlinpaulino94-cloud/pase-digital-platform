@@ -119,9 +119,9 @@ function CompanyIcon({ type, logoUrl }: { type: string; logoUrl: string | null }
       />
     )
   }
-  const bg = type === 'carwash' ? 'bg-sky-100' : 'bg-amber-100'
+  const bg = type === 'carwash' ? 'bg-info/10' : 'bg-warning/15'
   const Icon = type === 'carwash' ? Car : UtensilsCrossed
-  const color = type === 'carwash' ? 'text-sky-600' : 'text-amber-600'
+  const color = type === 'carwash' ? 'text-primary' : 'text-warning-foreground'
   return (
     <div className={cn('flex h-10 w-10 items-center justify-center rounded-xl', bg)}>
       <Icon className={cn('h-5 w-5', color)} />
@@ -204,7 +204,7 @@ function ActionMenu({
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          className="text-red-600 focus:text-red-600"
+          className="text-destructive focus:text-destructive"
           onClick={() => onDelete(empresa.id)}
         >
           <Trash2 className="mr-2 h-4 w-4" /> Eliminar
@@ -234,7 +234,7 @@ function EmpresaCard({
 
   return (
     <Card className="group relative overflow-hidden border-border/60 shadow-card transition-all hover:shadow-card-hover hover:-translate-y-0.5">
-      <div className={cn('absolute inset-x-0 top-0 h-0.5', empresa.isActive ? 'bg-green-500' : 'bg-slate-300')} />
+      <div className={cn('absolute inset-x-0 top-0 h-0.5', empresa.isActive ? 'bg-success' : 'bg-muted-foreground/30')} />
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div
@@ -250,8 +250,8 @@ function EmpresaCard({
                   className={cn(
                     'shrink-0 text-[10px]',
                     empresa.isActive
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-slate-200 text-slate-600'
+                      ? 'bg-success/15 text-success'
+                      : 'bg-muted text-muted-foreground'
                   )}
                 >
                   {empresa.isActive ? 'Activa' : 'Suspendida'}
@@ -294,7 +294,7 @@ function EmpresaCard({
           <span>Última actividad: {relativeTime(empresa.ultimaActividad)}</span>
           <button
             onClick={() => router.push(`/superadmin/empresas/${empresa.id}`)}
-            className="flex items-center gap-0.5 text-sky-600 hover:underline"
+            className="flex items-center gap-0.5 text-primary hover:underline"
           >
             Ver dashboard <ChevronRight className="h-3 w-3" />
           </button>
@@ -332,7 +332,7 @@ function EmpresaTableRow({
           variant="secondary"
           className={cn(
             'text-[10px]',
-            empresa.isActive ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-600'
+            empresa.isActive ? 'bg-success/15 text-success' : 'bg-muted text-muted-foreground'
           )}
         >
           {empresa.isActive ? 'Activa' : 'Suspendida'}
@@ -462,7 +462,7 @@ export function EmpresasCRM({ empresas }: { empresas: EmpresaItem[] }) {
         </div>
         <div className="rounded-xl border border-border/60 bg-card p-4">
           <p className="text-sm text-muted-foreground">Activas</p>
-          <p className="text-2xl font-bold tabular-nums text-green-600">{activas}</p>
+          <p className="text-2xl font-bold tabular-nums text-success">{activas}</p>
         </div>
         <div className="rounded-xl border border-border/60 bg-card p-4">
           <p className="text-sm text-muted-foreground">Clientes totales</p>
@@ -563,7 +563,7 @@ export function EmpresasCRM({ empresas }: { empresas: EmpresaItem[] }) {
               onClick={() => setView('cards')}
               className={cn(
                 'rounded-l-lg px-2.5 py-1.5 transition',
-                view === 'cards' ? 'bg-sky-100 text-sky-700' : 'text-muted-foreground hover:bg-muted/50'
+                view === 'cards' ? 'bg-info/10 text-info' : 'text-muted-foreground hover:bg-muted/50'
               )}
             >
               <LayoutGrid className="h-4 w-4" />
@@ -572,7 +572,7 @@ export function EmpresasCRM({ empresas }: { empresas: EmpresaItem[] }) {
               onClick={() => setView('table')}
               className={cn(
                 'rounded-r-lg px-2.5 py-1.5 transition',
-                view === 'table' ? 'bg-sky-100 text-sky-700' : 'text-muted-foreground hover:bg-muted/50'
+                view === 'table' ? 'bg-info/10 text-info' : 'text-muted-foreground hover:bg-muted/50'
               )}
             >
               <List className="h-4 w-4" />
@@ -655,7 +655,7 @@ export function EmpresasCRM({ empresas }: { empresas: EmpresaItem[] }) {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleting}
-              className="bg-red-600 hover:bg-red-500"
+              className="bg-destructive text-white hover:bg-destructive/90"
             >
               Eliminar
             </AlertDialogAction>

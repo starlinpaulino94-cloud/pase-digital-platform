@@ -96,6 +96,7 @@ enum AuditAccion {
   REFERIDO_COMPLETADO
   RECOMPENSA_OTORGADA
   NOTA_INTERNA
+  PLANTILLA_RECIBO_ACTUALIZADA
 }
 
 // ─────────────────────────────────────────────
@@ -131,6 +132,12 @@ model User {
   empresasAcceso  UserCompanyAccess[]
 
   // Listados de empleados por empresa (/admin/empleados) y conteos por empresa.
+  transaccionesComoEmpleado Transaction[]           @relation("TransactionEmpleado")
+  transicionesTransaccion   TransactionTransicion[]
+  impresionesRecibo         ReceiptImpresion[]
+  comprasAprobadas          ProductoCompra[]           @relation("CompraAprobadaPor")
+  transicionesCompra        ProductoCompraTransicion[]
+
   @@index([companyId])
   @@map("users")
 }
@@ -213,51 +220,55 @@ model Company {
   bienvenidaTipo   String   @default("PORCENTAJE") // PORCENTAJE | MONTO
   bienvenidaValor  Decimal? @db.Decimal(10, 2)
 
-  users               User[]
-  plans               Plan[]
-  clientes            Cliente[]
-  memberships         Membership[]
-  sucursales          Sucursal[]
-  metodosPago         MetodoPago[]
-  auditLogs           AuditLog[]
-  promociones         Promocion[]
-  referidos           Referido[]
-  reglasRecompensa    ReglaRecompensa[]
-  whatsappConfig      WhatsAppConfig?
-  faqs                FaqItem[]
-  tickets             SupportTicket[]
-  categories          CompanyToCategory[]
-  ratings             CompanyRating[]
-  referralEvents      ReferralEvent[]
-  followers           CompanyFollow[]
-  posts               CompanyPost[]
-  campanas            Campana[]
-  invitaciones        Invitacion[]
-  accesosStaff        UserCompanyAccess[]
+  users                  User[]
+  plans                  Plan[]
+  clientes               Cliente[]
+  memberships            Membership[]
+  sucursales             Sucursal[]
+  metodosPago            MetodoPago[]
+  auditLogs              AuditLog[]
+  promociones            Promocion[]
+  referidos              Referido[]
+  reglasRecompensa       ReglaRecompensa[]
+  whatsappConfig         WhatsAppConfig?
+  faqs                   FaqItem[]
+  tickets                SupportTicket[]
+  categories             CompanyToCategory[]
+  ratings                CompanyRating[]
+  referralEvents         ReferralEvent[]
+  followers              CompanyFollow[]
+  posts                  CompanyPost[]
+  campanas               Campana[]
+  invitaciones           Invitacion[]
+  accesosStaff           UserCompanyAccess[]
   // Benefit Engine (Fase C). Relaciones inversas; ningún flujo las consume aún.
-  benefits            Benefit[]
+  benefits               Benefit[]
   // Referral Engine (Fase D). Relaciones inversas; ningún flujo las consume aún.
-  referralPrograms    ReferralProgram[]
+  referralPrograms       ReferralProgram[]
   // Automation Engine (Fase E1). Relaciones inversas; ningún flujo las consume aún.
-  automations         Automation[]
+  automations            Automation[]
   // Motor Universal de Reglas (Fase 1). Relaciones inversas; no cambian el
   // comportamiento actual: ninguna función existente las consulta todavía.
-  ruleGroups          RuleGroup[]
-  rules               Rule[]
-  ruleExecLogs        RuleExecutionLog[]
+  ruleGroups             RuleGroup[]
+  rules                  Rule[]
+  ruleExecLogs           RuleExecutionLog[]
   // Framework Universal de Promociones (Fase 4). Relaciones inversas; ningún
   // flujo existente las consulta.
-  promotions          Promotion[]
-  promotionAudits     PromotionAudit[]
+  promotions             Promotion[]
+  promotionAudits        PromotionAudit[]
   // Business Data Dictionary (Fase 6). Variables específicas de empresa.
-  dictionaryVariables DataDictionaryVariable[]
+  dictionaryVariables    DataDictionaryVariable[]
   // Membership Engine universal (Fase A). Independiente del modelo Membership
   // legacy (Car Wash). Ningún flujo existente lo consulta.
-  membershipPlans     MembershipPlan[]
-  membershipInstances MembershipInstance[]
+  membershipPlans        MembershipPlan[]
+  membershipInstances    MembershipInstance[]
   // Benefit Transformation Engine (Fase E1.7).
-  benefitTransformations  BenefitTransformation[]
-  transformationPolicies  TransformationPolicy[]
+  benefitTransformations BenefitTransformation[]
+  transformationPolicies TransformationPolicy[]
+
+  transacciones   Transaction[]
+  receiptTemplate ReceiptTemplate?
+  compras         ProductoCompra[]
 
   @@index([isPublished, isFeatured])
   @@index([ciudad, provincia])
@@ -279,6 +290,8 @@ model Sucursal {
 
   visits Visit[]
 
+  transacciones Transaction[]
+
   @@index([companyId])
   @@map("sucursales")
 }
@@ -299,6 +312,7 @@ model MetodoPago {
   updatedAt     DateTime       @updatedAt
 
   memberships Membership[]
+  compras     ProductoCompra[]
 
   @@index([companyId])
   @@map("metodos_pago")
@@ -340,6 +354,23 @@ model Promocion {
   prioridad   Int      @default(0) // mayor = primero en los listados
   archivada   Boolean  @default(false)
 
+  // FASE E5: la promoción como producto comercial comprable.
+  // - Ventana de adquisición = vigenciaDesde/vigenciaHasta (ya existentes).
+  // - Vigencia del beneficio: días desde la activación O fecha fija; ambos
+  //   null = sin vencimiento. El Rule Engine valida ambas ventanas.
+  esComprable            Boolean   @default(false)
+  precio                 Decimal?  @db.Decimal(10, 2) // 0 = gratis (activación directa)
+  usosPorCompra          Int       @default(1)
+  beneficioVigenciaDias  Int?
+  beneficioVigenciaHasta DateTime?
+  // Restricciones de consumo (0=domingo … 6=sábado; vacío = todos los días).
+  diasPermitidos         Int[]     @default([])
+  horaDesde              String? // "HH:MM"
+  horaHasta              String? // "HH:MM"
+  // Imágenes subidas al storage del proyecto (galería futura; [0] = principal).
+  imagenes               String[]  @default([])
+
+  compras     ProductoCompra[]
   guardadaPor PromocionGuardada[]
 
   @@index([companyId, activo])
@@ -432,6 +463,9 @@ model Cliente {
   tickets         SupportTicket[]
   ratings         CompanyRating[]
   notas           ClienteNota[]
+
+  transacciones Transaction[]
+  compras       ProductoCompra[]
 
   @@unique([supabaseId, companyId])
   // Filtros frecuentes solo por empresa (adminMetrics, reportes, /admin/clientes).
@@ -657,6 +691,8 @@ model Membership {
   comprobantes Comprobante[]
   qrTokens     QrToken[]
 
+  transacciones Transaction[]
+
   @@unique([clienteId, companyId])
   @@index([estado])
   @@index([clienteId])
@@ -669,23 +705,116 @@ model Membership {
   @@map("memberships")
 }
 
-// QR generado SOLO al activar membresía. Uno por cada membresía del cliente.
+// ─────────────────────────────────────────────
+// FASE E5 · PRODUCTOS COMERCIALES (compras)
+// Ciclo de compra unificado: hoy lo usan las promociones; las membresías
+// comparten el mismo flujo conceptual (solicitud → pago → validación →
+// activación → QR → consumo) y podrán migrar a esta tabla sin rediseño.
+// ─────────────────────────────────────────────
+
+enum ProductoComercialTipo {
+  PROMOCION
+  MEMBRESIA // reservado: unificación futura del ciclo de membresías
+}
+
+enum CompraEstado {
+  SOLICITADA // el cliente pidió el producto
+  PENDIENTE_PAGO // esperando la transferencia del cliente
+  EN_VALIDACION // comprobante enviado, esperando al admin
+  APROBADA // pago validado (transitorio antes de activar)
+  ACTIVA // beneficio disponible, QR emitido
+  RECHAZADA // pago rechazado (puede reintentar)
+  CONSUMIDA // sin usos restantes
+  EXPIRADA // venció sin consumirse por completo
+  CANCELADA // cancelada por el cliente o el admin
+}
+
+model ProductoCompra {
+  id     String                @id @default(cuid())
+  tipo   ProductoComercialTipo @default(PROMOCION)
+  estado CompraEstado          @default(SOLICITADA)
+
+  companyId   String
+  company     Company    @relation(fields: [companyId], references: [id])
+  clienteId   String
+  cliente     Cliente    @relation(fields: [clienteId], references: [id])
+  promocionId String?
+  promocion   Promocion? @relation(fields: [promocionId], references: [id])
+
+  // Pago (transferencia hoy; el puerto de pagos permite pasarelas futuras)
+  metodoPagoId       String?
+  metodoPago         MetodoPago? @relation(fields: [metodoPagoId], references: [id])
+  precioCongelado    Decimal?    @db.Decimal(10, 2) // precio al solicitar
+  montoPagado        Decimal?    @db.Decimal(10, 2)
+  pagoConfirmado     Boolean     @default(false)
+  comprobanteUrl     String?
+  comprobanteNota    String?
+  transferenciaFecha DateTime? // fecha/hora declarada de la transferencia
+  rechazadoReason    String?
+  adminNota          String?
+  aprobadaPorId      String?
+  aprobadaPor        User?       @relation("CompraAprobadaPor", fields: [aprobadaPorId], references: [id])
+
+  // Beneficio activo
+  usosIncluidos    Int       @default(1)
+  usosRestantes    Int       @default(0)
+  fechaActivacion  DateTime?
+  fechaVencimiento DateTime? // null = sin vencimiento
+  consumidaAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transiciones ProductoCompraTransicion[]
+  qrTokens     QrToken[]
+
+  @@index([companyId, estado])
+  @@index([clienteId, estado])
+  @@index([promocionId, estado])
+  @@index([companyId, createdAt])
+  @@map("producto_compras")
+}
+
+// Bitácora inmutable de estados de una compra (quién, cuándo, por qué).
+model ProductoCompraTransicion {
+  id       String         @id @default(cuid())
+  compraId String
+  compra   ProductoCompra @relation(fields: [compraId], references: [id], onDelete: Cascade)
+  desde    CompraEstado?
+  hacia    CompraEstado
+  motivo   String?
+  userId   String?
+  user     User?          @relation(fields: [userId], references: [id])
+  createdAt DateTime      @default(now())
+
+  @@index([compraId, createdAt])
+  @@map("producto_compra_transiciones")
+}
+
+// QR de acceso de un producto activo: membresía O compra de promoción (E5).
+// Exactamente el mismo sistema de un solo uso con regeneración para ambos.
 model QrToken {
-  id               String     @id @default(cuid())
+  id               String      @id @default(cuid())
   clienteId        String
-  cliente          Cliente    @relation(fields: [clienteId], references: [id])
-  membresiaId      String
-  membership       Membership @relation(fields: [membresiaId], references: [id], onDelete: Cascade)
-  token            String     @unique @default(cuid())
-  activo           Boolean    @default(true)
+  cliente          Cliente     @relation(fields: [clienteId], references: [id])
+  membresiaId      String?
+  membership       Membership? @relation(fields: [membresiaId], references: [id], onDelete: Cascade)
+  // FASE E5: QR de una compra de promoción (excluyente con membresiaId).
+  compraId         String?
+  compra           ProductoCompra? @relation(fields: [compraId], references: [id], onDelete: Cascade)
+  token            String      @unique @default(cuid())
+  activo           Boolean     @default(true)
   // Compartir el QR (p. ej. por WhatsApp) no consume el token —sigue siendo de
   // un solo uso— pero sí queda registrado: cuántas veces y cuándo la última.
-  compartidoCount  Int        @default(0)
+  compartidoCount  Int         @default(0)
   ultimoCompartido DateTime?
-  createdAt        DateTime   @default(now())
+  createdAt        DateTime    @default(now())
+
+  transaccionUso Transaction? @relation("TransactionQrUsado")
 
   @@index([clienteId, activo])
   @@index([membresiaId])
+  @@index([compraId])
   @@map("qr_tokens")
 }
 
@@ -713,6 +842,8 @@ model Visit {
 
   // Postgres no indexa FKs automáticamente. Visitas se consultan por cliente,
   // por membresía y por fecha (historial, reportes, "clientes frecuentes").
+  transaccion Transaction?
+
   @@index([clienteId])
   @@index([membershipId])
   @@index([fechaVisita])
@@ -1518,7 +1649,7 @@ model Benefit {
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
-  grants BenefitGrant[]
+  grants                  BenefitGrant[]
   // Benefit Transformation Engine (Fase E1.7). Relaciones inversas.
   transformationsAsSource BenefitTransformation[] @relation("TransformationSource")
   transformationsAsTarget BenefitTransformation[] @relation("TransformationTarget")
@@ -1561,74 +1692,74 @@ model BenefitGrant {
 // ─────────────────────────────────────────────
 
 enum TransformationType {
-  UPGRADE       // mejora (básico → premium)
-  DOWNGRADE     // rebaja (premium → básico)
-  EXCHANGE      // intercambio (A → B + C)
-  REPLACEMENT   // reemplazo autorizado
+  UPGRADE // mejora (básico → premium)
+  DOWNGRADE // rebaja (premium → básico)
+  EXCHANGE // intercambio (A → B + C)
+  REPLACEMENT // reemplazo autorizado
   CUSTOMIZATION // personalización antes de consumir
-  SPLIT         // dividir un beneficio en varios (arquitectura preparada)
-  MERGE         // combinar varios en uno (arquitectura preparada)
+  SPLIT // dividir un beneficio en varios (arquitectura preparada)
+  MERGE // combinar varios en uno (arquitectura preparada)
 }
 
 enum TransformationStatus {
-  REQUESTED        // cliente lo solicitó
-  RESOLVING        // calculando mejor forma de fondear
-  RESOLVED         // resolución encontrada, esperando acción
+  REQUESTED // cliente lo solicitó
+  RESOLVING // calculando mejor forma de fondear
+  RESOLVED // resolución encontrada, esperando acción
   PENDING_APPROVAL // requiere aprobación administrativa
-  APPROVED         // aprobado, pendiente de ejecución/pago
-  PENDING_PAYMENT  // esperando pago de diferencia
-  EXECUTING        // ejecutando la transformación
-  COMPLETED        // completada exitosamente
-  REJECTED         // rechazada por admin
-  CANCELLED        // cancelada por cliente
-  FAILED           // falló durante ejecución
+  APPROVED // aprobado, pendiente de ejecución/pago
+  PENDING_PAYMENT // esperando pago de diferencia
+  EXECUTING // ejecutando la transformación
+  COMPLETED // completada exitosamente
+  REJECTED // rechazada por admin
+  CANCELLED // cancelada por cliente
+  FAILED // falló durante ejecución
 }
 
 /// Registro inmutable de una transformación de beneficio. Cada operación genera
 /// un registro independiente: nunca se sobrescribe el beneficio original.
 model BenefitTransformation {
-  id               String               @id @default(cuid())
-  companyId        String
-  company          Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  subscriberId     String
-  subscriberKind   String               @default("CLIENT")
-  type             TransformationType
-  status           TransformationStatus @default(REQUESTED)
+  id             String               @id @default(cuid())
+  companyId      String
+  company        Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  subscriberId   String
+  subscriberKind String               @default("CLIENT")
+  type           TransformationType
+  status         TransformationStatus @default(REQUESTED)
 
   // Beneficio origen
-  sourceBenefitId  String
-  sourceBenefit    Benefit              @relation("TransformationSource", fields: [sourceBenefitId], references: [id])
-  sourceGrantId    String?
+  sourceBenefitId String
+  sourceBenefit   Benefit @relation("TransformationSource", fields: [sourceBenefitId], references: [id])
+  sourceGrantId   String?
 
   // Beneficio destino (null hasta que se resuelva)
-  targetBenefitId  String?
-  targetBenefit    Benefit?             @relation("TransformationTarget", fields: [targetBenefitId], references: [id])
-  targetGrantId    String?
+  targetBenefitId String?
+  targetBenefit   Benefit? @relation("TransformationTarget", fields: [targetBenefitId], references: [id])
+  targetGrantId   String?
 
   // Economía
-  sourceValue      Decimal?             @db.Decimal(10, 2)
-  targetValue      Decimal?             @db.Decimal(10, 2)
-  differenceAmount Decimal?             @db.Decimal(10, 2) // diferencia bruta
-  resolvedAmount   Decimal?             @db.Decimal(10, 2) // monto final tras aplicar fondeos
+  sourceValue      Decimal? @db.Decimal(10, 2)
+  targetValue      Decimal? @db.Decimal(10, 2)
+  differenceAmount Decimal? @db.Decimal(10, 2) // diferencia bruta
+  resolvedAmount   Decimal? @db.Decimal(10, 2) // monto final tras aplicar fondeos
 
   // Resolución: detalle de qué fuentes se usaron (puntos, créditos, promos…)
-  resolution       Json                 @default("{}")
+  resolution       Json      @default("{}")
   // Política que autorizó la transformación
   policyId         String?
-  requiresApproval Boolean              @default(false)
+  requiresApproval Boolean   @default(false)
   approvedById     String?
   approvedAt       DateTime?
   rejectionReason  String?
 
   // Contexto
-  sucursalId       String?
-  requestedById    String?
-  config           Json                 @default("{}")
-  metadata         Json                 @default("{}")
+  sucursalId    String?
+  requestedById String?
+  config        Json    @default("{}")
+  metadata      Json    @default("{}")
 
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-  completedAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
 
   @@index([companyId, status])
   @@index([companyId, type])
@@ -1857,4 +1988,152 @@ model AutomationEvent {
   @@index([companyId, occurredAt])
   @@index([subjectId])
   @@map("automation_events")
+}
+
+// ─────────────────────────────────────────────
+// FASE E4 · TRANSACTION & RECEIPT ENGINE
+// Toda operación (redención de membresía, promoción, beneficio, recompensa,
+// cupón, puntos, referido, venta futura…) genera una TRANSACCIÓN oficial con
+// ID único (TX-YYYYMMDD-NNNNNN), estados con historial de transiciones,
+// auditoría completa y comprobante reimprimible. Universal: sin lógica de
+// industria (la especificidad vive en snapshot/config JSON y plantillas).
+// ─────────────────────────────────────────────
+
+enum TransactionTipo {
+  MEMBERSHIP_REDEMPTION // uso de membresía (visita)
+  PROMOTION_USE
+  BENEFIT_USE
+  REWARD_REDEMPTION
+  COUPON_USE
+  POINTS_SPEND
+  REFERRAL
+  SALE // ventas futuras
+  PURCHASE // compras futuras
+  OTHER
+}
+
+enum TransactionEstado {
+  PENDING
+  VALIDATING
+  APPROVED
+  APPLIED
+  CANCELLED
+  REVERTED
+  EXPIRED
+  ERROR
+}
+
+model Transaction {
+  id           String            @id @default(cuid())
+  /// ID oficial único e irrepetible: TX-YYYYMMDD-NNNNNN. Se imprime en el
+  /// ticket, se codifica en el QR de la transacción y sirve para consultas.
+  codigo       String            @unique
+  /// Número de ticket secuencial por empresa (TCK-000123).
+  ticketNumero String
+  tipo         TransactionTipo
+  estado       TransactionEstado @default(PENDING)
+
+  companyId  String
+  company    Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sucursalId String?
+  sucursal   Sucursal? @relation(fields: [sucursalId], references: [id])
+  clienteId  String?
+  cliente    Cliente?  @relation(fields: [clienteId], references: [id])
+  empleadoId String?
+  empleado   User?     @relation("TransactionEmpleado", fields: [empleadoId], references: [id])
+  /// Caja/terminal (texto libre hasta que exista gestión de cajas).
+  caja       String?
+
+  membershipId   String?
+  membership     Membership? @relation(fields: [membershipId], references: [id])
+  visitId        String?     @unique
+  visit          Visit?      @relation(fields: [visitId], references: [id])
+  /// QR de un solo uso que se consumió para crear esta transacción: permite
+  /// que re-escanear un QR usado muestre el historial completo de la operación.
+  qrTokenUsadoId String?     @unique
+  qrTokenUsado   QrToken?    @relation("TransactionQrUsado", fields: [qrTokenUsadoId], references: [id])
+
+  /// Etiquetas congeladas al momento de la operación (cliente, vehículo,
+  /// servicio, promoción, beneficio, membresía, plan, empleado, sucursal…):
+  /// el historial no cambia aunque cambien los datos maestros.
+  snapshot     Json    @default("{}")
+  /// Auditoría técnica: ip, userAgent, dispositivo, navegador.
+  auditoria    Json    @default("{}")
+  /// Resultado legible u observaciones del operador.
+  resultado    String?
+  errorDetalle String?
+  /// Duración de la operación (ms) para métricas de tiempo de atención.
+  executionMs  Int?
+
+  createdAt   DateTime  @default(now())
+  appliedAt   DateTime?
+  cancelledAt DateTime?
+  revertedAt  DateTime?
+
+  transiciones TransactionTransicion[]
+  impresiones  ReceiptImpresion[]
+
+  @@index([companyId, estado])
+  @@index([companyId, createdAt])
+  @@index([clienteId, createdAt])
+  @@index([empleadoId])
+  @@map("transactions")
+}
+
+/// Historial inmutable de cambios de estado de una transacción.
+model TransactionTransicion {
+  id            String             @id @default(cuid())
+  transactionId String
+  transaction   Transaction        @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  desde         TransactionEstado?
+  hacia         TransactionEstado
+  motivo        String?
+  userId        String?
+  user          User?              @relation(fields: [userId], references: [id])
+  createdAt     DateTime           @default(now())
+
+  @@index([transactionId, createdAt])
+  @@map("transaction_transitions")
+}
+
+/// Contadores atómicos para IDs secuenciales (TX por día, ticket por empresa).
+/// id = scope, ej. "TX:20260711" o "TICKET:companyId". Se incrementa con
+/// INSERT ... ON CONFLICT DO UPDATE ... RETURNING (una sola sentencia atómica).
+model TransactionCounter {
+  id  String @id
+  seq Int    @default(0)
+
+  @@map("transaction_counters")
+}
+
+/// Cada impresión/reimpresión de comprobante queda auditada.
+model ReceiptImpresion {
+  id            String      @id @default(cuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  empleadoId    String?
+  empleado      User?       @relation(fields: [empleadoId], references: [id])
+  /// false = impresión original; true = COPIA.
+  esCopia       Boolean     @default(false)
+  /// Nº de impresión de esta transacción (1 = original, 2+ = copias).
+  numero        Int
+  motivo        String?
+  createdAt     DateTime    @default(now())
+
+  @@index([transactionId])
+  @@map("receipt_prints")
+}
+
+/// Plantilla de comprobante por empresa (Receipt Engine): personalización de
+/// encabezado, pie, bloques, campos opcionales y ancho de papel SIN tocar
+/// código. `config` sigue el contrato ReceiptTemplateConfig de src/lib/receipts.
+model ReceiptTemplate {
+  id        String   @id @default(cuid())
+  companyId String   @unique
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  config    Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("receipt_templates")
 }

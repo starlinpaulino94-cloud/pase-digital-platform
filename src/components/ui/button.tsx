@@ -20,8 +20,8 @@ const buttonVariants = cva(
           "hover:bg-muted hover:text-foreground active:scale-[0.98] dark:hover:bg-white/8",
         link:
           "text-primary underline-offset-4 hover:underline p-0 h-auto font-medium",
-        brand:
-          "bg-brand text-[oklch(0.13_0.02_265)] shadow-brand hover:opacity-90 active:scale-[0.98] font-semibold",
+        success:
+          "bg-success text-success-foreground shadow-sm hover:bg-success/90 active:scale-[0.98] focus-visible:ring-success/30",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

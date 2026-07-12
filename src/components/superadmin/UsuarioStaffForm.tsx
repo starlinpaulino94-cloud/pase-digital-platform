@@ -116,8 +116,8 @@ export function UsuarioStaffForm({
 
       <div className="space-y-2">
         <Label>Correo</Label>
-        <Input value={usuario.email} disabled className="bg-slate-50" />
-        <p className="text-xs text-slate-500">
+        <Input value={usuario.email} disabled className="bg-muted" />
+        <p className="text-xs text-muted-foreground">
           El correo es la identidad de acceso y no se cambia desde aquí.
         </p>
       </div>
@@ -144,19 +144,19 @@ export function UsuarioStaffForm({
           {companies.map((c) => (
             <label
               key={c.id}
-              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-slate-700 transition hover:bg-slate-50"
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-foreground transition hover:bg-muted"
             >
               <input
                 type="checkbox"
                 checked={seleccion.has(c.id)}
                 onChange={(e) => toggleEmpresa(c.id, e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300"
+                className="h-4 w-4 rounded border-border"
               />
               {c.name}
             </label>
           ))}
           {companies.length === 0 && (
-            <p className="text-sm text-slate-400">No hay empresas registradas.</p>
+            <p className="text-sm text-muted-foreground">No hay empresas registradas.</p>
           )}
         </div>
       </div>
@@ -169,7 +169,7 @@ export function UsuarioStaffForm({
           value={activa}
           onChange={(e) => setActiva(e.target.value)}
           required
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="">Seleccionar…</option>
           {seleccionadas.map((c) => (
@@ -178,7 +178,7 @@ export function UsuarioStaffForm({
             </option>
           ))}
         </select>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           La que verá al entrar al panel; puede cambiarla desde el selector si
           tiene varias.
         </p>
@@ -196,7 +196,7 @@ export function UsuarioStaffForm({
       </div>
 
       <div className="flex gap-3">
-        <Button type="submit" disabled={pending} className="bg-sky-500 hover:bg-sky-400">
+        <Button type="submit" disabled={pending} className="bg-primary hover:bg-primary/90">
           {pending ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (

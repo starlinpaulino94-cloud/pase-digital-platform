@@ -55,10 +55,10 @@ export function ShareButton({
       onClick={handleShare}
       className={
         className ??
-        'inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto'
+        'inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-5 py-3 font-semibold text-muted-foreground transition hover:bg-muted sm:w-auto'
       }
     >
-      {copied ? <Check className="h-4 w-4 text-green-600" /> : <Share2 className="h-4 w-4" />}
+      {copied ? <Check className="h-4 w-4 text-success" /> : <Share2 className="h-4 w-4" />}
       {label}
     </button>
   )

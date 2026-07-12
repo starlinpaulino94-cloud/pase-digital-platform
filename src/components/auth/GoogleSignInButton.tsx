@@ -59,7 +59,7 @@ export function GoogleSignInButton({
         variant="outline"
         onClick={handleClick}
         disabled={loading}
-        className="w-full border-white/20 bg-white text-slate-800 hover:bg-slate-100"
+        className="w-full border-white/20 bg-white text-slate-800 hover:bg-slate-50"
       >
         {loading ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -68,7 +68,7 @@ export function GoogleSignInButton({
         )}
         {label}
       </Button>
-      {error && <p className="text-center text-sm text-red-400">{error}</p>}
+      {error && <p className="text-center text-sm text-destructive">{error}</p>}
     </div>
   )
 }

@@ -70,11 +70,11 @@ export function ReportarProblemaForm() {
   // limpio y con el nuevo ticket ya visible en la lista.
   if (state.success) {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-xl bg-green-50 p-6 text-center">
-        <CheckCircle2 className="h-8 w-8 text-green-600" />
+      <div className="flex flex-col items-center gap-4 rounded-xl bg-success/10 p-6 text-center">
+        <CheckCircle2 className="h-8 w-8 text-success" />
         <div>
-          <p className="font-medium text-green-800">Reporte enviado</p>
-          <p className="text-sm text-green-700">
+          <p className="font-medium text-success">Reporte enviado</p>
+          <p className="text-sm text-success">
             Te avisaremos cuando el equipo responda. Puedes ver su estado en “Mis
             reportes”.
           </p>
@@ -164,7 +164,7 @@ export function ReportarProblemaForm() {
       <div className="space-y-1.5">
         <Label>Adjuntar captura (opcional)</Label>
         {previewUrl ? (
-          <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+          <div className="relative overflow-hidden rounded-xl border border-border bg-muted">
             <Image
               src={previewUrl}
               alt="Vista previa del adjunto"
@@ -175,27 +175,27 @@ export function ReportarProblemaForm() {
             <button
               type="button"
               onClick={clearAdjunto}
-              className="absolute right-2 top-2 rounded-full bg-white/90 p-1 shadow hover:bg-white"
+              className="absolute right-2 top-2 rounded-full bg-white/90 p-1 shadow hover:bg-card"
             >
-              <X className="h-4 w-4 text-slate-600" />
+              <X className="h-4 w-4 text-muted-foreground" />
             </button>
           </div>
         ) : isPdf && adjuntoUrl ? (
-          <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <span className="flex items-center gap-2 text-sm text-slate-700">
+          <div className="flex items-center justify-between rounded-xl border border-border bg-muted px-4 py-3">
+            <span className="flex items-center gap-2 text-sm text-foreground">
               <FileText className="h-4 w-4" /> {fileName}
             </span>
-            <button type="button" onClick={clearAdjunto} className="text-xs text-sky-600 hover:underline">
+            <button type="button" onClick={clearAdjunto} className="text-xs text-primary hover:underline">
               Quitar
             </button>
           </div>
         ) : (
           <div
             onClick={() => fileRef.current?.click()}
-            className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500 transition hover:border-sky-400 hover:bg-sky-50"
+            className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted p-6 text-muted-foreground transition hover:border-info/40 hover:bg-info/10"
           >
             {uploading ? (
-              <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             ) : (
               <>
                 <Upload className="h-6 w-6" />

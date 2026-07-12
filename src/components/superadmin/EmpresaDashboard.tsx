@@ -64,12 +64,12 @@ const ESTADO_LABELS: Record<string, string> = {
 }
 
 const ESTADO_COLORS: Record<string, string> = {
-  ACTIVA: 'bg-green-500',
-  PENDIENTE: 'bg-amber-500',
-  PENDIENTE_PAGO: 'bg-orange-500',
-  RECHAZADA: 'bg-red-500',
-  VENCIDA: 'bg-slate-400',
-  CANCELADA: 'bg-slate-300',
+  ACTIVA: 'bg-success',
+  PENDIENTE: 'bg-warning',
+  PENDIENTE_PAGO: 'bg-warning',
+  RECHAZADA: 'bg-destructive/100',
+  VENCIDA: 'bg-muted-foreground/50',
+  CANCELADA: 'bg-muted-foreground/30',
 }
 
 function fmtMoney(n: number) {
@@ -175,7 +175,7 @@ export function EmpresaDashboard({
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-muted/50">
                       <div
-                        className={cn('h-full rounded-full transition-all', ESTADO_COLORS[m.estado] ?? 'bg-sky-500')}
+                        className={cn('h-full rounded-full transition-all', ESTADO_COLORS[m.estado] ?? 'bg-primary')}
                         style={{ width: `${(m.count / maxMembresias) * 100}%` }}
                       />
                     </div>
@@ -199,7 +199,7 @@ export function EmpresaDashboard({
                   <div key={p.id} className="flex items-center gap-3">
                     <div className={cn(
                       'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold',
-                      i === 0 ? 'bg-amber-100 text-amber-700' : 'bg-muted text-muted-foreground'
+                      i === 0 ? 'bg-warning/15 text-warning-foreground' : 'bg-muted text-muted-foreground'
                     )}>
                       {i + 1}
                     </div>
@@ -233,7 +233,7 @@ export function EmpresaDashboard({
               <div className="space-y-3">
                 {actividadReciente.slice(0, 8).map((a) => (
                   <div key={a.id} className="flex gap-3">
-                    <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-sky-400" />
+                    <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm text-foreground">
                         <span className="font-medium">{a.accion}</span>

@@ -111,15 +111,15 @@ export function ReferralShareCard({ url, companyName }: Props) {
     <div className="space-y-3">
       {/* Enlace + copiar */}
       <div className="flex gap-2">
-        <Input readOnly value={url} className="bg-white font-mono text-sm" />
+        <Input readOnly value={url} className="bg-card font-mono text-sm" />
         <Button type="button" onClick={copiar} variant="outline" className="shrink-0">
-          {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+          {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
         </Button>
       </div>
 
       {/* Acciones */}
       <div className="flex flex-wrap gap-2">
-        <Button onClick={compartirNativo} className="flex-1 bg-sky-500 hover:bg-sky-400 sm:flex-none">
+        <Button onClick={compartirNativo} className="flex-1 bg-primary hover:bg-primary/90 sm:flex-none">
           <Share2 className="mr-2 h-4 w-4" />
           Compartir
         </Button>
@@ -154,7 +154,7 @@ export function ReferralShareCard({ url, companyName }: Props) {
             target={c.id === 'email' || c.id === 'sms' ? undefined : '_blank'}
             rel="noopener noreferrer"
             onClick={() => track(c.id)}
-            className="flex flex-col items-center gap-1 rounded-lg border border-slate-200 bg-white p-2.5 text-xs text-slate-600 transition hover:border-sky-300 hover:bg-sky-50"
+            className="flex flex-col items-center gap-1 rounded-lg border border-border bg-card p-2.5 text-xs text-muted-foreground transition hover:border-info/30 hover:bg-info/10"
           >
             <c.icon className="h-4 w-4" />
             {c.nombre}

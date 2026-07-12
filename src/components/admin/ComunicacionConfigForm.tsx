@@ -42,7 +42,7 @@ const VARIABLES = ['{cliente}', '{empresa}', '{membresia}', '{fecha}']
 function SubmitButton() {
   const { pending } = useFormStatus()
   return (
-    <Button type="submit" disabled={pending} className="bg-emerald-600 hover:bg-emerald-500">
+    <Button type="submit" disabled={pending} className="bg-success hover:bg-success/90">
       {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
       Guardar configuración
     </Button>
@@ -182,7 +182,7 @@ export function ComunicacionConfigForm({
           <Switch id="activo" checked={activo} onCheckedChange={setActivo} />
           <div>
             <Label htmlFor="activo" className="flex items-center gap-2">
-              <MessageCircle className="h-4 w-4 text-emerald-600" />
+              <MessageCircle className="h-4 w-4 text-success" />
               Mostrar botón de WhatsApp en la aplicación
             </Label>
             <p className="text-xs text-muted-foreground">
@@ -252,7 +252,7 @@ export function ComunicacionConfigForm({
                   onClick={() => toggleDia(d.value)}
                   className={`h-9 w-12 rounded-lg border text-sm font-medium transition ${
                     dias.includes(d.value)
-                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                      ? 'border-success/40 bg-success/10 text-success'
                       : 'border-border bg-background text-muted-foreground hover:bg-muted'
                   }`}
                 >

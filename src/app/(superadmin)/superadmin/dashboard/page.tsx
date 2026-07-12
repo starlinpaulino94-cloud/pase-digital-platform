@@ -260,7 +260,7 @@ export default async function SuperadminDashboard() {
                 <ul className="divide-y divide-border/50">
                   {actividad.map((a) => (
                     <li key={a.id} className="flex items-center gap-3 py-2.5 text-sm">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary dark:text-primary">
                         <Activity className="h-3.5 w-3.5" />
                       </span>
                       <div className="min-w-0 flex-1">

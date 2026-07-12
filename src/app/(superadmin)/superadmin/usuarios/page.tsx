@@ -52,8 +52,8 @@ export default async function UsuariosStaffPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Usuarios de staff</h1>
-        <p className="text-slate-500">
+        <h1 className="text-2xl font-bold text-foreground">Usuarios de staff</h1>
+        <p className="text-muted-foreground">
           Administradores y equipo de las empresas. Edita su rol, sus datos y
           las empresas que puede gestionar cada uno.
         </p>
@@ -61,8 +61,8 @@ export default async function UsuariosStaffPage() {
 
       {usuarios.length === 0 ? (
         <Card>
-          <CardContent className="py-16 text-center text-slate-500">
-            <Users className="mx-auto mb-3 h-10 w-10 text-slate-300" />
+          <CardContent className="py-16 text-center text-muted-foreground">
+            <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
             <p className="font-medium">Sin usuarios de staff</p>
             <p className="text-sm">
               Crea una empresa con su administrador desde el panel de empresas.
@@ -84,14 +84,14 @@ export default async function UsuariosStaffPage() {
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="rounded-lg bg-blue-100 p-2">
-                        <UserCog className="h-5 w-5 text-blue-600" />
+                      <div className="rounded-lg bg-info/15 p-2">
+                        <UserCog className="h-5 w-5 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate font-semibold text-slate-800">
+                        <p className="truncate font-semibold text-foreground">
                           {u.name}
                         </p>
-                        <p className="truncate text-xs text-slate-500">{u.email}</p>
+                        <p className="truncate text-xs text-muted-foreground">{u.email}</p>
                       </div>
                     </div>
                     <Link href={`/superadmin/usuarios/${u.id}`}>
@@ -106,7 +106,7 @@ export default async function UsuariosStaffPage() {
                       {ROL_LABEL[u.role] ?? u.role}
                     </Badge>
                     {todas.length === 0 ? (
-                      <span className="text-xs text-slate-400">Sin empresa asignada</span>
+                      <span className="text-xs text-muted-foreground">Sin empresa asignada</span>
                     ) : (
                       todas.map((n) => (
                         <Badge
@@ -114,8 +114,8 @@ export default async function UsuariosStaffPage() {
                           variant="outline"
                           className={
                             n === activa
-                              ? 'border-blue-200 bg-blue-50 text-xs text-blue-700'
-                              : 'text-xs text-slate-600'
+                              ? 'border-info/30 bg-info/10 text-xs text-info'
+                              : 'text-xs text-muted-foreground'
                           }
                         >
                           {n}

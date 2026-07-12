@@ -5,6 +5,9 @@ import { prisma } from '@/lib/prisma'
 import { contarSegmentos, type ConteoSegmentos } from '@/modules/admin/segmentos'
 import { NotifSegmentForm } from '@/components/admin/NotifSegmentForm'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeader } from '@/components/ui/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
+import { StatusBanner } from '@/components/ui/status-banner'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,13 +18,12 @@ export default async function NotificacionesEmpresaPage() {
   if (!companyId) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-slate-900">Notificaciones</h1>
-        <Card>
-          <CardContent className="py-12 text-center text-slate-500">
-            <AlertCircle className="mx-auto mb-3 h-8 w-8 text-slate-300" />
-            Esta vista es por empresa. Inicia sesión con una cuenta de empresa.
-          </CardContent>
-        </Card>
+        <PageHeader title="Notificaciones" />
+        <EmptyState
+          icon={<AlertCircle className="h-6 w-6" />}
+          title="Esta vista es por empresa"
+          description="Inicia sesión con una cuenta de empresa para enviar notificaciones a tus clientes."
+        />
       </div>
     )
   }
@@ -35,6 +37,7 @@ export default async function NotificacionesEmpresaPage() {
     inactivos: 0,
   }
   let planes: { id: string; nombre: string }[] = []
+  let loadError = false
   try {
     ;[conteos, planes] = await Promise.all([
       contarSegmentos(companyId),
@@ -46,17 +49,22 @@ export default async function NotificacionesEmpresaPage() {
     ])
   } catch (e) {
     console.error('[admin-notificaciones]', e)
+    loadError = true
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Notificaciones</h1>
-        <p className="text-slate-500">
-          Envía avisos dentro de MembeGo a segmentos específicos de tus
-          clientes y seguidores.
-        </p>
-      </div>
+      <PageHeader
+        title="Notificaciones"
+        description="Envía avisos dentro de MembeGo a segmentos específicos de tus clientes y seguidores."
+      />
+
+      {loadError && (
+        <StatusBanner variant="destructive" title="No pudimos cargar los conteos de segmentos">
+          Los tamaños de cada segmento pueden mostrarse en cero. Recarga la página para
+          intentarlo de nuevo.
+        </StatusBanner>
+      )}
 
       <Card>
         <CardHeader>

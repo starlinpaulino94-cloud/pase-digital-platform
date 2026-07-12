@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useState } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { Loader2, Check, X, RefreshCw, StickyNote } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,8 @@ const init: AdminActionState = {}
 
 export function ConfirmarPagoButton({ membershipId }: { membershipId: string }) {
   const [state, formAction, pending] = useActionState(confirmarPago, init)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
     if (state.success) toast.success('Pago confirmado. Membresía activada.')
@@ -33,13 +36,14 @@ export function ConfirmarPagoButton({ membershipId }: { membershipId: string }) 
   }, [state.success, state.error])
 
   return (
-    <form action={formAction}>
+    <form ref={formRef} action={formAction}>
       <input type="hidden" name="membershipId" value={membershipId} />
       <Button
-        type="submit"
+        type="button"
         size="sm"
+        variant="success"
         disabled={pending}
-        className="bg-green-600 hover:bg-green-500"
+        onClick={() => setConfirmOpen(true)}
       >
         {pending ? (
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -48,6 +52,18 @@ export function ConfirmarPagoButton({ membershipId }: { membershipId: string }) 
         )}
         Aprobar
       </Button>
+      <ConfirmDialog
+        open={confirmOpen}
+        title="¿Aprobar este pago?"
+        description="Se activará la membresía del cliente."
+        confirmText="Aprobar"
+        isLoading={pending}
+        onConfirm={() => {
+          setConfirmOpen(false)
+          formRef.current?.requestSubmit()
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </form>
   )
 }
@@ -60,14 +76,14 @@ export function RechazarPagoButton({ membershipId }: { membershipId: string }) {
   const open = manualOpen && !state.success
 
   useEffect(() => {
-    if (state.success) toast.error('Pago rechazado.')
+    if (state.success) toast.success('Pago rechazado correctamente.')
     if (state.error) toast.error(state.error)
   }, [state.success, state.error])
 
   return (
     <Dialog open={open} onOpenChange={setManualOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50">
+        <Button size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive">
           <X className="h-4 w-4" />
           Rechazar
         </Button>
@@ -120,7 +136,7 @@ export function SolicitarEvidenciaButton({ membershipId }: { membershipId: strin
   return (
     <Dialog open={open} onOpenChange={setManualOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-50">
+        <Button size="sm" variant="outline" className="border-warning/30 text-warning-foreground hover:bg-warning/15 hover:text-warning-foreground">
           <RefreshCw className="h-4 w-4" />
           Nueva evidencia
         </Button>
@@ -140,14 +156,14 @@ export function SolicitarEvidenciaButton({ membershipId }: { membershipId: strin
               required
             />
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             El cliente recibirá una notificación y deberá subir un nuevo comprobante.
           </p>
           <div className="flex gap-2 justify-end">
             <Button type="button" variant="outline" onClick={() => setManualOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={pending} className="bg-amber-600 hover:bg-amber-500">
+            <Button type="submit" disabled={pending}>
               {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Solicitar
             </Button>
@@ -176,9 +192,9 @@ export function NotaInternaForm({
     <form action={formAction} className="space-y-2">
       <input type="hidden" name="membershipId" value={membershipId} />
       <div className="flex items-center gap-2">
-        <StickyNote className="h-4 w-4 text-slate-400" />
-        <span className="text-sm font-medium text-slate-600">Nota interna</span>
-        <span className="text-xs text-slate-400">(no visible al cliente)</span>
+        <StickyNote className="h-4 w-4 text-muted-foreground/70" />
+        <span className="text-sm font-medium text-muted-foreground">Nota interna</span>
+        <span className="text-xs text-muted-foreground/70">(no visible al cliente)</span>
       </div>
       <Textarea
         name="nota"

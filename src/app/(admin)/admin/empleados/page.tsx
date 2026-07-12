@@ -11,6 +11,8 @@ import { InvitarEquipo } from '@/components/admin/InvitarEquipo'
 import { CancelarInvitacionButton } from '@/components/admin/CancelarInvitacionButton'
 import { roleLabel } from '@/components/layout/nav-config'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeader } from '@/components/ui/page-header'
+import { StatusBanner } from '@/components/ui/status-banner'
 import { INVITABLE_ROLES, type AppRole } from '@/types'
 
 // Todos los roles de equipo (para listar el equipo completo, no solo empleados).
@@ -26,6 +28,7 @@ export default async function EmpleadosPage() {
 
   let miembros: EmpleadoRow[] = []
   let invitacionesPendientes: { id: string; email: string; rol: AppRole; expiraEn: Date }[] = []
+  let loadError = false
   try {
     const [team, invs] = await Promise.all([
       prisma.user.findMany({
@@ -49,24 +52,30 @@ export default async function EmpleadosPage() {
     invitacionesPendientes = invs
   } catch (e) {
     console.error('[admin-empleados]', e)
+    loadError = true
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Equipo</h1>
-          <p className="text-slate-500">
-            {miembros.length} miembro{miembros.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/admin/empleados/nuevo">
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo empleado
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="Equipo"
+        description={`${miembros.length} miembro${miembros.length !== 1 ? 's' : ''} · Invita por correo para que elijan su contraseña; crea manualmente si necesitas acceso inmediato.`}
+        action={
+          <Button asChild>
+            <Link href="/admin/empleados/nuevo">
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo empleado
+            </Link>
+          </Button>
+        }
+      />
+
+      {loadError && (
+        <StatusBanner variant="destructive" title="No pudimos cargar el equipo">
+          La lista de miembros e invitaciones puede estar incompleta. Recarga la página
+          para intentarlo de nuevo.
+        </StatusBanner>
+      )}
 
       {/* Invitar al equipo (paso 7 del onboarding) */}
       {puedeInvitar && (
@@ -79,18 +88,18 @@ export default async function EmpleadosPage() {
 
             {invitacionesPendientes.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/70">
                   Invitaciones pendientes
                 </p>
-                <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+                <ul className="divide-y divide-border rounded-lg border border-border">
                   {invitacionesPendientes.map((inv) => (
                     <li
                       key={inv.id}
                       className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
                     >
                       <span className="min-w-0 truncate">
-                        <span className="font-medium text-slate-800">{inv.email}</span>
-                        <span className="ml-2 text-slate-500">· {roleLabel(inv.rol)}</span>
+                        <span className="font-medium text-foreground">{inv.email}</span>
+                        <span className="ml-2 text-muted-foreground">· {roleLabel(inv.rol)}</span>
                       </span>
                       <CancelarInvitacionButton id={inv.id} />
                     </li>

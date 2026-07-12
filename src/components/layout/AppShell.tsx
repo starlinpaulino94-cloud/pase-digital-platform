@@ -1,12 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AppSidebar } from '@/components/layout/AppSidebar'
 import { AppHeader } from '@/components/layout/AppHeader'
+import { BottomNav } from '@/components/layout/BottomNav'
 import type { CompanyOption } from '@/components/cliente/CompanySwitcher'
 import type { AppRole } from '@/types'
+
+/** Roles con navegación inferior en móvil (experiencia principalmente táctil). */
+const BOTTOM_NAV_ROLES: readonly AppRole[] = ['CLIENTE']
 
 export function AppShell({
   role,
@@ -24,6 +28,8 @@ export function AppShell({
   children: React.ReactNode
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const drawerRef = useRef<HTMLElement>(null)
+  const hasBottomNav = BOTTOM_NAV_ROLES.includes(role)
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -31,6 +37,17 @@ export function AppShell({
     return () => {
       document.body.style.overflow = ''
     }
+  }, [mobileOpen])
+
+  // A11y del drawer: cerrar con Escape y mover el foco al abrirlo.
+  useEffect(() => {
+    if (!mobileOpen) return
+    drawerRef.current?.querySelector<HTMLElement>('a, button')?.focus()
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setMobileOpen(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
   }, [mobileOpen])
 
   return (
@@ -50,11 +67,15 @@ export function AppShell({
         <div
           onClick={() => setMobileOpen(false)}
           className={cn(
-            'absolute inset-0 bg-slate-900/50 transition-opacity',
+            'absolute inset-0 bg-black/50 transition-opacity',
             mobileOpen ? 'opacity-100' : 'opacity-0'
           )}
         />
         <aside
+          ref={drawerRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menú de navegación"
           className={cn(
             'absolute inset-y-0 left-0 w-64 overflow-hidden rounded-r-2xl elevation-3 transition-transform duration-300',
             mobileOpen ? 'translate-x-0' : '-translate-x-full'
@@ -85,10 +106,18 @@ export function AppShell({
           companies={companies}
           onMenuClick={() => setMobileOpen(true)}
         />
-        <main className="mx-auto max-w-7xl px-4 py-8 md:px-6 lg:px-8">
+        <main
+          className={cn(
+            'mx-auto max-w-7xl px-4 py-8 md:px-6 lg:px-8',
+            // Espacio para que la barra inferior no tape el contenido en móvil.
+            hasBottomNav && 'pb-24 lg:pb-8'
+          )}
+        >
           {children}
         </main>
       </div>
+
+      {hasBottomNav && <BottomNav role={role} />}
     </div>
   )
 }

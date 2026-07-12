@@ -1,12 +1,7 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
-import { Loader2, Trash2 } from 'lucide-react'
-import { toast } from 'sonner'
-import { eliminarMetodoPago, type MetodoPagoState } from '@/modules/admin/metodoPagoActions'
-import { Button } from '@/components/ui/button'
-
-const init: MetodoPagoState = {}
+import { eliminarMetodoPago } from '@/modules/admin/metodoPagoActions'
+import { DeleteButton } from '@/components/ui/delete-button'
 
 export function DeleteMetodoPagoButton({
   id,
@@ -15,28 +10,17 @@ export function DeleteMetodoPagoButton({
   id: string
   nombre: string
 }) {
-  const [state, formAction, pending] = useActionState(eliminarMetodoPago, init)
-
-  useEffect(() => {
-    if (state.success) toast.success(`"${nombre}" eliminado.`)
-    if (state.error) toast.error(state.error)
-  }, [state.success, state.error, nombre])
-
   return (
-    <form
-      action={formAction}
-      onSubmit={(e) => {
-        if (!confirm(`¿Eliminar el método "${nombre}"?`)) e.preventDefault()
+    <DeleteButton
+      action={async () => {
+        const fd = new FormData()
+        fd.set('id', id)
+        return eliminarMetodoPago({}, fd)
       }}
-    >
-      <input type="hidden" name="id" value={id} />
-      <Button size="icon" variant="ghost" type="submit" disabled={pending}>
-        {pending ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Trash2 className="h-4 w-4 text-red-500" />
-        )}
-      </Button>
-    </form>
+      title={`¿Eliminar el método "${nombre}"?`}
+      description="Si tiene membresías asociadas se desactivará en lugar de eliminarse."
+      successMessage={`"${nombre}" eliminado.`}
+      label={`Eliminar método de pago ${nombre}`}
+    />
   )
 }

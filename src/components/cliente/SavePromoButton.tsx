@@ -40,8 +40,8 @@ export function SavePromoButton({ promocionId, guardada }: SavePromoButtonProps)
       title={saved ? 'Quitar de guardadas' : 'Guardar promoción'}
       className={`absolute right-3 top-3 z-10 rounded-full border bg-white/95 p-2 shadow-sm backdrop-blur transition disabled:opacity-60 ${
         saved
-          ? 'border-rose-200 text-rose-500'
-          : 'border-slate-200 text-slate-400 hover:text-rose-500'
+          ? 'border-destructive/25 text-destructive'
+          : 'border-border text-muted-foreground hover:text-destructive'
       }`}
     >
       {pending ? (

@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { DeletePromocionButton } from '@/components/admin/DeletePromocionButton'
 import { PromoControls } from '@/components/admin/PromoControls'
 import { CompartirOfertaButton } from '@/components/admin/CompartirOfertaButton'
-import { Gift, Plus, Pencil, Lock, Globe, Eye, Share2, Heart, Archive } from 'lucide-react'
+import { Gift, Plus, Pencil, Lock, Globe, Eye, Share2, Heart, Archive, LayoutTemplate } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,20 +41,20 @@ function PromoCard({ p, showCompany }: { p: PromoRow; showCompany: boolean }) {
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-amber-100 p-2">
-              <Gift className="h-5 w-5 text-amber-600" />
+            <div className="rounded-lg bg-warning/15 p-2">
+              <Gift className="h-5 w-5 text-warning-foreground" />
             </div>
             <div>
-              <p className="font-semibold text-slate-900">{p.titulo}</p>
+              <p className="font-semibold text-foreground">{p.titulo}</p>
               <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs">
-                <span className="rounded-full bg-sky-50 px-2 py-0.5 font-medium text-sky-700">
+                <span className="rounded-full bg-info/10 px-2 py-0.5 font-medium text-info">
                   {PROMO_TIPO_LABEL[p.tipo] ?? p.tipo}
                 </span>
                 <span
                   className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${
                     p.visibilidad === 'privada'
-                      ? 'bg-slate-100 text-slate-600'
-                      : 'bg-emerald-50 text-emerald-700'
+                      ? 'bg-muted text-muted-foreground'
+                      : 'bg-success/10 text-success'
                   }`}
                 >
                   {p.visibilidad === 'privada' ? (
@@ -68,7 +68,7 @@ function PromoCard({ p, showCompany }: { p: PromoRow; showCompany: boolean }) {
                   )}
                 </span>
                 {showCompany && (
-                  <span className="text-slate-400">{p.company.name}</span>
+                  <span className="text-muted-foreground">{p.company.name}</span>
                 )}
               </div>
             </div>
@@ -78,9 +78,9 @@ function PromoCard({ p, showCompany }: { p: PromoRow; showCompany: boolean }) {
           </Badge>
         </div>
 
-        <p className="mt-3 line-clamp-2 text-sm text-slate-600">{p.descripcion}</p>
+        <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{p.descripcion}</p>
 
-        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           {p.vigenciaHasta && <span>Hasta {fmtDate(p.vigenciaHasta)}</span>}
           {p.maxCanjes != null && (
             <span>
@@ -92,7 +92,7 @@ function PromoCard({ p, showCompany }: { p: PromoRow; showCompany: boolean }) {
         </div>
 
         {/* Indicadores */}
-        <div className="mt-3 flex gap-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
+        <div className="mt-3 flex gap-4 border-t border-border/60 pt-3 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <Eye className="h-3.5 w-3.5" /> {p.viewCount}
           </span>
@@ -137,13 +137,49 @@ function PromoCard({ p, showCompany }: { p: PromoRow; showCompany: boolean }) {
   )
 }
 
+/** Fase E5: métricas de ventas del ciclo de compras de promociones. */
+async function fetchVentas(companyId: string | null) {
+  const where = companyId ? { companyId } : {}
+  const [porEstado, ingresos] = await Promise.all([
+    prisma.productoCompra.groupBy({
+      by: ['estado'],
+      where,
+      _count: { _all: true },
+    }),
+    prisma.productoCompra.aggregate({
+      where: { ...where, pagoConfirmado: true },
+      _sum: { montoPagado: true },
+    }),
+  ])
+  const count = (estados: string[]) =>
+    porEstado.filter((r) => estados.includes(r.estado)).reduce((s, r) => s + r._count._all, 0)
+
+  const total = porEstado.reduce((s, r) => s + r._count._all, 0)
+  const vendidas = count(['ACTIVA', 'CONSUMIDA', 'EXPIRADA'])
+  return {
+    total,
+    vendidas,
+    activas: count(['ACTIVA']),
+    pendientes: count(['SOLICITADA', 'PENDIENTE_PAGO', 'APROBADA', 'RECHAZADA']),
+    porValidar: count(['EN_VALIDACION']),
+    consumidas: count(['CONSUMIDA']),
+    vencidas: count(['EXPIRADA']),
+    conversion: total > 0 ? Math.round((vendidas / total) * 100) : 0,
+    ingresos: Number(ingresos._sum.montoPagado ?? 0),
+  }
+}
+
 export default async function PromocionesPage() {
   const user = await requireRole(ADMIN_ROLES)
   const companyId = companyFilter(user)
 
   let promociones: PromoRow[] = []
+  let ventas: Awaited<ReturnType<typeof fetchVentas>> | null = null
   try {
-    promociones = await fetchPromos(companyId ?? null)
+    ;[promociones, ventas] = await Promise.all([
+      fetchPromos(companyId ?? null),
+      fetchVentas(companyId ?? null),
+    ])
   } catch (e) {
     console.error('[admin-promociones]', e)
   }
@@ -155,26 +191,86 @@ export default async function PromocionesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Promociones</h1>
-          <p className="text-slate-500">
+          <h1 className="text-2xl font-bold text-foreground">Promociones</h1>
+          <p className="text-muted-foreground">
             Crea, programa y controla tus ofertas. Tus seguidores se notifican
             automáticamente.
           </p>
         </div>
-        <Link href="/admin/promociones/nuevo">
-          <Button className="bg-sky-500 hover:bg-sky-400">
-            <Plus className="mr-2 h-4 w-4" />
-            Nueva promoción
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/admin/promociones/plantillas">
+            <Button variant="outline">
+              <LayoutTemplate className="mr-2 h-4 w-4" />
+              Plantillas
+            </Button>
+          </Link>
+          <Link href="/admin/promociones/nuevo">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva promoción
+            </Button>
+          </Link>
+        </div>
       </div>
+
+      {/* Fase E5: panel de ventas del motor de compras */}
+      {ventas && ventas.total > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardContent className="p-5">
+              <p className="text-sm font-medium text-muted-foreground">Ingresos por promociones</p>
+              <p className="mt-1 text-2xl font-bold text-foreground">
+                {new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP', maximumFractionDigits: 0 }).format(ventas.ingresos)}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">pagos confirmados</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-5">
+              <p className="text-sm font-medium text-muted-foreground">Vendidas</p>
+              <p className="mt-1 text-2xl font-bold text-foreground">{ventas.vendidas}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {ventas.activas} activas · {ventas.consumidas} consumidas · {ventas.vencidas} vencidas
+              </p>
+            </CardContent>
+          </Card>
+          <Card className={ventas.porValidar > 0 ? 'border-warning/40' : ''}>
+            <CardContent className="p-5">
+              <p className="text-sm font-medium text-muted-foreground">Pagos por validar</p>
+              <p className="mt-1 text-2xl font-bold text-foreground">{ventas.porValidar}</p>
+              {ventas.porValidar > 0 ? (
+                <Link href="/admin/pagos" className="mt-1 inline-block text-xs font-medium text-primary hover:underline">
+                  Ir a validación de pagos →
+                </Link>
+              ) : (
+                <p className="mt-1 text-xs text-muted-foreground">{ventas.pendientes} en proceso de pago</p>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-5">
+              <p className="text-sm font-medium text-muted-foreground">Conversión de ventas</p>
+              <p className="mt-1 text-2xl font-bold text-foreground">{ventas.conversion}%</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {ventas.vendidas} de {ventas.total} solicitudes
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {activas.length === 0 && archivadas.length === 0 ? (
         <Card>
-          <CardContent className="py-16 text-center text-slate-500">
-            <Gift className="mx-auto mb-3 h-10 w-10 text-slate-300" />
+          <CardContent className="py-16 text-center text-muted-foreground">
+            <Gift className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
             <p className="font-medium">Sin promociones publicadas</p>
             <p className="text-sm">Crea tu primera promoción para tus clientes.</p>
+            <Link
+              href="/admin/promociones/plantillas"
+              className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
+            >
+              Empieza desde una plantilla →
+            </Link>
           </CardContent>
         </Card>
       ) : (
@@ -187,7 +283,7 @@ export default async function PromocionesPage() {
 
           {archivadas.length > 0 && (
             <details className="group">
-              <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-700">
+              <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
                 <Archive className="h-4 w-4" />
                 Archivadas ({archivadas.length})
               </summary>

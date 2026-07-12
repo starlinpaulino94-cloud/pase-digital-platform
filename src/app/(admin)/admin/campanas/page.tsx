@@ -33,10 +33,10 @@ export default async function CampanasPage() {
   if (!companyId) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-slate-900">Campañas</h1>
+        <h1 className="text-2xl font-bold text-foreground">Campañas</h1>
         <Card>
-          <CardContent className="py-12 text-center text-slate-500">
-            <AlertCircle className="mx-auto mb-3 h-8 w-8 text-slate-300" />
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <AlertCircle className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" />
             Esta vista es por empresa. Inicia sesión con una cuenta de empresa.
           </CardContent>
         </Card>
@@ -71,14 +71,14 @@ export default async function CampanasPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Campañas</h1>
-          <p className="text-slate-500">
+          <h1 className="text-2xl font-bold text-foreground">Campañas</h1>
+          <p className="text-muted-foreground">
             Agrupa promociones y publicaciones bajo una misma campaña y mide su
             rendimiento en conjunto.
           </p>
         </div>
         <Link href="/admin/campanas/nueva">
-          <Button className="bg-sky-500 hover:bg-sky-400">
+          <Button>
             <Plus className="mr-2 h-4 w-4" />
             Nueva campaña
           </Button>
@@ -87,8 +87,8 @@ export default async function CampanasPage() {
 
       {campanas.length === 0 ? (
         <Card>
-          <CardContent className="py-16 text-center text-slate-500">
-            <Flag className="mx-auto mb-3 h-10 w-10 text-slate-300" />
+          <CardContent className="py-16 text-center text-muted-foreground">
+            <Flag className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
             <p className="font-medium">Sin campañas</p>
             <p className="text-sm">
               Crea una campaña (ej. &quot;Black Friday&quot;) y asígnale
@@ -110,13 +110,13 @@ export default async function CampanasPage() {
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-indigo-100 p-2">
-                        <Flag className="h-5 w-5 text-indigo-600" />
+                      <div className="rounded-lg bg-primary/10 p-2">
+                        <Flag className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-900">{c.nombre}</p>
+                        <p className="font-semibold text-foreground">{c.nombre}</p>
                         {(c.fechaInicio || c.fechaFin) && (
-                          <p className="inline-flex items-center gap-1 text-xs text-slate-400">
+                          <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                             <CalendarDays className="h-3 w-3" />
                             {fmtFecha(c.fechaInicio) ?? '—'} → {fmtFecha(c.fechaFin) ?? 'sin fin'}
                           </p>
@@ -129,25 +129,25 @@ export default async function CampanasPage() {
                   </div>
 
                   {c.descripcion && (
-                    <p className="mt-3 line-clamp-2 text-sm text-slate-600">
+                    <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
                       {c.descripcion}
                     </p>
                   )}
 
                   {/* Contenido de la campaña */}
-                  <div className="mt-3 flex gap-4 text-xs text-slate-500">
+                  <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
-                      <Gift className="h-3.5 w-3.5 text-amber-500" />
+                      <Gift className="h-3.5 w-3.5 text-warning-foreground" />
                       {c._count.promociones} promociones
                     </span>
                     <span className="inline-flex items-center gap-1">
-                      <Newspaper className="h-3.5 w-3.5 text-sky-500" />
+                      <Newspaper className="h-3.5 w-3.5 text-primary" />
                       {c._count.posts} publicaciones
                     </span>
                   </div>
 
                   {/* Métricas conjuntas */}
-                  <div className="mt-3 flex gap-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                  <div className="mt-3 flex gap-4 border-t border-border/60 pt-3 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
                       <Eye className="h-3.5 w-3.5" /> {vistas}
                     </span>
@@ -161,7 +161,7 @@ export default async function CampanasPage() {
                     <div className="ml-auto flex items-center gap-1">
                       <Link href={`/admin/campanas/${c.id}/editar`}>
                         <Button size="icon" variant="ghost" title="Editar" aria-label="Editar">
-                          <Pencil className="h-4 w-4 text-slate-500" />
+                          <Pencil className="h-4 w-4 text-muted-foreground" />
                         </Button>
                       </Link>
                       <DeleteCampanaButton id={c.id} nombre={c.nombre} />

@@ -124,7 +124,7 @@ export function NotifSegmentForm({
         />
       </div>
 
-      <Button type="submit" disabled={pending} className="bg-sky-500 hover:bg-sky-400">
+      <Button type="submit" disabled={pending}>
         {pending ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         ) : (

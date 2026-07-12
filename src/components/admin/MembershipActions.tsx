@@ -67,8 +67,9 @@ export function ConfirmPaymentForm({
       </div>
       <Button
         type="submit"
+        variant="success"
         disabled={pending}
-        className="w-full bg-green-600 hover:bg-green-500"
+        className="w-full"
       >
         {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         Confirmar pago y activar
@@ -165,7 +166,7 @@ export function CancelForm({ membershipId }: { membershipId: string }) {
             type="button"
             variant="outline"
             disabled={pending}
-            className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+            className="w-full border-destructive/25 text-destructive hover:bg-destructive/10 hover:text-destructive"
           >
             {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Cancelar membresía
@@ -183,7 +184,7 @@ export function CancelForm({ membershipId }: { membershipId: string }) {
             <AlertDialogCancel>Volver</AlertDialogCancel>
             <AlertDialogAction
               type="submit"
-              className="bg-red-600 hover:bg-red-500"
+              className="bg-destructive text-white hover:bg-destructive/90"
             >
               Sí, cancelar
             </AlertDialogAction>
@@ -230,11 +231,7 @@ export function NewMembershipForm({
 
   if (!open) {
     return (
-      <Button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="bg-sky-500 hover:bg-sky-400 text-white"
-      >
+      <Button type="button" onClick={() => setOpen(true)}>
         Nueva membresía
       </Button>
     )
@@ -242,14 +239,14 @@ export function NewMembershipForm({
 
   return (
     <div className="space-y-3 rounded-lg border p-4">
-      <p className="font-medium text-slate-900">Crear nueva membresía</p>
+      <p className="font-medium text-foreground">Crear nueva membresía</p>
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
       {planes.length === 0 ? (
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">
           No hay planes activos disponibles.
         </p>
       ) : (
@@ -274,7 +271,6 @@ export function NewMembershipForm({
           type="button"
           disabled={pending || planes.length === 0}
           onClick={handleCreate}
-          className="bg-sky-500 hover:bg-sky-400 text-white"
         >
           {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Crear membresía

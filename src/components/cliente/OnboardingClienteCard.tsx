@@ -12,20 +12,20 @@ export function OnboardingClienteCard({ onboarding }: { onboarding: OnboardingCl
   const pct = Math.round((onboarding.completados / onboarding.total) * 100)
 
   return (
-    <Card className="border-blue-200 bg-blue-50/40">
+    <Card className="border-info/30 bg-info/10">
       <CardHeader className="pb-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-base text-blue-900">
-            <Sparkles className="h-5 w-5 text-blue-600" />
+          <CardTitle className="flex items-center gap-2 text-base text-info">
+            <Sparkles className="h-5 w-5 text-primary" />
             Saca el máximo a MembeGo
           </CardTitle>
-          <span className="text-sm font-semibold text-blue-700">
+          <span className="text-sm font-semibold text-info">
             {onboarding.completados}/{onboarding.total}
           </span>
         </div>
-        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-blue-100">
+        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-info/15">
           <div
-            className="h-full rounded-full bg-blue-500 transition-all"
+            className="h-full rounded-full bg-primary transition-all"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -34,15 +34,15 @@ export function OnboardingClienteCard({ onboarding }: { onboarding: OnboardingCl
         {onboarding.items.map((item) => (
           <div
             key={item.key}
-            className="flex items-center justify-between gap-3 rounded-lg bg-white p-2.5 text-sm shadow-sm"
+            className="flex items-center justify-between gap-3 rounded-lg bg-card p-2.5 text-sm shadow-sm"
           >
             <span className="flex items-center gap-2">
               {item.done ? (
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
               ) : (
-                <Circle className="h-4 w-4 shrink-0 text-slate-300" />
+                <Circle className="h-4 w-4 shrink-0 text-muted-foreground/40" />
               )}
-              <span className={item.done ? 'text-slate-400 line-through' : 'text-slate-700'}>
+              <span className={item.done ? 'text-muted-foreground line-through' : 'text-foreground'}>
                 {item.label}
               </span>
             </span>
@@ -59,7 +59,7 @@ export function OnboardingClienteCard({ onboarding }: { onboarding: OnboardingCl
         <div className="pt-1 text-right">
           <Link
             href="/cliente/bienvenida"
-            className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline"
+            className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
           >
             Ver guía paso a paso <ArrowRight className="h-3 w-3" />
           </Link>

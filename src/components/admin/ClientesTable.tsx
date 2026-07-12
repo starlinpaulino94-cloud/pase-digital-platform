@@ -42,7 +42,7 @@ const columns: ColumnDef<ClienteRow>[] = [
     header: 'Membresía',
     cell: ({ row }) => {
       const membership = row.original.memberships?.[0]
-      if (!membership) return <span className="text-slate-500">—</span>
+      if (!membership) return <span className="text-muted-foreground">—</span>
       return (
         <div className="space-y-0.5">
           <p className="text-sm font-medium">{membership.plan.nombre}</p>
@@ -56,7 +56,7 @@ const columns: ColumnDef<ClienteRow>[] = [
     header: 'Acciones',
     cell: ({ row }) => (
       <Link href={`/admin/clientes/${row.original.id}`} title="Ver detalles">
-        <ExternalLink className="h-4 w-4 text-slate-400 hover:text-slate-600" />
+        <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-muted-foreground" />
       </Link>
     ),
   },

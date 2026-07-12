@@ -15,6 +15,7 @@ import {
   TIPOS_CON_PORCENTAJE,
   TIPOS_CON_MONTO,
 } from '@/lib/promociones'
+import { PromoImagenUpload } from '@/components/admin/PromoImagenUpload'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -44,11 +45,42 @@ interface Existing {
   prioridad: number
   campanaId: string | null
   activo: boolean
+  // Fase E5: venta como producto comercial
+  esComprable: boolean
+  precio: number | null
+  usosPorCompra: number
+  beneficioVigenciaDias: number | null
+  beneficioVigenciaHasta: Date | null
+  diasPermitidos: number[]
+  horaDesde: string | null
+  horaHasta: string | null
 }
+
+const DIAS_SEMANA = [
+  { value: 1, label: 'Lun' },
+  { value: 2, label: 'Mar' },
+  { value: 3, label: 'Mié' },
+  { value: 4, label: 'Jue' },
+  { value: 5, label: 'Vie' },
+  { value: 6, label: 'Sáb' },
+  { value: 0, label: 'Dom' },
+]
 
 interface CampanaOption {
   id: string
   nombre: string
+}
+
+/**
+ * Valores iniciales copiados de una plantilla (Fase E3). Solo aplica al crear:
+ * el usuario puede editar todo antes de publicar y la plantilla nunca cambia.
+ */
+export interface PromocionPrefillValues {
+  titulo: string
+  descripcion: string
+  tipo: string
+  descuento: number | null
+  vigenciaHasta: Date | null
 }
 
 const init: PromocionState = {}
@@ -62,15 +94,18 @@ function toDatetimeLocal(d: Date | null) {
 
 export function PromocionForm({
   existing,
+  prefill,
   campanas = [],
 }: {
   existing?: Existing
+  prefill?: PromocionPrefillValues
   campanas?: CampanaOption[]
 }) {
   const router = useRouter()
   const action = existing ? actualizarPromocion : crearPromocion
   const [state, formAction, pending] = useActionState(action, init)
-  const [tipo, setTipo] = useState(existing?.tipo ?? 'descuento')
+  const [tipo, setTipo] = useState(existing?.tipo ?? prefill?.tipo ?? 'descuento')
+  const [esComprable, setEsComprable] = useState(existing?.esComprable ?? false)
 
   useEffect(() => {
     if (state.success) {
@@ -98,8 +133,8 @@ export function PromocionForm({
       )}
 
       {/* Qué ofreces */}
-      <div className="space-y-5 rounded-xl border border-slate-200 p-5">
-        <h3 className="font-semibold text-slate-900">Qué ofreces</h3>
+      <div className="space-y-5 rounded-xl border border-border p-5">
+        <h3 className="font-semibold text-foreground">Qué ofreces</h3>
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2">
@@ -129,7 +164,7 @@ export function PromocionForm({
                 type="number"
                 min={0}
                 max={pidePorcentaje ? 100 : undefined}
-                defaultValue={existing?.descuento ?? ''}
+                defaultValue={existing?.descuento ?? prefill?.descuento ?? ''}
                 placeholder={pidePorcentaje ? '25' : '500'}
               />
             </div>
@@ -141,7 +176,7 @@ export function PromocionForm({
           <Input
             id="titulo"
             name="titulo"
-            defaultValue={existing?.titulo}
+            defaultValue={existing?.titulo ?? prefill?.titulo}
             placeholder="Ej: 25% de descuento en tu primer mes"
             required
           />
@@ -152,38 +187,35 @@ export function PromocionForm({
           <Textarea
             id="descripcion"
             name="descripcion"
-            defaultValue={existing?.descripcion}
+            defaultValue={existing?.descripcion ?? prefill?.descripcion}
             rows={4}
             placeholder="Condiciones y detalles para el cliente"
             required
           />
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="codigo">Código promocional / cupón</Label>
-            <Input
-              id="codigo"
-              name="codigo"
-              defaultValue={existing?.codigo ?? ''}
-              placeholder="Ej: BIENVENIDA25"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="imagenUrl">Imagen (URL)</Label>
-            <Input
-              id="imagenUrl"
-              name="imagenUrl"
-              defaultValue={existing?.imagenUrl ?? ''}
-              placeholder="https://..."
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="codigo">Código promocional / cupón</Label>
+          <Input
+            id="codigo"
+            name="codigo"
+            defaultValue={existing?.codigo ?? ''}
+            placeholder="Ej: BIENVENIDA25"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Imagen de la promoción</Label>
+          <PromoImagenUpload
+            folder={existing?.id ?? 'nueva'}
+            currentUrl={existing?.imagenUrl ?? null}
+          />
         </div>
       </div>
 
       {/* Vigencia y límites */}
-      <div className="space-y-5 rounded-xl border border-slate-200 p-5">
-        <h3 className="font-semibold text-slate-900">Vigencia y límites</h3>
+      <div className="space-y-5 rounded-xl border border-border p-5">
+        <h3 className="font-semibold text-foreground">Vigencia y límites</h3>
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="vigenciaDesde">Inicio (fecha y hora)</Label>
@@ -200,7 +232,7 @@ export function PromocionForm({
               id="vigenciaHasta"
               name="vigenciaHasta"
               type="datetime-local"
-              defaultValue={toDatetimeLocal(existing?.vigenciaHasta ?? null)}
+              defaultValue={toDatetimeLocal(existing?.vigenciaHasta ?? prefill?.vigenciaHasta ?? null)}
             />
             <p className="text-xs text-muted-foreground">
               Vacío = sin fecha de expiración.
@@ -232,9 +264,134 @@ export function PromocionForm({
         </div>
       </div>
 
+      {/* Venta (Fase E5): la promoción como producto comercial */}
+      <div className="space-y-5 rounded-xl border border-border p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="font-semibold text-foreground">Venta directa</h3>
+            <p className="text-xs text-muted-foreground">
+              Permite que el cliente compre esta promoción (transferencia +
+              validación) y reciba un QR para canjearla.
+            </p>
+          </div>
+          <Switch
+            id="esComprable"
+            checked={esComprable}
+            onCheckedChange={setEsComprable}
+            aria-label="Habilitar venta directa"
+          />
+        </div>
+        <input type="hidden" name="esComprable" value={String(esComprable)} />
+
+        {esComprable && (
+          <>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="precio">Precio (RD$) *</Label>
+                <Input
+                  id="precio"
+                  name="precio"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  defaultValue={existing?.precio ?? ''}
+                  placeholder="0 = gratis (se activa sin pago)"
+                  required={esComprable}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="usosPorCompra">Usos por compra</Label>
+                <Input
+                  id="usosPorCompra"
+                  name="usosPorCompra"
+                  type="number"
+                  min={1}
+                  defaultValue={existing?.usosPorCompra ?? 1}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="beneficioVigenciaDias">Vigencia del beneficio (días)</Label>
+                <Input
+                  id="beneficioVigenciaDias"
+                  name="beneficioVigenciaDias"
+                  type="number"
+                  min={1}
+                  defaultValue={existing?.beneficioVigenciaDias ?? ''}
+                  placeholder="Ej: 30, 60, 90"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Días para usarla desde la activación. Independiente de la
+                  ventana de compra (Vigencia y límites).
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="beneficioVigenciaHasta">…o hasta una fecha fija</Label>
+                <Input
+                  id="beneficioVigenciaHasta"
+                  name="beneficioVigenciaHasta"
+                  type="datetime-local"
+                  defaultValue={toDatetimeLocal(existing?.beneficioVigenciaHasta ?? null)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Ambos vacíos = sin vencimiento.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Días permitidos para el canje</Label>
+              <div className="flex flex-wrap gap-2">
+                {DIAS_SEMANA.map((d) => (
+                  <label
+                    key={d.value}
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/10"
+                  >
+                    <input
+                      type="checkbox"
+                      name="diasPermitidos"
+                      value={d.value}
+                      defaultChecked={existing?.diasPermitidos?.includes(d.value) ?? false}
+                      className="accent-[var(--primary)]"
+                    />
+                    {d.label}
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Sin marcar ninguno = válida todos los días.
+              </p>
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="horaDesde">Horario desde</Label>
+                <Input
+                  id="horaDesde"
+                  name="horaDesde"
+                  type="time"
+                  defaultValue={existing?.horaDesde ?? ''}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="horaHasta">Horario hasta</Label>
+                <Input
+                  id="horaHasta"
+                  name="horaHasta"
+                  type="time"
+                  defaultValue={existing?.horaHasta ?? ''}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Vacíos = válida a cualquier hora.
+                </p>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
       {/* Alcance */}
-      <div className="space-y-5 rounded-xl border border-slate-200 p-5">
-        <h3 className="font-semibold text-slate-900">Alcance</h3>
+      <div className="space-y-5 rounded-xl border border-border p-5">
+        <h3 className="font-semibold text-foreground">Alcance</h3>
         <div className="space-y-2">
           <Label htmlFor="visibilidad">Visibilidad</Label>
           <Select name="visibilidad" defaultValue={existing?.visibilidad ?? 'publica'}>
@@ -295,7 +452,7 @@ export function PromocionForm({
       </div>
 
       <div className="flex gap-3">
-        <Button type="submit" disabled={pending} className="bg-sky-500 hover:bg-sky-400">
+        <Button type="submit" disabled={pending}>
           {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {existing ? 'Guardar cambios' : 'Publicar promoción'}
         </Button>

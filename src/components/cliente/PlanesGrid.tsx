@@ -133,20 +133,20 @@ export function PlanesGrid({
             key={plan.id}
             className={cn(
               'relative flex flex-col',
-              isCurrent && 'border-emerald-300 ring-1 ring-emerald-200',
-              isFeatured && !isCurrent && 'border-sky-300 shadow-lg ring-1 ring-sky-200'
+              isCurrent && 'border-success/30 ring-1 ring-success/20',
+              isFeatured && !isCurrent && 'border-info/30 shadow-lg ring-1 ring-info/20'
             )}
           >
             {isCurrent && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <Badge className="bg-emerald-500 text-white hover:bg-emerald-500">
+                <Badge className="bg-success text-white hover:bg-success">
                   <Check className="mr-1 h-3 w-3" /> Tu plan actual
                 </Badge>
               </div>
             )}
             {isFeatured && !isCurrent && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <Badge className="bg-sky-500 text-white hover:bg-sky-500">
+                <Badge className="bg-info/100 text-white hover:bg-info/100">
                   <Star className="mr-1 h-3 w-3" /> Más popular
                 </Badge>
               </div>
@@ -156,14 +156,14 @@ export function PlanesGrid({
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   {plan.esIlimitado ? (
-                    <Crown className="h-5 w-5 text-amber-500" />
+                    <Crown className="h-5 w-5 text-warning-foreground" />
                   ) : (
-                    <Sparkles className="h-5 w-5 text-sky-500" />
+                    <Sparkles className="h-5 w-5 text-primary" />
                   )}
                   {plan.nombre}
                 </CardTitle>
                 {plan.esIlimitado && (
-                  <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">
+                  <Badge className="bg-warning/15 text-warning-foreground hover:bg-warning/15">
                     Ilimitado
                   </Badge>
                 )}
@@ -174,12 +174,12 @@ export function PlanesGrid({
               <div>
                 {descuento > 0 ? (
                   <>
-                    <p className="text-sm text-slate-400 line-through">
+                    <p className="text-sm text-muted-foreground line-through">
                       {formatMoney(plan.precio, prefs)}
                     </p>
-                    <p className="text-3xl font-extrabold text-slate-900">
+                    <p className="text-3xl font-extrabold text-foreground">
                       {formatMoney(precioFinal, prefs)}
-                      <span className="text-base font-normal text-slate-400">/mes</span>
+                      <span className="text-base font-normal text-muted-foreground">/mes</span>
                     </p>
                     <Badge variant="success" className="mt-1 gap-1">
                       <Gift className="h-3 w-3" />
@@ -187,23 +187,23 @@ export function PlanesGrid({
                     </Badge>
                   </>
                 ) : (
-                  <p className="text-3xl font-extrabold text-slate-900">
+                  <p className="text-3xl font-extrabold text-foreground">
                     {formatMoney(plan.precio, prefs)}
-                    <span className="text-base font-normal text-slate-400">/mes</span>
+                    <span className="text-base font-normal text-muted-foreground">/mes</span>
                   </p>
                 )}
                 {plan.descripcion && (
-                  <p className="mt-2 text-sm text-slate-500">{plan.descripcion}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">{plan.descripcion}</p>
                 )}
               </div>
 
-              <div className="rounded-lg bg-slate-50 p-3 text-sm">
-                <p className="font-medium text-slate-700">
+              <div className="rounded-lg bg-muted p-3 text-sm">
+                <p className="font-medium text-foreground">
                   {plan.esIlimitado
                     ? 'Usos ilimitados'
                     : `${plan.lavadosIncluidos} usos incluidos`}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   Vigencia: {plan.vigenciaDias} días
                 </p>
               </div>
@@ -211,8 +211,8 @@ export function PlanesGrid({
               {plan.beneficios.length > 0 && (
                 <ul className="space-y-2">
                   {plan.beneficios.map((b) => (
-                    <li key={b} className="flex items-start gap-2 text-sm text-slate-600">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                    <li key={b} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
                       {b}
                     </li>
                   ))}
@@ -227,7 +227,7 @@ export function PlanesGrid({
                 ) : isRequested ? (
                   <Button
                     variant="outline"
-                    className="w-full border-amber-300 text-amber-700"
+                    className="w-full border-warning/30 text-warning-foreground"
                     onClick={() =>
                       activeMembershipId && router.push(`/membresia/${activeMembershipId}`)
                     }
@@ -239,7 +239,7 @@ export function PlanesGrid({
                     <AlertDialogTrigger asChild>
                       <Button
                         variant={isFeatured ? 'default' : 'outline'}
-                        className={cn('w-full', isFeatured && 'bg-sky-500 hover:bg-sky-400')}
+                        className={cn('w-full', isFeatured && 'bg-primary hover:bg-primary/90')}
                       >
                         {isUpgrade && <ArrowUpCircle className="mr-2 h-4 w-4" />}
                         {isDowngrade && <ArrowDownCircle className="mr-2 h-4 w-4" />}
@@ -273,7 +273,7 @@ export function PlanesGrid({
                     <input type="hidden" name="planId" value={plan.id} />
                     <SubmitButton
                       variant={isFeatured ? 'default' : 'outline'}
-                      className={cn('w-full', isFeatured && 'bg-sky-500 hover:bg-sky-400')}
+                      className={cn('w-full', isFeatured && 'bg-primary hover:bg-primary/90')}
                     >
                       Quiero este plan
                     </SubmitButton>

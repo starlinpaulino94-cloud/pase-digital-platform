@@ -1,12 +1,7 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
-import { Loader2, Trash2 } from 'lucide-react'
-import { toast } from 'sonner'
-import { eliminarPromocion, type PromocionState } from '@/modules/admin/promocionActions'
-import { Button } from '@/components/ui/button'
-
-const init: PromocionState = {}
+import { eliminarPromocion } from '@/modules/admin/promocionActions'
+import { DeleteButton } from '@/components/ui/delete-button'
 
 export function DeletePromocionButton({
   id,
@@ -15,28 +10,16 @@ export function DeletePromocionButton({
   id: string
   titulo: string
 }) {
-  const [state, formAction, pending] = useActionState(eliminarPromocion, init)
-
-  useEffect(() => {
-    if (state.success) toast.success(`"${titulo}" eliminada.`)
-    if (state.error) toast.error(state.error)
-  }, [state.success, state.error, titulo])
-
   return (
-    <form
-      action={formAction}
-      onSubmit={(e) => {
-        if (!confirm(`¿Eliminar la promoción "${titulo}"?`)) e.preventDefault()
+    <DeleteButton
+      action={async () => {
+        const fd = new FormData()
+        fd.set('id', id)
+        return eliminarPromocion({}, fd)
       }}
-    >
-      <input type="hidden" name="id" value={id} />
-      <Button size="icon" variant="ghost" type="submit" disabled={pending}>
-        {pending ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Trash2 className="h-4 w-4 text-red-500" />
-        )}
-      </Button>
-    </form>
+      title={`¿Eliminar la promoción "${titulo}"?`}
+      label="Eliminar promoción"
+      successMessage={`"${titulo}" eliminada.`}
+    />
   )
 }

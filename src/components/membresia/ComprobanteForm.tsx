@@ -106,7 +106,7 @@ export function ComprobanteForm({ membershipId, metodosPago }: Props) {
 
   if (state.success) {
     return (
-      <div className="flex items-center gap-2 rounded-xl bg-green-50 p-4 text-green-700">
+      <div className="flex items-center gap-2 rounded-xl bg-success/10 p-4 text-success">
         <CheckCircle2 className="h-5 w-5 shrink-0" />
         <p className="text-sm font-medium">
           Comprobante enviado. El equipo lo revisará pronto.
@@ -135,7 +135,7 @@ export function ComprobanteForm({ membershipId, metodosPago }: Props) {
 
         {/* Preview area */}
         {previewUrl ? (
-          <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+          <div className="relative overflow-hidden rounded-xl border border-border bg-muted">
             <Image
               src={previewUrl}
               alt="Vista previa del comprobante"
@@ -146,28 +146,28 @@ export function ComprobanteForm({ membershipId, metodosPago }: Props) {
             <button
               type="button"
               onClick={clearFile}
-              className="absolute right-2 top-2 rounded-full bg-white/90 p-1 shadow hover:bg-white"
+              className="absolute right-2 top-2 rounded-full bg-white/90 p-1 shadow hover:bg-card"
             >
-              <X className="h-4 w-4 text-slate-600" />
+              <X className="h-4 w-4 text-muted-foreground" />
             </button>
-            <p className="px-3 py-2 text-xs text-slate-500">
-              {fileName} · <button type="button" onClick={clearFile} className="text-sky-600 hover:underline">Cambiar</button>
+            <p className="px-3 py-2 text-xs text-muted-foreground">
+              {fileName} · <button type="button" onClick={clearFile} className="text-primary hover:underline">Cambiar</button>
             </p>
           </div>
         ) : isPdf ? (
-          <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-sm font-medium text-slate-700">{fileName}</p>
-            <button type="button" onClick={clearFile} className="text-xs text-sky-600 hover:underline">
+          <div className="flex items-center justify-between rounded-xl border border-border bg-muted px-4 py-3">
+            <p className="text-sm font-medium text-foreground">{fileName}</p>
+            <button type="button" onClick={clearFile} className="text-xs text-primary hover:underline">
               Cambiar
             </button>
           </div>
         ) : (
           <div
             onClick={() => fileRef.current?.click()}
-            className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-8 text-slate-500 transition hover:border-sky-400 hover:bg-sky-50"
+            className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted p-8 text-muted-foreground transition hover:border-info/40 hover:bg-info/10"
           >
             {uploading ? (
-              <Loader2 className="h-8 w-8 animate-spin text-sky-500" />
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             ) : (
               <>
                 <Upload className="h-8 w-8" />
@@ -230,8 +230,8 @@ export function ComprobanteForm({ membershipId, metodosPago }: Props) {
                 key={m.id}
                 className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-2.5 text-sm transition ${
                   metodoPagoId === m.id
-                    ? 'border-sky-400 bg-sky-50 text-sky-700'
-                    : 'border-slate-200 hover:border-slate-300'
+                    ? 'border-info/40 bg-info/10 text-info'
+                    : 'border-border hover:border-border'
                 }`}
               >
                 <input
@@ -260,7 +260,7 @@ export function ComprobanteForm({ membershipId, metodosPago }: Props) {
       <Button
         type="submit"
         disabled={!comprobanteUrl || uploading || pending}
-        className="w-full bg-sky-500 hover:bg-sky-400"
+        className="w-full bg-primary hover:bg-primary/90"
       >
         {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         Enviar comprobante

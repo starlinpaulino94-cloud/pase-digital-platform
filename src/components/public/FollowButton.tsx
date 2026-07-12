@@ -49,7 +49,7 @@ export function FollowButton({ companyId, redirectTo }: FollowButtonProps) {
     return (
       <button
         disabled
-        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-400 sm:w-auto"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-5 py-3 font-semibold text-muted-foreground sm:w-auto"
       >
         <Loader2 className="h-4 w-4 animate-spin" /> Seguir
       </button>
@@ -62,7 +62,7 @@ export function FollowButton({ companyId, redirectTo }: FollowButtonProps) {
         onClick={() =>
           router.push(`/login?redirect=${encodeURIComponent(redirectTo)}`)
         }
-        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-5 py-3 font-semibold text-blue-700 transition hover:bg-blue-50 sm:w-auto"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-info/30 bg-card px-5 py-3 font-semibold text-info transition hover:bg-info/10 sm:w-auto"
       >
         <Plus className="h-4 w-4" /> Seguir empresa
       </button>
@@ -120,8 +120,8 @@ export function FollowButton({ companyId, redirectTo }: FollowButtonProps) {
         disabled={pending}
         className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-5 py-3 font-semibold transition disabled:opacity-60 sm:flex-none ${
           following
-            ? 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-            : 'border border-blue-200 bg-white text-blue-700 hover:bg-blue-50'
+            ? 'border border-border bg-muted text-foreground hover:bg-muted'
+            : 'border border-info/30 bg-card text-info hover:bg-info/10'
         }`}
       >
         {pending ? (
@@ -142,8 +142,8 @@ export function FollowButton({ companyId, redirectTo }: FollowButtonProps) {
           title={esFavorita ? 'Quitar de favoritas' : 'Marcar favorita'}
           className={`inline-flex items-center justify-center rounded-xl border p-3 transition disabled:opacity-60 ${
             esFavorita
-              ? 'border-amber-200 bg-amber-50 text-amber-500'
-              : 'border-slate-200 bg-white text-slate-400 hover:text-amber-500'
+              ? 'border-warning/30 bg-warning/15 text-warning-foreground'
+              : 'border-border bg-card text-muted-foreground hover:text-warning-foreground'
           }`}
         >
           <Star className={`h-4 w-4 ${esFavorita ? 'fill-amber-400' : ''}`} />

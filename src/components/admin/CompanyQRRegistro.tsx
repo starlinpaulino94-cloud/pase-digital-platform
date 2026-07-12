@@ -37,19 +37,19 @@ export function CompanyQRRegistro({
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className="flex h-52 w-52 items-center justify-center rounded-xl border border-slate-200 bg-white p-3">
+      <div className="flex h-52 w-52 items-center justify-center rounded-xl border border-border bg-white p-3">
         {dataUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={dataUrl} alt="QR de registro" className="h-full w-full" />
         ) : fallo ? (
-          <p className="px-2 text-center text-xs text-slate-500">
+          <p className="px-2 text-center text-xs text-muted-foreground">
             No se pudo generar el QR. Recarga la página para reintentar.
           </p>
         ) : (
-          <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         )}
       </div>
-      <p className="max-w-full break-all text-center text-xs text-slate-500">{url}</p>
+      <p className="max-w-full break-all text-center text-xs text-muted-foreground">{url}</p>
       {dataUrl && (
         <a href={dataUrl} download={`registro-${companySlug}.png`}>
           <Button type="button" size="sm" variant="outline" className="gap-1.5">

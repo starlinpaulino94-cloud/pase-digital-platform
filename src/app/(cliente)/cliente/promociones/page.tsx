@@ -65,11 +65,11 @@ function SeccionPromos({
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <Icon className={`h-5 w-5 ${iconClass}`} />
           {titulo}
         </h2>
-        {descripcion && <p className="text-sm text-slate-500">{descripcion}</p>}
+        {descripcion && <p className="text-sm text-muted-foreground">{descripcion}</p>}
       </div>
       <PromoGridConGuardar promociones={promociones} guardadasIds={guardadasIds} />
     </section>
@@ -105,8 +105,8 @@ export default async function PromocionesDisponiblesPage() {
   return (
     <div className="space-y-10">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Promociones para ti</h1>
-        <p className="text-slate-500">
+        <h1 className="text-2xl font-bold text-foreground">Promociones para ti</h1>
+        <p className="text-muted-foreground">
           Primero lo de las empresas que sigues; después, lo mejor del
           marketplace.
         </p>
@@ -127,7 +127,7 @@ export default async function PromocionesDisponiblesPage() {
           {/* Guardadas */}
           <SeccionPromos
             icon={Heart}
-            iconClass="fill-rose-500 text-rose-500"
+            iconClass="fill-rose-500 text-destructive"
             titulo="Mis promociones guardadas"
             promociones={guardadas}
             guardadasIds={guardadasIds}
@@ -136,7 +136,7 @@ export default async function PromocionesDisponiblesPage() {
           {/* Empresas que sigo */}
           <SeccionPromos
             icon={Star}
-            iconClass="fill-amber-400 text-amber-400"
+            iconClass="fill-amber-400 text-warning-foreground"
             titulo="De empresas que sigues"
             descripcion="Tus empresas favoritas aparecen primero."
             promociones={feed.seguidas}
@@ -146,7 +146,7 @@ export default async function PromocionesDisponiblesPage() {
           {/* Destacadas */}
           <SeccionPromos
             icon={Flame}
-            iconClass="text-orange-500"
+            iconClass="text-warning-foreground"
             titulo="Promociones destacadas"
             promociones={feed.destacadas}
             guardadasIds={guardadasIds}
@@ -155,7 +155,7 @@ export default async function PromocionesDisponiblesPage() {
           {/* Nuevas */}
           <SeccionPromos
             icon={Sparkles}
-            iconClass="text-sky-500"
+            iconClass="text-primary"
             titulo="Nuevas promociones"
             descripcion="Publicadas en los últimos 14 días."
             promociones={feed.nuevas}
@@ -165,7 +165,7 @@ export default async function PromocionesDisponiblesPage() {
           {/* Expiran pronto */}
           <SeccionPromos
             icon={Clock}
-            iconClass="text-red-500"
+            iconClass="text-destructive"
             titulo="Expiran pronto"
             descripcion="Aprovéchalas antes de que venzan."
             promociones={feed.expiranPronto}
@@ -175,7 +175,7 @@ export default async function PromocionesDisponiblesPage() {
           {/* Recomendadas */}
           <SeccionPromos
             icon={ThumbsUp}
-            iconClass="text-blue-500"
+            iconClass="text-primary"
             titulo="Recomendadas para ti"
             descripcion="De empresas parecidas a las que sigues."
             promociones={feed.recomendadas}
@@ -185,8 +185,8 @@ export default async function PromocionesDisponiblesPage() {
           {/* Sin promociones */}
           {sinPromos && guardadas.length === 0 && (
             <Card>
-              <CardContent className="py-16 text-center text-slate-500">
-                <Gift className="mx-auto mb-3 h-10 w-10 text-slate-300" />
+              <CardContent className="py-16 text-center text-muted-foreground">
+                <Gift className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
                 <p className="font-medium">No hay promociones activas por ahora</p>
                 <p className="text-sm">
                   Sigue empresas para recibir sus promociones apenas se
@@ -204,11 +204,11 @@ export default async function PromocionesDisponiblesPage() {
             <section className="space-y-4">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-                    <Compass className="h-5 w-5 text-indigo-500" />
+                  <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+                    <Compass className="h-5 w-5 text-primary" />
                     Descubrir empresas
                   </h2>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-muted-foreground">
                     También podría interesarte seguirlas.
                   </p>
                 </div>

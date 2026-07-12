@@ -22,10 +22,10 @@ export default async function EditarPlanPage({
 
   return (
     <div className="max-w-xl space-y-6">
-      <Link href="/superadmin/planes" className="text-sm text-sky-600 hover:underline">
+      <Link href="/superadmin/planes" className="text-sm text-primary hover:underline">
         ← Volver a planes
       </Link>
-      <h1 className="text-2xl font-bold text-slate-900">Editar plan — {plan.nombre}</h1>
+      <h1 className="text-2xl font-bold text-foreground">Editar plan — {plan.nombre}</h1>
       <EditarPlanForm plan={plan} />
     </div>
   )

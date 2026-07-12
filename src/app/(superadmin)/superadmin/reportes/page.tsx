@@ -50,32 +50,32 @@ export default async function SuperadminReportesPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Reportes globales</h1>
-        <p className="text-slate-500">Todas las empresas · mes en curso</p>
+        <h1 className="text-2xl font-bold text-foreground">Reportes globales</h1>
+        <p className="text-muted-foreground">Todas las empresas · mes en curso</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((c) => (
           <Card key={c.label}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-500">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 {c.label}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-slate-900">{c.value}</p>
+              <p className="text-3xl font-bold text-foreground">{c.value}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">
+        <h2 className="mb-4 text-lg font-semibold text-foreground">
           Por empresa
         </h2>
         <div className="space-y-4">
           {empresas.length === 0 && (
-            <p className="text-sm text-slate-500">No hay empresas.</p>
+            <p className="text-sm text-muted-foreground">No hay empresas.</p>
           )}
           {empresas.map((emp) => (
             <Card key={emp.companyId}>
@@ -100,7 +100,7 @@ export default async function SuperadminReportesPage() {
 
                 {emp.data.activasPorPlan.length > 0 && (
                   <div>
-                    <p className="mb-1 text-sm font-medium text-slate-500">
+                    <p className="mb-1 text-sm font-medium text-muted-foreground">
                       Activas por plan
                     </p>
                     <ul className="divide-y">
@@ -109,8 +109,8 @@ export default async function SuperadminReportesPage() {
                           key={p.plan}
                           className="flex justify-between py-1 text-sm"
                         >
-                          <span className="text-slate-700">{p.plan}</span>
-                          <span className="font-semibold text-slate-900">
+                          <span className="text-foreground">{p.plan}</span>
+                          <span className="font-semibold text-foreground">
                             {p.count}
                           </span>
                         </li>
@@ -121,7 +121,7 @@ export default async function SuperadminReportesPage() {
 
                 {emp.data.membresiasPorVencer.length > 0 && (
                   <div>
-                    <p className="mb-1 text-sm font-medium text-slate-500">
+                    <p className="mb-1 text-sm font-medium text-muted-foreground">
                       Por vencer (próximos 7 días)
                     </p>
                     <ul className="divide-y">
@@ -130,10 +130,10 @@ export default async function SuperadminReportesPage() {
                           key={m.id}
                           className="flex justify-between py-1 text-sm"
                         >
-                          <span className="text-slate-700">
+                          <span className="text-foreground">
                             {m.cliente} · {m.plan}
                           </span>
-                          <span className="text-slate-600">
+                          <span className="text-muted-foreground">
                             {fmtDate(m.fechaVencimiento)}
                           </span>
                         </li>
@@ -153,8 +153,8 @@ export default async function SuperadminReportesPage() {
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-sm text-slate-500">{label}</p>
-      <p className="text-xl font-bold text-slate-900">{value}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="text-xl font-bold text-foreground">{value}</p>
     </div>
   )
 }

@@ -32,8 +32,8 @@ export default async function ClientesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Clientes</h1>
-        <p className="text-slate-500">{clientes.length} registros</p>
+        <h1 className="text-2xl font-bold text-foreground">Clientes</h1>
+        <p className="text-muted-foreground">{clientes.length} registros</p>
       </div>
 
       <ClientesTable data={clientes} />

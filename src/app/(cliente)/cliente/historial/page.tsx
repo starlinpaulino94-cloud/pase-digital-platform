@@ -7,6 +7,7 @@ import {
   MapPin,
   User,
   Car,
+  Hash,
 } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
 import { getClienteVisitas, type HistorialVisitas } from '@/modules/cliente/queries'
@@ -32,7 +33,7 @@ export default async function HistorialPage({
 }) {
   const user = await requireRole('CLIENTE')
   const clienteId = user.metadata.clienteId
-  if (!clienteId) return <p className="text-slate-600">No autorizado.</p>
+  if (!clienteId) return <p className="text-muted-foreground">No autorizado.</p>
 
   const { page: pageParam } = await searchParams
   const page = Math.max(1, Number(pageParam ?? 1) || 1)
@@ -50,31 +51,31 @@ export default async function HistorialPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Historial de visitas</h1>
-        <p className="text-slate-500">Cada uso registrado de tu membresía.</p>
+        <h1 className="text-2xl font-bold text-foreground">Historial de visitas</h1>
+        <p className="text-muted-foreground">Cada uso registrado de tu membresía.</p>
       </div>
 
       {/* Resumen */}
       <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardContent className="flex items-center gap-3 py-5">
-            <div className="rounded-lg bg-sky-100 p-2">
-              <History className="h-5 w-5 text-sky-600" />
+            <div className="rounded-lg bg-info/10 p-2">
+              <History className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900">{total}</p>
-              <p className="text-sm text-slate-500">Visitas totales</p>
+              <p className="text-2xl font-bold text-foreground">{total}</p>
+              <p className="text-sm text-muted-foreground">Visitas totales</p>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="flex items-center gap-3 py-5">
-            <div className="rounded-lg bg-violet-100 p-2">
-              <CalendarDays className="h-5 w-5 text-violet-600" />
+            <div className="rounded-lg bg-primary/10 p-2">
+              <CalendarDays className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900">{esteMes}</p>
-              <p className="text-sm text-slate-500">Este mes</p>
+              <p className="text-2xl font-bold text-foreground">{esteMes}</p>
+              <p className="text-sm text-muted-foreground">Este mes</p>
             </div>
           </CardContent>
         </Card>
@@ -91,8 +92,8 @@ export default async function HistorialPage({
         </Card>
       ) : visitas.length === 0 ? (
         <Card>
-          <CardContent className="py-16 text-center text-slate-500">
-            <History className="mx-auto mb-3 h-10 w-10 text-slate-300" />
+          <CardContent className="py-16 text-center text-muted-foreground">
+            <History className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
             <p className="font-medium">Sin visitas registradas</p>
             <p className="text-sm">
               Tus visitas aparecerán aquí cuando el empleado las confirme.
@@ -102,15 +103,15 @@ export default async function HistorialPage({
       ) : (
         <Card>
           <CardContent className="p-0">
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-border/60">
               {visitas.map((v) => (
                 <li key={v.id} className="px-5 py-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 space-y-1">
-                      <p className="font-semibold text-slate-800">{v.servicio}</p>
-                      <p className="text-sm text-slate-500">{fmtDateTime(v.fechaVisita)}</p>
+                      <p className="font-semibold text-foreground">{v.servicio}</p>
+                      <p className="text-sm text-muted-foreground">{fmtDateTime(v.fechaVisita)}</p>
 
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                         {v.sucursal && (
                           <span className="inline-flex items-center gap-1">
                             <MapPin className="h-3 w-3" /> {v.sucursal}
@@ -130,18 +131,35 @@ export default async function HistorialPage({
                         {v.planNombre && <span>Plan: {v.planNombre}</span>}
                       </div>
 
+                      {/* Fase E4: identificador oficial de la operación */}
+                      {v.transaccion && (
+                        <p className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
+                          <Hash className="h-3 w-3" />
+                          {v.transaccion.codigo} · {v.transaccion.ticketNumero}
+                        </p>
+                      )}
+
                       {v.notas && (
-                        <p className="mt-1 text-xs italic text-slate-400">“{v.notas}”</p>
+                        <p className="mt-1 text-xs italic text-muted-foreground">“{v.notas}”</p>
                       )}
                     </div>
-                    <div className="shrink-0">
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
                       {v.descontado ? (
-                        <Badge variant="secondary" className="bg-red-50 text-xs text-red-600">
+                        <Badge variant="secondary" className="bg-destructive/10 text-xs text-destructive">
                           −1 uso
                         </Badge>
                       ) : (
-                        <Badge variant="secondary" className="bg-green-50 text-xs text-green-600">
+                        <Badge variant="secondary" className="bg-success/10 text-xs text-success">
                           Sin descuento
+                        </Badge>
+                      )}
+                      {v.transaccion && v.transaccion.estado !== 'APPLIED' && (
+                        <Badge variant="secondary" className="bg-warning/15 text-[10px] text-warning-foreground">
+                          {v.transaccion.estado === 'REVERTED'
+                            ? 'Revertida'
+                            : v.transaccion.estado === 'CANCELLED'
+                              ? 'Cancelada'
+                              : v.transaccion.estado}
                         </Badge>
                       )}
                     </div>
@@ -169,7 +187,7 @@ export default async function HistorialPage({
               Anterior
             </Button>
           )}
-          <span className="text-sm text-slate-600">
+          <span className="text-sm text-muted-foreground">
             Página {page} de {pages}
           </span>
           {page < pages ? (

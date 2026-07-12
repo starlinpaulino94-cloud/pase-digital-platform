@@ -40,9 +40,9 @@ export default async function EmpresasPage({ searchParams }: EmpresasPageProps) 
   ])
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-card">
       {desdeGoogle && (
-        <div className="border-b border-sky-200 bg-sky-50 px-4 py-3 text-center text-sm text-sky-900">
+        <div className="border-b border-info/30 bg-info/10 px-4 py-3 text-center text-sm text-info">
           Para crear tu cuenta con Google, entra a la página de la empresa donde
           quieres registrarte y usa allí <strong>«Continuar con Google»</strong>.
         </div>
@@ -50,13 +50,13 @@ export default async function EmpresasPage({ searchParams }: EmpresasPageProps) 
       {/* Header */}
       <section className="relative overflow-hidden bg-gradient-to-br from-blue-800 via-blue-700 to-indigo-900 pb-16 pt-14">
         <div className="absolute inset-0 bg-grid-light mask-fade" />
-        <div className="absolute -top-16 right-10 h-56 w-56 rounded-full bg-sky-400/25 blur-3xl" />
+        <div className="absolute -top-16 right-10 h-56 w-56 rounded-full bg-primary/25 blur-3xl" />
         <div className="relative mx-auto max-w-7xl space-y-7 px-4 sm:px-6 lg:px-8">
           <div className="text-white">
             <h1 className="animate-slide-up text-4xl font-extrabold tracking-tight sm:text-5xl">
               Explora empresas
             </h1>
-            <p className="mt-3 max-w-xl animate-slide-up text-lg text-sky-100/90 delay-75">
+            <p className="mt-3 max-w-xl animate-slide-up text-lg text-white/80/90 delay-75">
               Descubre negocios afiliados, sus planes de membresía y promociones
               exclusivas.
             </p>
@@ -77,7 +77,7 @@ export default async function EmpresasPage({ searchParams }: EmpresasPageProps) 
             href={filters.featured ? '/empresas' : '/empresas?featured=true'}
             className={`hidden flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-150 sm:inline-flex ${
               filters.featured
-                ? 'bg-blue-600 text-white shadow-glow'
+                ? 'bg-primary text-white shadow-glow'
                 : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground'
             }`}
           >

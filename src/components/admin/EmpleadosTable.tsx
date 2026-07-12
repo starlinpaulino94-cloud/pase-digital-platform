@@ -24,12 +24,12 @@ const columns: ColumnDef<EmpleadoRow>[] = [
       row.original.esEmpleado ? (
         <Link
           href={`/admin/empleados/${row.original.id}`}
-          className="font-medium text-sky-600 hover:underline"
+          className="font-medium text-primary hover:underline"
         >
           {row.getValue('name')}
         </Link>
       ) : (
-        <span className="font-medium text-slate-800">{row.getValue('name')}</span>
+        <span className="font-medium text-foreground">{row.getValue('name')}</span>
       ),
   },
   {
@@ -54,7 +54,7 @@ const columns: ColumnDef<EmpleadoRow>[] = [
     cell: ({ row }) =>
       row.original.esEmpleado ? (
         <Link href={`/admin/empleados/${row.original.id}`} title="Ver detalles">
-          <ExternalLink className="h-4 w-4 text-slate-400 hover:text-slate-600" />
+          <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-muted-foreground" />
         </Link>
       ) : null,
   },

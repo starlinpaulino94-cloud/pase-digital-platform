@@ -25,13 +25,13 @@ const STEPS = [
 
 export function HowItWorks() {
   return (
-    <section className="bg-slate-50 py-16 sm:py-24">
+    <section className="bg-muted py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             Cómo funciona
           </h2>
-          <p className="mt-4 text-lg text-slate-600">
+          <p className="mt-4 text-lg text-muted-foreground">
             Cuatro pasos simples para empezar a disfrutar tus beneficios.
           </p>
         </div>
@@ -39,19 +39,19 @@ export function HowItWorks() {
         <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((step, i) => (
             <div key={step.title} className="relative">
-              <div className="h-full rounded-2xl border border-slate-100 bg-white p-6 text-center shadow-sm">
+              <div className="h-full rounded-2xl border border-border/60 bg-card p-6 text-center shadow-sm">
                 <div className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-sky-500 text-white">
                   <step.icon className="h-6 w-6" />
-                  <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
+                  <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-foreground text-xs font-bold text-white">
                     {i + 1}
                   </span>
                 </div>
-                <h3 className="mt-4 font-semibold text-slate-900">{step.title}</h3>
-                <p className="mt-2 text-sm text-slate-600">{step.description}</p>
+                <h3 className="mt-4 font-semibold text-foreground">{step.title}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{step.description}</p>
               </div>
 
               {i < STEPS.length - 1 && (
-                <div className="absolute -right-3 top-1/2 hidden -translate-y-1/2 text-2xl text-slate-300 lg:block">
+                <div className="absolute -right-3 top-1/2 hidden -translate-y-1/2 text-2xl text-muted-foreground/40 lg:block">
                   →
                 </div>
               )}

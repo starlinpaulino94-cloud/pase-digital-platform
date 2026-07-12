@@ -24,12 +24,12 @@ export function WizardEmpresa({
   // Caso final: publicada y completa.
   if (onboarding.publicado && onboarding.listoParaPublicar) {
     return (
-      <div className="rounded-2xl border border-emerald-200 bg-white p-8 text-center shadow-sm">
-        <PartyPopper className="mx-auto h-10 w-10 text-emerald-500" />
-        <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-900">
+      <div className="rounded-2xl border border-success/25 bg-card p-8 text-center shadow-sm">
+        <PartyPopper className="mx-auto h-10 w-10 text-success" />
+        <h1 className="mt-4 text-2xl font-bold tracking-tight text-foreground">
           ¡{companyName} está lista!
         </h1>
-        <p className="mt-2 text-slate-600">
+        <p className="mt-2 text-muted-foreground">
           Tu empresa está publicada en el marketplace y tu perfil está completo.
         </p>
         <Link href="/admin/dashboard" className="mt-6 inline-block">
@@ -44,27 +44,27 @@ export function WizardEmpresa({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-indigo-600">Configura tu empresa</p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+        <p className="text-sm font-medium text-primary">Configura tu empresa</p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">
           Terminemos de preparar {companyName}
         </h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-muted-foreground">
           Completa estos pasos para publicar tu empresa en el marketplace. Puedes
           salir y retomar cuando quieras: tu progreso se guarda solo.
         </p>
       </div>
 
       {/* Progreso */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="rounded-xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-slate-700">
+          <span className="text-sm font-semibold text-foreground">
             Progreso: {onboarding.completados} de {onboarding.total}
           </span>
-          <span className="text-sm font-semibold text-indigo-600">{pct}%</span>
+          <span className="text-sm font-semibold text-primary">{pct}%</span>
         </div>
-        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full bg-indigo-500 transition-all"
+            className="h-full rounded-full bg-primary transition-all"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -79,17 +79,17 @@ export function WizardEmpresa({
               key={item.key}
               className={`flex items-center justify-between gap-3 rounded-xl border p-4 transition ${
                 isCurrent
-                  ? 'border-indigo-300 bg-indigo-50/50 shadow-sm'
-                  : 'border-slate-200 bg-white'
+                  ? 'border-primary/40 bg-primary/10/50 shadow-sm'
+                  : 'border-border bg-card'
               }`}
             >
               <div className="flex items-center gap-3">
                 {item.done ? (
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
                 ) : (
                   <span
                     className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
-                      isCurrent ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-500'
+                      isCurrent ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
                     }`}
                   >
                     {i + 1}
@@ -98,13 +98,13 @@ export function WizardEmpresa({
                 <div>
                   <p
                     className={`text-sm font-medium ${
-                      item.done ? 'text-slate-400 line-through' : 'text-slate-800'
+                      item.done ? 'text-muted-foreground line-through' : 'text-foreground'
                     }`}
                   >
                     {item.label}
                   </p>
                   {isCurrent && (
-                    <p className="text-xs text-indigo-600">Paso actual</p>
+                    <p className="text-xs text-primary">Paso actual</p>
                   )}
                 </div>
               </div>
@@ -125,13 +125,13 @@ export function WizardEmpresa({
       </ol>
 
       {/* Paso opcional: equipo (no bloquea la publicación) */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="rounded-xl border border-border bg-card p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Users className="h-5 w-5 shrink-0 text-slate-400" />
+            <Users className="h-5 w-5 shrink-0 text-muted-foreground" />
             <div>
-              <p className="text-sm font-medium text-slate-800">Invitar a tu equipo</p>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm font-medium text-foreground">Invitar a tu equipo</p>
+              <p className="text-xs text-muted-foreground">
                 Opcional · puedes hacerlo ahora o más tarde
               </p>
             </div>
@@ -145,11 +145,11 @@ export function WizardEmpresa({
       </div>
 
       {/* Publicación */}
-      <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-5">
+      <div className="rounded-xl border border-primary/20 bg-primary/10/40 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-start gap-2">
-            <Rocket className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600" />
-            <p className="text-sm text-indigo-800">
+            <Rocket className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+            <p className="text-sm text-primary">
               {onboarding.listoParaPublicar
                 ? '¡Todo listo! Publica tu empresa para que aparezca en el marketplace.'
                 : 'Completa todos los pasos para poder publicar tu empresa.'}
@@ -162,7 +162,7 @@ export function WizardEmpresa({
       <div className="text-center">
         <Link
           href="/admin/clientes"
-          className="text-sm text-slate-500 underline hover:text-slate-700"
+          className="text-sm text-muted-foreground underline hover:text-foreground"
         >
           Explorar mi panel por ahora
         </Link>

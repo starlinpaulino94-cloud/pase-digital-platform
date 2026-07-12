@@ -60,7 +60,7 @@ export function MisEmpresasList({ empresas }: { empresas: EmpresaSeguida[] }) {
         return (
           <div
             key={company.id}
-            className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-blue-200 hover:shadow-sm"
+            className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:border-info/30 hover:shadow-sm"
           >
             {/* Cabecera con banner/gradiente */}
             <div className="relative h-16 bg-gradient-to-br from-blue-600 to-sky-500">
@@ -73,8 +73,8 @@ export function MisEmpresasList({ empresas }: { empresas: EmpresaSeguida[] }) {
                 />
               )}
               {esFavorita && (
-                <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-xs font-semibold text-amber-600">
-                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> Favorita
+                <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-xs font-semibold text-warning-foreground">
+                  <Star className="h-3 w-3 fill-amber-400 text-warning-foreground" /> Favorita
                 </span>
               )}
             </div>
@@ -82,7 +82,7 @@ export function MisEmpresasList({ empresas }: { empresas: EmpresaSeguida[] }) {
             <div className="flex flex-1 flex-col p-4">
               <div className="-mt-10 mb-2">
                 {company.logoUrl ? (
-                  <div className="relative h-12 w-12 overflow-hidden rounded-xl border-2 border-white bg-white shadow">
+                  <div className="relative h-12 w-12 overflow-hidden rounded-xl border-2 border-white bg-card shadow">
                     <Image src={company.logoUrl} alt={company.name} fill className="object-cover" />
                   </div>
                 ) : (
@@ -92,9 +92,9 @@ export function MisEmpresasList({ empresas }: { empresas: EmpresaSeguida[] }) {
                 )}
               </div>
 
-              <h3 className="font-semibold text-slate-900">{company.name}</h3>
-              <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                <span className="rounded-full bg-slate-100 px-2 py-0.5">
+              <h3 className="font-semibold text-foreground">{company.name}</h3>
+              <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="rounded-full bg-muted px-2 py-0.5">
                   {TIPO_LABEL[company.type] ?? company.type}
                 </span>
                 {company.ciudad && (
@@ -104,16 +104,16 @@ export function MisEmpresasList({ empresas }: { empresas: EmpresaSeguida[] }) {
                 )}
               </div>
 
-              <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-slate-600">
-                <Gift className="h-4 w-4 text-rose-500" />
+              <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Gift className="h-4 w-4 text-destructive" />
                 {company.activePromotionsCount} promociones activas
               </p>
 
               {/* Acciones */}
-              <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3">
+              <div className="mt-4 flex items-center gap-2 border-t border-border/60 pt-3">
                 <Link
                   href={`/cliente/empresas/${company.slug}`}
-                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition hover:bg-primary"
                 >
                   Ver perfil <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
@@ -124,8 +124,8 @@ export function MisEmpresasList({ empresas }: { empresas: EmpresaSeguida[] }) {
                   title={esFavorita ? 'Quitar de favoritas' : 'Marcar favorita'}
                   className={`rounded-lg border p-2 transition disabled:opacity-50 ${
                     esFavorita
-                      ? 'border-amber-200 bg-amber-50 text-amber-500'
-                      : 'border-slate-200 text-slate-400 hover:text-amber-500'
+                      ? 'border-warning/30 bg-warning/15 text-warning-foreground'
+                      : 'border-border text-muted-foreground hover:text-warning-foreground'
                   }`}
                 >
                   <Star className={`h-4 w-4 ${esFavorita ? 'fill-amber-400' : ''}`} />
@@ -135,7 +135,7 @@ export function MisEmpresasList({ empresas }: { empresas: EmpresaSeguida[] }) {
                   disabled={pending}
                   aria-label="Dejar de seguir"
                   title="Dejar de seguir"
-                  className="rounded-lg border border-slate-200 p-2 text-slate-400 transition hover:border-red-200 hover:text-red-500 disabled:opacity-50"
+                  className="rounded-lg border border-border p-2 text-muted-foreground transition hover:border-destructive/25 hover:text-destructive disabled:opacity-50"
                 >
                   {pending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

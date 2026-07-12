@@ -87,7 +87,7 @@ export function RegisterGeneralForm() {
     <Card className="border-white/10 bg-white/5 text-white">
       <CardHeader>
         <CardTitle className="text-2xl">Crear cuenta MembeGo</CardTitle>
-        <CardDescription className="text-slate-400">
+        <CardDescription className="text-white/60">
           Una sola cuenta para todas las empresas. Sin compromiso: sigues o te
           unes a las que tú quieras, cuando quieras.
         </CardDescription>
@@ -106,7 +106,7 @@ export function RegisterGeneralForm() {
               id="nombre"
               name="nombre"
               required
-              className="bg-white/10 text-white placeholder:text-slate-500"
+              className="bg-white/10 text-white placeholder:text-white/50"
             />
           </div>
           <div className="space-y-2">
@@ -116,7 +116,7 @@ export function RegisterGeneralForm() {
               name="email"
               type="email"
               required
-              className="bg-white/10 text-white placeholder:text-slate-500"
+              className="bg-white/10 text-white placeholder:text-white/50"
             />
           </div>
           <div className="space-y-2">
@@ -136,39 +136,39 @@ export function RegisterGeneralForm() {
               id="telefono"
               name="telefono"
               type="tel"
-              className="bg-white/10 text-white placeholder:text-slate-500"
+              className="bg-white/10 text-white placeholder:text-white/50"
               placeholder="809-555-0000"
             />
           </div>
 
-          <label className="flex items-start gap-2 text-sm text-slate-300">
+          <label className="flex items-start gap-2 text-sm text-white/70">
             <input
               type="checkbox"
               name="terminos"
               value="on"
               required
-              className="mt-0.5 h-4 w-4 rounded border-slate-500"
+              className="mt-0.5 h-4 w-4 rounded border-white/30 bg-white/10"
             />
             <span>
               Acepto los{' '}
-              <a href="/terms" target="_blank" className="text-sky-400 hover:underline">
+              <a href="/terms" target="_blank" className="text-primary hover:underline">
                 términos y condiciones
               </a>{' '}
               y la{' '}
-              <a href="/privacy" target="_blank" className="text-sky-400 hover:underline">
+              <a href="/privacy" target="_blank" className="text-primary hover:underline">
                 política de privacidad
               </a>
               .
             </span>
           </label>
 
-          <label className="flex items-start gap-2 text-sm text-slate-300">
+          <label className="flex items-start gap-2 text-sm text-white/70">
             <input type="hidden" name="marketingConsent" value="off" />
             <input
               type="checkbox"
               name="marketingConsent"
               value="on"
-              className="mt-0.5 h-4 w-4 rounded border-slate-500"
+              className="mt-0.5 h-4 w-4 rounded border-white/30 bg-white/10"
             />
             <span>
               Quiero recibir novedades y ofertas de MembeGo por correo (opcional).
@@ -178,21 +178,21 @@ export function RegisterGeneralForm() {
           <Button
             type="submit"
             disabled={pending || redirecting}
-            className="w-full bg-sky-500 hover:bg-sky-400"
+            className="w-full bg-primary hover:bg-primary/90"
           >
             {(pending || redirecting) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {redirecting ? 'Entrando…' : 'Crear cuenta'}
           </Button>
         </form>
-        <p className="mt-4 text-center text-sm text-slate-400">
+        <p className="mt-4 text-center text-sm text-white/60">
           ¿Ya tienes cuenta?{' '}
-          <a href="/login" className="text-sky-400 hover:underline">
+          <a href="/login" className="text-primary hover:underline">
             Inicia sesión
           </a>
         </p>
-        <p className="mt-2 text-center text-sm text-slate-400">
+        <p className="mt-2 text-center text-sm text-white/60">
           ¿Prefieres registrarte directo en una empresa?{' '}
-          <Link href="/registro" className="text-sky-400 hover:underline">
+          <Link href="/registro" className="text-primary hover:underline">
             Elige una aquí
           </Link>
         </p>

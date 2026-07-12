@@ -29,9 +29,9 @@ export function AceptarInvitacionForm({
   }, [state.error])
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-      <h1 className="text-xl font-bold text-slate-900">Únete a {empresa}</h1>
-      <p className="mt-1 text-sm text-slate-600">
+    <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+      <h1 className="text-xl font-bold text-foreground">Únete a {empresa}</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
         Te invitaron como <strong>{rol}</strong>. Crea tu cuenta para empezar.
       </p>
 
@@ -56,13 +56,13 @@ export function AceptarInvitacionForm({
           <Input id="password" name="password" type="password" required placeholder="••••••••" />
         </div>
 
-        <label className="flex items-start gap-2 text-sm text-slate-600">
-          <input type="checkbox" name="terminos" value="on" required className="mt-0.5 h-4 w-4 rounded border-slate-300" />
+        <label className="flex items-start gap-2 text-sm text-muted-foreground">
+          <input type="checkbox" name="terminos" value="on" required className="mt-0.5 h-4 w-4 rounded border-border" />
           <span>
             Acepto los{' '}
-            <a href="/terms" target="_blank" className="text-sky-600 underline">términos</a>{' '}
+            <a href="/terms" target="_blank" className="text-primary underline">términos</a>{' '}
             y la{' '}
-            <a href="/privacy" target="_blank" className="text-sky-600 underline">política de privacidad</a>.
+            <a href="/privacy" target="_blank" className="text-primary underline">política de privacidad</a>.
           </span>
         </label>
 

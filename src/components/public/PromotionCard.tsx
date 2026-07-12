@@ -46,7 +46,7 @@ export function PromotionCard({
               </div>
             )}
             {promotion.descuento && (
-              <span className="absolute right-2 top-2 rounded-full bg-white/95 px-2 py-0.5 text-xs font-bold text-blue-700 shadow-sm">
+              <span className="absolute right-2 top-2 rounded-full bg-white/95 px-2 py-0.5 text-xs font-bold text-info shadow-sm">
                 {formatDescuento(promotion.descuento, promotion.tipo)}
               </span>
             )}
@@ -95,11 +95,11 @@ export function PromotionCard({
                 />
               </span>
             ) : (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-white">
                 {promotion.company.name.slice(0, 1).toUpperCase()}
               </span>
             )}
-            <span className="max-w-36 truncate text-xs font-medium text-slate-700">
+            <span className="max-w-36 truncate text-xs font-medium text-foreground">
               {promotion.company.name}
             </span>
           </div>
@@ -107,12 +107,12 @@ export function PromotionCard({
           {/* Descuento / destacada */}
           <div className="absolute right-3 top-3 flex flex-col items-end gap-1.5">
             {promotion.descuento && (
-              <span className="rounded-full bg-white/95 px-2.5 py-1 text-sm font-bold text-blue-700 shadow-sm">
+              <span className="rounded-full bg-white/95 px-2.5 py-1 text-sm font-bold text-info shadow-sm">
                 {formatDescuento(promotion.descuento, promotion.tipo)}
               </span>
             )}
             {promotion.isFeatured && !isExpired && (
-              <span className="rounded-full bg-blue-600/90 px-2.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur">
+              <span className="rounded-full bg-primary/90 px-2.5 py-0.5 text-[11px] font-semibold text-white backdrop-blur">
                 Destacada
               </span>
             )}
@@ -120,7 +120,7 @@ export function PromotionCard({
 
           {/* Expirada */}
           {isExpired && (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/55 backdrop-blur-[2px]">
+            <div className="absolute inset-0 flex items-center justify-center bg-foreground/55 backdrop-blur-[2px]">
               <span className="rounded-full border border-white/30 px-4 py-1.5 text-sm font-semibold text-white">
                 Expirada
               </span>
@@ -130,7 +130,7 @@ export function PromotionCard({
 
         {/* Contenido */}
         <div className="flex flex-1 flex-col p-5">
-          <h3 className="text-h3 line-clamp-2 text-foreground transition-colors group-hover:text-blue-700">
+          <h3 className="text-h3 line-clamp-2 text-foreground transition-colors group-hover:text-info">
             {promotion.titulo}
           </h3>
 
@@ -154,7 +154,7 @@ export function PromotionCard({
               {promotion.tags.slice(0, 3).map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full bg-blue-500/8 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300"
+                  className="rounded-full bg-primary/8 px-2 py-0.5 text-xs font-medium text-info"
                 >
                   {tag}
                 </span>
@@ -176,7 +176,7 @@ export function PromotionCard({
             ) : (
               <span />
             )}
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary opacity-0 transition-opacity duration-200 group-hover:opacity-100">
               Ver promoción <ArrowRight className="h-3.5 w-3.5" />
             </span>
           </div>

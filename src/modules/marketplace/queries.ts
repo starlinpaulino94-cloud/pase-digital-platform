@@ -390,6 +390,14 @@ export async function getPromotionDetail(promotionId: string): Promise<Promotion
         activo: true,
         archivada: true,
         visibilidad: true,
+        // Fase E5: venta directa
+        esComprable: true,
+        precio: true,
+        usosPorCompra: true,
+        beneficioVigenciaDias: true,
+        beneficioVigenciaHasta: true,
+        maxCanjes: true,
+        canjes: true,
       },
     })
 
@@ -409,10 +417,24 @@ export async function getPromotionDetail(promotionId: string): Promise<Promotion
       if (!esMiembro) return null
     }
 
-    const { activo: _activo, archivada: _arch, visibilidad: _vis, ...rest } = promotion
+    const {
+      activo: _activo, archivada: _arch, visibilidad: _vis,
+      esComprable, precio, usosPorCompra, beneficioVigenciaDias, beneficioVigenciaHasta,
+      maxCanjes, canjes,
+      ...rest
+    } = promotion
     // No exponer flags internos de la empresa en el payload público.
     const { isPublished: _p, isActive: _a, ...company } = rest.company
-    return { ...rest, company } as PromotionPublic
+    const venta = esComprable
+      ? {
+          precio: Number(precio ?? 0),
+          usosPorCompra,
+          agotada: maxCanjes != null && canjes >= maxCanjes,
+          beneficioVigenciaDias,
+          beneficioVigenciaHasta,
+        }
+      : null
+    return { ...rest, company, venta } as PromotionPublic
   } catch (error) {
     console.error('[getPromotionDetail] Error:', error)
     return null

@@ -58,7 +58,7 @@ export default async function ClienteTicketPage({
               href={ticket.adjuntoUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mb-4 inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-sm text-sky-600 hover:bg-muted/50"
+              className="mb-4 inline-flex items-center gap-1.5 rounded-lg border border-border/60 px-3 py-1.5 text-sm text-primary hover:bg-muted/50"
             >
               <Paperclip className="h-4 w-4" /> Ver adjunto
             </a>

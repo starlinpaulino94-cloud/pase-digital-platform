@@ -1,11 +1,12 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { confirmarPago, renovarMembresia } from '@/modules/admin/actions'
 import { cancelarMembresia, desactivarMembresia } from '@/modules/admin/planActions'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { ConfirmarPagoButton, RechazarPagoButton } from '@/components/admin/ValidarPagoActions'
 import type { MembershipEstado } from '@/types'
 
@@ -29,6 +30,11 @@ export function MembershipAdminActions({
   const [renovarState, renovarAction, renovarPending] = useActionState(renovarMembresia, {})
   const router = useRouter()
 
+  const desactivarFormRef = useRef<HTMLFormElement>(null)
+  const cancelarFormRef = useRef<HTMLFormElement>(null)
+  const [confirmDesactivar, setConfirmDesactivar] = useState(false)
+  const [confirmCancelar, setConfirmCancelar] = useState(false)
+
   useEffect(() => {
     if (activarState.success || cancelarState.success || desactivarState.success || renovarState.success) {
       router.refresh()
@@ -39,7 +45,7 @@ export function MembershipAdminActions({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {error && <span className="text-xs text-red-600">{error}</span>}
+      {error && <span className="text-xs text-destructive">{error}</span>}
 
       {/* Activar pago — for PENDIENTE */}
       {estado === 'PENDIENTE' && (
@@ -49,8 +55,8 @@ export function MembershipAdminActions({
           <Button
             size="sm"
             type="submit"
+            variant="success"
             disabled={activarPending}
-            className="bg-green-600 hover:bg-green-700 text-white"
           >
             {activarPending ? '…' : 'Activar'}
           </Button>
@@ -83,40 +89,64 @@ export function MembershipAdminActions({
 
       {/* Desactivar — for ACTIVA */}
       {estado === 'ACTIVA' && (
-        <form action={desactivarAction}>
-          <input type="hidden" name="membershipId" value={membershipId} />
-          <Button
-            size="sm"
-            variant="outline"
-            type="submit"
-            disabled={desactivarPending}
-            className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
-            onClick={(e) => {
-              if (!confirm('¿Desactivar esta membresía?')) e.preventDefault()
+        <>
+          <form ref={desactivarFormRef} action={desactivarAction}>
+            <input type="hidden" name="membershipId" value={membershipId} />
+            <Button
+              size="sm"
+              variant="outline"
+              type="button"
+              disabled={desactivarPending}
+              className="border-warning/30 text-warning-foreground hover:bg-warning/15 hover:text-warning-foreground"
+              onClick={() => setConfirmDesactivar(true)}
+            >
+              {desactivarPending ? '…' : 'Desactivar'}
+            </Button>
+          </form>
+          <ConfirmDialog
+            open={confirmDesactivar}
+            title="¿Desactivar esta membresía?"
+            confirmText="Desactivar"
+            isLoading={desactivarPending}
+            onConfirm={() => {
+              setConfirmDesactivar(false)
+              desactivarFormRef.current?.requestSubmit()
             }}
-          >
-            {desactivarPending ? '…' : 'Desactivar'}
-          </Button>
-        </form>
+            onCancel={() => setConfirmDesactivar(false)}
+          />
+        </>
       )}
 
       {/* Cancelar — for anything except CANCELADA */}
       {estado !== 'CANCELADA' && (
-        <form action={cancelarAction}>
-          <input type="hidden" name="membershipId" value={membershipId} />
-          <Button
-            size="sm"
-            variant="outline"
-            type="submit"
-            disabled={cancelarPending}
-            className="border-red-200 text-red-600 hover:bg-red-50"
-            onClick={(e) => {
-              if (!confirm('¿Cancelar esta membresía? No se puede deshacer.')) e.preventDefault()
+        <>
+          <form ref={cancelarFormRef} action={cancelarAction}>
+            <input type="hidden" name="membershipId" value={membershipId} />
+            <Button
+              size="sm"
+              variant="outline"
+              type="button"
+              disabled={cancelarPending}
+              className="border-destructive/25 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => setConfirmCancelar(true)}
+            >
+              {cancelarPending ? '…' : 'Cancelar'}
+            </Button>
+          </form>
+          <ConfirmDialog
+            open={confirmCancelar}
+            title="¿Cancelar esta membresía?"
+            description="No se puede deshacer."
+            confirmText="Sí, cancelar"
+            isDangerous
+            isLoading={cancelarPending}
+            onConfirm={() => {
+              setConfirmCancelar(false)
+              cancelarFormRef.current?.requestSubmit()
             }}
-          >
-            {cancelarPending ? '…' : 'Cancelar'}
-          </Button>
-        </form>
+            onCancel={() => setConfirmCancelar(false)}
+          />
+        </>
       )}
     </div>
   )

@@ -24,8 +24,8 @@ export default async function MisEmpresasPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Mis empresas</h1>
-          <p className="text-slate-500">
+          <h1 className="text-2xl font-bold text-foreground">Mis empresas</h1>
+          <p className="text-muted-foreground">
             Las empresas que sigues. Sus promociones y novedades llegan a ti
             automáticamente.
           </p>
@@ -51,8 +51,8 @@ export default async function MisEmpresasPage() {
         </Card>
       ) : empresas.length === 0 ? (
         <Card>
-          <CardContent className="py-16 text-center text-slate-500">
-            <Store className="mx-auto mb-3 h-10 w-10 text-slate-300" />
+          <CardContent className="py-16 text-center text-muted-foreground">
+            <Store className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
             <p className="font-medium">Aún no sigues ninguna empresa</p>
             <p className="text-sm">
               Sigue empresas para recibir sus promociones, beneficios y

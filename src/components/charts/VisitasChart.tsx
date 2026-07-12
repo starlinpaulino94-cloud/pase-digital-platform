@@ -31,8 +31,8 @@ export function VisitasChart({ data, titulo = 'Visitas por día', color = '#3b82
   const gradId = `grad-${color.replace('#', '')}`
 
   return (
-    <div className="rounded-xl border bg-white p-5 shadow-sm">
-      <h3 className="mb-4 text-sm font-semibold text-slate-800">{titulo}</h3>
+    <div className="rounded-xl border bg-card p-5 shadow-sm">
+      <h3 className="mb-4 text-sm font-semibold text-foreground">{titulo}</h3>
       <ResponsiveContainer width="100%" height={220}>
         <AreaChart data={formatted} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
           <defs>

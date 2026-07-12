@@ -59,7 +59,7 @@ export function RegistroEmpresaForm() {
 
       {/* Tu cuenta */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-slate-900">Tu cuenta</h3>
+        <h3 className="text-sm font-semibold text-foreground">Tu cuenta</h3>
         <div className="space-y-1.5">
           <Label htmlFor="nombrePropietario">Nombre del propietario *</Label>
           <Input
@@ -90,7 +90,7 @@ export function RegistroEmpresaForm() {
 
       {/* Tu empresa */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-slate-900">Tu empresa</h3>
+        <h3 className="text-sm font-semibold text-foreground">Tu empresa</h3>
         <div className="space-y-1.5">
           <Label htmlFor="nombreComercial">Nombre comercial *</Label>
           <Input
@@ -123,15 +123,15 @@ export function RegistroEmpresaForm() {
         </div>
       </div>
 
-      <label className="flex items-start gap-2 text-sm text-slate-600">
-        <input type="checkbox" name="terminos" required className="mt-0.5 h-4 w-4 rounded border-slate-300" />
+      <label className="flex items-start gap-2 text-sm text-muted-foreground">
+        <input type="checkbox" name="terminos" required className="mt-0.5 h-4 w-4 rounded border-border" />
         <span>
           Acepto los{' '}
-          <Link href="/terms" target="_blank" className="text-blue-600 underline">
+          <Link href="/terms" target="_blank" className="text-primary underline">
             términos y condiciones
           </Link>{' '}
           y la{' '}
-          <Link href="/privacy" target="_blank" className="text-blue-600 underline">
+          <Link href="/privacy" target="_blank" className="text-primary underline">
             política de privacidad
           </Link>
           .
@@ -140,13 +140,13 @@ export function RegistroEmpresaForm() {
 
       {/* Consentimiento de marketing (opcional). El hidden "off" va primero;
           si se marca, "on" queda al final. */}
-      <label className="flex items-start gap-2 text-sm text-slate-600">
+      <label className="flex items-start gap-2 text-sm text-muted-foreground">
         <input type="hidden" name="marketingConsent" value="off" />
-        <input type="checkbox" name="marketingConsent" value="on" className="mt-0.5 h-4 w-4 rounded border-slate-300" />
+        <input type="checkbox" name="marketingConsent" value="on" className="mt-0.5 h-4 w-4 rounded border-border" />
         <span>Quiero recibir novedades y consejos de MembeGo por correo (opcional).</span>
       </label>
 
-      <Button type="submit" disabled={pending} size="lg" className="w-full bg-blue-600 hover:bg-blue-700">
+      <Button type="submit" disabled={pending} size="lg" className="w-full bg-primary hover:bg-primary/90">
         {pending ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         ) : (
@@ -155,7 +155,7 @@ export function RegistroEmpresaForm() {
         Registrar mi empresa
       </Button>
 
-      <p className="text-center text-xs text-slate-500">
+      <p className="text-center text-xs text-muted-foreground">
         Tu empresa no será visible en el marketplace hasta que completes tu
         perfil y la publiques desde tu panel.
       </p>

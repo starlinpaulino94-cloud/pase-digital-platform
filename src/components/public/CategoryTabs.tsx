@@ -10,7 +10,7 @@ interface CategoryTabsProps {
 
 const CHIP_BASE =
   'flex-shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all duration-150'
-const CHIP_ACTIVE = 'bg-blue-600 text-white shadow-glow'
+const CHIP_ACTIVE = 'bg-primary text-white shadow-glow'
 const CHIP_IDLE =
   'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground'
 

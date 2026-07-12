@@ -12,13 +12,13 @@ export default async function OnboardingLayout({
 }) {
   await requireRole(FULL_ADMIN_ROLES)
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="min-h-screen bg-muted">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-16 max-w-3xl items-center gap-2.5 px-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="MembeGo" width={32} height={32} />
-          <span className="text-sm font-semibold tracking-tight text-slate-900">
-            Membe<span className="text-emerald-500">Go</span>
+          <span className="text-sm font-semibold tracking-tight text-foreground">
+            Membe<span className="text-success">Go</span>
           </span>
         </div>
       </header>

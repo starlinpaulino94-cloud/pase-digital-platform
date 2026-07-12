@@ -66,7 +66,7 @@ export default async function ClienteDetailPage({
   } catch (e) {
     console.error('[admin-cliente-detail]', e)
     return (
-      <p className="text-slate-600">
+      <p className="text-muted-foreground">
         No pudimos cargar este cliente en este momento. Intenta de nuevo más tarde.
       </p>
     )
@@ -99,17 +99,17 @@ export default async function ClienteDetailPage({
     <div className="space-y-6">
       <Link
         href="/admin/clientes"
-        className="text-sm text-sky-600 hover:underline"
+        className="text-sm text-primary hover:underline"
       >
         ← Volver a clientes
       </Link>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl font-bold text-foreground">
             {cliente.nombre}
           </h1>
-          <p className="text-slate-500">
+          <p className="text-muted-foreground">
             {cliente.email}
             {cliente.telefono ? ` · ${cliente.telefono}` : ''}
           </p>
@@ -121,7 +121,7 @@ export default async function ClienteDetailPage({
               href={`https://wa.me/${cliente.telefono.replace(/\D/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700 transition hover:bg-green-100"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-success/25 bg-success/10 px-3 py-1.5 text-sm font-medium text-success transition hover:bg-success/15"
             >
               <MessageCircle className="h-4 w-4" /> WhatsApp
             </a>
@@ -129,7 +129,7 @@ export default async function ClienteDetailPage({
           {cliente.email && (
             <a
               href={`mailto:${cliente.email}`}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-muted"
             >
               <Mail className="h-4 w-4" /> Correo
             </a>
@@ -150,9 +150,9 @@ export default async function ClienteDetailPage({
             {token ? (
               <QRDisplay token={token} size={200} />
             ) : (
-              <p className="text-slate-500">Sin código.</p>
+              <p className="text-muted-foreground">Sin código.</p>
             )}
-            <p className="break-all text-center text-xs text-slate-400">
+            <p className="break-all text-center text-xs text-muted-foreground">
               {token}
             </p>
           </CardContent>
@@ -166,7 +166,7 @@ export default async function ClienteDetailPage({
           <CardContent className="space-y-4">
             {!membership ? (
               <div className="space-y-4">
-                <p className="text-slate-500">
+                <p className="text-muted-foreground">
                   El cliente aún no ha seleccionado un plan.
                 </p>
                 <NewMembershipForm
@@ -204,13 +204,13 @@ export default async function ClienteDetailPage({
 
                 {/* Comprobante de pago */}
                 {membership.comprobanteUrl && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3">
-                    <p className="text-sm font-medium text-amber-800 flex items-center gap-2">
+                  <div className="rounded-lg border border-warning/30 bg-warning/15 p-4 space-y-3">
+                    <p className="text-sm font-medium text-warning-foreground flex items-center gap-2">
                       <FileText className="h-4 w-4" />
                       Comprobante enviado por el cliente
                     </p>
                     {membership.comprobanteNota && (
-                      <p className="text-sm text-slate-600 italic">"{membership.comprobanteNota}"</p>
+                      <p className="text-sm text-muted-foreground italic">"{membership.comprobanteNota}"</p>
                     )}
                     {/\.(jpe?g|png|webp)$/i.test(membership.comprobanteUrl) ? (
                       <a href={membership.comprobanteUrl} target="_blank" rel="noopener noreferrer">
@@ -226,7 +226,7 @@ export default async function ClienteDetailPage({
                         href={membership.comprobanteUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-sky-600 underline"
+                        className="text-sm text-primary underline"
                       >
                         Ver comprobante (PDF)
                       </a>
@@ -236,9 +236,9 @@ export default async function ClienteDetailPage({
 
                 {/* Motivo de rechazo */}
                 {membership.rechazadoReason && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-3">
-                    <p className="text-sm font-medium text-red-700">Motivo de rechazo</p>
-                    <p className="text-sm text-red-600">{membership.rechazadoReason}</p>
+                  <div className="rounded-lg border border-destructive/25 bg-destructive/10 p-3">
+                    <p className="text-sm font-medium text-destructive">Motivo de rechazo</p>
+                    <p className="text-sm text-destructive">{membership.rechazadoReason}</p>
                   </div>
                 )}
 
@@ -268,7 +268,7 @@ export default async function ClienteDetailPage({
                   {(membership.estado === 'CANCELADA' ||
                     membership.estado === 'VENCIDA') && (
                     <div className="border-t pt-4">
-                      <p className="mb-3 text-sm text-slate-500">
+                      <p className="mb-3 text-sm text-muted-foreground">
                         Crear una nueva membresía para este cliente:
                       </p>
                       <NewMembershipForm
@@ -297,7 +297,7 @@ export default async function ClienteDetailPage({
                 <p className="font-medium">
                   {v.marca} {v.modelo} ({v.anio})
                 </p>
-                <p className="text-slate-500">
+                <p className="text-muted-foreground">
                   {v.color}
                   {v.placa ? ` · ${v.placa}` : ''}
                 </p>
@@ -311,7 +311,7 @@ export default async function ClienteDetailPage({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <StickyNote className="h-4 w-4 text-amber-500" /> Notas internas
+            <StickyNote className="h-4 w-4 text-warning-foreground" /> Notas internas
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -334,7 +334,7 @@ export default async function ClienteDetailPage({
         </CardHeader>
         <CardContent>
           {cliente.visits.length === 0 ? (
-            <p className="text-sm text-slate-500">Sin visitas.</p>
+            <p className="text-sm text-muted-foreground">Sin visitas.</p>
           ) : (
             <ul className="divide-y">
               {cliente.visits.map((v) => (
@@ -342,12 +342,12 @@ export default async function ClienteDetailPage({
                   <div>
                     <p className="font-medium">{v.servicio}</p>
                     {v.vehiculo && (
-                      <p className="text-slate-500">
+                      <p className="text-muted-foreground">
                         {v.vehiculo.marca} {v.vehiculo.modelo}
                       </p>
                     )}
                   </div>
-                  <span className="text-slate-500">{fmtDate(v.fechaVisita)}</span>
+                  <span className="text-muted-foreground">{fmtDate(v.fechaVisita)}</span>
                 </li>
               ))}
             </ul>
@@ -361,8 +361,8 @@ export default async function ClienteDetailPage({
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-sm text-slate-500">{label}</p>
-      <p className="font-medium text-slate-900">{value}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="font-medium text-foreground">{value}</p>
     </div>
   )
 }

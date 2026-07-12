@@ -111,7 +111,7 @@ export default async function AdminDashboard() {
 
   if (!d) {
     return (
-      <p className="text-slate-600">
+      <p className="text-muted-foreground">
         No pudimos cargar el panel en este momento. Intenta de nuevo.
       </p>
     )
@@ -153,12 +153,12 @@ export default async function AdminDashboard() {
             href={a.href}
             className="card-interactive group relative flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-4 shadow-card"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 ring-1 ring-blue-500/20 transition-colors group-hover:bg-blue-600 group-hover:text-white dark:text-blue-400">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20 transition-colors group-hover:bg-primary group-hover:text-white dark:text-primary">
               <a.icon className="h-5 w-5" />
             </span>
             <span className="text-sm font-medium text-foreground">{a.label}</span>
             {a.badge !== undefined && (
-              <span className="absolute right-3 top-3 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[11px] font-bold text-white">
+              <span className="absolute right-3 top-3 flex h-5 min-w-5 items-center justify-center rounded-full bg-warning px-1.5 text-[11px] font-bold text-white">
                 {a.badge}
               </span>
             )}
@@ -230,10 +230,10 @@ export default async function AdminDashboard() {
 
       {/* Recomendaciones (BI) */}
       {d.recomendaciones.length > 0 && (
-        <Card className="border-sky-200 bg-sky-50/50">
+        <Card className="border-info/30 bg-info/10/50">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base text-sky-900">
-              <Lightbulb className="h-5 w-5 text-sky-600" />
+            <CardTitle className="flex items-center gap-2 text-base text-info">
+              <Lightbulb className="h-5 w-5 text-primary" />
               Recomendaciones para hoy
             </CardTitle>
           </CardHeader>
@@ -243,7 +243,7 @@ export default async function AdminDashboard() {
                 key={r.texto}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white p-3 text-sm shadow-sm"
               >
-                <p className="text-slate-700">{r.texto}</p>
+                <p className="text-foreground">{r.texto}</p>
                 <Link href={r.href}>
                   <Button size="sm" variant="outline" className="gap-1.5">
                     {r.cta} <ArrowRight className="h-3.5 w-3.5" />
@@ -260,7 +260,7 @@ export default async function AdminDashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Activity className="h-4 w-4 text-slate-400" />
+              <Activity className="h-4 w-4 text-muted-foreground" />
               Visitas — últimos 14 días
             </CardTitle>
           </CardHeader>
@@ -286,13 +286,13 @@ export default async function AdminDashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Gift className="h-4 w-4 text-slate-400" />
+              <Gift className="h-4 w-4 text-muted-foreground" />
               Promociones más exitosas
             </CardTitle>
           </CardHeader>
           <CardContent>
             {d.topPromos.length === 0 ? (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 Aún sin datos. Publica promociones y aparecerán aquí sus
                 métricas.
               </p>
@@ -300,18 +300,18 @@ export default async function AdminDashboard() {
               <ul className="space-y-3">
                 {d.topPromos.map((p, i) => (
                   <li key={p.id} className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
                       {i + 1}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-slate-900">
+                      <p className="truncate text-sm font-medium text-foreground">
                         {p.titulo}
                       </p>
                     </div>
-                    <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                       <Eye className="h-3.5 w-3.5" /> {fmt(p.vistas)}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                       <Heart className="h-3.5 w-3.5" /> {p.guardadas}
                     </span>
                   </li>
@@ -327,7 +327,7 @@ export default async function AdminDashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Clock className="h-4 w-4 text-slate-400" />
+              <Clock className="h-4 w-4 text-muted-foreground" />
               Alertas
             </CardTitle>
           </CardHeader>
@@ -373,26 +373,26 @@ export default async function AdminDashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Activity className="h-4 w-4 text-slate-400" />
+              <Activity className="h-4 w-4 text-muted-foreground" />
               Actividad reciente
             </CardTitle>
           </CardHeader>
           <CardContent>
             {d.actividad.length === 0 ? (
-              <p className="text-sm text-slate-500">Sin actividad registrada.</p>
+              <p className="text-sm text-muted-foreground">Sin actividad registrada.</p>
             ) : (
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-border/60">
                 {d.actividad.map((a) => (
                   <li key={a.id} className="flex items-center justify-between py-2 text-sm">
                     <div>
-                      <p className="font-medium text-slate-800">
+                      <p className="font-medium text-foreground">
                         {ACCION_LABEL[a.accion] ?? a.accion}
                       </p>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-muted-foreground">
                         {a.autor ?? 'Sistema'} · {a.entidadTipo}
                       </p>
                     </div>
-                    <span className="text-xs text-slate-400">{fmtHora(a.fecha)}</span>
+                    <span className="text-xs text-muted-foreground">{fmtHora(a.fecha)}</span>
                   </li>
                 ))}
               </ul>

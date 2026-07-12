@@ -18,10 +18,10 @@ export function MembresiasPie({ data }: { data: DataPoint[] }) {
   const withData = data.filter((d) => d.total > 0)
 
   return (
-    <div className="rounded-xl border bg-white p-5 shadow-sm">
-      <h3 className="mb-4 text-sm font-semibold text-slate-800">Membresías por estado</h3>
+    <div className="rounded-xl border bg-card p-5 shadow-sm">
+      <h3 className="mb-4 text-sm font-semibold text-foreground">Membresías por estado</h3>
       {withData.length === 0 ? (
-        <div className="flex h-[180px] items-center justify-center text-sm text-slate-400">
+        <div className="flex h-[180px] items-center justify-center text-sm text-muted-foreground">
           Sin datos
         </div>
       ) : (

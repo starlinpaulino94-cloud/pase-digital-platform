@@ -122,7 +122,7 @@ export function CompanyProfile({
   ].filter(Boolean) as { icon: typeof Mail; label: string; href: string }[]
 
   return (
-    <div className={isApp ? 'bg-white' : 'min-h-screen bg-white'}>
+    <div className={isApp ? 'bg-card' : 'min-h-screen bg-card'}>
       {/* Hero / Banner */}
       <section className="relative h-56 w-full overflow-hidden bg-gradient-to-br from-blue-800 via-blue-700 to-indigo-900 sm:h-72">
         {company.bannerUrl ? (
@@ -138,7 +138,7 @@ export function CompanyProfile({
         ) : (
           <>
             <div className="absolute inset-0 bg-grid-light mask-fade" />
-            <div className="absolute -top-10 right-16 h-56 w-56 rounded-full bg-sky-400/25 blur-3xl" />
+            <div className="absolute -top-10 right-16 h-56 w-56 rounded-full bg-primary/25 blur-3xl" />
           </>
         )}
         <div className="absolute left-0 top-0 p-4 sm:p-6">
@@ -153,12 +153,12 @@ export function CompanyProfile({
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Header card */}
-        <div className="relative -mt-16 animate-slide-up rounded-3xl border border-slate-200/80 bg-white p-6 shadow-premium-lg sm:p-8">
+        <div className="relative -mt-16 animate-slide-up rounded-3xl border border-border/80 bg-card p-6 shadow-premium-lg sm:p-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
             {/* Logo */}
             <div className="-mt-16 shrink-0 sm:-mt-20">
               {company.logoUrl ? (
-                <div className="relative h-28 w-28 overflow-hidden rounded-2xl border-4 border-white bg-white shadow-md sm:h-32 sm:w-32">
+                <div className="relative h-28 w-28 overflow-hidden rounded-2xl border-4 border-white bg-card shadow-md sm:h-32 sm:w-32">
                   <Image src={company.logoUrl} alt={company.name} fill className="object-cover" />
                 </div>
               ) : (
@@ -170,22 +170,22 @@ export function CompanyProfile({
 
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                <span className="rounded-full bg-info/10 px-2.5 py-0.5 text-xs font-semibold text-info">
                   {TIPO_LABEL[company.type] ?? company.type}
                 </span>
                 {company.isFeatured && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
-                    <Star className="h-3 w-3 fill-amber-500 text-amber-500" /> Destacada
+                  <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2.5 py-0.5 text-xs font-semibold text-warning-foreground">
+                    <Star className="h-3 w-3 fill-amber-500 text-warning-foreground" /> Destacada
                   </span>
                 )}
               </div>
 
-              <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+              <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
                 {company.name}
               </h1>
 
               {(location || company.horario) && (
-                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
                   {location && (
                     <span className="inline-flex items-center gap-1.5">
                       <MapPin className="h-4 w-4" /> {location}
@@ -200,26 +200,26 @@ export function CompanyProfile({
               )}
 
               {company.description && (
-                <p className="mt-3 max-w-2xl text-slate-600">{company.description}</p>
+                <p className="mt-3 max-w-2xl text-muted-foreground">{company.description}</p>
               )}
 
               {/* Chips de datos reales (solo si aportan) */}
               <div className="mt-4 flex flex-wrap gap-2">
                 {stats && stats.activePromotions > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-sm font-medium text-rose-700">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-3 py-1 text-sm font-medium text-destructive">
                     <Gift className="h-4 w-4" /> {stats.activePromotions} promociones
                   </span>
                 )}
                 {stats && stats.totalMembers > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-info/10 px-3 py-1 text-sm font-medium text-info">
                     <Users className="h-4 w-4" /> {stats.totalMembers} miembros
                   </span>
                 )}
                 {stats && stats.averageRating != null && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-700">
-                    <Star className="h-4 w-4 fill-amber-500 text-amber-500" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/15 px-3 py-1 text-sm font-medium text-warning-foreground">
+                    <Star className="h-4 w-4 fill-amber-500 text-warning-foreground" />
                     {stats.averageRating.toFixed(1)}
-                    <span className="text-amber-600/70">({stats.totalRatings})</span>
+                    <span className="text-warning-foreground/70">({stats.totalRatings})</span>
                   </span>
                 )}
               </div>
@@ -231,7 +231,7 @@ export function CompanyProfile({
                 planesHref && (
                   <Link
                     href={planesHref}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:w-auto"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-primary sm:w-auto"
                   >
                     Ver planes <ArrowRight className="h-4 w-4" />
                   </Link>
@@ -239,7 +239,7 @@ export function CompanyProfile({
               ) : (
                 <Link
                   href={registroHref}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:w-auto"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-primary sm:w-auto"
                 >
                   Quiero una membresía <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -255,14 +255,14 @@ export function CompanyProfile({
 
           {/* Contacto y redes */}
           {(contactLinks.length > 0 || socialLinks.length > 0) && (
-            <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-slate-100 pt-5">
+            <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-border/60 pt-5">
               {contactLinks.map((c) => (
                 <a
                   key={c.label}
                   href={c.href}
                   target={c.href.startsWith('http') ? '_blank' : undefined}
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm text-slate-600 transition hover:text-blue-600"
+                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-primary"
                 >
                   <c.icon className="h-4 w-4" /> {c.label}
                 </a>
@@ -273,7 +273,7 @@ export function CompanyProfile({
                   href={s.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm text-slate-600 transition hover:text-blue-600"
+                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-primary"
                 >
                   <s.icon className="h-4 w-4" /> {s.label}
                 </a>
@@ -284,13 +284,13 @@ export function CompanyProfile({
 
         {/* Navegación de secciones (mini web) */}
         {seccionesNav.length > 1 && (
-          <nav className="sticky top-16 z-30 mt-6 -mx-4 overflow-x-auto border-b border-slate-200 bg-white/90 px-4 backdrop-blur sm:mx-0 sm:rounded-full sm:border sm:px-2">
+          <nav className="sticky top-16 z-30 mt-6 -mx-4 overflow-x-auto border-b border-border bg-white/90 px-4 backdrop-blur sm:mx-0 sm:rounded-full sm:border sm:px-2">
             <div className="flex gap-1 py-2">
               {seccionesNav.map((s) => (
                 <a
                   key={s.id}
                   href={`#${s.id}`}
-                  className="whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-blue-50 hover:text-blue-700"
+                  className="whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-info/10 hover:text-info"
                 >
                   {s.label}
                 </a>
@@ -303,10 +303,10 @@ export function CompanyProfile({
         {planes.length > 0 && (
           <section id="membresias" className="mt-14 scroll-mt-32">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                 Planes de membresía
               </h2>
-              <p className="mt-2 text-slate-600">
+              <p className="mt-2 text-muted-foreground">
                 Elige el plan que mejor se adapte a ti y recibe tu membresía
                 digital con QR.
               </p>
@@ -321,47 +321,47 @@ export function CompanyProfile({
                 return (
                   <div
                     key={plan.id}
-                    className={`card-interactive relative flex flex-col rounded-3xl border bg-white p-6 ${
+                    className={`card-interactive relative flex flex-col rounded-3xl border bg-card p-6 ${
                       featured
-                        ? 'border-blue-300 shadow-premium ring-1 ring-blue-200'
-                        : 'border-slate-200/80 shadow-card'
+                        ? 'border-primary/40 shadow-premium ring-1 ring-info/30'
+                        : 'border-border/80 shadow-card'
                     }`}
                   >
                     {featured && (
-                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 px-3.5 py-1 text-xs font-semibold text-white shadow-glow">
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3.5 py-1 text-xs font-semibold text-white shadow-glow">
                         Más popular
                       </span>
                     )}
 
                     <div className="flex items-center gap-2">
                       {plan.esIlimitado ? (
-                        <Crown className="h-5 w-5 text-amber-500" />
+                        <Crown className="h-5 w-5 text-warning-foreground" />
                       ) : (
-                        <Sparkles className="h-5 w-5 text-sky-500" />
+                        <Sparkles className="h-5 w-5 text-primary" />
                       )}
-                      <h3 className="font-semibold text-slate-900">{plan.nombre}</h3>
+                      <h3 className="font-semibold text-foreground">{plan.nombre}</h3>
                       {plan.esIlimitado && (
-                        <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                        <span className="ml-auto rounded-full bg-warning/15 px-2 py-0.5 text-xs font-semibold text-warning-foreground">
                           Ilimitado
                         </span>
                       )}
                     </div>
 
-                    <p className="mt-4 text-3xl font-extrabold text-slate-900">
+                    <p className="mt-4 text-3xl font-extrabold text-foreground">
                       {formatMoney(plan.precio, prefs)}
-                      <span className="text-base font-normal text-slate-400">/mes</span>
+                      <span className="text-base font-normal text-muted-foreground">/mes</span>
                     </p>
                     {plan.descripcion && (
-                      <p className="mt-2 text-sm text-slate-500">{plan.descripcion}</p>
+                      <p className="mt-2 text-sm text-muted-foreground">{plan.descripcion}</p>
                     )}
 
-                    <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm">
-                      <p className="font-medium text-slate-700">
+                    <div className="mt-4 rounded-lg bg-muted p-3 text-sm">
+                      <p className="font-medium text-foreground">
                         {plan.esIlimitado
                           ? 'Usos ilimitados'
                           : `${plan.lavadosIncluidos} usos incluidos`}
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-muted-foreground">
                         Vigencia: {plan.vigenciaDias} días
                       </p>
                     </div>
@@ -369,8 +369,8 @@ export function CompanyProfile({
                     {plan.beneficios.length > 0 && (
                       <ul className="mt-4 space-y-2">
                         {plan.beneficios.map((b) => (
-                          <li key={b} className="flex items-start gap-2 text-sm text-slate-600">
-                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                          <li key={b} className="flex items-start gap-2 text-sm text-muted-foreground">
+                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
                             {b}
                           </li>
                         ))}
@@ -382,8 +382,8 @@ export function CompanyProfile({
                         href={planCtaHref}
                         className={`mt-6 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 font-semibold transition ${
                           featured
-                            ? 'bg-blue-600 text-white hover:bg-blue-700'
-                            : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
+                            ? 'bg-primary text-white hover:bg-primary'
+                            : 'bg-muted text-foreground hover:bg-muted'
                         }`}
                       >
                         Elegir plan <ArrowRight className="h-4 w-4" />
@@ -399,10 +399,10 @@ export function CompanyProfile({
         {/* Promociones */}
         {promotions && promotions.length > 0 && (
           <section id="promociones" className="mt-14 scroll-mt-32">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Promociones vigentes
             </h2>
-            <p className="mt-2 text-slate-600">
+            <p className="mt-2 text-muted-foreground">
               Beneficios exclusivos disponibles ahora mismo.
             </p>
             <div className="mt-6">
@@ -419,23 +419,23 @@ export function CompanyProfile({
         {/* Beneficios para miembros */}
         {posts.beneficios.length > 0 && (
           <section id="beneficios" className="mt-14 scroll-mt-32">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Beneficios para miembros
             </h2>
-            <p className="mt-2 text-slate-600">
+            <p className="mt-2 text-muted-foreground">
               Ventajas permanentes por ser miembro de {company.name}.
             </p>
             <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {posts.beneficios.map((b) => (
                 <div
                   key={b.id}
-                  className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5"
+                  className="rounded-2xl border border-success/20 bg-success/10 p-5"
                 >
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-semibold text-success">
                     <BadgeCheck className="h-3.5 w-3.5" /> Beneficio
                   </span>
-                  <h3 className="mt-3 font-semibold text-slate-900">{b.titulo}</h3>
-                  <p className="mt-1 text-sm text-slate-600">{b.contenido}</p>
+                  <h3 className="mt-3 font-semibold text-foreground">{b.titulo}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{b.contenido}</p>
                 </div>
               ))}
             </div>
@@ -445,16 +445,16 @@ export function CompanyProfile({
         {/* Eventos */}
         {posts.eventos.length > 0 && (
           <section id="eventos" className="mt-14 scroll-mt-32">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Próximos eventos
             </h2>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               {posts.eventos.map((e) => (
                 <div
                   key={e.id}
-                  className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-5"
+                  className="flex gap-4 rounded-2xl border border-border bg-card p-5"
                 >
-                  <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+                  <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <span className="text-lg font-bold leading-none">
                       {e.fechaEvento ? new Date(e.fechaEvento).getDate() : '—'}
                     </span>
@@ -467,11 +467,11 @@ export function CompanyProfile({
                     </span>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-900">{e.titulo}</h3>
-                    <p className="mt-1 line-clamp-2 text-sm text-slate-600">
+                    <h3 className="font-semibold text-foreground">{e.titulo}</h3>
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                       {e.contenido}
                     </p>
-                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                       {e.fechaEvento && (
                         <span className="inline-flex items-center gap-1">
                           <CalendarDays className="h-3.5 w-3.5" />
@@ -497,23 +497,23 @@ export function CompanyProfile({
         {/* Noticias */}
         {posts.noticias.length > 0 && (
           <section id="noticias" className="mt-14 scroll-mt-32">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Noticias
             </h2>
             <div className="mt-6 space-y-4">
               {posts.noticias.map((n) => (
                 <article
                   key={n.id}
-                  className="rounded-2xl border border-slate-200 bg-white p-5"
+                  className="rounded-2xl border border-border bg-card p-5"
                 >
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Newspaper className="h-3.5 w-3.5" />
                     {new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', dateStyle: 'long' }).format(
                       new Date(n.publicadaEn)
                     )}
                   </div>
-                  <h3 className="mt-2 font-semibold text-slate-900">{n.titulo}</h3>
-                  <p className="mt-1 text-sm text-slate-600">{n.contenido}</p>
+                  <h3 className="mt-2 font-semibold text-foreground">{n.titulo}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{n.contenido}</p>
                 </article>
               ))}
             </div>
@@ -523,14 +523,14 @@ export function CompanyProfile({
         {/* Galería */}
         {company.galleryImages && company.galleryImages.length > 0 && (
           <section id="galeria" className="mt-14 scroll-mt-32">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
               Galería
             </h2>
             <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {company.galleryImages.map((image, idx) => (
                 <div
                   key={idx}
-                  className="relative aspect-square w-full overflow-hidden rounded-xl bg-slate-100"
+                  className="relative aspect-square w-full overflow-hidden rounded-xl bg-muted"
                 >
                   <Image
                     src={image}
@@ -546,30 +546,30 @@ export function CompanyProfile({
 
         {/* Información */}
         <section id="informacion" className="mt-14 scroll-mt-32">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             Información
           </h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             {company.horario && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                <h3 className="flex items-center gap-2 font-semibold text-slate-900">
-                  <Clock className="h-4 w-4 text-blue-600" /> Horario de atención
+              <div className="rounded-2xl border border-border bg-card p-5">
+                <h3 className="flex items-center gap-2 font-semibold text-foreground">
+                  <Clock className="h-4 w-4 text-primary" /> Horario de atención
                 </h3>
-                <p className="mt-2 text-sm text-slate-600">{company.horario}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{company.horario}</p>
               </div>
             )}
             {location && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                <h3 className="flex items-center gap-2 font-semibold text-slate-900">
-                  <MapPin className="h-4 w-4 text-blue-600" /> Ubicación
+              <div className="rounded-2xl border border-border bg-card p-5">
+                <h3 className="flex items-center gap-2 font-semibold text-foreground">
+                  <MapPin className="h-4 w-4 text-primary" /> Ubicación
                 </h3>
-                <p className="mt-2 text-sm text-slate-600">{location}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{location}</p>
                 {company.googleMapsUrl && (
                   <a
                     href={company.googleMapsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-3 inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-blue-600 transition hover:bg-slate-50"
+                    className="mt-3 inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-primary transition hover:bg-muted"
                   >
                     Ver en Google Maps
                   </a>
@@ -577,9 +577,9 @@ export function CompanyProfile({
               </div>
             )}
             {contactLinks.length > 0 && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                <h3 className="flex items-center gap-2 font-semibold text-slate-900">
-                  <Phone className="h-4 w-4 text-blue-600" /> Contacto
+              <div className="rounded-2xl border border-border bg-card p-5">
+                <h3 className="flex items-center gap-2 font-semibold text-foreground">
+                  <Phone className="h-4 w-4 text-primary" /> Contacto
                 </h3>
                 <div className="mt-2 space-y-2">
                   {contactLinks.map((c) => (
@@ -588,7 +588,7 @@ export function CompanyProfile({
                       href={c.href}
                       target={c.href.startsWith('http') ? '_blank' : undefined}
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm text-slate-600 transition hover:text-blue-600"
+                      className="flex items-center gap-2 text-sm text-muted-foreground transition hover:text-primary"
                     >
                       <c.icon className="h-4 w-4" /> {c.label}
                     </a>
@@ -604,18 +604,18 @@ export function CompanyProfile({
       {isApp ? (
         <section className="mt-16 rounded-3xl bg-gradient-to-br from-blue-700 to-indigo-800 py-14 text-center text-white">
           <div className="mx-auto max-w-2xl px-4">
-            <Sparkles className="mx-auto h-10 w-10 text-sky-200" />
+            <Sparkles className="mx-auto h-10 w-10 text-white" />
             <h2 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
               ¿Te gusta {company.name}?
             </h2>
-            <p className="mt-3 text-sky-100">
+            <p className="mt-3 text-white/80">
               Síguela para recibir sus promociones y novedades, o descubre más
               empresas dentro de MembeGo.
             </p>
             <div className="mt-8 flex justify-center">
               <Link
                 href={discoverHref}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-blue-700 transition hover:bg-sky-50"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-card px-6 py-3 font-semibold text-info transition hover:bg-info/10"
               >
                 Descubrir empresas <ArrowRight className="h-4 w-4" />
               </Link>
@@ -625,18 +625,18 @@ export function CompanyProfile({
       ) : (
         <section className="mt-16 bg-gradient-to-br from-blue-700 to-indigo-800 py-14 text-center text-white">
           <div className="mx-auto max-w-2xl px-4">
-            <QrCode className="mx-auto h-10 w-10 text-sky-200" />
+            <QrCode className="mx-auto h-10 w-10 text-primary" />
             <h2 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
               Activa tu membresía en {company.name}
             </h2>
-            <p className="mt-3 text-sky-100">
+            <p className="mt-3 text-white/80">
               Regístrate, elige tu plan y recibe tu membresía digital con QR en
               minutos.
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 href={registroHref}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-blue-700 transition hover:bg-sky-50"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-card px-6 py-3 font-semibold text-info transition hover:bg-info/10"
               >
                 Registrarme <ArrowRight className="h-4 w-4" />
               </Link>

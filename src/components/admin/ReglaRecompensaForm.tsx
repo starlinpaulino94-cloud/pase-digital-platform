@@ -63,7 +63,7 @@ export function ReglaRecompensaForm({ companies }: { companies?: EmpresaOpcion[]
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             La regla de recompensa aplicará solo a esta empresa.
           </p>
         </div>
@@ -97,7 +97,7 @@ export function ReglaRecompensaForm({ companies }: { companies?: EmpresaOpcion[]
         </div>
       </div>
 
-      <Button type="submit" disabled={pending} className="bg-sky-500 hover:bg-sky-400">
+      <Button type="submit" disabled={pending}>
         {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
         Agregar regla
       </Button>

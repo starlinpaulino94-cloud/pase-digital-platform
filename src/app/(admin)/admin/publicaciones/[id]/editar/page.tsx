@@ -30,8 +30,8 @@ export default async function EditarPublicacionPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Editar publicación</h1>
-        <p className="text-slate-500">{post.titulo}</p>
+        <h1 className="text-2xl font-bold text-foreground">Editar publicación</h1>
+        <p className="text-muted-foreground">{post.titulo}</p>
       </div>
       <PostForm
         campanas={campanas}

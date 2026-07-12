@@ -14,7 +14,7 @@ export default async function PlanesPage() {
   const user = await requireRole('CLIENTE')
 
   if (!user.metadata.clienteId) {
-    return <p className="text-slate-600">Tu cuenta no está completamente configurada.</p>
+    return <p className="text-muted-foreground">Tu cuenta no está completamente configurada.</p>
   }
 
   let cliente
@@ -45,10 +45,10 @@ export default async function PlanesPage() {
     })
   } catch (e) {
     console.error('[cliente-planes]', e)
-    return <p className="text-slate-600">No pudimos cargar tu información. Intenta más tarde.</p>
+    return <p className="text-muted-foreground">No pudimos cargar tu información. Intenta más tarde.</p>
   }
 
-  if (!cliente) return <p className="text-slate-600">No se encontró tu información.</p>
+  if (!cliente) return <p className="text-muted-foreground">No se encontró tu información.</p>
 
   const planesRaw = await prisma.plan
     .findMany({
@@ -96,30 +96,30 @@ export default async function PlanesPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Oportunidades disponibles</h1>
-        <p className="mt-1 text-slate-500">
+        <h1 className="text-2xl font-bold text-foreground">Planes disponibles</h1>
+        <p className="mt-1 text-muted-foreground">
           Elige o cambia el plan que mejor se adapte a ti en {cliente.company.name}
         </p>
       </div>
 
       {/* Banner: pago pendiente */}
       {pendingPayment && (
-        <Card className="border-amber-200 bg-amber-50">
+        <Card className="border-warning/30 bg-warning/15">
           <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
-              <Clock className="mt-0.5 h-5 w-5 text-amber-600" />
+              <Clock className="mt-0.5 h-5 w-5 text-warning-foreground" />
               <div>
-                <p className="font-medium text-amber-900">
+                <p className="font-medium text-warning-foreground">
                   Tienes el plan {pendingPayment.plan.nombre} pendiente de pago
                 </p>
-                <p className="text-sm text-amber-700">
+                <p className="text-sm text-warning-foreground">
                   {pendingPayment.estado === 'RECHAZADA'
                     ? 'Tu comprobante fue rechazado. Envía uno nuevo para activarlo.'
                     : 'Sube tu comprobante para que el equipo active tu membresía.'}
                 </p>
               </div>
             </div>
-            <Button asChild className="bg-amber-600 hover:bg-amber-500">
+            <Button asChild className="bg-warning hover:bg-warning">
               <Link href={`/membresia/${pendingPayment.id}`}>
                 <CreditCard className="mr-2 h-4 w-4" /> Completar pago
               </Link>
@@ -130,21 +130,21 @@ export default async function PlanesPage() {
 
       {/* Banner: cambio de plan solicitado */}
       {pendingChange && (
-        <Card className="border-sky-200 bg-sky-50">
+        <Card className="border-info/30 bg-info/10">
           <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
-              <ArrowRightLeft className="mt-0.5 h-5 w-5 text-sky-600" />
+              <ArrowRightLeft className="mt-0.5 h-5 w-5 text-primary" />
               <div>
-                <p className="font-medium text-sky-900">
+                <p className="font-medium text-info">
                   Cambio a {pendingChange.planSolicitado?.nombre} solicitado
                 </p>
-                <p className="text-sm text-sky-700">
+                <p className="text-sm text-info">
                   Tu plan actual sigue activo. Sube el comprobante del nuevo plan para
                   que el equipo lo apruebe.
                 </p>
               </div>
             </div>
-            <Button asChild className="bg-sky-600 hover:bg-sky-500">
+            <Button asChild className="bg-primary hover:bg-info/100">
               <Link href={`/membresia/${pendingChange.id}`}>
                 <CreditCard className="mr-2 h-4 w-4" /> Subir comprobante
               </Link>
@@ -155,15 +155,15 @@ export default async function PlanesPage() {
 
       {/* Banner: membresía activa sin cambios */}
       {isActive && !pendingChange && (
-        <Card className="border-emerald-200 bg-emerald-50">
+        <Card className="border-success/25 bg-success/10">
           <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-600" />
+              <CheckCircle2 className="mt-0.5 h-5 w-5 text-success" />
               <div>
-                <p className="font-medium text-emerald-900">
+                <p className="font-medium text-success">
                   Tu plan {membership?.plan.nombre} está activo
                 </p>
-                <p className="text-sm text-emerald-700">
+                <p className="text-sm text-success">
                   Puedes cambiar a otro plan cuando quieras; el actual sigue vigente
                   hasta que se apruebe el cambio.
                 </p>
@@ -179,7 +179,7 @@ export default async function PlanesPage() {
       {/* Grid de planes */}
       {planes.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-slate-500">
+          <CardContent className="py-12 text-center text-muted-foreground">
             No hay planes disponibles en este momento.
           </CardContent>
         </Card>

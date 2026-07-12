@@ -21,8 +21,8 @@ export default async function NuevaPublicacionPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Nueva publicación</h1>
-        <p className="text-slate-500">
+        <h1 className="text-2xl font-bold text-foreground">Nueva publicación</h1>
+        <p className="text-muted-foreground">
           Se notificará automáticamente a los seguidores de tu empresa.
         </p>
       </div>

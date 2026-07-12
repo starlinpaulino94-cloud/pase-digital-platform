@@ -62,29 +62,29 @@ export function PlanSelector({
               className={cn(
                 'flex flex-col rounded-2xl border-2 p-6 text-left transition disabled:cursor-not-allowed disabled:opacity-60',
                 active
-                  ? 'border-sky-500 bg-sky-50'
-                  : 'border-slate-200 bg-white hover:border-sky-300'
+                  ? 'border-info/40 bg-info/10'
+                  : 'border-border bg-card hover:border-info/30'
               )}
             >
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-xl font-semibold">{plan.nombre}</h3>
                 {plan.esIlimitado && (
-                  <Badge className="bg-amber-100 text-amber-700">
+                  <Badge className="bg-warning/15 text-warning-foreground">
                     Ilimitado
                   </Badge>
                 )}
               </div>
-              <p className="mb-4 text-2xl font-bold text-slate-900">
+              <p className="mb-4 text-2xl font-bold text-foreground">
                 RD${plan.precio}
-                <span className="text-sm font-normal text-slate-500">/mes</span>
+                <span className="text-sm font-normal text-muted-foreground">/mes</span>
               </p>
               <ul className="space-y-2">
                 {plan.beneficios.map((b) => (
                   <li
                     key={b}
-                    className="flex items-start gap-2 text-sm text-slate-600"
+                    className="flex items-start gap-2 text-sm text-muted-foreground"
                   >
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-sky-500" />
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                     {b}
                   </li>
                 ))}
@@ -97,7 +97,7 @@ export function PlanSelector({
         <Button
           type="submit"
           disabled={!selected || pending}
-          className="w-full bg-sky-500 hover:bg-sky-400 md:w-auto"
+          className="w-full bg-primary hover:bg-primary/90 md:w-auto"
         >
           {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Seleccionar plan

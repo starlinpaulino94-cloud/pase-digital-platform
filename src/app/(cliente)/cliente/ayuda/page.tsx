@@ -99,7 +99,7 @@ export default async function AyudaPage() {
         <Card>
           <CardContent className="flex flex-col gap-3 pt-6">
             <div className="flex items-center gap-2">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-success/15 text-success">
                 <MessageCircle className="h-5 w-5" />
               </span>
               <div>
@@ -109,7 +109,7 @@ export default async function AyudaPage() {
             </div>
             {config?.activo && waLink ? (
               <a href={waLink} target="_blank" rel="noopener noreferrer">
-                <Button className="w-full bg-emerald-600 hover:bg-emerald-500">
+                <Button className="w-full bg-success hover:bg-success">
                   <MessageCircle className="mr-2 h-4 w-4" /> Contactar por WhatsApp
                 </Button>
               </a>
@@ -124,7 +124,7 @@ export default async function AyudaPage() {
         <Card>
           <CardContent className="flex flex-col gap-3 pt-6">
             <div className="flex items-center gap-2">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-info/10 text-primary">
                 <Mail className="h-5 w-5" />
               </span>
               <div>

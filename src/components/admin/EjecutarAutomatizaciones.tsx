@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { Loader2, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -8,11 +8,14 @@ import {
   type AutomatizacionState,
 } from '@/modules/admin/automatizacionActions'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 const init: AutomatizacionState = {}
 
 export function EjecutarAutomatizaciones() {
   const [state, action, pending] = useActionState(ejecutarAutomatizaciones, init)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
     if (state.success && state.resultado) {
@@ -28,8 +31,8 @@ export function EjecutarAutomatizaciones() {
   }, [state.success, state.resultado, state.error])
 
   return (
-    <form action={action}>
-      <Button type="submit" disabled={pending} className="bg-sky-500 hover:bg-sky-400">
+    <form ref={formRef} action={action}>
+      <Button type="button" disabled={pending} onClick={() => setConfirmOpen(true)}>
         {pending ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         ) : (
@@ -37,6 +40,18 @@ export function EjecutarAutomatizaciones() {
         )}
         Ejecutar ahora
       </Button>
+      <ConfirmDialog
+        open={confirmOpen}
+        title="¿Ejecutar las automatizaciones ahora?"
+        description="Se enviarán las notificaciones pendientes a tus clientes."
+        confirmText="Ejecutar"
+        isLoading={pending}
+        onConfirm={() => {
+          setConfirmOpen(false)
+          formRef.current?.requestSubmit()
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </form>
   )
 }

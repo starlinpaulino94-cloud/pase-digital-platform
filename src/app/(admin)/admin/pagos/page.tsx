@@ -17,8 +17,15 @@ import {
   AprobarCambioButton,
   RechazarCambioButton,
 } from '@/components/admin/CambioPlanActions'
+import {
+  AprobarCompraButton,
+  RechazarCompraButton,
+} from '@/components/admin/ValidarCompraActions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/ui/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
+import { StatusBanner } from '@/components/ui/status-banner'
 import { FileText, ExternalLink, ArrowRight } from 'lucide-react'
 import type { MembershipEstado } from '@/types'
 
@@ -66,7 +73,7 @@ export default async function PagosPage() {
   // el error como [] el admin dejaría de validar pagos sin darse cuenta.
   // null = la query falló (se distingue de [] = sin resultados) para poder
   // mostrar un aviso en vez de fingir "no hay pagos pendientes".
-  const [pendientesData, cambiosData] = await Promise.all([
+  const [pendientesData, cambiosData, comprasData] = await Promise.all([
     prisma.membership
       .findMany({
         where: {
@@ -122,67 +129,191 @@ export default async function PagosPage() {
         console.error('[admin-pagos] cambios query', e)
         return null
       }),
+    // Fase E5: compras de promociones esperando validación del pago.
+    prisma.productoCompra
+      .findMany({
+        where: {
+          estado: 'EN_VALIDACION',
+          ...(companyId ? { companyId } : {}),
+        },
+        select: {
+          id: true,
+          clienteId: true,
+          updatedAt: true,
+          comprobanteUrl: true,
+          comprobanteNota: true,
+          transferenciaFecha: true,
+          precioCongelado: true,
+          cliente: {
+            select: { nombre: true, email: true, company: { select: { name: true } } },
+          },
+          promocion: { select: { titulo: true } },
+          metodoPago: { select: { nombre: true } },
+        },
+        orderBy: { updatedAt: 'desc' },
+        take: 100,
+      })
+      .catch((e) => {
+        console.error('[admin-pagos] compras query', e)
+        return null
+      }),
   ])
 
-  const loadError = pendientesData === null || cambiosData === null
+  const loadError = pendientesData === null || cambiosData === null || comprasData === null
   const pendientes: PendienteRow[] = pendientesData ?? []
   const cambios = cambiosData ?? []
+  const compras = comprasData ?? []
 
   return (
     <div className="space-y-6">
       {loadError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          No se pudieron cargar los pagos. Es un problema temporal; recarga la
-          página en unos segundos. Si persiste, avisa al equipo técnico.
-        </div>
+        <StatusBanner variant="destructive" title="No se pudieron cargar los pagos">
+          Es un problema temporal; recarga la página en unos segundos. Si
+          persiste, avisa al equipo técnico.
+        </StatusBanner>
       )}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Validación de pagos</h1>
-          <p className="text-slate-500">
-            {pendientes.length} comprobante{pendientes.length !== 1 ? 's' : ''} esperando revisión
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Validación de pagos"
+        description={`${pendientes.length} comprobante${pendientes.length !== 1 ? 's' : ''} esperando revisión`}
+      />
 
-      {/* Cambios de plan solicitados */}
-      {cambios.length > 0 && (
+      {/* Fase E5: compras de promociones por validar */}
+      {compras.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Cambios de plan solicitados ({cambios.length})
+          <h2 className="text-h4 text-foreground">
+            Compras de promociones ({compras.length})
           </h2>
           <div className="grid gap-4 md:grid-cols-2">
-            {cambios.map((c) => (
-              <Card key={c.id} className="overflow-hidden border-sky-200">
-                <CardHeader className="border-b bg-sky-50 pb-4">
+            {compras.map((c) => (
+              <Card key={c.id} className="overflow-hidden border-primary/25">
+                <CardHeader className="border-b bg-primary/5 pb-4">
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <CardTitle className="text-base">
                         <Link
                           href={`/admin/clientes/${c.clienteId}`}
-                          className="text-sky-600 hover:underline"
+                          className="text-primary hover:underline"
                         >
                           {c.cliente.nombre}
                         </Link>
                       </CardTitle>
-                      <p className="text-sm text-slate-500">{c.cliente.email}</p>
+                      <p className="text-sm text-muted-foreground">{c.cliente.email}</p>
                       {user.metadata.role === 'SUPERADMIN' && (
                         <Badge variant="outline" className="mt-1 text-xs">
                           {c.cliente.company.name}
                         </Badge>
                       )}
                     </div>
-                    <Badge className="bg-sky-100 text-sky-700">Cambio de plan</Badge>
+                    <Badge variant="info">Promoción</Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-4">
-                  <div className="flex items-center justify-center gap-3 rounded-lg bg-slate-50 p-3 text-sm">
-                    <span className="font-medium text-slate-500">{c.plan.nombre}</span>
-                    <ArrowRight className="h-4 w-4 text-slate-400" />
-                    <span className="font-semibold text-slate-900">
+                  <div className="rounded-lg bg-muted p-3 text-sm">
+                    <p>
+                      <span className="text-muted-foreground">Promoción:</span>{' '}
+                      <strong>{c.promocion?.titulo ?? '—'}</strong>
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">Monto esperado:</span>{' '}
+                      <strong>{fmtMoney(Number(c.precioCongelado ?? 0))}</strong>
+                    </p>
+                    {c.metodoPago && (
+                      <p>
+                        <span className="text-muted-foreground">Método:</span> {c.metodoPago.nombre}
+                      </p>
+                    )}
+                    {c.transferenciaFecha && (
+                      <p>
+                        <span className="text-muted-foreground">Transferencia declarada:</span>{' '}
+                        {fmtDate(c.transferenciaFecha)}
+                      </p>
+                    )}
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Enviado: {fmtDate(c.updatedAt)}
+                    </p>
+                  </div>
+
+                  {c.comprobanteUrl &&
+                    (isImage(c.comprobanteUrl) ? (
+                      <a href={c.comprobanteUrl} target="_blank" rel="noopener noreferrer" className="block">
+                        <Image
+                          src={c.comprobanteUrl}
+                          alt="Comprobante de la compra"
+                          width={400}
+                          height={300}
+                          className="w-full rounded-lg border object-cover"
+                          style={{ maxHeight: '200px', objectFit: 'cover' }}
+                        />
+                      </a>
+                    ) : (
+                      <a
+                        href={c.comprobanteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm text-primary hover:bg-muted"
+                      >
+                        <FileText className="h-5 w-5" />
+                        Ver comprobante (PDF)
+                        <ExternalLink className="ml-auto h-4 w-4" />
+                      </a>
+                    ))}
+
+                  {c.comprobanteNota && (
+                    <div className="rounded-lg bg-warning/15 p-3 text-sm text-warning-foreground">
+                      <p className="font-medium">Nota del cliente:</p>
+                      <p>{c.comprobanteNota}</p>
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <AprobarCompraButton compraId={c.id} />
+                    <RechazarCompraButton compraId={c.id} />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Cambios de plan solicitados */}
+      {cambios.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-h4 text-foreground">
+            Cambios de plan solicitados ({cambios.length})
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {cambios.map((c) => (
+              <Card key={c.id} className="overflow-hidden border-info/30">
+                <CardHeader className="border-b bg-info/5 pb-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <CardTitle className="text-base">
+                        <Link
+                          href={`/admin/clientes/${c.clienteId}`}
+                          className="text-primary hover:underline"
+                        >
+                          {c.cliente.nombre}
+                        </Link>
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">{c.cliente.email}</p>
+                      {user.metadata.role === 'SUPERADMIN' && (
+                        <Badge variant="outline" className="mt-1 text-xs">
+                          {c.cliente.company.name}
+                        </Badge>
+                      )}
+                    </div>
+                    <Badge variant="info">Cambio de plan</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-4">
+                  <div className="flex items-center justify-center gap-3 rounded-lg bg-muted p-3 text-sm">
+                    <span className="font-medium text-muted-foreground">{c.plan.nombre}</span>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-semibold text-foreground">
                       {c.planSolicitado?.nombre}
                       {c.planSolicitado != null && (
-                        <span className="ml-1 text-slate-500">
+                        <span className="ml-1 text-muted-foreground">
                           · {fmtMoney(Number(c.planSolicitado.precio))}
                         </span>
                       )}
@@ -206,7 +337,7 @@ export default async function PagosPage() {
                         href={c.comprobanteUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm text-sky-600 hover:bg-slate-50"
+                        className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm text-primary hover:bg-muted"
                       >
                         <FileText className="h-5 w-5" />
                         Ver comprobante (PDF)
@@ -214,13 +345,13 @@ export default async function PagosPage() {
                       </a>
                     )
                   ) : (
-                    <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-700">
+                    <p className="rounded-lg bg-warning/15 p-3 text-xs text-warning-foreground">
                       El cliente aún no ha subido el comprobante del nuevo plan.
                     </p>
                   )}
 
                   {c.comprobanteNota && (
-                    <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
+                    <div className="rounded-lg bg-warning/15 p-3 text-sm text-warning-foreground">
                       <p className="font-medium">Nota del cliente:</p>
                       <p>{c.comprobanteNota}</p>
                     </div>
@@ -239,28 +370,28 @@ export default async function PagosPage() {
 
       {pendientes.length === 0 ? (
         <Card>
-          <CardContent className="py-16 text-center text-slate-500">
-            <FileText className="mx-auto mb-3 h-10 w-10 text-slate-300" />
-            <p className="font-medium">Sin comprobantes pendientes</p>
-            <p className="text-sm">Todos los pagos han sido revisados.</p>
-          </CardContent>
+          <EmptyState
+            icon={<FileText className="h-7 w-7" />}
+            title="Sin comprobantes pendientes"
+            description="Todos los pagos han sido revisados."
+          />
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
           {pendientes.map((m) => (
             <Card key={m.id} className="overflow-hidden">
-              <CardHeader className="border-b bg-blue-50 pb-4">
+              <CardHeader className="border-b bg-info/5 pb-4">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <CardTitle className="text-base">
                       <Link
                         href={`/admin/clientes/${m.clienteId}`}
-                        className="text-sky-600 hover:underline"
+                        className="text-primary hover:underline"
                       >
                         {m.cliente.nombre}
                       </Link>
                     </CardTitle>
-                    <p className="text-sm text-slate-500">{m.cliente.email}</p>
+                    <p className="text-sm text-muted-foreground">{m.cliente.email}</p>
                     {user.metadata.role === 'SUPERADMIN' && (
                       <Badge variant="outline" className="mt-1 text-xs">
                         {m.cliente.company.name}
@@ -272,9 +403,9 @@ export default async function PagosPage() {
               </CardHeader>
 
               <CardContent className="space-y-4 pt-4">
-                <div className="rounded-lg bg-slate-50 p-3 text-sm">
+                <div className="rounded-lg bg-muted p-3 text-sm">
                   <p>
-                    <span className="text-slate-500">Plan:</span>{' '}
+                    <span className="text-muted-foreground">Plan:</span>{' '}
                     <strong>{m.plan.nombre}</strong>
                   </p>
                   {(() => {
@@ -285,7 +416,7 @@ export default async function PagosPage() {
                     if (desc <= 0) {
                       return (
                         <p>
-                          <span className="text-slate-500">Precio:</span>{' '}
+                          <span className="text-muted-foreground">Precio:</span>{' '}
                           <strong>{fmtMoney(Number(m.plan.precio))}</strong>
                         </p>
                       )
@@ -293,14 +424,14 @@ export default async function PagosPage() {
                     return (
                       <>
                         <p>
-                          <span className="text-slate-500">Precio:</span>{' '}
+                          <span className="text-muted-foreground">Precio:</span>{' '}
                           <span className="line-through">{fmtMoney(Number(m.plan.precio))}</span>{' '}
-                          <span className="text-emerald-600">
+                          <span className="text-success">
                             −{fmtMoney(desc)} bienvenida
                           </span>
                         </p>
                         <p>
-                          <span className="text-slate-500">Monto esperado:</span>{' '}
+                          <span className="text-muted-foreground">Monto esperado:</span>{' '}
                           <strong>{fmtMoney(Math.max(0, Number(m.plan.precio) - desc))}</strong>
                         </p>
                       </>
@@ -308,18 +439,18 @@ export default async function PagosPage() {
                   })()}
                   {m.metodoPago && (
                     <p>
-                      <span className="text-slate-500">Método:</span>{' '}
+                      <span className="text-muted-foreground">Método:</span>{' '}
                       {m.metodoPago.nombre}
                     </p>
                   )}
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Enviado: {fmtDate(m.updatedAt)}
                   </p>
                 </div>
 
                 {m.comprobanteUrl && (
                   <div className="space-y-2">
-                    <p className="text-sm font-medium text-slate-700">
+                    <p className="text-sm font-medium text-foreground">
                       Comprobante:
                     </p>
                     {isImage(m.comprobanteUrl) ? (
@@ -343,7 +474,7 @@ export default async function PagosPage() {
                         href={m.comprobanteUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 rounded-lg border border-slate-200 p-3 text-sm text-sky-600 hover:bg-slate-50"
+                        className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm text-primary hover:bg-muted"
                       >
                         <FileText className="h-5 w-5" />
                         Ver comprobante (PDF)
@@ -354,15 +485,15 @@ export default async function PagosPage() {
                 )}
 
                 {m.comprobanteNota && (
-                  <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
+                  <div className="rounded-lg bg-warning/15 p-3 text-sm text-warning-foreground">
                     <p className="font-medium">Nota del cliente:</p>
                     <p>{m.comprobanteNota}</p>
                   </div>
                 )}
 
                 {m.adminNota && (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
-                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Nota interna</p>
+                  <div className="rounded-lg border border-border bg-muted p-3 text-sm text-muted-foreground">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Nota interna</p>
                     <p>{m.adminNota}</p>
                   </div>
                 )}

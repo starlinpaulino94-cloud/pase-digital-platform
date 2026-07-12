@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { Loader2, Download, Play, Pause, Archive } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -11,10 +11,11 @@ import {
   type EstrategiaState,
 } from '@/modules/admin/estrategiasActions'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 const init: EstrategiaState = {}
 
-/** Botón "Instalar" de un playbook de la biblioteca. */
+/** Botón "Usar plantilla" de un playbook de la biblioteca. */
 export function InstalarEstrategiaButton({
   playbookId,
   nombre,
@@ -38,7 +39,7 @@ export function InstalarEstrategiaButton({
         ) : (
           <Download className="mr-2 h-4 w-4" />
         )}
-        Instalar estrategia
+        Usar plantilla
       </Button>
     </form>
   )
@@ -101,27 +102,41 @@ export function ArchivarEstrategiaButton({ id, nombre }: { id: string; nombre: s
     if (state.error) toast.error(state.error)
   }, [state.success, state.error, nombre])
 
+  const [open, setOpen] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
+
   return (
-    <form
-      action={formAction}
-      onSubmit={(e) => {
-        if (
-          !confirm(
-            `¿Desinstalar "${nombre}"? Dejará de ejecutarse; el historial se conserva y puedes reinstalarla desde la biblioteca.`
-          )
-        )
-          e.preventDefault()
-      }}
-    >
-      <input type="hidden" name="id" value={id} />
-      <Button type="submit" size="sm" variant="ghost" disabled={pending}>
-        {pending ? (
-          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-        ) : (
-          <Archive className="mr-1.5 h-3.5 w-3.5 text-red-500" />
-        )}
-        Desinstalar
-      </Button>
-    </form>
+    <>
+      <form action={formAction} ref={formRef}>
+        <input type="hidden" name="id" value={id} />
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          disabled={pending}
+          onClick={() => setOpen(true)}
+        >
+          {pending ? (
+            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Archive className="mr-1.5 h-3.5 w-3.5 text-destructive" />
+          )}
+          Desinstalar
+        </Button>
+        <ConfirmDialog
+          open={open}
+          title={`¿Desinstalar "${nombre}"?`}
+          description="Dejará de ejecutarse. El historial se conserva y puedes volver a instalarla desde la biblioteca de plantillas."
+          confirmText="Desinstalar"
+          isDangerous
+          isLoading={pending}
+          onConfirm={() => {
+            setOpen(false)
+            formRef.current?.requestSubmit()
+          }}
+          onCancel={() => setOpen(false)}
+        />
+      </form>
+    </>
   )
 }

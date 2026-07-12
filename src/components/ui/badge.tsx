@@ -17,15 +17,11 @@ const badgeVariants = cva(
         outline:
           "border-border text-muted-foreground bg-transparent [a&]:hover:bg-muted",
         success:
-          "border-emerald-200 bg-emerald-50 text-emerald-700 [a&]:hover:bg-emerald-100",
+          "border-success/20 bg-success/10 text-success [a&]:hover:bg-success/20",
         warning:
-          "border-amber-200 bg-amber-50 text-amber-700 [a&]:hover:bg-amber-100",
-        brand:
-          "border-transparent bg-brand/10 text-brand-emphasis border-brand/20",
-        "brand-solid":
-          "border-transparent bg-brand text-[oklch(0.13_0.02_265)]",
+          "border-warning/30 bg-warning/15 text-warning-foreground [a&]:hover:bg-warning/25",
         info:
-          "border-sky-200 bg-sky-50 text-sky-700 [a&]:hover:bg-sky-100",
+          "border-info/20 bg-info/10 text-info [a&]:hover:bg-info/20",
       },
     },
     defaultVariants: {

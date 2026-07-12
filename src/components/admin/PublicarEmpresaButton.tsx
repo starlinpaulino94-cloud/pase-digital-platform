@@ -29,7 +29,7 @@ export function PublicarEmpresaButton({ habilitado }: { habilitado: boolean }) {
       <Button
         type="submit"
         disabled={!habilitado || pending}
-        className="bg-indigo-600 hover:bg-indigo-500"
+        className="bg-primary hover:bg-primary/90"
       >
         {pending ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />

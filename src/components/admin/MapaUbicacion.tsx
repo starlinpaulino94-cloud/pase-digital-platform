@@ -90,14 +90,14 @@ export function MapaUbicacion({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="flex items-center gap-1.5 text-sm text-slate-600">
-          <MapPin className="h-4 w-4 text-slate-400" />
+        <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <MapPin className="h-4 w-4 text-muted-foreground" />
           Arrastra el pin o toca el mapa para marcar tu ubicación exacta.
         </p>
         <button
           type="button"
           onClick={locateMe}
-          className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
+          className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
         >
           <LocateFixed className="h-3.5 w-3.5" /> Usar mi ubicación
         </button>
@@ -105,12 +105,12 @@ export function MapaUbicacion({
 
       <div
         ref={containerRef}
-        className="h-64 w-full overflow-hidden rounded-xl border border-slate-200"
+        className="h-64 w-full overflow-hidden rounded-xl border border-border"
         // Leaflet necesita un contenedor con altura definida.
         style={{ minHeight: 256 }}
       />
 
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-muted-foreground">
         {coords
           ? `Coordenadas: ${coords.lat}, ${coords.lng}`
           : 'Sin coordenadas todavía.'}

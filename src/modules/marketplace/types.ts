@@ -51,6 +51,14 @@ export interface PromotionPublic {
     logoUrl: string | null
   }
   createdAt: Date
+  /** Fase E5: datos de venta directa (solo si la promoción es comprable). */
+  venta?: {
+    precio: number
+    usosPorCompra: number
+    agotada: boolean
+    beneficioVigenciaDias: number | null
+    beneficioVigenciaHasta: Date | null
+  } | null
 }
 
 export interface CategoryPublic {

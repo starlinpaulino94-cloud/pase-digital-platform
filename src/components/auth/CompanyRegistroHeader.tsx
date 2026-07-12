@@ -44,7 +44,7 @@ export function CompanyRegistroHeader({
           </div>
         )}
         <div className="min-w-0">
-          <p className="text-xs text-slate-400">Crea tu cuenta en</p>
+          <p className="text-xs text-white/60">Crea tu cuenta en</p>
           <p className="truncate text-lg font-bold text-white">{name}</p>
         </div>
       </div>

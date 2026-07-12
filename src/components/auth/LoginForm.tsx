@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import {
   Card,
@@ -20,6 +21,30 @@ import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
 import { isGoogleAuthEnabled } from '@/lib/auth/googleAuth'
 import { safeInternalPath } from '@/lib/utils'
 import { ROLE_HOME, type AppRole } from '@/types'
+
+/**
+ * Traduce los errores de Supabase a mensajes en español accionables. Nunca
+ * mostrar el texto crudo en inglés al usuario (primera impresión del producto).
+ */
+function mensajeDeError(message: string, status?: number): string {
+  const m = message.toLowerCase()
+  if (m.includes('invalid login credentials')) {
+    return 'Correo o contraseña incorrectos. Revísalos e intenta de nuevo.'
+  }
+  if (m.includes('email not confirmed')) {
+    return 'Aún no has confirmado tu correo. Abre el enlace que te enviamos (revisa spam) y vuelve a intentar.'
+  }
+  if (m.includes('too many requests') || status === 429) {
+    return 'Demasiados intentos. Espera unos minutos antes de volver a intentar.'
+  }
+  if (m.includes('network') || m.includes('fetch')) {
+    return 'No pudimos conectar. Verifica tu conexión a internet e intenta de nuevo.'
+  }
+  if (status === 400 || m.includes('invalid')) {
+    return 'No se pudo iniciar sesión. Verifica tus datos e intenta de nuevo.'
+  }
+  return 'No se pudo iniciar sesión. Intenta de nuevo en unos momentos.'
+}
 
 // Simple client-side rate limiting cache
 const loginAttempts = new Map<string, { count: number; resetAt: number }>()
@@ -80,12 +105,7 @@ export function LoginForm({
     )
 
     if (signInError) {
-      // Mostramos el mensaje real de Supabase para poder diagnosticar el fallo
-      // (ej. "Invalid login credentials", "Email not confirmed", "Invalid API key").
-      const detalle = [signInError.message, signInError.status ? `código ${signInError.status}` : null]
-        .filter(Boolean)
-        .join(' · ')
-      setError(detalle || 'No se pudo iniciar sesión.')
+      setError(mensajeDeError(signInError.message, signInError.status))
       setLoading(false)
       return
     }
@@ -117,7 +137,7 @@ export function LoginForm({
         <CardTitle className="text-2xl">
           {isStaff ? 'Acceso del equipo' : 'Iniciar sesión'}
         </CardTitle>
-        <CardDescription className="text-slate-400">
+        <CardDescription className="text-white/60">
           {isStaff
             ? 'Panel para administradores y empleados.'
             : 'Accede a tu cuenta de MembeGo.'}
@@ -125,7 +145,7 @@ export function LoginForm({
       </CardHeader>
       <CardContent>
         {verificaPendiente && (
-          <Alert className="mb-4 border-sky-500/40 bg-sky-500/10 text-sky-100">
+          <Alert className="mb-4 border-info/40 bg-info/15 text-info-foreground">
             <AlertDescription>
               Te enviamos un enlace de confirmación a tu correo. Ábrelo (revisa
               también spam) para activar tu cuenta y luego inicia sesión.
@@ -133,7 +153,7 @@ export function LoginForm({
           </Alert>
         )}
         {verificado && (
-          <Alert className="mb-4 border-green-500/40 bg-green-500/10 text-green-100">
+          <Alert className="mb-4 border-success/40 bg-success/15 text-success-foreground">
             <AlertDescription>
               Correo confirmado. Ya puedes iniciar sesión.
             </AlertDescription>
@@ -172,9 +192,8 @@ export function LoginForm({
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Contraseña</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -185,7 +204,7 @@ export function LoginForm({
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-sky-500 hover:bg-sky-400"
+            className="w-full bg-primary hover:bg-primary/90"
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Entrar
@@ -193,7 +212,7 @@ export function LoginForm({
         </form>
         {!isStaff && isGoogleAuthEnabled() && (
           <div className="mt-4 space-y-4">
-            <div className="flex items-center gap-3 text-xs text-slate-500">
+            <div className="flex items-center gap-3 text-xs text-white/50">
               <span className="h-px flex-1 bg-white/10" />
               o
               <span className="h-px flex-1 bg-white/10" />
@@ -201,23 +220,23 @@ export function LoginForm({
             <GoogleSignInButton />
           </div>
         )}
-        <p className="mt-4 text-center text-sm text-slate-400">
-          <Link href="/recuperar" className="text-sky-400 hover:underline">
+        <p className="mt-4 text-center text-sm text-white/60">
+          <Link href="/recuperar" className="text-primary hover:underline">
             ¿Olvidaste tu contraseña?
           </Link>
         </p>
         {!isStaff && (
-          <p className="mt-2 text-center text-sm text-slate-400">
+          <p className="mt-2 text-center text-sm text-white/60">
             ¿No tienes cuenta?{' '}
-            <Link href="/registro" className="text-sky-400 hover:underline">
+            <Link href="/registro" className="text-primary hover:underline">
               Regístrate
             </Link>
           </p>
         )}
         {isStaff && (
-          <p className="mt-2 text-center text-xs text-slate-500">
+          <p className="mt-2 text-center text-xs text-white/50">
             ¿Eres cliente?{' '}
-            <Link href="/login" className="text-sky-400 hover:underline">
+            <Link href="/login" className="text-primary hover:underline">
               Entra por aquí
             </Link>
           </p>

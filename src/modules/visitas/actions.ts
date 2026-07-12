@@ -6,6 +6,17 @@ import { getUser } from '@/lib/auth'
 import { getRequestMeta } from '@/lib/server-utils'
 import { qrScanLimiter } from '@/lib/rate-limit'
 import { SCANNER_ROLES } from '@/types'
+import {
+  crearTransaccionAplicada,
+  getByQrUsado,
+  isTransactionCodigo,
+} from '@/lib/transactions'
+import {
+  consultarTransaccionPorCodigo,
+  type TicketPayload,
+  type TransaccionScanInfo,
+} from '@/modules/transacciones/actions'
+import { validarConsumoCompra, registrarTransicionCompra } from '@/modules/promociones/compra'
 
 export interface VisitaReciente {
   id: string
@@ -41,10 +52,38 @@ export interface ClienteLookup {
   promocionesActivas: number
 }
 
+/** Fase E5: lookup de un QR de compra de promoción (mismo escáner). */
+export interface PromoCompraLookup {
+  compraId: string
+  qrTokenId: string
+  clienteId: string
+  nombre: string
+  avatarUrl: string | null
+  empresa: string
+  promoTitulo: string
+  promoDescripcion: string
+  promoTipo: string
+  descuento: number | null
+  codigo: string | null
+  estado: string
+  usosIncluidos: number
+  usosRestantes: number
+  fechaActivacion: string | null
+  fechaVencimiento: string | null
+  puedeUsar: boolean
+  mensaje?: string
+  alertas: string[]
+}
+
 export interface LookupResult {
   error?: string
   errorCode?: 'QR_NOT_FOUND' | 'QR_INACTIVE' | 'WRONG_COMPANY' | 'NO_MEMBERSHIP' | 'MEMBERSHIP_INACTIVE' | 'MEMBERSHIP_EXPIRED' | 'NO_USES_LEFT' | 'RATE_LIMITED' | 'UNAUTHORIZED' | 'INTERNAL'
   cliente?: ClienteLookup
+  /** Fase E4: al escanear un QR ya utilizado o un QR de transacción (TX-…),
+   *  se devuelve el registro oficial completo de la operación. */
+  transaccion?: TransaccionScanInfo
+  /** Fase E5: QR de una promoción comprada (canje). */
+  promoCompra?: PromoCompraLookup
 }
 
 export async function buscarPorToken(token: string): Promise<LookupResult> {
@@ -62,6 +101,14 @@ export async function buscarPorToken(token: string): Promise<LookupResult> {
     const clean = token.trim()
     if (!clean) return { error: 'El código QR está vacío.', errorCode: 'QR_NOT_FOUND' }
 
+    // Fase E4: el QR impreso en el ticket codifica el Transaction ID (TX-…).
+    // Escanearlo consulta el historial oficial de esa operación.
+    if (isTransactionCodigo(clean)) {
+      const res = await consultarTransaccionPorCodigo(clean)
+      if (res.transaccion) return { transaccion: res.transaccion }
+      return { error: res.error ?? 'Transacción no encontrada.', errorCode: 'QR_NOT_FOUND' }
+    }
+
     const qr = await prisma.qrToken.findUnique({
       where: { token: clean },
       include: {
@@ -76,6 +123,13 @@ export async function buscarPorToken(token: string): Promise<LookupResult> {
         membership: {
           include: { plan: true },
         },
+        // Fase E5: el mismo QR puede pertenecer a una compra de promoción.
+        compra: {
+          include: {
+            promocion: true,
+            company: { select: { name: true, zonaHoraria: true } },
+          },
+        },
       },
     })
 
@@ -86,11 +140,95 @@ export async function buscarPorToken(token: string): Promise<LookupResult> {
 
     if (!qr.activo) {
       await logScanInvalido(user.metadata.dbUserId, clean, 'QR_INACTIVE')
+      // Fase E4 · Historial del QR: un QR usado no es solo un error — es una
+      // transacción registrada. Se muestra el registro oficial completo.
+      const tx = await getByQrUsado(qr.id).catch(() => null)
+      if (tx) {
+        const res = await consultarTransaccionPorCodigo(tx.codigo)
+        if (res.transaccion) {
+          return { errorCode: 'QR_INACTIVE', transaccion: res.transaccion }
+        }
+      }
       return { error: 'Este código QR ya fue utilizado. Pide al cliente que muestre su QR actualizado.', errorCode: 'QR_INACTIVE' }
     }
 
     const cliente = qr.cliente
+
+    // ── Fase E5: QR de una compra de promoción — flujo de canje propio ──────
+    if (qr.compra) {
+      const compra = qr.compra
+      if (
+        user.metadata.role !== 'SUPERADMIN' &&
+        user.metadata.companyId &&
+        compra.companyId !== user.metadata.companyId
+      ) {
+        await logScanInvalido(user.metadata.dbUserId, clean, 'WRONG_COMPANY')
+        return { error: 'Esta promoción pertenece a otra empresa.', errorCode: 'WRONG_COMPANY' }
+      }
+      const promo = compra.promocion
+      const validacion = promo
+        ? validarConsumoCompra(
+            compra,
+            { diasPermitidos: promo.diasPermitidos, horaDesde: promo.horaDesde, horaHasta: promo.horaHasta },
+            new Date(),
+            compra.company.zonaHoraria
+          )
+        : { puedeUsar: false, mensaje: 'La promoción de esta compra ya no existe.' as string, expiro: false }
+
+      // Vencimiento detectado al escanear: se marca EXPIRADA (lazy) y queda
+      // registrado en la bitácora de transiciones.
+      if (validacion.expiro) {
+        await prisma.$transaction(async (tx) => {
+          const upd = await tx.productoCompra.updateMany({
+            where: { id: compra.id, estado: 'ACTIVA' },
+            data: { estado: 'EXPIRADA' },
+          })
+          if (upd.count > 0) {
+            await registrarTransicionCompra(tx, {
+              compraId: compra.id,
+              desde: 'ACTIVA',
+              hacia: 'EXPIRADA',
+              motivo: 'Vencimiento detectado al escanear',
+              userId: user.metadata.dbUserId ?? null,
+            })
+          }
+        }).catch(() => {})
+      }
+
+      return {
+        promoCompra: {
+          compraId: compra.id,
+          qrTokenId: qr.id,
+          clienteId: cliente.id,
+          nombre: cliente.nombre,
+          avatarUrl: cliente.avatarUrl ?? null,
+          empresa: compra.company.name,
+          promoTitulo: promo?.titulo ?? 'Promoción',
+          promoDescripcion: promo?.descripcion ?? '',
+          promoTipo: promo?.tipo ?? 'general',
+          descuento: promo?.descuento ?? null,
+          codigo: promo?.codigo ?? null,
+          estado: validacion.expiro ? 'EXPIRADA' : compra.estado,
+          usosIncluidos: compra.usosIncluidos,
+          usosRestantes: compra.usosRestantes,
+          fechaActivacion: compra.fechaActivacion?.toISOString() ?? null,
+          fechaVencimiento: compra.fechaVencimiento?.toISOString() ?? null,
+          puedeUsar: validacion.puedeUsar,
+          mensaje: validacion.mensaje,
+          alertas:
+            compra.usosRestantes === 1 && validacion.puedeUsar
+              ? ['Este es el último uso disponible de la promoción.']
+              : [],
+        },
+      }
+    }
+
     const membership = qr.membership
+    if (!membership) {
+      // QR sin membresía ni compra (no debería existir): trato como sin membresía.
+      await logScanInvalido(user.metadata.dbUserId, clean, 'NO_MEMBERSHIP')
+      return { error: 'Este código no está asociado a una membresía ni a una promoción.', errorCode: 'NO_MEMBERSHIP' }
+    }
 
     // Validate scanner's company matches membership's company
     if (
@@ -199,12 +337,18 @@ export interface ConfirmState {
   restantes?: number
   visitId?: string
   servicio?: string
+  /** Fase E4: registro oficial de la operación + datos del ticket. */
+  transaccionId?: string
+  codigo?: string
+  ticketNumero?: string
+  ticket?: TicketPayload
 }
 
 export async function confirmarVisita(
   _prev: ConfirmState,
   formData: FormData
 ): Promise<ConfirmState> {
+  const t0 = Date.now()
   try {
     const user = await getUser()
     if (!user || !SCANNER_ROLES.includes(user.metadata.role)) {
@@ -231,7 +375,19 @@ export async function confirmarVisita(
     // dentro del núcleo atómico de abajo.
     const membership = await prisma.membership.findUnique({
       where: { id: membershipId },
-      include: { plan: true, cliente: true },
+      include: {
+        plan: true,
+        cliente: {
+          include: {
+            company: {
+              select: {
+                name: true, direccion: true, telefono: true, website: true,
+                logoUrl: true, zonaHoraria: true,
+              },
+            },
+          },
+        },
+      },
     })
     if (!membership) {
       return { error: 'La membresía no fue encontrada. Puede haber sido eliminada.' }
@@ -245,6 +401,7 @@ export async function confirmarVisita(
       return { error: 'Este cliente pertenece a otra empresa.' }
     }
 
+    let sucursalNombre: string | null = null
     if (sucursalId) {
       const sucursal = await prisma.sucursal.findUnique({
         where: { id: sucursalId },
@@ -254,6 +411,18 @@ export async function confirmarVisita(
       }
       if (sucursal.companyId !== membership.companyId) {
         return { error: 'La sucursal no pertenece a la empresa del cliente.' }
+      }
+      sucursalNombre = sucursal.nombre
+    }
+
+    // Etiquetas del vehículo para el snapshot/ticket (lectura fuera del tx).
+    let vehiculoLabel: string | null = null
+    let vehiculoPlaca: string | null = null
+    if (vehiculoId) {
+      const v = await prisma.vehiculo.findUnique({ where: { id: vehiculoId } })
+      if (v) {
+        vehiculoLabel = `${v.marca} ${v.modelo}${v.anio ? ` (${v.anio})` : ''}`
+        vehiculoPlaca = v.placa ?? null
       }
     }
 
@@ -414,7 +583,38 @@ export async function confirmarVisita(
       ]
       await tx.auditLog.createMany({ data: auditRows })
 
-      return { restantes, visitId: visit.id }
+      // Fase E4: la operación queda registrada como TRANSACCIÓN OFICIAL
+      // dentro del mismo núcleo atómico (o entra todo, o no entra nada).
+      const snapshot = {
+        empresa: membership.cliente.company.name,
+        cliente: membership.cliente.nombre,
+        vehiculo: vehiculoLabel ?? undefined,
+        placa: vehiculoPlaca ?? undefined,
+        servicio,
+        membresia: membership.plan.nombre,
+        plan: membership.plan.nombre,
+        empleado: user.email ?? undefined,
+        sucursal: sucursalNombre ?? undefined,
+        restantes: ilimitado ? ('ilimitado' as const) : restantes,
+      }
+      const transaccion = await crearTransaccionAplicada(tx, {
+        tipo: 'MEMBERSHIP_REDEMPTION',
+        companyId: membership.companyId,
+        sucursalId,
+        clienteId: membership.clienteId,
+        empleadoId: user.metadata.dbUserId || null,
+        membershipId: membership.id,
+        visitId: visit.id,
+        qrTokenUsadoId: qrTokenId,
+        snapshot,
+        auditoria: { ...meta },
+        resultado: notas,
+        executionMs: Date.now() - t0,
+        timeZone: membership.cliente.company.zonaHoraria,
+        userId: user.metadata.dbUserId || null,
+      })
+
+      return { restantes, visitId: visit.id, transaccion }
     })
 
     // Bus de estrategias: la visita quedó confirmada. Se emite fuera de la
@@ -442,7 +642,66 @@ export async function confirmarVisita(
       })
     }
 
-    return { success: true, restantes: result.restantes, visitId: result.visitId, servicio }
+    // Payload del ticket (Receipt Engine): plantilla de la empresa + snapshot.
+    const [plantilla, promosActivas] = await Promise.all([
+      prisma.receiptTemplate
+        .findUnique({ where: { companyId: membership.companyId } })
+        .catch(() => null),
+      prisma.promocion
+        .findMany({
+          where: {
+            companyId: membership.companyId,
+            activo: true,
+            archivada: false,
+            vigenciaDesde: { lte: new Date() },
+            OR: [{ vigenciaHasta: null }, { vigenciaHasta: { gte: new Date() } }],
+          },
+          select: { titulo: true },
+          orderBy: { prioridad: 'desc' },
+          take: 3,
+        })
+        .catch(() => []),
+    ])
+    const empresa = membership.cliente.company
+    const ticket: TicketPayload = {
+      transactionId: result.transaccion.id,
+      timeZone: empresa.zonaHoraria,
+      empresa: {
+        nombre: empresa.name,
+        sucursal: sucursalNombre,
+        direccion: empresa.direccion,
+        telefono: empresa.telefono,
+        web: empresa.website,
+        logoUrl: empresa.logoUrl,
+      },
+      template: (plantilla?.config ?? {}) as TicketPayload['template'],
+      transaccion: {
+        codigo: result.transaccion.codigo,
+        ticketNumero: result.transaccion.ticketNumero,
+        fecha: new Date().toISOString(),
+        empleado: user.email ?? null,
+        cliente: membership.cliente.nombre,
+        vehiculo: vehiculoLabel,
+        placa: vehiculoPlaca,
+        membresia: membership.plan.nombre,
+        plan: membership.plan.nombre,
+        servicio,
+        restantes: ilimitado ? 'ilimitado' : result.restantes,
+        observaciones: notas,
+        promosActivas: promosActivas.map((x) => x.titulo),
+      },
+    }
+
+    return {
+      success: true,
+      restantes: result.restantes,
+      visitId: result.visitId,
+      servicio,
+      transaccionId: result.transaccion.id,
+      codigo: result.transaccion.codigo,
+      ticketNumero: result.transaccion.ticketNumero,
+      ticket,
+    }
   } catch (e) {
     if (e instanceof TxError) {
       return { error: e.message }

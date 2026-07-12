@@ -42,14 +42,14 @@ export default async function EditarUsuarioStaffPage({
     <div className="space-y-6">
       <Link
         href="/superadmin/usuarios"
-        className="inline-flex items-center gap-1.5 text-sm text-slate-500 transition hover:text-slate-900"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" /> Usuarios de staff
       </Link>
 
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Editar usuario</h1>
-        <p className="text-slate-500">
+        <h1 className="text-2xl font-bold text-foreground">Editar usuario</h1>
+        <p className="text-muted-foreground">
           Controla su rol, sus empresas y su acceso. Los cambios aplican en su
           próxima navegación.
         </p>

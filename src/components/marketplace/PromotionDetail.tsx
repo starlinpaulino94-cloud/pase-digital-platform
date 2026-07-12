@@ -12,9 +12,11 @@ export interface PromotionDetailProps {
    */
   mode: 'public' | 'app'
   promotion: PromotionPublic
+  /** Fase E5: CTA de compra directa (lo inyecta la página del cliente). */
+  comprarSlot?: React.ReactNode
 }
 
-export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
+export function PromotionDetail({ mode, promotion, comprarSlot }: PromotionDetailProps) {
   const isApp = mode === 'app'
   const isExpired =
     promotion.vigenciaHasta && new Date(promotion.vigenciaHasta) < new Date()
@@ -26,18 +28,18 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
   const registroHref = `/registro/${promotion.company.slug}`
 
   return (
-    <div className={isApp ? 'bg-white' : 'min-h-screen bg-white'}>
+    <div className={isApp ? 'bg-card' : 'min-h-screen bg-card'}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Back Link */}
-        <Link href={backHref} className="text-blue-600 hover:underline flex items-center gap-2">
+        <Link href={backHref} className="text-primary hover:underline flex items-center gap-2">
           ← Volver a promociones
         </Link>
 
         {/* Main Card */}
-        <div className="mt-8 overflow-hidden rounded-3xl border border-slate-200/80 shadow-premium">
+        <div className="mt-8 overflow-hidden rounded-3xl border border-border/80 shadow-premium">
           {/* Image */}
           {promotion.imagenUrl && (
-            <div className="relative h-96 w-full overflow-hidden bg-slate-100">
+            <div className="relative h-96 w-full overflow-hidden bg-muted">
               <Image
                 src={promotion.imagenUrl}
                 alt={promotion.titulo}
@@ -52,14 +54,14 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
               <div className="flex-1">
-                <h1 className="text-4xl font-bold text-slate-900">
+                <h1 className="text-4xl font-bold text-foreground">
                   {promotion.titulo}
                 </h1>
 
                 {/* Company */}
                 <div className="flex items-center gap-3 mt-4">
                   {promotion.company.logoUrl && (
-                    <div className="relative h-10 w-10 overflow-hidden rounded-full bg-slate-100">
+                    <div className="relative h-10 w-10 overflow-hidden rounded-full bg-muted">
                       <Image
                         src={promotion.company.logoUrl}
                         alt={promotion.company.name}
@@ -69,12 +71,12 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
                     </div>
                   )}
                   <div>
-                    <p className="font-semibold text-slate-900">
+                    <p className="font-semibold text-foreground">
                       {promotion.company.name}
                     </p>
                     <Link
                       href={empresaHref}
-                      className="text-blue-600 hover:underline text-sm"
+                      className="text-primary hover:underline text-sm"
                     >
                       Ver empresa
                     </Link>
@@ -84,68 +86,68 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
 
               {/* Status Badge */}
               {isExpired && (
-                <div className="bg-red-100 text-red-800 px-4 py-2 rounded-lg font-semibold">
+                <div className="bg-destructive/15 text-destructive px-4 py-2 rounded-lg font-semibold">
                   Expirada
                 </div>
               )}
               {promotion.isFeatured && (
-                <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-semibold flex items-center gap-2">
+                <div className="bg-info/15 text-info px-4 py-2 rounded-lg font-semibold flex items-center gap-2">
                   ⭐ Destacada
                 </div>
               )}
             </div>
 
             {/* Main Info */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-6 border-y border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-6 border-y border-border">
               {/* Discount */}
               {promotion.descuento && (
-                <div className="bg-red-50 p-4 rounded-lg text-center">
-                  <div className="text-3xl font-bold text-red-600">
+                <div className="bg-destructive/10 p-4 rounded-lg text-center">
+                  <div className="text-3xl font-bold text-destructive">
                     {formatDescuento(promotion.descuento, promotion.tipo)}
                   </div>
-                  <div className="text-sm text-slate-600">Descuento</div>
+                  <div className="text-sm text-muted-foreground">Descuento</div>
                 </div>
               )}
 
               {/* Code */}
               {promotion.codigo && (
-                <div className="bg-blue-50 p-4 rounded-lg text-center">
-                  <code className="text-2xl font-bold text-blue-600">
+                <div className="bg-info/10 p-4 rounded-lg text-center">
+                  <code className="text-2xl font-bold text-primary">
                     {promotion.codigo}
                   </code>
-                  <div className="text-sm text-slate-600">Código</div>
+                  <div className="text-sm text-muted-foreground">Código</div>
                 </div>
               )}
 
               {/* Type */}
-              <div className="rounded-xl bg-slate-50 p-4 text-center">
-                <div className="text-lg font-bold text-slate-900">
+              <div className="rounded-xl bg-muted p-4 text-center">
+                <div className="text-lg font-bold text-foreground">
                   {PROMO_TIPO_LABEL[promotion.tipo] ?? promotion.tipo}
                 </div>
-                <div className="text-sm text-slate-600">Tipo</div>
+                <div className="text-sm text-muted-foreground">Tipo</div>
               </div>
             </div>
 
             {/* Description */}
             {promotion.descripcion && (
               <div>
-                <h2 className="text-xl font-semibold text-slate-900 mb-3">
+                <h2 className="text-xl font-semibold text-foreground mb-3">
                   Descripción
                 </h2>
-                <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
+                <p className="text-foreground leading-relaxed whitespace-pre-wrap">
                   {promotion.descripcion}
                 </p>
               </div>
             )}
 
             {/* Validity */}
-            <div className="rounded-xl bg-slate-50 p-4">
-              <h3 className="font-semibold text-slate-900 mb-2">Vigencia</h3>
-              <div className="space-y-1 text-sm text-slate-700">
+            <div className="rounded-xl bg-muted p-4">
+              <h3 className="font-semibold text-foreground mb-2">Vigencia</h3>
+              <div className="space-y-1 text-sm text-foreground">
                 {promotion.vigenciaDesde && (
                   <div>
                     <span className="font-semibold">Desde:</span>{' '}
-                    {new Date(promotion.vigenciaDesde).toLocaleDateString('es-ES', {
+                    {new Date(promotion.vigenciaDesde).toLocaleDateString('es-DO', { timeZone: 'America/Santo_Domingo',
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
@@ -153,9 +155,9 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
                   </div>
                 )}
                 {promotion.vigenciaHasta && (
-                  <div className={isExpired ? 'text-red-600 font-semibold' : ''}>
+                  <div className={isExpired ? 'text-destructive font-semibold' : ''}>
                     <span className="font-semibold">Hasta:</span>{' '}
-                    {new Date(promotion.vigenciaHasta).toLocaleDateString('es-ES', {
+                    {new Date(promotion.vigenciaHasta).toLocaleDateString('es-DO', { timeZone: 'America/Santo_Domingo',
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
@@ -169,12 +171,12 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
             {/* Tags */}
             {promotion.tags && promotion.tags.length > 0 && (
               <div>
-                <h3 className="font-semibold text-slate-900 mb-2">Categorías</h3>
+                <h3 className="font-semibold text-foreground mb-2">Categorías</h3>
                 <div className="flex flex-wrap gap-2">
                   {promotion.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm"
+                      className="bg-info/10 text-info px-3 py-1 rounded-full text-sm"
                     >
                       #{tag}
                     </span>
@@ -185,7 +187,7 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
 
             {/* Stats + compartir */}
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex gap-4 text-sm text-slate-600">
+              <div className="flex gap-4 text-sm text-muted-foreground">
                 <span>{promotion.viewCount} vistas</span>
                 <span>{promotion.shareCount} compartidas</span>
               </div>
@@ -198,18 +200,20 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
 
             {/* CTA */}
             {!isExpired && (
-              <div className="pt-4">
-                {isApp ? (
+              <div className="pt-4 space-y-3">
+                {/* Fase E5: compra directa (inyectada por la página del cliente) */}
+                {comprarSlot}
+                {isApp && comprarSlot ? null : isApp ? (
                   <Link
                     href={empresaHref}
-                    className="w-full block text-center bg-blue-600 text-white px-6 py-4 rounded-lg hover:bg-blue-700 transition-colors font-bold text-lg"
+                    className="w-full block text-center bg-primary text-white px-6 py-4 rounded-lg hover:bg-primary transition-colors font-bold text-lg"
                   >
                     Ver empresa y sus planes
                   </Link>
                 ) : (
                   <Link
                     href={registroHref}
-                    className="w-full block text-center bg-blue-600 text-white px-6 py-4 rounded-lg hover:bg-blue-700 transition-colors font-bold text-lg"
+                    className="w-full block text-center bg-primary text-white px-6 py-4 rounded-lg hover:bg-primary transition-colors font-bold text-lg"
                   >
                     Registrarse para acceder a esta promoción
                   </Link>
@@ -220,16 +224,16 @@ export function PromotionDetail({ mode, promotion }: PromotionDetailProps) {
         </div>
 
         {/* Related Company Info */}
-        <div className="mt-12 rounded-2xl bg-slate-50 p-6">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">
+        <div className="mt-12 rounded-2xl bg-muted p-6">
+          <h2 className="text-2xl font-bold text-foreground mb-4">
             Más sobre {promotion.company.name}
           </h2>
-          <p className="text-slate-700 mb-4">
+          <p className="text-foreground mb-4">
             Descubre todas las promociones y beneficios que ofrece esta empresa
           </p>
           <Link
             href={empresaHref}
-            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-block bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary transition-colors"
           >
             Ver empresa completa
           </Link>

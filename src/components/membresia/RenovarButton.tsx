@@ -24,7 +24,7 @@ export function RenovarButton({ planId, planNombre }: { planId: string; planNomb
   return (
     <form action={formAction}>
       <input type="hidden" name="planId" value={planId} />
-      <Button type="submit" disabled={pending} className="bg-sky-500 hover:bg-sky-400 gap-2">
+      <Button type="submit" disabled={pending} className="bg-primary hover:bg-primary/90 gap-2">
         {pending ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (

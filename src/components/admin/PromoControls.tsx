@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { Loader2, Pause, Play, Copy, Archive, ArchiveRestore } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -10,6 +10,7 @@ import {
   type PromocionState,
 } from '@/modules/admin/promocionActions'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 const init: PromocionState = {}
 
@@ -19,15 +20,19 @@ function ControlButton({
   icon,
   label,
   successMsg,
-  confirmMsg,
+  confirmTitle,
+  confirmText,
 }: {
   id: string
   action: typeof alternarPausaPromocion
   icon: React.ReactNode
   label: string
   successMsg: string
-  confirmMsg?: string
+  confirmTitle?: string
+  confirmText?: string
 }) {
+  const formRef = useRef<HTMLFormElement>(null)
+  const [open, setOpen] = useState(false)
   const [state, formAction, pending] = useActionState(action, init)
 
   useEffect(() => {
@@ -36,16 +41,32 @@ function ControlButton({
   }, [state.success, state.error, successMsg])
 
   return (
-    <form
-      action={formAction}
-      onSubmit={(e) => {
-        if (confirmMsg && !confirm(confirmMsg)) e.preventDefault()
-      }}
-    >
+    <form ref={formRef} action={formAction}>
       <input type="hidden" name="id" value={id} />
-      <Button size="icon" variant="ghost" type="submit" disabled={pending} title={label} aria-label={label}>
+      <Button
+        size="icon"
+        variant="ghost"
+        type={confirmTitle ? 'button' : 'submit'}
+        disabled={pending}
+        title={label}
+        aria-label={label}
+        onClick={confirmTitle ? () => setOpen(true) : undefined}
+      >
         {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : icon}
       </Button>
+      {confirmTitle && (
+        <ConfirmDialog
+          open={open}
+          title={confirmTitle}
+          confirmText={confirmText}
+          isLoading={pending}
+          onConfirm={() => {
+            setOpen(false)
+            formRef.current?.requestSubmit()
+          }}
+          onCancel={() => setOpen(false)}
+        />
+      )}
     </form>
   )
 }
@@ -69,9 +90,9 @@ export function PromoControls({
           action={alternarPausaPromocion}
           icon={
             activo ? (
-              <Pause className="h-4 w-4 text-amber-500" />
+              <Pause className="h-4 w-4 text-warning-foreground" />
             ) : (
-              <Play className="h-4 w-4 text-green-600" />
+              <Play className="h-4 w-4 text-success" />
             )
           }
           label={activo ? 'Pausar' : 'Reanudar'}
@@ -81,7 +102,7 @@ export function PromoControls({
       <ControlButton
         id={id}
         action={duplicarPromocion}
-        icon={<Copy className="h-4 w-4 text-slate-500" />}
+        icon={<Copy className="h-4 w-4 text-muted-foreground" />}
         label="Duplicar"
         successMsg={`Copia de "${titulo}" creada (pausada).`}
       />
@@ -90,16 +111,17 @@ export function PromoControls({
         action={alternarArchivoPromocion}
         icon={
           archivada ? (
-            <ArchiveRestore className="h-4 w-4 text-blue-500" />
+            <ArchiveRestore className="h-4 w-4 text-info" />
           ) : (
-            <Archive className="h-4 w-4 text-slate-500" />
+            <Archive className="h-4 w-4 text-muted-foreground" />
           )
         }
         label={archivada ? 'Restaurar' : 'Archivar'}
         successMsg={archivada ? `"${titulo}" restaurada.` : `"${titulo}" archivada.`}
-        confirmMsg={
+        confirmTitle={
           archivada ? undefined : `¿Archivar "${titulo}"? Saldrá de todos los listados.`
         }
+        confirmText={archivada ? undefined : 'Archivar'}
       />
     </div>
   )

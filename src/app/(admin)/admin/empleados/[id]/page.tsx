@@ -28,7 +28,7 @@ export default async function EmpleadoDetailPage({
   } catch (e) {
     console.error('[admin-empleado-detail]', e)
     return (
-      <p className="text-slate-600">
+      <p className="text-muted-foreground">
         No pudimos cargar este empleado en este momento. Intenta de nuevo más
         tarde.
       </p>
@@ -42,7 +42,7 @@ export default async function EmpleadoDetailPage({
     <div className="mx-auto max-w-lg space-y-6">
       <Link
         href="/admin/empleados"
-        className="text-sm text-sky-600 hover:underline"
+        className="text-sm text-primary hover:underline"
       >
         ← Volver a empleados
       </Link>
@@ -69,8 +69,8 @@ export default async function EmpleadoDetailPage({
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-sm text-slate-500">{label}</p>
-      <p className="font-medium text-slate-900">{value}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="font-medium text-foreground">{value}</p>
     </div>
   )
 }

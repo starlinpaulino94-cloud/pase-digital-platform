@@ -1,17 +1,18 @@
 import { Badge } from '@/components/ui/badge'
 import type { MembershipEstado } from '@/types'
 
+// Estados sobre tokens semánticos del design system (soportan dark mode).
 const MAP: Record<MembershipEstado, { label: string; className: string }> = {
-  ACTIVA:          { label: 'Activa',             className: 'bg-green-100 text-green-700' },
-  PENDIENTE:       { label: 'Pendiente',           className: 'bg-yellow-100 text-yellow-700' },
-  PENDIENTE_PAGO:  { label: 'Pago enviado',        className: 'bg-blue-100 text-blue-700' },
-  RECHAZADA:       { label: 'Pago rechazado',      className: 'bg-red-100 text-red-700' },
-  VENCIDA:         { label: 'Vencida',             className: 'bg-orange-100 text-orange-700' },
-  CANCELADA:       { label: 'Cancelada',           className: 'bg-slate-200 text-slate-600' },
+  ACTIVA:          { label: 'Activa',        className: 'bg-success/10 text-success' },
+  PENDIENTE:       { label: 'Pendiente',     className: 'bg-warning/15 text-warning-foreground' },
+  PENDIENTE_PAGO:  { label: 'Pago enviado',  className: 'bg-info/10 text-info' },
+  RECHAZADA:       { label: 'Pago rechazado', className: 'bg-destructive/10 text-destructive' },
+  VENCIDA:         { label: 'Vencida',       className: 'bg-warning/15 text-warning-foreground' },
+  CANCELADA:       { label: 'Cancelada',     className: 'bg-muted text-muted-foreground' },
 }
 
 export function EstadoBadge({ estado }: { estado: MembershipEstado }) {
-  const cfg = MAP[estado] ?? { label: estado, className: 'bg-slate-100 text-slate-600' }
+  const cfg = MAP[estado] ?? { label: estado, className: 'bg-muted text-muted-foreground' }
   return (
     <Badge variant="secondary" className={cfg.className}>
       {cfg.label}

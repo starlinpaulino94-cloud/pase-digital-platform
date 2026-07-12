@@ -94,7 +94,7 @@ export default function ActualizarPasswordPage() {
     <Card className="border-white/10 bg-white/5 text-white">
       <CardHeader>
         <CardTitle className="text-2xl">Nueva contraseña</CardTitle>
-        <CardDescription className="text-slate-400">
+        <CardDescription className="text-white/60">
           Elige una contraseña nueva para tu cuenta.
         </CardDescription>
       </CardHeader>
@@ -113,8 +113,8 @@ export default function ActualizarPasswordPage() {
                 nuevo.
               </AlertDescription>
             </Alert>
-            <p className="text-center text-sm text-slate-400">
-              <a href="/recuperar" className="text-sky-400 hover:underline">
+            <p className="text-center text-sm text-white/60">
+              <a href="/recuperar" className="text-primary hover:underline">
                 Solicitar nuevo enlace
               </a>
             </p>
@@ -153,7 +153,7 @@ export default function ActualizarPasswordPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-sky-500 hover:bg-sky-400"
+              className="w-full bg-primary hover:bg-primary/90"
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Actualizar contraseña

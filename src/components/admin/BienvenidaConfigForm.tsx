@@ -35,25 +35,25 @@ export function BienvenidaConfigForm({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Gift className="h-4 w-4 text-emerald-600" />
+          <Gift className="h-4 w-4 text-success" />
           Beneficio de bienvenida
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="mb-4 text-sm text-slate-500">
+        <p className="mb-4 text-sm text-muted-foreground">
           Descuento para clientes nuevos en su <strong>primer pago</strong> de
           membresía. Lo financia tu empresa y se aplica una sola vez por
           cliente. Los clientes lo ven al elegir plan.
         </p>
         <form action={formAction} className="space-y-4">
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <label className="flex items-center gap-2 text-sm text-foreground">
             <input
               type="checkbox"
               name="activa"
               value="on"
               checked={activa}
               onChange={(e) => setActiva(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300"
+              className="h-4 w-4 rounded border-border"
             />
             Ofrecer beneficio de bienvenida
           </label>
@@ -67,7 +67,7 @@ export function BienvenidaConfigForm({
                   name="tipo"
                   value={tipo}
                   onChange={(e) => setTipo(e.target.value)}
-                  className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+                  className="h-9 w-full rounded-md border border-border bg-white px-3 text-sm"
                 >
                   <option value="PORCENTAJE">Porcentaje (%)</option>
                   <option value="MONTO">Monto fijo</option>

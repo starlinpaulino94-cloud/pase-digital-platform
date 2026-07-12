@@ -43,7 +43,7 @@ export default async function SucursalesPage() {
           </p>
         </div>
         <Link href="/admin/sucursales/nueva">
-          <Button className="gap-2 bg-sky-500 hover:bg-sky-400">
+          <Button className="gap-2">
             <Plus className="h-4 w-4" />
             Nueva sucursal
           </Button>
@@ -53,13 +53,13 @@ export default async function SucursalesPage() {
       {sucursales.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="py-16 text-center text-muted-foreground">
-            <MapPin className="mx-auto mb-3 h-10 w-10 text-slate-200" />
+            <MapPin className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
             <p className="font-medium">Sin sucursales configuradas</p>
             <p className="text-sm">
               Agrega sucursales para que el escáner pueda registrar desde qué ubicación se confirmó cada visita.
             </p>
             <Link href="/admin/sucursales/nueva" className="mt-4 block">
-              <Button className="bg-sky-500 hover:bg-sky-400">
+              <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 Agregar primera sucursal
               </Button>
@@ -73,8 +73,8 @@ export default async function SucursalesPage() {
               <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className={`rounded-xl p-2.5 ring-1 ${s.activa ? 'bg-sky-50 ring-sky-100' : 'bg-slate-100 ring-slate-200'}`}>
-                      <MapPin className={`h-5 w-5 ${s.activa ? 'text-sky-600' : 'text-slate-400'}`} />
+                    <div className={`rounded-xl p-2.5 ring-1 ${s.activa ? 'bg-info/10 ring-info/20' : 'bg-muted ring-border'}`}>
+                      <MapPin className={`h-5 w-5 ${s.activa ? 'text-primary' : 'text-muted-foreground'}`} />
                     </div>
                     <div>
                       <p className="font-semibold text-foreground">{s.nombre}</p>
@@ -88,7 +88,7 @@ export default async function SucursalesPage() {
                       <Badge variant="secondary" className="text-xs">Inactiva</Badge>
                     )}
                     <Link href={`/admin/sucursales/${s.id}/editar`}>
-                      <Button size="icon" variant="ghost">
+                      <Button size="icon" variant="ghost" aria-label="Editar" title="Editar">
                         <Pencil className="h-4 w-4" />
                       </Button>
                     </Link>
@@ -99,13 +99,13 @@ export default async function SucursalesPage() {
                 <div className="mt-4 space-y-1.5 text-sm text-muted-foreground">
                   {s.direccion && (
                     <div className="flex items-start gap-2">
-                      <Navigation className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                      <Navigation className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                       <span>{s.direccion}</span>
                     </div>
                   )}
                   {s.telefono && (
                     <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 shrink-0 text-slate-400" />
+                      <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <span>{s.telefono}</span>
                     </div>
                   )}
@@ -117,7 +117,7 @@ export default async function SucursalesPage() {
                   </p>
                   <Badge
                     variant="secondary"
-                    className={s.activa ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-500'}
+                    className={s.activa ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}
                   >
                     {s.activa ? 'Activa' : 'Inactiva'}
                   </Badge>

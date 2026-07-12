@@ -35,13 +35,13 @@ export default async function MetodosPagoPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Métodos de pago</h1>
-          <p className="text-slate-500">
+          <h1 className="text-2xl font-bold text-foreground">Métodos de pago</h1>
+          <p className="text-muted-foreground">
             Los clientes verán estas instrucciones al enviar su comprobante.
           </p>
         </div>
         <Link href="/admin/metodos-pago/nuevo">
-          <Button className="bg-sky-500 hover:bg-sky-400">
+          <Button>
             <Plus className="mr-2 h-4 w-4" />
             Agregar método
           </Button>
@@ -50,8 +50,8 @@ export default async function MetodosPagoPage() {
 
       {metodos.length === 0 ? (
         <Card>
-          <CardContent className="py-16 text-center text-slate-500">
-            <CreditCard className="mx-auto mb-3 h-10 w-10 text-slate-300" />
+          <CardContent className="py-16 text-center text-muted-foreground">
+            <CreditCard className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
             <p className="font-medium">Sin métodos configurados</p>
             <p className="text-sm">
               Agrega cuentas bancarias o métodos presenciales para que tus
@@ -67,17 +67,17 @@ export default async function MetodosPagoPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     {m.tipo === 'TRANSFERENCIA' ? (
-                      <div className="rounded-lg bg-sky-100 p-2">
-                        <CreditCard className="h-5 w-5 text-sky-600" />
+                      <div className="rounded-lg bg-info/10 p-2">
+                        <CreditCard className="h-5 w-5 text-primary" />
                       </div>
                     ) : (
-                      <div className="rounded-lg bg-amber-100 p-2">
-                        <Building2 className="h-5 w-5 text-amber-600" />
+                      <div className="rounded-lg bg-warning/15 p-2">
+                        <Building2 className="h-5 w-5 text-warning-foreground" />
                       </div>
                     )}
                     <div>
-                      <p className="font-semibold text-slate-800">{m.nombre}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="font-semibold text-foreground">{m.nombre}</p>
+                      <p className="text-xs text-muted-foreground">
                         {m.tipo === 'TRANSFERENCIA'
                           ? 'Transferencia bancaria'
                           : 'Pago presencial'}
@@ -91,7 +91,7 @@ export default async function MetodosPagoPage() {
                       </Badge>
                     )}
                     <Link href={`/admin/metodos-pago/${m.id}/editar`}>
-                      <Button size="icon" variant="ghost">
+                      <Button size="icon" variant="ghost" aria-label="Editar" title="Editar">
                         <Pencil className="h-4 w-4" />
                       </Button>
                     </Link>
@@ -99,7 +99,7 @@ export default async function MetodosPagoPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 space-y-1 text-sm text-slate-600">
+                <div className="mt-4 space-y-1 text-sm text-muted-foreground">
                   {m.titular && <p><strong>Titular:</strong> {m.titular}</p>}
                   {m.numeroCuenta && (
                     <p>
@@ -108,14 +108,14 @@ export default async function MetodosPagoPage() {
                     </p>
                   )}
                   {m.instrucciones && (
-                    <p className="whitespace-pre-line text-xs text-slate-500">
+                    <p className="whitespace-pre-line text-xs text-muted-foreground">
                       {m.instrucciones}
                     </p>
                   )}
                 </div>
 
                 {user.metadata.role === 'SUPERADMIN' && (
-                  <p className="mt-3 text-xs text-slate-400">
+                  <p className="mt-3 text-xs text-muted-foreground">
                     {m.company.name}
                   </p>
                 )}

@@ -98,7 +98,7 @@ export function RegisterForm({
       <Card className="border-white/10 bg-white/5 text-white">
         <CardHeader>
           <CardTitle className="text-2xl">Crear cuenta</CardTitle>
-          <CardDescription className="text-slate-400">
+          <CardDescription className="text-white/60">
             Regístrate en {companyName}.
           </CardDescription>
         </CardHeader>
@@ -118,7 +118,7 @@ export function RegisterForm({
                 id="nombre"
                 name="nombre"
                 required
-                className="bg-white/10 text-white placeholder:text-slate-500"
+                className="bg-white/10 text-white placeholder:text-white/50"
               />
             </div>
             <div className="space-y-2">
@@ -128,7 +128,7 @@ export function RegisterForm({
                 name="email"
                 type="email"
                 required
-                className="bg-white/10 text-white placeholder:text-slate-500"
+                className="bg-white/10 text-white placeholder:text-white/50"
               />
             </div>
             <div className="space-y-2">
@@ -148,24 +148,24 @@ export function RegisterForm({
                 id="telefono"
                 name="telefono"
                 type="tel"
-                className="bg-white/10 text-white placeholder:text-slate-500"
+                className="bg-white/10 text-white placeholder:text-white/50"
                 placeholder="809-555-0000"
               />
             </div>
 
             {isCarwash && (
               <div className="space-y-4 rounded-lg border border-white/10 p-4">
-                <p className="text-sm font-medium text-slate-300">
+                <p className="text-sm font-medium text-white/70">
                   Tu vehículo (opcional)
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="marca">Marca</Label>
-                    <Input id="marca" name="marca" className="bg-white/10 text-white placeholder:text-slate-500" placeholder="Toyota" />
+                    <Input id="marca" name="marca" className="bg-white/10 text-white placeholder:text-white/50" placeholder="Toyota" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="modelo">Modelo</Label>
-                    <Input id="modelo" name="modelo" className="bg-white/10 text-white placeholder:text-slate-500" placeholder="Corolla" />
+                    <Input id="modelo" name="modelo" className="bg-white/10 text-white placeholder:text-white/50" placeholder="Corolla" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="anio">Año</Label>
@@ -179,11 +179,11 @@ export function RegisterForm({
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="color">Color</Label>
-                    <Input id="color" name="color" className="bg-white/10 text-white placeholder:text-slate-500" placeholder="Blanco" />
+                    <Input id="color" name="color" className="bg-white/10 text-white placeholder:text-white/50" placeholder="Blanco" />
                   </div>
                   <div className="col-span-2 space-y-2">
                     <Label htmlFor="placa">Placa</Label>
-                    <Input id="placa" name="placa" className="bg-white/10 text-white placeholder:text-slate-500" placeholder="A123456" />
+                    <Input id="placa" name="placa" className="bg-white/10 text-white placeholder:text-white/50" placeholder="A123456" />
                   </div>
                 </div>
               </div>
@@ -191,14 +191,14 @@ export function RegisterForm({
 
             {/* F5.2: auto-seguir con opción de desmarcar (el hidden va primero;
                 si el checkbox está marcado, su valor "on" queda al final). */}
-            <label className="flex items-start gap-2 text-sm text-slate-300">
+            <label className="flex items-start gap-2 text-sm text-white/70">
               <input type="hidden" name="seguirEmpresa" value="off" />
               <input
                 type="checkbox"
                 name="seguirEmpresa"
                 value="on"
                 defaultChecked
-                className="mt-0.5 h-4 w-4 rounded border-slate-500"
+                className="mt-0.5 h-4 w-4 rounded border-white/30 bg-white/10"
               />
               <span>
                 Seguir a {companyName} para recibir sus promociones y novedades.
@@ -206,21 +206,21 @@ export function RegisterForm({
             </label>
 
             {/* Aceptación de términos (obligatoria) — se persiste con versión. */}
-            <label className="flex items-start gap-2 text-sm text-slate-300">
+            <label className="flex items-start gap-2 text-sm text-white/70">
               <input
                 type="checkbox"
                 name="terminos"
                 value="on"
                 required
-                className="mt-0.5 h-4 w-4 rounded border-slate-500"
+                className="mt-0.5 h-4 w-4 rounded border-white/30 bg-white/10"
               />
               <span>
                 Acepto los{' '}
-                <a href="/terms" target="_blank" className="text-sky-400 hover:underline">
+                <a href="/terms" target="_blank" className="text-primary hover:underline">
                   términos y condiciones
                 </a>{' '}
                 y la{' '}
-                <a href="/privacy" target="_blank" className="text-sky-400 hover:underline">
+                <a href="/privacy" target="_blank" className="text-primary hover:underline">
                   política de privacidad
                 </a>
                 .
@@ -229,13 +229,13 @@ export function RegisterForm({
 
             {/* Consentimiento de marketing (opcional). El hidden "off" va
                 primero; si se marca, "on" queda al final. */}
-            <label className="flex items-start gap-2 text-sm text-slate-300">
+            <label className="flex items-start gap-2 text-sm text-white/70">
               <input type="hidden" name="marketingConsent" value="off" />
               <input
                 type="checkbox"
                 name="marketingConsent"
                 value="on"
-                className="mt-0.5 h-4 w-4 rounded border-slate-500"
+                className="mt-0.5 h-4 w-4 rounded border-white/30 bg-white/10"
               />
               <span>
                 Quiero recibir novedades y ofertas de MembeGo por correo (opcional).
@@ -245,7 +245,7 @@ export function RegisterForm({
             <Button
               type="submit"
               disabled={pending || redirecting}
-              className="w-full bg-sky-500 hover:bg-sky-400"
+              className="w-full bg-primary hover:bg-primary/90"
               style={colorPrimario ? { backgroundColor: colorPrimario } : undefined}
             >
               {(pending || redirecting) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -254,28 +254,28 @@ export function RegisterForm({
           </form>
           {isGoogleAuthEnabled() && (
             <div className="mt-4 space-y-3">
-              <div className="flex items-center gap-3 text-xs text-slate-500">
+              <div className="flex items-center gap-3 text-xs text-white/50">
                 <span className="h-px flex-1 bg-white/10" />
                 o
                 <span className="h-px flex-1 bg-white/10" />
               </div>
               <GoogleSignInButton companySlug={companySlug} refCode={refCode || null} />
-              <p className="text-center text-xs text-slate-500">
+              <p className="text-center text-xs text-white/50">
                 Al continuar con Google aceptas los{' '}
-                <a href="/terms" target="_blank" className="text-sky-400 hover:underline">
+                <a href="/terms" target="_blank" className="text-primary hover:underline">
                   términos
                 </a>{' '}
                 y la{' '}
-                <a href="/privacy" target="_blank" className="text-sky-400 hover:underline">
+                <a href="/privacy" target="_blank" className="text-primary hover:underline">
                   política de privacidad
                 </a>
                 .
               </p>
             </div>
           )}
-          <p className="mt-4 text-center text-sm text-slate-400">
+          <p className="mt-4 text-center text-sm text-white/60">
             ¿Ya tienes cuenta?{' '}
-            <a href="/login" className="text-sky-400 hover:underline">
+            <a href="/login" className="text-primary hover:underline">
               Inicia sesión
             </a>
           </p>

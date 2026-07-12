@@ -36,8 +36,8 @@ export default async function ExplorarEmpresasPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Explorar empresas</h1>
-        <p className="text-slate-500">
+        <h1 className="text-2xl font-bold text-foreground">Explorar empresas</h1>
+        <p className="text-muted-foreground">
           Descubre negocios afiliados, síguelos y únete a sus membresías, todo
           desde tu cuenta.
         </p>
@@ -46,7 +46,7 @@ export default async function ExplorarEmpresasPage({
       {/* Búsqueda (GET: funciona sin JS y conserva el término en la URL) */}
       <form action="/cliente/explorar" className="flex max-w-md gap-2">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             name="q"
             defaultValue={search}
@@ -61,8 +61,8 @@ export default async function ExplorarEmpresasPage({
 
       {companies.length === 0 ? (
         <Card>
-          <CardContent className="py-16 text-center text-slate-500">
-            <Store className="mx-auto mb-3 h-10 w-10 text-slate-300" />
+          <CardContent className="py-16 text-center text-muted-foreground">
+            <Store className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
             <p className="font-medium">
               {search
                 ? `No encontramos empresas para “${search}”`

@@ -39,18 +39,20 @@ export class ScannerErrorBoundary extends Component<Props, State> {
     const { error } = this.state
     if (error) {
       return (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center space-y-4">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm">
-            <AlertTriangle className="h-7 w-7 text-red-600" />
+        <div className="rounded-xl border border-destructive/25 bg-destructive/10 p-6 text-center space-y-4">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-card shadow-sm">
+            <AlertTriangle className="h-7 w-7 text-destructive" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-red-700">Error en el escáner</h3>
-            <p className="mt-2 break-words text-sm text-red-600">
-              {error.message || 'Error desconocido'}
+            <h3 className="text-lg font-bold text-destructive">Error en el escáner</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Ocurrió un problema inesperado. Reintenta; si persiste, contacta al
+              administrador. El detalle técnico ya fue reportado automáticamente.
             </p>
           </div>
-          {error.stack && (
-            <pre className="max-h-40 overflow-auto rounded-lg bg-white p-3 text-left text-[10px] leading-tight text-slate-500">
+          {/* El stack solo en desarrollo: al empleado nunca se le muestran internals. */}
+          {process.env.NODE_ENV === 'development' && error.stack && (
+            <pre className="max-h-40 overflow-auto rounded-lg bg-card p-3 text-left text-[10px] leading-tight text-muted-foreground">
               {error.stack}
             </pre>
           )}

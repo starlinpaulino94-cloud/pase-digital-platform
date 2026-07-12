@@ -13,7 +13,7 @@ export default async function NuevoEmpleadoPage() {
     <div className="mx-auto max-w-lg space-y-6">
       <Link
         href="/admin/empleados"
-        className="text-sm text-sky-600 hover:underline"
+        className="text-sm text-primary hover:underline"
       >
         ← Volver a empleados
       </Link>

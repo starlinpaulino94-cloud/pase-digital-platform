@@ -84,7 +84,7 @@ export type {
   PromotionEvaluation,
 } from './application/promotion-engine'
 
-// Fase B — Promotion Strategy Library (plantillas por industria)
+// Fase B — Promotion Templates (library data, internal use)
 export {
   PROMOTION_OBJECTIVES, PROMOTION_SEGMENTS, BENEFIT_TYPES, TRIGGER_TYPES,
   PROMOTION_CHANNELS, PROMOTION_METRICS, DEFAULT_PROMOTION_METRICS,
@@ -105,6 +105,23 @@ export {
   objectiveFromGoal,
 } from './templates/service'
 export { CARWASH_PROMOTION_TEMPLATES, getCarwashPromo } from './templates/carwash'
+
+// Fase F1.2 — Promotion Strategies (library data, INTERNAL ONLY)
+// User-facing code should NOT import from this section
+export {
+  PROMOTION_STRATEGY_CATEGORIES, PROMOTION_STRATEGY_CATALOG,
+} from './templates/strategy-taxonomy'
+export type {
+  PromotionStrategyCategory, PromotionComplexity, EngineId, StrategyCategoryEntry,
+} from './templates/strategy-taxonomy'
+export type { PromotionStrategy } from './templates/strategy-types'
+export {
+  CARWASH_PROMOTION_STRATEGIES, getPromotionStrategy, promotionStrategyForCategory,
+  strategyPromotions, promotionStrategiesBySegment,
+} from './templates/carwash-strategies'
+
+// Helpers for Plantillas subsection (Fase E3)
+export { getPromotionTemplateCatalog } from './templates/service-internal'
 
 // Infraestructura
 export { PrismaPromotionRepository } from './infrastructure/prisma-promotion-repository'

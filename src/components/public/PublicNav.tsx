@@ -35,15 +35,15 @@ export function PublicNav() {
         className={cn(
           'mx-auto flex max-w-6xl items-center justify-between rounded-2xl border px-4 py-2.5 transition-all duration-300 sm:px-5',
           scrolled
-            ? 'border-slate-200/80 bg-white/80 shadow-premium glass-strong'
+            ? 'border-border/80 bg-white/80 shadow-premium glass-strong'
             : 'border-transparent bg-white/40 glass'
         )}
       >
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <Image src="/logo.svg" alt="MembeGo" width={30} height={30} priority />
-          <span className="text-lg font-bold tracking-tight text-slate-900">
-            Membe<span className="text-emerald-500">Go</span>
+          <span className="text-lg font-bold tracking-tight text-foreground">
+            Membe<span className="text-success">Go</span>
           </span>
         </Link>
 
@@ -56,8 +56,8 @@ export function PublicNav() {
               className={cn(
                 'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
                 isActive(l.href)
-                  ? 'text-blue-600'
-                  : 'text-slate-600 hover:bg-slate-900/5 hover:text-slate-900'
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground'
               )}
             >
               {l.label}
@@ -69,13 +69,13 @@ export function PublicNav() {
         <div className="hidden items-center gap-2 md:flex">
           <Link
             href="/login"
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             Ingresar
           </Link>
           <Link
             href="/registro"
-            className="group inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-glow transition-all hover:bg-blue-700 hover:shadow-glow-strong active:scale-[0.98]"
+            className="group inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-glow transition-all hover:bg-primary hover:shadow-glow-strong active:scale-[0.98]"
           >
             Registrarse
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -85,7 +85,7 @@ export function PublicNav() {
         {/* Toggle móvil */}
         <button
           onClick={() => setOpen(!open)}
-          className="rounded-lg p-2 text-slate-700 transition-colors hover:bg-slate-900/5 md:hidden"
+          className="rounded-lg p-2 text-foreground transition-colors hover:bg-foreground/5 md:hidden"
           aria-label="Menú"
           aria-expanded={open}
         >
@@ -95,29 +95,29 @@ export function PublicNav() {
 
       {/* Menú móvil */}
       {open && (
-        <div className="mx-auto mt-2 max-w-6xl animate-scale-in rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-premium glass-strong md:hidden">
+        <div className="mx-auto mt-2 max-w-6xl animate-scale-in rounded-2xl border border-border/80 bg-white/90 p-2 shadow-premium glass-strong md:hidden">
           {LINKS.map((l) => (
             <Link
               key={l.href}
               href={l.href}
               onClick={() => setOpen(false)}
-              className="block rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-900/5"
+              className="block rounded-xl px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
             >
               {l.label}
             </Link>
           ))}
-          <div className="mt-1 space-y-1.5 border-t border-slate-200/70 pt-2">
+          <div className="mt-1 space-y-1.5 border-t border-border/70 pt-2">
             <Link
               href="/login"
               onClick={() => setOpen(false)}
-              className="block rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-900/5"
+              className="block rounded-xl px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
             >
               Ingresar
             </Link>
             <Link
               href="/registro"
               onClick={() => setOpen(false)}
-              className="block rounded-xl bg-blue-600 px-3 py-2.5 text-center text-sm font-semibold text-white shadow-glow"
+              className="block rounded-xl bg-primary px-3 py-2.5 text-center text-sm font-semibold text-white shadow-glow"
             >
               Registrarse
             </Link>

@@ -77,7 +77,7 @@ export function ExplorarEmpresasList({
         return (
           <div
             key={company.id}
-            className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-blue-200 hover:shadow-sm"
+            className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:border-info/30 hover:shadow-sm"
           >
             <div className="relative h-16 bg-gradient-to-br from-blue-600 to-sky-500">
               {company.bannerUrl && (
@@ -93,7 +93,7 @@ export function ExplorarEmpresasList({
             <div className="flex flex-1 flex-col p-4">
               <div className="-mt-10 mb-2">
                 {company.logoUrl ? (
-                  <div className="relative h-12 w-12 overflow-hidden rounded-xl border-2 border-white bg-white shadow">
+                  <div className="relative h-12 w-12 overflow-hidden rounded-xl border-2 border-white bg-card shadow">
                     <Image src={company.logoUrl} alt={company.name} fill className="object-cover" />
                   </div>
                 ) : (
@@ -103,9 +103,9 @@ export function ExplorarEmpresasList({
                 )}
               </div>
 
-              <h3 className="font-semibold text-slate-900">{company.name}</h3>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                <span className="rounded-full bg-slate-100 px-2 py-0.5">
+              <h3 className="font-semibold text-foreground">{company.name}</h3>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span className="rounded-full bg-muted px-2 py-0.5">
                   {TIPO_LABEL[company.type] ?? company.type}
                 </span>
                 {company.ciudad && (
@@ -115,25 +115,25 @@ export function ExplorarEmpresasList({
                 )}
               </div>
 
-              <div className="mt-2 flex items-center gap-4 text-sm text-slate-600">
+              <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-1.5">
-                  <Gift className="h-4 w-4 text-rose-500" />
+                  <Gift className="h-4 w-4 text-destructive" />
                   {company.activePromotionsCount} promos
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <Users className="h-4 w-4 text-sky-500" />
+                  <Users className="h-4 w-4 text-primary" />
                   {company.totalMembersCount} miembros
                 </span>
               </div>
 
-              <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3">
+              <div className="mt-4 flex items-center gap-2 border-t border-border/60 pt-3">
                 <button
                   onClick={() => toggleSeguir(company)}
                   disabled={pending}
                   className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition disabled:opacity-60 ${
                     siguiendo
-                      ? 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      ? 'border border-border bg-muted text-foreground hover:bg-muted'
+                      : 'bg-primary text-white hover:bg-primary'
                   }`}
                 >
                   {pending ? (
@@ -147,7 +147,7 @@ export function ExplorarEmpresasList({
                 </button>
                 <Link
                   href={`/cliente/empresas/${company.slug}`}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:border-blue-200 hover:text-blue-700"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition hover:border-info/30 hover:text-info"
                 >
                   Ver perfil <ArrowRight className="h-3.5 w-3.5" />
                 </Link>

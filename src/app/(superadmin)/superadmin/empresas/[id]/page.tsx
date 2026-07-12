@@ -37,8 +37,8 @@ export default async function EmpresaDetailPage({
 
   const { company, stats, actividadReciente, topPlanes, membresiasPorEstado } = data
   const Icon = company.type === 'carwash' ? Car : UtensilsCrossed
-  const iconBg = company.type === 'carwash' ? 'bg-sky-100' : 'bg-amber-100'
-  const iconColor = company.type === 'carwash' ? 'text-sky-600' : 'text-amber-600'
+  const iconBg = company.type === 'carwash' ? 'bg-info/10' : 'bg-warning/15'
+  const iconColor = company.type === 'carwash' ? 'text-primary' : 'text-warning-foreground'
 
   return (
     <div className="space-y-6 animate-fade-up">
@@ -73,8 +73,8 @@ export default async function EmpresaDetailPage({
                   <Badge
                     className={
                       company.isActive
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-slate-200 text-slate-600'
+                        ? 'bg-success/15 text-success'
+                        : 'bg-muted text-muted-foreground'
                     }
                   >
                     {company.isActive ? 'Activa' : 'Suspendida'}

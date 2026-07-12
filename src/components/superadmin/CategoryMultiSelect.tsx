@@ -54,8 +54,8 @@ export function CategoryMultiSelect({
             key={c.id}
             className={`inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors ${
               active
-                ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
-                : 'border-border bg-background text-muted-foreground hover:border-blue-300 hover:text-foreground'
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground'
             }`}
           >
             <input

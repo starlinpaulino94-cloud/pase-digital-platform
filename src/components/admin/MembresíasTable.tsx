@@ -25,7 +25,7 @@ const columns: ColumnDef<MembershipRow>[] = [
     cell: ({ row }) => (
       <Link
         href={`/admin/clientes/${row.original.cliente.id}`}
-        className="font-medium text-sky-600 hover:underline"
+        className="font-medium text-primary hover:underline"
       >
         {row.original.cliente.nombre}
       </Link>
@@ -67,9 +67,16 @@ const columns: ColumnDef<MembershipRow>[] = [
   {
     id: 'actions',
     header: 'Acciones',
+    // La ficha del cliente contiene la membresía (QR, notas, visitas): no existe
+    // ruta /admin/membresias/[id]. Antes enlazaba ahí y daba 404.
     cell: ({ row }) => (
-      <Link href={`/admin/membresias/${row.original.id}`} title="Ver detalles">
-        <ExternalLink className="h-4 w-4 text-slate-400 hover:text-slate-600" />
+      <Link
+        href={`/admin/clientes/${row.original.cliente.id}`}
+        title="Ver ficha del cliente"
+        aria-label={`Ver ficha de ${row.original.cliente.nombre}`}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      >
+        <ExternalLink className="h-4 w-4" />
       </Link>
     ),
   },

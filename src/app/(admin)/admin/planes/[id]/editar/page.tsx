@@ -27,11 +27,11 @@ export default async function EditarPlanEmpresaPage({
     <div className="max-w-xl space-y-6">
       <Link
         href="/admin/planes"
-        className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" /> Volver a planes
       </Link>
-      <h1 className="text-2xl font-bold text-slate-900">
+      <h1 className="text-2xl font-bold text-foreground">
         Editar plan — {plan.nombre}
       </h1>
       <EditarPlanForm plan={plan} redirectTo="/admin/planes" />

@@ -70,7 +70,7 @@ export function ProfileForm({
       )}
 
       {state.success && (
-        <div className="flex items-center gap-2 rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
+        <div className="flex items-center gap-2 rounded-xl bg-success/10 px-4 py-3 text-sm text-success">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           Perfil actualizado correctamente.
         </div>
@@ -138,25 +138,25 @@ export function ProfileForm({
       {/* Preferencias de notificaciones */}
       <div className="space-y-2">
         <Label>Preferencias de notificaciones</Label>
-        <label className="flex items-center gap-2 text-sm text-slate-600">
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
           <input type="hidden" name="notifPromos" value="off" />
           <input
             type="checkbox"
             name="notifPromos"
             value="on"
             defaultChecked={notifPromos}
-            className="h-4 w-4 rounded border-slate-300"
+            className="h-4 w-4 rounded border-border"
           />
           Recibir promociones y novedades
         </label>
-        <label className="flex items-center gap-2 text-sm text-slate-600">
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
           <input type="hidden" name="notifRecordatorios" value="off" />
           <input
             type="checkbox"
             name="notifRecordatorios"
             value="on"
             defaultChecked={notifRecordatorios}
-            className="h-4 w-4 rounded border-slate-300"
+            className="h-4 w-4 rounded border-border"
           />
           Recibir recordatorios (vencimiento de membresía, etc.)
         </label>
@@ -173,7 +173,7 @@ export function ProfileForm({
       <Button
         type="submit"
         disabled={pending}
-        className="bg-sky-500 hover:bg-sky-400"
+        className="bg-primary hover:bg-primary/90"
       >
         {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         Guardar cambios

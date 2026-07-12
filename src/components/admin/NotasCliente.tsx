@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, StickyNote, Trash2, Plus } from 'lucide-react'
+import { Loader2, StickyNote, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   agregarNotaCliente,
@@ -10,6 +10,7 @@ import {
   type CrmState,
 } from '@/modules/admin/crmActions'
 import { Button } from '@/components/ui/button'
+import { DeleteButton } from '@/components/ui/delete-button'
 import { Textarea } from '@/components/ui/textarea'
 
 export interface NotaClienteItem {
@@ -30,32 +31,21 @@ function fmtFecha(d: Date) {
 
 function DeleteNota({ notaId }: { notaId: string }) {
   const router = useRouter()
-  const [state, action, pending] = useActionState(eliminarNotaCliente, init)
-
-  useEffect(() => {
-    if (state.success) {
-      toast.success('Nota eliminada.')
-      router.refresh()
-    }
-    if (state.error) toast.error(state.error)
-  }, [state.success, state.error, router])
 
   return (
-    <form
-      action={action}
-      onSubmit={(e) => {
-        if (!confirm('¿Eliminar esta nota?')) e.preventDefault()
+    <DeleteButton
+      action={async () => {
+        const fd = new FormData()
+        fd.set('notaId', notaId)
+        const res = await eliminarNotaCliente(init, fd)
+        if (!res?.error) router.refresh()
+        return res
       }}
-    >
-      <input type="hidden" name="notaId" value={notaId} />
-      <Button size="icon" variant="ghost" type="submit" disabled={pending} aria-label="Eliminar nota">
-        {pending ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        ) : (
-          <Trash2 className="h-3.5 w-3.5 text-slate-400 hover:text-red-500" />
-        )}
-      </Button>
-    </form>
+      title="¿Eliminar esta nota?"
+      label="Eliminar nota"
+      successMessage="Nota eliminada."
+      size="icon-sm"
+    />
   )
 }
 
@@ -103,7 +93,7 @@ export function NotasCliente({
 
       {/* Historial */}
       {notas.length === 0 ? (
-        <p className="flex items-center gap-2 text-sm text-slate-400">
+        <p className="flex items-center gap-2 text-sm text-muted-foreground/70">
           <StickyNote className="h-4 w-4" /> Sin notas todavía.
         </p>
       ) : (
@@ -111,13 +101,13 @@ export function NotasCliente({
           {notas.map((n) => (
             <li
               key={n.id}
-              className="rounded-lg border border-amber-100 bg-amber-50/60 p-3"
+              className="rounded-lg border border-warning/30 bg-warning/15 p-3"
             >
               <div className="flex items-start justify-between gap-2">
-                <p className="whitespace-pre-wrap text-sm text-slate-700">{n.texto}</p>
+                <p className="whitespace-pre-wrap text-sm text-foreground">{n.texto}</p>
                 <DeleteNota notaId={n.id} />
               </div>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-muted-foreground/70">
                 {n.autorNombre ?? 'Equipo'} · {fmtFecha(n.createdAt)}
               </p>
             </li>

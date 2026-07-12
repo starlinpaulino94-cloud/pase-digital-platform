@@ -1,9 +1,10 @@
 /**
  * Biblioteca de plantillas de PROMOCIÓN para CAR WASH (Fase B, Industria 1).
  *
- * Las 36 estrategias (CAR-001..036) en sus 12 categorías, como DATOS. Un Car
- * Wash instancia las que necesite sobre el Promotion Framework (F4). El motor no
- * contiene nada de Car Wash: toda la especificidad vive aquí.
+ * 54 plantillas (CAR-001..054) como DATOS. Un Car Wash instancia las que
+ * necesite sobre el Promotion Framework (F4). El motor no contiene nada de Car
+ * Wash: toda la especificidad vive aquí. Las estrategias por objetivo comercial
+ * (Fase F1.2) las agrupan en `carwash-strategies.ts`.
  */
 
 import { RESTRICTION_TYPES } from '../domain/restrictions'
@@ -79,6 +80,40 @@ export const CARWASH_PROMOTION_TEMPLATES: readonly PromotionTemplate[] = [
   t({ code: 'CAR-034', name: 'Oferta personalizada IA', objective: O.COMPETITIVE, category: 'Avanzadas', description: 'El sistema recomienda la promoción óptima.', segment: S.ALL, trigger: { type: T.AI_RECOMMENDED }, benefit: { type: B.PERCENTAGE, value: 15 } }),
   t({ code: 'CAR-035', name: 'Próxima mejor acción', objective: O.COMPETITIVE, category: 'Avanzadas', description: 'Acción sugerida según el comportamiento del cliente.', segment: S.ALL, trigger: { type: T.AI_RECOMMENDED }, benefit: { type: B.UPGRADE, service: 'lavado_premium' } }),
   t({ code: 'CAR-036', name: 'Segmentación automática', objective: O.COMPETITIVE, category: 'Avanzadas', description: 'El sistema crea grupos y ofertas por segmento.', segment: S.ALL, trigger: { type: T.AI_RECOMMENDED }, benefit: { type: B.PERCENTAGE, value: 10 } }),
+
+  // ── 13. Captación (variante social/QR) ──
+  t({ code: 'CAR-037', name: 'Cupón de bienvenida', objective: O.CAPTURE, category: 'Captación', description: 'Cupón de descuento para nuevos captados por redes o QR.', segment: S.NEW, trigger: { type: T.ON_SIGNUP }, benefit: { type: B.PERCENTAGE, value: 20 }, channels: ['qr', 'push'], restrictions: [{ type: RESTRICTION_TYPES.PER_CLIENT, value: 1 }] }),
+
+  // ── 14. Activación (registro → primera visita) ──
+  t({ code: 'CAR-038', name: 'Activa tu registro', objective: O.CONVERSION, category: 'Activación', description: 'Beneficio para convertir un registro en primera visita dentro de 15 días.', segment: S.NEW, trigger: { type: T.ON_SIGNUP }, conditions: 'cliente.visitas == 0', durationDays: 15, benefit: { type: B.FREE_SERVICE, service: 'aspirado' }, channels: ['push', 'email'], restrictions: [{ type: RESTRICTION_TYPES.PER_CLIENT, value: 1 }] }),
+  t({ code: 'CAR-039', name: 'Vuelve por tu segunda', objective: O.CONVERSION, category: 'Activación', description: 'Puntos dobles en la segunda visita para consolidar el hábito.', segment: S.CONVERTED, trigger: { type: T.ON_VISIT_COUNT, params: { count: 1 } }, conditions: 'cliente.visitas == 1', benefit: { type: B.POINTS, value: 150 }, channels: ['push'] }),
+
+  // ── 15. Horarios de baja demanda (Happy Hour) ──
+  t({ code: 'CAR-040', name: 'Happy Hour Básico', objective: O.FREQUENCY, category: 'Horarios de baja demanda', description: '25% en lavado básico en horas valle entre semana.', segment: S.ALL, trigger: { type: T.ON_DAY_OF_WEEK, params: { days: [1, 2, 3, 4], hours: [9, 12] } }, conditions: 'sistema.diaSemana IN [1, 2, 3, 4] AND sistema.hora >= 9 AND sistema.hora <= 12', benefit: { type: B.PERCENTAGE, value: 25, service: 'lavado_exterior' } }),
+  t({ code: 'CAR-041', name: 'Happy Hour Premium', objective: O.FREQUENCY, category: 'Horarios de baja demanda', description: '20% en lavado premium en horas valle.', segment: S.ALL, trigger: { type: T.ON_DAY_OF_WEEK, params: { days: [1, 2, 3, 4], hours: [9, 12] } }, conditions: 'sistema.hora >= 9 AND sistema.hora <= 12', benefit: { type: B.PERCENTAGE, value: 20, service: 'lavado_premium' } }),
+  t({ code: 'CAR-042', name: 'Happy Hour Detailing', objective: O.FREQUENCY, category: 'Horarios de baja demanda', description: '15% en detailing en horas de baja demanda.', segment: S.ALL, trigger: { type: T.ON_DAY_OF_WEEK, params: { days: [1, 2, 3], hours: [9, 12] } }, benefit: { type: B.PERCENTAGE, value: 15, service: 'detailing' } }),
+  t({ code: 'CAR-043', name: 'Happy Hour Aspirado', objective: O.FREQUENCY, category: 'Horarios de baja demanda', description: 'Aspirado gratis al lavar en horas valle.', segment: S.ALL, trigger: { type: T.ON_DAY_OF_WEEK, params: { days: [1, 2, 3, 4], hours: [9, 12] } }, benefit: { type: B.FREE_SERVICE, service: 'aspirado' } }),
+
+  // ── 16. Upselling ──
+  t({ code: 'CAR-044', name: 'Upgrade con descuento', objective: O.PREMIUM, category: 'Upselling', description: 'Sube de básico a premium pagando la diferencia con descuento.', segment: S.ALL, trigger: { type: T.ON_BEHAVIOR }, conditions: 'compra.servicio == "basico"', benefit: { type: B.UPGRADE, service: 'lavado_premium' } }),
+  t({ code: 'CAR-045', name: 'Sube a detailing', objective: O.PREMIUM, category: 'Upselling', description: 'Pasa de premium a detailing con precio preferencial.', segment: S.FREQUENT, trigger: { type: T.ON_BEHAVIOR }, conditions: 'compra.servicio == "lavado_premium"', benefit: { type: B.UPGRADE, service: 'detailing' } }),
+
+  // ── 17. Cross Selling ──
+  t({ code: 'CAR-046', name: 'Agrega aspirado', objective: O.TICKET, category: 'Cross Selling', description: 'Aspirado con 50% al comprar cualquier lavado.', segment: S.ALL, trigger: { type: T.ON_BEHAVIOR }, benefit: { type: B.PERCENTAGE, value: 50, service: 'aspirado' } }),
+  t({ code: 'CAR-047', name: 'Suma protección UV', objective: O.TICKET, category: 'Cross Selling', description: 'Complementa el lavado con protección UV a precio especial.', segment: S.ALL, trigger: { type: T.ON_BEHAVIOR }, benefit: { type: B.FIXED, value: 200, service: 'proteccion_uv' } }),
+
+  // ── 18. Eventos ──
+  t({ code: 'CAR-048', name: 'Evento local', objective: O.SEASONAL, category: 'Eventos', description: 'Promoción ligada a un evento local (concierto, feria, deportivo).', segment: S.ALL, trigger: { type: T.ON_DATE_RANGE }, durationDays: 2, benefit: { type: B.PERCENTAGE, value: 20 }, channels: ['push', 'whatsapp'] }),
+  t({ code: 'CAR-049', name: 'Expo/Feria comercial', objective: O.SEASONAL, category: 'Eventos', description: 'Activación durante ferias o expos con beneficio de cortesía.', segment: S.ALL, trigger: { type: T.ON_DATE_RANGE }, benefit: { type: B.FREE_SERVICE, service: 'aroma' } }),
+
+  // ── 19. Fidelización ──
+  t({ code: 'CAR-050', name: 'Club VIP beneficio', objective: O.RETENTION, category: 'Fidelización', description: 'Beneficio exclusivo mensual para clientes VIP.', segment: S.VIP, trigger: { type: T.ON_BEHAVIOR }, conditions: 'cliente.esVip == true', benefit: { type: B.FREE_SERVICE, service: 'lavado_premium' }, channels: ['push'] }),
+  t({ code: 'CAR-051', name: 'Puntos dobles frecuentes', objective: O.RETENTION, category: 'Fidelización', description: 'Puntos dobles permanentes para clientes de alta frecuencia.', segment: S.FREQUENT, trigger: { type: T.ON_BEHAVIOR }, conditions: 'cliente.visitas >= 8', benefit: { type: B.POINTS, value: 200 } }),
+
+  // ── 20. Celebraciones ──
+  t({ code: 'CAR-052', name: 'Cumpleaños feliz', objective: O.RETENTION, category: 'Celebraciones', description: 'Lavado premium de regalo en el mes de cumpleaños del cliente.', segment: S.ALL, trigger: { type: T.ON_DATE_RANGE, params: { event: 'birthday' } }, conditions: 'cliente.esCumpleanos == true', benefit: { type: B.FREE_SERVICE, service: 'lavado_premium' }, channels: ['push', 'email'], restrictions: [{ type: RESTRICTION_TYPES.PER_CLIENT, value: 1 }] }),
+  t({ code: 'CAR-053', name: 'Aniversario de cliente', objective: O.RETENTION, category: 'Celebraciones', description: 'Puntos de regalo al cumplir un año como cliente.', segment: S.FREQUENT, trigger: { type: T.ON_DATE_RANGE, params: { event: 'anniversary' } }, benefit: { type: B.POINTS, value: 300 } }),
+  t({ code: 'CAR-054', name: 'Hito de visitas', objective: O.RETENTION, category: 'Celebraciones', description: 'Recompensa al alcanzar un hito de visitas (ej. 25, 50, 100).', segment: S.FREQUENT, trigger: { type: T.ON_VISIT_COUNT, params: { count: 25 } }, conditions: 'cliente.visitas == 25', benefit: { type: B.FREE_SERVICE, service: 'detailing' } }),
 ]
 
 const BY_KEY = new Map(CARWASH_PROMOTION_TEMPLATES.map((t) => [t.key, t]))

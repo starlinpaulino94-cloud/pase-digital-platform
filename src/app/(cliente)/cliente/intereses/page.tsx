@@ -29,10 +29,10 @@ export default async function InteresesPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900">
-          <Sparkles className="h-6 w-6 text-blue-500" /> Tus intereses
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-foreground">
+          <Sparkles className="h-6 w-6 text-primary" /> Tus intereses
         </h1>
-        <p className="text-slate-500">
+        <p className="text-muted-foreground">
           Elige las categorías que te interesan. Usaremos esto para
           recomendarte empresas y promociones que realmente te gusten.
         </p>

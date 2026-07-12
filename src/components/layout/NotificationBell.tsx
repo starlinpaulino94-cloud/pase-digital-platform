@@ -23,13 +23,13 @@ import {
 import type { Notificacion } from '@prisma/client'
 
 const TIPO_ICON: Record<string, { icon: LucideIcon; cls: string }> = {
-  PAGO_APROBADO: { icon: CheckCircle2, cls: 'bg-emerald-500/10 text-emerald-600' },
-  PAGO_RECHAZADO: { icon: XCircle, cls: 'bg-red-500/10 text-red-600' },
-  NUEVO_COMPROBANTE: { icon: FileText, cls: 'bg-sky-500/10 text-sky-600' },
-  MEMBRESIA_POR_VENCER: { icon: AlertTriangle, cls: 'bg-amber-500/10 text-amber-600' },
-  MEMBRESIA_ACTIVADA: { icon: BadgeCheck, cls: 'bg-emerald-500/10 text-emerald-600' },
-  PROMOCION_NUEVA: { icon: Gift, cls: 'bg-violet-500/10 text-violet-600' },
-  SISTEMA: { icon: Bell, cls: 'bg-slate-500/10 text-slate-600' },
+  PAGO_APROBADO: { icon: CheckCircle2, cls: 'bg-success/10 text-success' },
+  PAGO_RECHAZADO: { icon: XCircle, cls: 'bg-destructive/10 text-destructive' },
+  NUEVO_COMPROBANTE: { icon: FileText, cls: 'bg-info/10 text-info' },
+  MEMBRESIA_POR_VENCER: { icon: AlertTriangle, cls: 'bg-warning/15 text-warning-foreground' },
+  MEMBRESIA_ACTIVADA: { icon: BadgeCheck, cls: 'bg-success/10 text-success' },
+  PROMOCION_NUEVA: { icon: Gift, cls: 'bg-primary/10 text-primary' },
+  SISTEMA: { icon: Bell, cls: 'bg-muted text-muted-foreground' },
 }
 
 function timeAgo(date: Date) {
@@ -89,12 +89,12 @@ export function NotificationBell({ initialCount }: { initialCount: number }) {
     <div className="relative">
       <button
         onClick={handleOpen}
-        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
         aria-label="Notificaciones"
       >
         <Bell className="h-4 w-4" />
         {count > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
             {count > 9 ? '9+' : count}
           </span>
         )}
@@ -109,13 +109,13 @@ export function NotificationBell({ initialCount }: { initialCount: number }) {
           />
 
           {/* Panel */}
-          <div className="absolute right-0 top-11 z-50 w-80 rounded-xl border border-border/60 bg-white shadow-lg sm:w-96">
+          <div className="absolute right-0 top-11 z-50 w-80 rounded-xl border border-border/60 bg-popover shadow-lg sm:w-96">
             <div className="flex items-center justify-between border-b border-border/40 px-4 py-3">
-              <p className="text-sm font-semibold text-slate-900">Notificaciones</p>
+              <p className="text-sm font-semibold text-foreground">Notificaciones</p>
               {count > 0 && (
                 <button
                   onClick={handleMarkAll}
-                  className="flex items-center gap-1 text-xs text-sky-600 hover:underline"
+                  className="flex items-center gap-1 text-xs text-primary hover:underline"
                 >
                   <CheckCheck className="h-3 w-3" />
                   Marcar todas leídas
@@ -125,9 +125,9 @@ export function NotificationBell({ initialCount }: { initialCount: number }) {
 
             <div className="max-h-[26rem] overflow-y-auto">
               {notifs === null ? (
-                <div className="py-8 text-center text-sm text-slate-400">Cargando…</div>
+                <div className="py-8 text-center text-sm text-muted-foreground">Cargando…</div>
               ) : notifs.length === 0 ? (
-                <div className="py-8 text-center text-sm text-slate-400">
+                <div className="py-8 text-center text-sm text-muted-foreground">
                   No tienes notificaciones.
                 </div>
               ) : (
@@ -137,8 +137,8 @@ export function NotificationBell({ initialCount }: { initialCount: number }) {
                       <button
                         onClick={() => handleClick(n)}
                         className={cn(
-                          'w-full px-4 py-3 text-left transition hover:bg-slate-50',
-                          !n.leida && 'bg-sky-50/60'
+                          'w-full px-4 py-3 text-left transition hover:bg-muted/50',
+                          !n.leida && 'bg-info/5'
                         )}
                       >
                         <div className="flex items-start gap-3">
@@ -158,24 +158,24 @@ export function NotificationBell({ initialCount }: { initialCount: number }) {
                           })()}
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center justify-between gap-2">
-                              <p className={cn('truncate text-sm', !n.leida ? 'font-semibold text-slate-900' : 'font-medium text-slate-700')}>
+                              <p className={cn('truncate text-sm', !n.leida ? 'font-semibold text-foreground' : 'font-medium text-muted-foreground')}>
                                 {n.titulo}
                               </p>
-                              <span className="shrink-0 text-xs text-slate-400">
+                              <span className="shrink-0 text-xs text-muted-foreground/70">
                                 {timeAgo(n.createdAt)}
                               </span>
                             </div>
-                            <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">
+                            <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                               {n.mensaje}
                             </p>
                             {n.href && (
-                              <span className="mt-1 flex items-center gap-1 text-xs text-sky-600">
+                              <span className="mt-1 flex items-center gap-1 text-xs text-primary">
                                 <ExternalLink className="h-3 w-3" /> Ver detalle
                               </span>
                             )}
                           </div>
                           {!n.leida && (
-                            <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-sky-500" />
+                            <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
                           )}
                         </div>
                       </button>

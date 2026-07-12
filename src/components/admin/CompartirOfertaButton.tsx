@@ -83,12 +83,12 @@ export function CompartirOfertaButton({
         aria-label="Compartir"
         className={
           variant === 'icon'
-            ? 'inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900'
-            : 'inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50'
+            ? 'inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground'
+            : 'inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted'
         }
       >
         {copied ? (
-          <Check className="h-4 w-4 text-green-600" />
+          <Check className="h-4 w-4 text-success" />
         ) : (
           <Share2 className="h-4 w-4" />
         )}
@@ -98,30 +98,30 @@ export function CompartirOfertaButton({
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-10 z-50 w-64 rounded-xl border border-slate-200 bg-white py-1.5 shadow-lg">
+          <div className="absolute right-0 top-10 z-50 w-64 rounded-xl border border-border bg-popover py-1.5 shadow-lg">
             {advertencia && (
-              <p className="mx-2 mb-1 flex items-start gap-1.5 rounded-lg bg-amber-50 px-2.5 py-2 text-xs text-amber-700">
+              <p className="mx-2 mb-1 flex items-start gap-1.5 rounded-lg bg-warning/15 px-2.5 py-2 text-xs text-warning-foreground">
                 <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 {advertencia}
               </p>
             )}
             <button
               onClick={whatsapp}
-              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-foreground transition hover:bg-muted"
             >
-              <MessageCircle className="h-4 w-4 text-emerald-600" /> Enviar por WhatsApp
+              <MessageCircle className="h-4 w-4 text-success" /> Enviar por WhatsApp
             </button>
             <button
               onClick={compartirNativo}
-              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-foreground transition hover:bg-muted"
             >
-              <Share2 className="h-4 w-4 text-sky-600" /> Compartir…
+              <Share2 className="h-4 w-4 text-primary" /> Compartir…
             </button>
             <button
               onClick={copiar}
-              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+              className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-foreground transition hover:bg-muted"
             >
-              <Copy className="h-4 w-4 text-slate-500" /> Copiar enlace
+              <Copy className="h-4 w-4 text-muted-foreground" /> Copiar enlace
             </button>
           </div>
         </>

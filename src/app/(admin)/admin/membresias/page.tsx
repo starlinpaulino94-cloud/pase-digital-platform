@@ -33,8 +33,8 @@ function FilterLink({
       href={href}
       className={
         active
-          ? 'rounded-full bg-sky-500 px-4 py-1.5 text-sm font-medium text-white'
-          : 'rounded-full border border-slate-200 bg-white px-4 py-1.5 text-sm text-slate-600 hover:bg-slate-50'
+          ? 'rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground'
+          : 'rounded-full border border-border bg-white px-4 py-1.5 text-sm text-muted-foreground hover:bg-muted'
       }
     >
       {label}
@@ -75,8 +75,8 @@ export default async function MembresiasPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Membresías</h1>
-        <p className="text-slate-500">{memberships.length} registros</p>
+        <h1 className="text-2xl font-bold text-foreground">Membresías</h1>
+        <p className="text-muted-foreground">{memberships.length} registros</p>
       </div>
 
       <div className="flex flex-wrap gap-2">

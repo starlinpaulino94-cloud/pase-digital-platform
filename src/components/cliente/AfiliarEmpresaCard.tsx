@@ -38,13 +38,13 @@ export function AfiliarEmpresaCard({
   return (
     <Card className="border-white/10 bg-white/5 text-white">
       <CardHeader>
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-500/15 text-sky-300">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-info/15 text-primary">
           <BadgeCheck className="h-6 w-6" />
         </div>
         <CardTitle className="mt-3 text-2xl">
           {yaEsMiembro ? `Ya eres miembro de ${companyName}` : `Únete a ${companyName}`}
         </CardTitle>
-        <CardDescription className="text-slate-400">
+        <CardDescription className="text-muted-foreground">
           {yaEsMiembro
             ? 'Continúa para elegir o revisar tu membresía.'
             : 'Ya tienes cuenta en MembeGo. Únete con un clic — sin registrarte de nuevo.'}
@@ -61,7 +61,7 @@ export function AfiliarEmpresaCard({
           <Button
             type="submit"
             disabled={pending}
-            className="w-full bg-sky-500 hover:bg-sky-400"
+            className="w-full bg-primary hover:bg-primary/90"
           >
             {pending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -70,9 +70,9 @@ export function AfiliarEmpresaCard({
             {!pending && <ArrowRight className="ml-2 h-4 w-4" />}
           </Button>
         </form>
-        <p className="mt-4 text-center text-sm text-slate-400">
+        <p className="mt-4 text-center text-sm text-muted-foreground">
           ¿No eres tú?{' '}
-          <a href="/login" className="text-sky-400 hover:underline">
+          <a href="/login" className="text-primary hover:underline">
             Cambiar de cuenta
           </a>
         </p>

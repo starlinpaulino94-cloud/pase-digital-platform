@@ -94,10 +94,13 @@ export function ConfirmVisit({
   cliente,
   sucursales = [],
   onDone,
+  onScanNext,
 }: {
   cliente: ClienteLookup
   sucursales?: Sucursal[]
   onDone: () => void
+  /** Vuelve directo a la cámara para el siguiente cliente (loop sin fricción). */
+  onScanNext?: () => void
 }) {
   const [servicio, setServicio] = useState('')
   const [vehiculoId, setVehiculoId] = useState('')
@@ -135,7 +138,12 @@ export function ConfirmVisit({
         visitId={state.visitId}
         servicio={state.servicio ?? servicio}
         restantes={state.restantes ?? 0}
+        transaccionId={state.transaccionId}
+        codigo={state.codigo}
+        ticketNumero={state.ticketNumero}
+        ticket={state.ticket}
         onDone={onDone}
+        onScanNext={onScanNext}
       />
     )
   }
@@ -145,21 +153,21 @@ export function ConfirmVisit({
       {/* Status banner */}
       <div
         className={cn(
-          'flex items-center gap-3 rounded-xl px-4 py-3',
-          isValid ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+          'flex items-center gap-3 rounded-xl border px-4 py-3',
+          isValid ? 'border-success/25 bg-success/10' : 'border-destructive/25 bg-destructive/10'
         )}
       >
         {isValid ? (
-          <CheckCircle2 className="h-6 w-6 shrink-0 text-green-600" />
+          <CheckCircle2 className="h-6 w-6 shrink-0 text-success" />
         ) : (
-          <XCircle className="h-6 w-6 shrink-0 text-red-600" />
+          <XCircle className="h-6 w-6 shrink-0 text-destructive" />
         )}
         <div>
-          <p className={cn('font-bold', isValid ? 'text-green-800' : 'text-red-800')}>
+          <p className={cn('font-bold', isValid ? 'text-success' : 'text-destructive')}>
             {isValid ? 'Membresía válida' : 'Membresía inválida'}
           </p>
           {!isValid && cliente.mensaje && (
-            <p className="text-sm text-red-700">{cliente.mensaje}</p>
+            <p className="text-sm text-destructive/90">{cliente.mensaje}</p>
           )}
         </div>
       </div>
@@ -167,8 +175,8 @@ export function ConfirmVisit({
       {/* Client card */}
       <div
         className={cn(
-          'rounded-xl border-2 p-4',
-          isValid ? 'border-green-200 bg-white' : 'border-red-200 bg-white'
+          'rounded-xl border-2 bg-card p-4',
+          isValid ? 'border-success/30' : 'border-destructive/30'
         )}
       >
         <div className="flex items-start gap-4">
@@ -181,17 +189,17 @@ export function ConfirmVisit({
               height={64}
               className={cn(
                 'h-16 w-16 rounded-2xl object-cover ring-2',
-                isValid ? 'ring-green-200' : 'ring-red-200'
+                isValid ? 'ring-success/30' : 'ring-destructive/30'
               )}
             />
           ) : (
             <div
               className={cn(
                 'flex h-16 w-16 items-center justify-center rounded-2xl',
-                isValid ? 'bg-green-100' : 'bg-red-100'
+                isValid ? 'bg-success/10' : 'bg-destructive/10'
               )}
             >
-              <User className={cn('h-8 w-8', isValid ? 'text-green-600' : 'text-red-600')} />
+              <User className={cn('h-8 w-8', isValid ? 'text-success' : 'text-destructive')} />
             </div>
           )}
 
@@ -200,19 +208,19 @@ export function ConfirmVisit({
             <p className="text-sm text-muted-foreground">{cliente.empresa}</p>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               <Badge
-                className={cn(
-                  'text-[10px]',
+                variant={
                   cliente.estado === 'ACTIVA'
-                    ? 'bg-green-100 text-green-700'
+                    ? 'success'
                     : cliente.estado === 'VENCIDA'
-                      ? 'bg-orange-100 text-orange-700'
-                      : 'bg-slate-200 text-slate-600'
-                )}
+                      ? 'warning'
+                      : 'secondary'
+                }
+                className="text-[10px]"
               >
                 {cliente.estado ?? 'Sin membresía'}
               </Badge>
               {cliente.esIlimitado && (
-                <Badge className="bg-amber-100 text-amber-700 text-[10px]">
+                <Badge variant="warning" className="text-[10px]">
                   <Sparkles className="mr-1 h-3 w-3" /> Ilimitado
                 </Badge>
               )}
@@ -250,7 +258,7 @@ export function ConfirmVisit({
             </p>
             <div className="flex flex-wrap gap-1.5">
               {planBeneficios.map((b) => (
-                <Badge key={b} variant="secondary" className="text-xs bg-sky-50 text-sky-700">
+                <Badge key={b} variant="info" className="text-xs">
                   {b}
                 </Badge>
               ))}
@@ -261,7 +269,7 @@ export function ConfirmVisit({
         {/* Promociones */}
         {cliente.promocionesActivas > 0 && (
           <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-            <Megaphone className="h-3.5 w-3.5 text-violet-500" />
+            <Megaphone className="h-3.5 w-3.5 text-primary" />
             <span>{cliente.promocionesActivas} promoción{cliente.promocionesActivas !== 1 ? 'es' : ''} disponible{cliente.promocionesActivas !== 1 ? 's' : ''}</span>
           </div>
         )}
@@ -273,7 +281,7 @@ export function ConfirmVisit({
           {alertas.map((alerta) => (
             <div
               key={alerta}
-              className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-700"
+              className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/15 px-3 py-2 text-sm text-warning-foreground"
             >
               <AlertTriangle className="h-4 w-4 shrink-0" />
               {alerta}
@@ -308,8 +316,8 @@ export function ConfirmVisit({
               {cliente.mensaje ?? 'No se puede registrar esta visita.'}
             </AlertDescription>
           </Alert>
-          <Button onClick={onDone} variant="outline" className="w-full">
-            Escanear otro QR
+          <Button onClick={onScanNext ?? onDone} className="w-full">
+            Escanear siguiente
           </Button>
         </div>
       ) : (
@@ -379,20 +387,28 @@ export function ConfirmVisit({
             <Textarea id="notas" name="notas" rows={2} placeholder="Observaciones opcionales…" />
           </div>
 
-          <div className="flex gap-3 pt-1">
-            <Button
-              type="submit"
-              disabled={pending || !servicio}
-              className="flex-1 bg-green-600 hover:bg-green-500 text-white font-semibold"
-              size="lg"
-            >
-              {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              Confirmar uso
-            </Button>
-            <Button type="button" variant="outline" onClick={onDone} size="lg">
-              Cancelar
-            </Button>
+          <div className="space-y-2 pt-1">
+            {!servicio && (
+              <p className="text-center text-xs text-muted-foreground">
+                Selecciona el servicio para poder confirmar.
+              </p>
+            )}
+            <div className="flex gap-3">
+              <Button
+                type="submit"
+                variant="success"
+                disabled={pending || !servicio}
+                className="flex-1 font-semibold"
+                size="lg"
+              >
+                {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Confirmar uso
+              </Button>
+              <Button type="button" variant="outline" onClick={onDone} size="lg">
+                Cancelar
+              </Button>
+            </div>
           </div>
         </form>
       )}

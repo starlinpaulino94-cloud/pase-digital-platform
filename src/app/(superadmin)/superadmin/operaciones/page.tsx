@@ -97,7 +97,7 @@ export default async function OperacionesPage() {
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
                   <div className="flex items-center gap-2 text-sm">
-                    <Megaphone className="h-4 w-4 text-sky-600" />
+                    <Megaphone className="h-4 w-4 text-primary" />
                     Promociones activas
                   </div>
                   <span className="font-semibold">
@@ -107,7 +107,7 @@ export default async function OperacionesPage() {
 
                 <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
                   <div className="flex items-center gap-2 text-sm">
-                    <Gift className="h-4 w-4 text-amber-600" />
+                    <Gift className="h-4 w-4 text-warning-foreground" />
                     Referidos completados
                   </div>
                   <span className="font-semibold">
@@ -117,15 +117,15 @@ export default async function OperacionesPage() {
 
                 <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
                   <div className="flex items-center gap-2 text-sm">
-                    <MessageCircle className="h-4 w-4 text-green-600" />
+                    <MessageCircle className="h-4 w-4 text-success" />
                     WhatsApp
                   </div>
                   {wa ? (
                     <Badge
                       className={
                         wa.activo
-                          ? 'bg-green-100 text-green-700 hover:bg-green-100'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-100'
+                          ? 'bg-success/15 text-success hover:bg-success/15'
+                          : 'bg-muted text-muted-foreground hover:bg-muted'
                       }
                     >
                       {wa.activo ? 'Activo' : 'Inactivo'} · {wa.numero}

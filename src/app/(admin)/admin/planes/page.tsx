@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Check, Infinity as InfinityIcon, Plus, Pencil, Package } from 'lucide-react'
+import { Check, Infinity as InfinityIcon, Plus, Pencil, Package, LayoutTemplate } from 'lucide-react'
 import { ADMIN_ROLES } from '@/types'
 import { requireRole } from '@/lib/auth/guards'
 import { companyFilter } from '@/modules/admin/queries'
@@ -77,8 +77,8 @@ export default async function PlanesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Planes</h1>
-          <p className="text-slate-500">
+          <h1 className="text-2xl font-bold text-foreground">Planes</h1>
+          <p className="text-muted-foreground">
             Crea y administra los planes de membresía de tu empresa.
           </p>
         </div>
@@ -92,8 +92,14 @@ export default async function PlanesPage() {
               texto={`Conoce los planes de membresía de ${empresa.name} en MembeGo.`}
             />
           )}
+          <Link href="/admin/planes/plantillas">
+            <Button variant="outline">
+              <LayoutTemplate className="mr-2 h-4 w-4" />
+              Plantillas
+            </Button>
+          </Link>
           <Link href="/admin/planes/nuevo">
-            <Button className="bg-sky-500 hover:bg-sky-400">
+            <Button>
               <Plus className="mr-2 h-4 w-4" />
               Nuevo plan
             </Button>
@@ -105,13 +111,19 @@ export default async function PlanesPage() {
 
       {planes.length === 0 ? (
         <Card>
-          <CardContent className="py-16 text-center text-slate-500">
-            <Package className="mx-auto mb-3 h-10 w-10 text-slate-300" />
+          <CardContent className="py-16 text-center text-muted-foreground">
+            <Package className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
             <p className="font-medium">Aún no tienes planes</p>
             <p className="text-sm">
               Crea tu primer plan (ej. Silver, Gold, Premium) para que los
               clientes puedan afiliarse.
             </p>
+            <Link
+              href="/admin/planes/plantillas"
+              className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
+            >
+              Empieza desde una plantilla →
+            </Link>
           </CardContent>
         </Card>
       ) : (
@@ -137,7 +149,7 @@ export default async function PlanesPage() {
                   </CardTitle>
                   <div className="flex items-center gap-1.5">
                     {plan.esIlimitado && (
-                      <Badge className="bg-amber-100 text-amber-700">
+                      <Badge className="bg-warning/15 text-warning-foreground">
                         <InfinityIcon className="mr-1 h-3 w-3" /> Ilimitado
                       </Badge>
                     )}
@@ -145,15 +157,15 @@ export default async function PlanesPage() {
                   </div>
                 </div>
                 {companyId === undefined && (
-                  <p className="text-sm text-slate-400">{plan.company.name}</p>
+                  <p className="text-sm text-muted-foreground">{plan.company.name}</p>
                 )}
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-2xl font-bold">
                   {formatMoney(Number(plan.precio), prefs)}
-                  <span className="text-sm font-normal text-slate-500">/mes</span>
+                  <span className="text-sm font-normal text-muted-foreground">/mes</span>
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   {plan.esIlimitado
                     ? 'Usos ilimitados'
                     : `${plan.lavadosIncluidos} usos`}{' '}
@@ -163,24 +175,24 @@ export default async function PlanesPage() {
                   {plan.beneficios.map((b) => (
                     <li
                       key={b}
-                      className="flex items-start gap-2 text-sm text-slate-600"
+                      className="flex items-start gap-2 text-sm text-muted-foreground"
                     >
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-sky-500" />
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                       {b}
                     </li>
                   ))}
                 </ul>
                 {plan.condiciones && (
-                  <p className="text-xs text-slate-400">{plan.condiciones}</p>
+                  <p className="text-xs text-muted-foreground">{plan.condiciones}</p>
                 )}
-                <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                  <p className="text-xs text-slate-400">
+                <div className="flex items-center justify-between border-t border-border/60 pt-3">
+                  <p className="text-xs text-muted-foreground">
                     {plan._count.memberships} membresías
                   </p>
                   <div className="flex items-center gap-1">
                     <Link href={`/admin/planes/${plan.id}/editar`}>
                       <Button size="icon" variant="ghost" title="Editar" aria-label="Editar">
-                        <Pencil className="h-4 w-4 text-slate-500" />
+                        <Pencil className="h-4 w-4 text-muted-foreground" />
                       </Button>
                     </Link>
                     <DeletePlanButton

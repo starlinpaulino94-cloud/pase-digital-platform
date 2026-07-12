@@ -39,17 +39,17 @@ export function SearchBar({
   return (
     <form onSubmit={handleSearch} className="w-full max-w-2xl">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
         <input
           type="text"
           placeholder={placeholder}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full rounded-2xl border-0 bg-white py-3.5 pl-12 pr-24 text-[15px] text-slate-900 shadow-premium-lg outline-none transition-shadow placeholder:text-slate-400 focus:ring-2 focus:ring-sky-300"
+          className="w-full rounded-2xl border-0 bg-card py-3.5 pl-12 pr-24 text-[15px] text-foreground shadow-premium-lg outline-none transition-shadow placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
         />
         <button
           type="submit"
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-blue-700 active:scale-[0.98]"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary active:scale-[0.98]"
         >
           Buscar
         </button>

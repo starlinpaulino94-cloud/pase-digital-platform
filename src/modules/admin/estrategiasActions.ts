@@ -13,7 +13,7 @@ import {
 import type { SessionUser } from '@/types'
 
 /**
- * Marketplace de Estrategias (Automation Playbooks). Instala/publica/pausa/
+ * Plantillas de automatización (Automation Playbooks). Instala/publica/pausa/
  * archiva automatizaciones de la biblioteca (180 playbooks) para la empresa
  * activa. Reutiliza el Automation Engine real (tablas automations/…): instalar
  * crea la automatización en DRAFT; publicarla la deja lista para el bus de
@@ -30,7 +30,7 @@ function service() {
 }
 
 function revalidateEstrategias() {
-  revalidatePath('/admin/estrategias')
+  revalidatePath('/admin/automatizaciones/plantillas')
 }
 
 /** La automatización existe y pertenece a la empresa del usuario (o superadmin). */
@@ -51,7 +51,7 @@ export async function instalarEstrategia(
   _prev: EstrategiaState,
   formData: FormData
 ): Promise<EstrategiaState> {
-  const user = await requireSection('estrategias')
+  const user = await requireSection('automatizaciones')
   if (!user) return { error: 'No autorizado.' }
 
   const companyId = await resolveCompanyId(user, formData)
@@ -59,7 +59,7 @@ export async function instalarEstrategia(
 
   const playbookId = String(formData.get('playbookId') ?? '').trim()
   const playbook = getPlaybook(playbookId)
-  if (!playbook) return { error: 'Estrategia no encontrada.' }
+  if (!playbook) return { error: 'Plantilla no encontrada.' }
 
   try {
     // Evitar duplicados: una instalación activa (no archivada) por playbook.
@@ -71,14 +71,14 @@ export async function instalarEstrategia(
       },
       select: { id: true },
     })
-    if (existente) return { error: 'Esta estrategia ya está instalada.' }
+    if (existente) return { error: 'Esta plantilla ya está instalada.' }
 
     await service().createAutomation(playbookToCreateData(playbook, companyId))
     revalidateEstrategias()
     return { success: true }
   } catch (e) {
     console.error('[estrategias] instalar', e)
-    return { error: 'No se pudo instalar la estrategia. Intenta de nuevo.' }
+    return { error: 'No se pudo instalar la plantilla. Intenta de nuevo.' }
   }
 }
 
@@ -87,7 +87,7 @@ export async function publicarEstrategia(
   _prev: EstrategiaState,
   formData: FormData
 ): Promise<EstrategiaState> {
-  const user = await requireSection('estrategias')
+  const user = await requireSection('automatizaciones')
   if (!user) return { error: 'No autorizado.' }
 
   const id = String(formData.get('id') ?? '').trim()
@@ -109,7 +109,7 @@ export async function pausarEstrategia(
   _prev: EstrategiaState,
   formData: FormData
 ): Promise<EstrategiaState> {
-  const user = await requireSection('estrategias')
+  const user = await requireSection('automatizaciones')
   if (!user) return { error: 'No autorizado.' }
 
   const id = String(formData.get('id') ?? '').trim()
@@ -131,7 +131,7 @@ export async function archivarEstrategia(
   _prev: EstrategiaState,
   formData: FormData
 ): Promise<EstrategiaState> {
-  const user = await requireSection('estrategias')
+  const user = await requireSection('automatizaciones')
   if (!user) return { error: 'No autorizado.' }
 
   const id = String(formData.get('id') ?? '').trim()

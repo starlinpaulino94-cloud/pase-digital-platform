@@ -86,8 +86,8 @@ export default async function SuperadminMembresiasPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Solicitudes de membresía</h1>
-        <p className="text-slate-500">Gestiona el estado de las membresías de clientes.</p>
+        <h1 className="text-2xl font-bold text-foreground">Solicitudes de membresía</h1>
+        <p className="text-muted-foreground">Gestiona el estado de las membresías de clientes.</p>
       </div>
 
       {/* Filters */}
@@ -96,12 +96,12 @@ export default async function SuperadminMembresiasPage({
           name="q"
           defaultValue={q}
           placeholder="Buscar cliente..."
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
         <select
           name="estado"
           defaultValue={estado ?? ''}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="">Todos los estados</option>
           {ESTADOS.map((e) => (
@@ -111,7 +111,7 @@ export default async function SuperadminMembresiasPage({
         <select
           name="empresa"
           defaultValue={empresa ?? ''}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="">Todas las empresas</option>
           {companies.map((c) => (
@@ -120,17 +120,17 @@ export default async function SuperadminMembresiasPage({
         </select>
         <button
           type="submit"
-          className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
           Filtrar
         </button>
       </form>
 
-      <p className="text-sm text-slate-500">{membresias.length} resultado(s)</p>
+      <p className="text-sm text-muted-foreground">{membresias.length} resultado(s)</p>
 
-      <div className="overflow-x-auto rounded-xl border bg-white">
+      <div className="overflow-x-auto rounded-xl border bg-card">
         <table className="w-full text-sm">
-          <thead className="border-b bg-slate-50 text-xs text-slate-500">
+          <thead className="border-b bg-muted text-xs text-muted-foreground">
             <tr>
               <th className="px-4 py-3 text-left">Cliente</th>
               <th className="px-4 py-3 text-left">Empresa</th>
@@ -141,20 +141,20 @@ export default async function SuperadminMembresiasPage({
               <th className="px-4 py-3 text-left">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border/60">
             {membresias.map((m) => (
-              <tr key={m.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3 font-medium text-slate-900">
+              <tr key={m.id} className="hover:bg-muted">
+                <td className="px-4 py-3 font-medium text-foreground">
                   <div>{m.cliente.nombre}</div>
-                  <div className="text-xs text-slate-400">{m.cliente.email}</div>
+                  <div className="text-xs text-muted-foreground">{m.cliente.email}</div>
                 </td>
-                <td className="px-4 py-3 text-slate-600">{m.cliente.company.name}</td>
-                <td className="px-4 py-3 text-slate-600">{m.plan.nombre}</td>
+                <td className="px-4 py-3 text-muted-foreground">{m.cliente.company.name}</td>
+                <td className="px-4 py-3 text-muted-foreground">{m.plan.nombre}</td>
                 <td className="px-4 py-3">
                   <EstadoBadge estado={m.estado as MembershipEstado} />
                 </td>
-                <td className="px-4 py-3 text-slate-500">{fmtDate(m.fechaInicio)}</td>
-                <td className="px-4 py-3 text-slate-500">{fmtDate(m.fechaVencimiento)}</td>
+                <td className="px-4 py-3 text-muted-foreground">{fmtDate(m.fechaInicio)}</td>
+                <td className="px-4 py-3 text-muted-foreground">{fmtDate(m.fechaVencimiento)}</td>
                 <td className="px-4 py-3">
                   <MembershipAdminActions
                     membershipId={m.id}
@@ -169,7 +169,7 @@ export default async function SuperadminMembresiasPage({
             ))}
             {membresias.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                   No hay membresías.
                 </td>
               </tr>

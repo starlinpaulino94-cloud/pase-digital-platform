@@ -51,7 +51,7 @@ export default function RecuperarPage() {
     <Card className="border-white/10 bg-white/5 text-white">
       <CardHeader>
         <CardTitle className="text-2xl">Recuperar contraseña</CardTitle>
-        <CardDescription className="text-slate-400">
+        <CardDescription className="text-white/60">
           Te enviaremos un enlace para restablecer tu contraseña.
         </CardDescription>
       </CardHeader>
@@ -64,8 +64,8 @@ export default function RecuperarPage() {
                 restablecer tu contraseña. Revisa tu bandeja de entrada.
               </AlertDescription>
             </Alert>
-            <p className="text-center text-sm text-slate-400">
-              <a href="/login" className="text-sky-400 hover:underline">
+            <p className="text-center text-sm text-white/60">
+              <a href="/login" className="text-primary hover:underline">
                 Volver a iniciar sesión
               </a>
             </p>
@@ -93,14 +93,14 @@ export default function RecuperarPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-sky-500 hover:bg-sky-400"
+                className="w-full bg-primary hover:bg-primary/90"
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Enviar enlace
               </Button>
             </form>
-            <p className="mt-4 text-center text-sm text-slate-400">
-              <a href="/login" className="text-sky-400 hover:underline">
+            <p className="mt-4 text-center text-sm text-white/60">
+              <a href="/login" className="text-primary hover:underline">
                 Volver a iniciar sesión
               </a>
             </p>

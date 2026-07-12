@@ -23,12 +23,12 @@ export function WizardCliente({
 
   if (completo) {
     return (
-      <div className="rounded-2xl border border-emerald-200 bg-white p-8 text-center shadow-sm">
-        <PartyPopper className="mx-auto h-10 w-10 text-emerald-500" />
-        <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-900">
+      <div className="rounded-2xl border border-success/25 bg-card p-8 text-center shadow-sm">
+        <PartyPopper className="mx-auto h-10 w-10 text-success" />
+        <h1 className="mt-4 text-2xl font-bold tracking-tight text-foreground">
           ¡Todo listo, {nombre}!
         </h1>
-        <p className="mt-2 text-slate-600">
+        <p className="mt-2 text-muted-foreground">
           Completaste tu configuración. Explora empresas y aprovecha tus beneficios.
         </p>
         <Link href="/mis-membresias" className="mt-6 inline-block">
@@ -43,26 +43,26 @@ export function WizardCliente({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-sky-600">Bienvenida</p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+        <p className="text-sm font-medium text-primary">Bienvenida</p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">
           Hola, {nombre} 👋
         </h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-muted-foreground">
           Personaliza tu experiencia en unos pasos. No es obligatorio: puedes
           hacerlo ahora o cuando quieras.
         </p>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="rounded-xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-slate-700">
+          <span className="text-sm font-semibold text-foreground">
             {onboarding.completados} de {onboarding.total}
           </span>
-          <span className="text-sm font-semibold text-sky-600">{pct}%</span>
+          <span className="text-sm font-semibold text-primary">{pct}%</span>
         </div>
-        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full bg-sky-500 transition-all"
+            className="h-full rounded-full bg-primary transition-all"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -75,16 +75,16 @@ export function WizardCliente({
             <li
               key={item.key}
               className={`flex items-center justify-between gap-3 rounded-xl border p-4 transition ${
-                isCurrent ? 'border-sky-300 bg-sky-50/50 shadow-sm' : 'border-slate-200 bg-white'
+                isCurrent ? 'border-info/30 bg-info/10 shadow-sm' : 'border-border bg-card'
               }`}
             >
               <div className="flex items-center gap-3">
                 {item.done ? (
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
                 ) : (
                   <span
                     className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
-                      isCurrent ? 'bg-sky-500 text-white' : 'bg-slate-200 text-slate-500'
+                      isCurrent ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
                     }`}
                   >
                     {i + 1}
@@ -93,12 +93,12 @@ export function WizardCliente({
                 <div>
                   <p
                     className={`text-sm font-medium ${
-                      item.done ? 'text-slate-400 line-through' : 'text-slate-800'
+                      item.done ? 'text-muted-foreground line-through' : 'text-foreground'
                     }`}
                   >
                     {item.label}
                   </p>
-                  {isCurrent && <p className="text-xs text-sky-600">Siguiente paso</p>}
+                  {isCurrent && <p className="text-xs text-primary">Siguiente paso</p>}
                 </div>
               </div>
               {!item.done && item.cta && (
@@ -120,7 +120,7 @@ export function WizardCliente({
       <div className="text-center">
         <Link
           href="/mis-membresias"
-          className="text-sm text-slate-500 underline hover:text-slate-700"
+          className="text-sm text-muted-foreground underline hover:text-foreground"
         >
           Saltar por ahora
         </Link>

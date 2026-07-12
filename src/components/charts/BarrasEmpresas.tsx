@@ -21,16 +21,16 @@ interface DataPoint {
 export function BarrasEmpresas({ data, titulo = 'Empresas más activas' }: { data: DataPoint[]; titulo?: string }) {
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border bg-white p-5 shadow-sm">
-        <h3 className="mb-4 text-sm font-semibold text-slate-800">{titulo}</h3>
-        <div className="flex h-[180px] items-center justify-center text-sm text-slate-400">Sin datos</div>
+      <div className="rounded-xl border bg-card p-5 shadow-sm">
+        <h3 className="mb-4 text-sm font-semibold text-foreground">{titulo}</h3>
+        <div className="flex h-[180px] items-center justify-center text-sm text-muted-foreground">Sin datos</div>
       </div>
     )
   }
 
   return (
-    <div className="rounded-xl border bg-white p-5 shadow-sm">
-      <h3 className="mb-4 text-sm font-semibold text-slate-800">{titulo}</h3>
+    <div className="rounded-xl border bg-card p-5 shadow-sm">
+      <h3 className="mb-4 text-sm font-semibold text-foreground">{titulo}</h3>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={data} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />

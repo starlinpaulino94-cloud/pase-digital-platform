@@ -52,32 +52,35 @@ export function AdminCompanySwitcher({
       <button
         onClick={() => setOpen((o) => !o)}
         disabled={pending}
-        className="flex w-full items-center justify-between gap-2 rounded-xl border border-border/60 bg-white px-3.5 py-2.5 text-sm shadow-sm transition hover:border-blue-200 disabled:opacity-60 sm:w-80"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label="Cambiar empresa activa"
+        className="flex w-full items-center justify-between gap-2 rounded-xl border border-border/60 bg-card px-3.5 py-2.5 text-sm shadow-sm transition hover:border-primary/40 disabled:opacity-60 sm:w-80"
       >
         <span className="flex min-w-0 items-center gap-2">
           {pending ? (
-            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-slate-400" />
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
           ) : (
-            <Building2 className="h-4 w-4 shrink-0 text-slate-400" />
+            <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
           )}
-          <span className="truncate font-medium text-slate-900">
+          <span className="truncate font-medium text-foreground">
             {activa?.name ?? 'Elegir empresa'}
           </span>
         </span>
-        <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+        <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       </button>
 
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-12 z-50 max-h-72 w-full overflow-y-auto rounded-xl border border-border/60 bg-white py-1 shadow-lg sm:w-80">
+          <div className="absolute left-0 top-12 z-50 max-h-72 w-full overflow-y-auto rounded-xl border border-border/60 bg-popover py-1 shadow-lg sm:w-80">
             {empresas.map((e) => (
               <button
                 key={e.id}
                 onClick={() => seleccionar(e.id)}
                 className={cn(
-                  'flex w-full items-center justify-between px-3.5 py-2 text-left text-sm transition hover:bg-slate-50',
-                  e.id === activaId ? 'font-semibold text-blue-700' : 'text-slate-700'
+                  'flex w-full items-center justify-between px-3.5 py-2 text-left text-sm transition hover:bg-muted',
+                  e.id === activaId ? 'font-semibold text-primary' : 'text-foreground'
                 )}
               >
                 <span className="truncate">{e.name}</span>

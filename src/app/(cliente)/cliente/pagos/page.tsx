@@ -44,7 +44,7 @@ const NECESITA_PAGO = ['PENDIENTE', 'RECHAZADA']
 export default async function PagosPage() {
   const user = await requireRole('CLIENTE')
   const clienteId = user.metadata.clienteId
-  if (!clienteId) return <p className="text-slate-600">No autorizado.</p>
+  if (!clienteId) return <p className="text-muted-foreground">No autorizado.</p>
 
   const prefs = await getRegionalPrefs(user.metadata.companyId)
   const fmtMonto = (n: number | null) => (n ? formatMoney(n, prefs) : '—')
@@ -65,8 +65,8 @@ export default async function PagosPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Mis pagos</h1>
-        <p className="text-slate-500">Estado de tu membresía e historial de pagos</p>
+        <h1 className="text-2xl font-bold text-foreground">Mis pagos</h1>
+        <p className="text-muted-foreground">Estado de tu membresía e historial de pagos</p>
       </div>
 
       {loadError ? (
@@ -81,11 +81,11 @@ export default async function PagosPage() {
         </Card>
       ) : !m ? (
         <Card>
-          <CardContent className="py-16 text-center text-slate-500">
-            <CreditCard className="mx-auto mb-3 h-10 w-10 text-slate-300" />
+          <CardContent className="py-16 text-center text-muted-foreground">
+            <CreditCard className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
             <p className="font-medium">Sin pagos todavía</p>
             <p className="text-sm">Selecciona un plan para comenzar tu membresía.</p>
-            <Button asChild className="mt-4 bg-sky-500 hover:bg-sky-400">
+            <Button asChild className="mt-4 bg-primary hover:bg-primary/90">
               <Link href="/cliente/planes">Ver planes</Link>
             </Button>
           </CardContent>
@@ -93,12 +93,12 @@ export default async function PagosPage() {
       ) : (
         <>
           {/* Estado actual */}
-          <Card className="ring-1 ring-sky-200">
+          <Card className="ring-1 ring-info/20">
             <CardHeader className="pb-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <CardTitle className="text-base">{m.planNombre}</CardTitle>
-                  <p className="mt-0.5 text-xs text-slate-500">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     Solicitado: {fmtDate(m.createdAt)}
                   </p>
                 </div>
@@ -108,25 +108,25 @@ export default async function PagosPage() {
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
                 <div>
-                  <p className="text-slate-500">Estado</p>
+                  <p className="text-muted-foreground">Estado</p>
                   <p className="font-medium">{ESTADO_LABEL[m.estado as MembershipEstado]}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Monto</p>
+                  <p className="text-muted-foreground">Monto</p>
                   <p className="font-medium">{fmtMonto(m.montoPagado)}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Inicio</p>
+                  <p className="text-muted-foreground">Inicio</p>
                   <p className="font-medium">{fmtDate(m.fechaInicio)}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Vencimiento</p>
+                  <p className="text-muted-foreground">Vencimiento</p>
                   <p className="font-medium">{fmtDate(m.fechaVencimiento)}</p>
                 </div>
               </div>
 
               {m.metodoPagoNombre && (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   Método de pago: <strong>{m.metodoPagoNombre}</strong>
                 </p>
               )}
@@ -136,7 +136,7 @@ export default async function PagosPage() {
                   href={m.comprobanteUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-sky-600 hover:bg-slate-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-primary hover:bg-muted"
                 >
                   <FileText className="h-4 w-4" />
                   Ver comprobante
@@ -152,7 +152,7 @@ export default async function PagosPage() {
 
               {/* Cambio de plan pendiente */}
               {cambioPendiente && (
-                <div className="flex items-start gap-2 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-800">
+                <div className="flex items-start gap-2 rounded-lg border border-info/30 bg-info/10 p-3 text-sm text-info">
                   <ArrowRightLeft className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>
                     Cambio a <strong>{m.planSolicitadoNombre}</strong> solicitado. Sube el
@@ -163,7 +163,7 @@ export default async function PagosPage() {
 
               {/* CTA de pago */}
               {(necesitaPago || cambioPendiente) && (
-                <Button asChild className="bg-sky-500 hover:bg-sky-400">
+                <Button asChild className="bg-primary hover:bg-primary/90">
                   <Link href={`/membresia/${m.id}`}>
                     <CreditCard className="mr-2 h-4 w-4" />
                     {m.estado === 'RECHAZADA'
@@ -179,10 +179,10 @@ export default async function PagosPage() {
 
           {/* Historial de pagos */}
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-slate-900">Historial de pagos</h2>
+            <h2 className="text-lg font-semibold text-foreground">Historial de pagos</h2>
             {historial.length === 0 ? (
               <Card>
-                <CardContent className="py-10 text-center text-sm text-slate-500">
+                <CardContent className="py-10 text-center text-sm text-muted-foreground">
                   Aún no hay pagos aprobados o rechazados registrados.
                 </CardContent>
               </Card>
@@ -192,27 +192,27 @@ export default async function PagosPage() {
                   {historial.map((h) => (
                     <div key={h.id} className="flex items-start gap-3 p-4">
                       {h.tipo === 'APROBADO' ? (
-                        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" />
                       ) : (
-                        <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+                        <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
                       )}
                       <div className="flex-1">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="text-sm font-medium text-slate-900">
+                          <p className="text-sm font-medium text-foreground">
                             {h.tipo === 'APROBADO' ? 'Pago aprobado' : 'Pago rechazado'}
                             {h.planNombre && (
-                              <span className="font-normal text-slate-500"> · {h.planNombre}</span>
+                              <span className="font-normal text-muted-foreground"> · {h.planNombre}</span>
                             )}
                           </p>
                           {h.tipo === 'APROBADO' && h.monto != null && (
-                            <span className="text-sm font-semibold text-slate-900">
+                            <span className="text-sm font-semibold text-foreground">
                               {fmtMonto(h.monto)}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-slate-400">{fmtDateTime(h.fecha)}</p>
+                        <p className="text-xs text-muted-foreground">{fmtDateTime(h.fecha)}</p>
                         {h.motivo && (
-                          <p className="mt-1 text-xs text-slate-500 italic">Motivo: {h.motivo}</p>
+                          <p className="mt-1 text-xs text-muted-foreground italic">Motivo: {h.motivo}</p>
                         )}
                       </div>
                     </div>

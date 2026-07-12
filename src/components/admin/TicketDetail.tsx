@@ -100,7 +100,7 @@ export function TicketDetail({ ticket, mensajes }: Props) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Lock className="h-4 w-4 text-amber-600" /> Nota interna
+              <Lock className="h-4 w-4 text-warning-foreground" /> Nota interna
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -126,7 +126,7 @@ export function TicketDetail({ ticket, mensajes }: Props) {
                 href={ticket.adjuntoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sky-600 hover:underline"
+                className="text-primary hover:underline"
               >
                 Ver adjunto
               </a>
@@ -179,10 +179,10 @@ function MensajeBubble({ m }: { m: Mensaje }) {
       <div
         className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
           m.esNotaInterna
-            ? 'border border-amber-200 bg-amber-50 text-amber-900'
+            ? 'border border-warning/30 bg-warning/15 text-warning-foreground'
             : isCliente
               ? 'bg-muted text-foreground'
-              : 'bg-sky-600 text-white'
+              : 'bg-primary text-white'
         }`}
       >
         <div className="mb-1 flex items-center gap-1.5 text-xs opacity-80">

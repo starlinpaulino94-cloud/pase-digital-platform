@@ -21,7 +21,7 @@ export function OnboardingClienteFirstVisit({ onboarding }: { onboarding: Onboar
       <button
         type="button"
         onClick={() => setVisible(false)}
-        className="absolute right-3 top-3 z-10 rounded-full p-1 text-blue-400 transition hover:bg-blue-100 hover:text-blue-700"
+        className="absolute right-3 top-3 z-10 rounded-full p-1 text-primary transition hover:bg-info/15 hover:text-info"
         aria-label="Cerrar"
       >
         <X className="h-4 w-4" />

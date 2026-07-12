@@ -118,8 +118,8 @@ export default async function PerfilPage() {
                   return (
                     <li key={v.id} className="flex items-center justify-between py-3">
                       <div className="flex items-center gap-3">
-                        <div className="rounded-lg bg-slate-100 p-2">
-                          <Car className="h-4 w-4 text-slate-500" />
+                        <div className="rounded-lg bg-muted p-2">
+                          <Car className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div>
                           <p className="text-sm font-medium">{v.marca} {v.modelo} ({v.anio})</p>

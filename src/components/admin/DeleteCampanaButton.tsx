@@ -1,41 +1,20 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
-import { Loader2, Trash2 } from 'lucide-react'
-import { toast } from 'sonner'
-import { eliminarCampana, type CampanaState } from '@/modules/admin/campanaActions'
-import { Button } from '@/components/ui/button'
-
-const init: CampanaState = {}
+import { eliminarCampana } from '@/modules/admin/campanaActions'
+import { DeleteButton } from '@/components/ui/delete-button'
 
 export function DeleteCampanaButton({ id, nombre }: { id: string; nombre: string }) {
-  const [state, formAction, pending] = useActionState(eliminarCampana, init)
-
-  useEffect(() => {
-    if (state.success) toast.success(`"${nombre}" eliminada.`)
-    if (state.error) toast.error(state.error)
-  }, [state.success, state.error, nombre])
-
   return (
-    <form
-      action={formAction}
-      onSubmit={(e) => {
-        if (
-          !confirm(
-            `¿Eliminar la campaña "${nombre}"? Sus promociones y publicaciones quedarán sin campaña (no se borran).`
-          )
-        )
-          e.preventDefault()
+    <DeleteButton
+      action={async () => {
+        const fd = new FormData()
+        fd.set('id', id)
+        return eliminarCampana({}, fd)
       }}
-    >
-      <input type="hidden" name="id" value={id} />
-      <Button size="icon" variant="ghost" type="submit" disabled={pending}>
-        {pending ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Trash2 className="h-4 w-4 text-red-500" />
-        )}
-      </Button>
-    </form>
+      title={`¿Eliminar la campaña "${nombre}"?`}
+      description="Sus promociones y publicaciones quedarán sin campaña (no se borran)."
+      label="Eliminar campaña"
+      successMessage={`"${nombre}" eliminada.`}
+    />
   )
 }

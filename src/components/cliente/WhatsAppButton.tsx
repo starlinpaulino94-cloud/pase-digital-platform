@@ -21,7 +21,7 @@ export function WhatsAppButton({
       rel="noopener noreferrer"
       className={
         className ??
-        'inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-500'
+        'inline-flex items-center gap-2 rounded-lg bg-success px-4 py-2 text-sm font-medium text-white hover:bg-success'
       }
     >
       <MessageCircle className="h-4 w-4" />

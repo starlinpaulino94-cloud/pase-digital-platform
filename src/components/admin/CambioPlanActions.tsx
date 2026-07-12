@@ -32,12 +32,7 @@ export function AprobarCambioButton({ membershipId }: { membershipId: string }) 
   return (
     <form action={formAction}>
       <input type="hidden" name="membershipId" value={membershipId} />
-      <Button
-        type="submit"
-        size="sm"
-        disabled={pending}
-        className="bg-green-600 hover:bg-green-500"
-      >
+      <Button type="submit" size="sm" variant="success" disabled={pending}>
         {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
         Aprobar cambio
       </Button>
@@ -58,7 +53,7 @@ export function RechazarCambioButton({ membershipId }: { membershipId: string })
   return (
     <Dialog open={open} onOpenChange={setManualOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50">
+        <Button size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10">
           <X className="h-4 w-4" />
           Rechazar
         </Button>

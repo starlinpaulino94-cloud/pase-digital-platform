@@ -39,4 +39,26 @@ function SkeletonRow({ className }: { className?: string }) {
   )
 }
 
-export { Skeleton, SkeletonCard, SkeletonRow }
+/** Skeleton de página de tabla (búsqueda + cabecera + filas), forma real de los listados. */
+function SkeletonTable({ rows = 8, className }: { rows?: number; className?: string }) {
+  return (
+    <div className={cn("space-y-4", className)}>
+      <div className="flex items-center justify-between gap-3">
+        <Skeleton className="h-9 w-full max-w-sm rounded-xl" />
+        <Skeleton className="h-8 w-28 rounded-lg" />
+      </div>
+      <div className="rounded-lg border border-border/70 bg-card p-0 shadow-sm">
+        <div className="border-b border-border/70 bg-muted/50 px-4 py-3">
+          <Skeleton className="h-3 w-2/3" />
+        </div>
+        <div className="divide-y divide-border/40 px-4">
+          {Array.from({ length: rows }).map((_, i) => (
+            <SkeletonRow key={i} />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export { Skeleton, SkeletonCard, SkeletonRow, SkeletonTable }

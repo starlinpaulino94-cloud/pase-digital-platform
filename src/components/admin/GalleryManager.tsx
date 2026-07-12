@@ -97,7 +97,7 @@ export function GalleryManager({ companyId, initialImages }: GalleryManagerProps
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            className="flex aspect-square items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted text-muted-foreground transition hover:border-blue-300 hover:text-blue-600"
+            className="flex aspect-square items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted text-muted-foreground transition hover:border-primary/40 hover:text-primary"
           >
             {uploading ? (
               <Loader2 className="h-5 w-5 animate-spin" />

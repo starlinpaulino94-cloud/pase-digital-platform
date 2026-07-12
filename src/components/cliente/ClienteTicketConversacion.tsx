@@ -63,7 +63,7 @@ export function ClienteTicketConversacion({
             <div key={m.id} className={`flex ${isCliente ? 'justify-end' : 'justify-start'}`}>
               <div
                 className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
-                  isCliente ? 'bg-sky-600 text-white' : 'bg-muted text-foreground'
+                  isCliente ? 'bg-primary text-white' : 'bg-muted text-foreground'
                 }`}
               >
                 <div className="mb-1 flex items-center gap-1.5 text-xs opacity-80">

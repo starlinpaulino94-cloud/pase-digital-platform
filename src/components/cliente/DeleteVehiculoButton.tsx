@@ -24,11 +24,11 @@ export function DeleteVehiculoButton({ vehiculoId, label }: { vehiculoId: string
       }}
     >
       <input type="hidden" name="vehiculoId" value={vehiculoId} />
-      <Button size="icon" variant="ghost" type="submit" disabled={pending}>
+      <Button size="icon" variant="ghost" type="submit" disabled={pending} aria-label="Eliminar vehículo" title="Eliminar vehículo">
         {pending ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
-          <Trash2 className="h-4 w-4 text-red-400" />
+          <Trash2 className="h-4 w-4 text-destructive" />
         )}
       </Button>
     </form>

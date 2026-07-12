@@ -41,12 +41,12 @@ export function ConfirmDialog({
         <AlertDialogHeader>
           <div className="flex items-start gap-3">
             {isDangerous && (
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100">
-                <AlertCircle className="h-4 w-4 text-red-600" />
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+                <AlertCircle className="h-4 w-4 text-destructive" />
               </div>
             )}
             <div className="flex-1">
-              <AlertDialogTitle className={isDangerous ? 'text-red-600' : ''}>
+              <AlertDialogTitle className={isDangerous ? 'text-destructive' : ''}>
                 {title}
               </AlertDialogTitle>
               {description && <AlertDialogDescription>{description}</AlertDialogDescription>}
@@ -58,7 +58,7 @@ export function ConfirmDialog({
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isLoading}
-            className={isDangerous ? 'bg-red-600 hover:bg-red-700' : ''}
+            className={isDangerous ? 'bg-destructive text-white hover:bg-destructive/90' : ''}
           >
             {isLoading ? 'Procesando...' : confirmText}
           </AlertDialogAction>

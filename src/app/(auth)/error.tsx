@@ -20,7 +20,7 @@ export default function AuthError({
   return (
     <div className="w-full max-w-md space-y-4 text-center">
       <h2 className="text-xl font-bold">Error de autenticación</h2>
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-white/60">
         No pudimos procesar tu solicitud. Intenta de nuevo.
       </p>
       <div className="flex justify-center gap-3">

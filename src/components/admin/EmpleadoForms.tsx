@@ -88,7 +88,7 @@ export function NuevoEmpleadoForm() {
           name="rol"
           defaultValue="EMPLEADO"
           required
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           {Object.entries(ROL_LABEL).map(([value, label]) => (
             <option key={value} value={value}>
@@ -96,7 +96,7 @@ export function NuevoEmpleadoForm() {
             </option>
           ))}
         </select>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           Administrador, Gerente y Cajero pueden aprobar pagos y usar todos los
           módulos del panel.
         </p>

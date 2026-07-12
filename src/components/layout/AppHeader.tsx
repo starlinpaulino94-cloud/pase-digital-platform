@@ -3,10 +3,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Menu, Search, X } from 'lucide-react'
+import Link from 'next/link'
 import { navForRole, allLinks } from '@/components/layout/nav-config'
 import { NotificationBell } from '@/components/layout/NotificationBell'
+import { CommandPalette } from '@/components/layout/CommandPalette'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { CompanySwitcher, type CompanyOption } from '@/components/cliente/CompanySwitcher'
 import type { AppRole } from '@/types'
+
+/** Etiquetas de los sub-segmentos comunes para el breadcrumb jerárquico. */
+const SEGMENT_LABELS: Record<string, string> = {
+  nuevo: 'Nuevo',
+  nueva: 'Nueva',
+  editar: 'Editar',
+  plantillas: 'Plantillas',
+}
 
 export function AppHeader({
   role,
@@ -27,12 +38,20 @@ export function AppHeader({
 
   const links = useMemo(() => allLinks(navForRole(role)), [role])
 
-  // Página actual para el breadcrumb.
-  const current = useMemo(() => {
+  // Breadcrumb jerárquico: sección del nav + sub-segmento actual si existe
+  // (nuevo/editar/plantillas/detalle). El nombre de la sección enlaza de vuelta.
+  const crumb = useMemo(() => {
     const matches = links
       .filter((l) => pathname === l.href || pathname.startsWith(l.href + '/'))
       .sort((a, b) => b.href.length - a.href.length)
-    return matches[0] ?? null
+    const section = matches[0] ?? null
+    if (!section) return { section: null, child: null }
+    const rest = pathname.slice(section.href.length).split('/').filter(Boolean)
+    if (rest.length === 0) return { section, child: null }
+    // Último segmento legible: etiqueta conocida, o "Detalle" para ids.
+    const named = [...rest].reverse().find((s) => SEGMENT_LABELS[s])
+    const child = named ? SEGMENT_LABELS[named] : 'Detalle'
+    return { section, child }
   }, [links, pathname])
 
   const results = useMemo(() => {
@@ -76,14 +95,35 @@ export function AppHeader({
         <Menu className="h-5 w-5" />
       </button>
 
-      {/* Breadcrumb mínimo: contexto + página actual */}
-      <div className="hidden min-w-0 items-baseline gap-2 md:flex">
+      {/* Breadcrumb jerárquico: MembeGo / Sección / Subpágina */}
+      <nav aria-label="Ruta de navegación" className="hidden min-w-0 items-baseline gap-2 md:flex">
         <span className="text-caption">MembeGo</span>
-        <span className="text-border">/</span>
-        <span className="truncate text-h4 text-foreground">
-          {current?.label ?? ''}
-        </span>
-      </div>
+        {crumb.section && (
+          <>
+            <span className="text-border" aria-hidden>/</span>
+            {crumb.child ? (
+              <Link
+                href={crumb.section.href}
+                className="truncate text-h4 text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {crumb.section.label}
+              </Link>
+            ) : (
+              <span className="truncate text-h4 text-foreground" aria-current="page">
+                {crumb.section.label}
+              </span>
+            )}
+          </>
+        )}
+        {crumb.child && (
+          <>
+            <span className="text-border" aria-hidden>/</span>
+            <span className="truncate text-h4 text-foreground" aria-current="page">
+              {crumb.child}
+            </span>
+          </>
+        )}
+      </nav>
 
       {/* Buscador global */}
       <div className="relative ml-auto w-full max-w-xs md:mx-auto md:ml-0">
@@ -142,8 +182,12 @@ export function AppHeader({
       {/* Acciones */}
       <div className="flex shrink-0 items-center gap-1">
         {companies && <CompanySwitcher companies={companies} />}
+        <ThemeToggle />
         <NotificationBell initialCount={notifCount} />
       </div>
+
+      {/* Cmd+K / Ctrl+K */}
+      <CommandPalette role={role} />
     </header>
   )
 }

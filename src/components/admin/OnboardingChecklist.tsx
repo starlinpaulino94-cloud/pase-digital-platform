@@ -16,23 +16,23 @@ export function OnboardingChecklist({ onboarding }: { onboarding: OnboardingEmpr
   const pct = Math.round((onboarding.completados / onboarding.total) * 100)
 
   return (
-    <Card className="border-indigo-200 bg-indigo-50/40">
+    <Card className="border-primary/20 bg-primary/5">
       <CardHeader className="pb-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-base text-indigo-900">
-            <Rocket className="h-5 w-5 text-indigo-600" />
+          <CardTitle className="flex items-center gap-2 text-base text-foreground">
+            <Rocket className="h-5 w-5 text-primary" />
             {onboarding.publicado
               ? 'Completa tu perfil'
               : 'Prepara tu empresa para el marketplace'}
           </CardTitle>
-          <span className="text-sm font-semibold text-indigo-700">
+          <span className="text-sm font-semibold text-primary">
             {onboarding.completados}/{onboarding.total} completado
           </span>
         </div>
         {/* Barra de progreso */}
-        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-indigo-100">
+        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-primary/15">
           <div
-            className="h-full rounded-full bg-indigo-500 transition-all"
+            className="h-full rounded-full bg-primary transition-all"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -41,15 +41,15 @@ export function OnboardingChecklist({ onboarding }: { onboarding: OnboardingEmpr
         {onboarding.items.map((item) => (
           <div
             key={item.key}
-            className="flex items-center justify-between gap-3 rounded-lg bg-white p-2.5 text-sm shadow-sm"
+            className="flex items-center justify-between gap-3 rounded-lg bg-card p-2.5 text-sm shadow-sm"
           >
             <span className="flex items-center gap-2">
               {item.done ? (
-                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
               ) : (
-                <Circle className="h-4 w-4 shrink-0 text-slate-300" />
+                <Circle className="h-4 w-4 shrink-0 text-muted-foreground/40" />
               )}
-              <span className={item.done ? 'text-slate-400 line-through' : 'text-slate-700'}>
+              <span className={item.done ? 'text-muted-foreground line-through' : 'text-foreground'}>
                 {item.label}
               </span>
             </span>
@@ -65,7 +65,7 @@ export function OnboardingChecklist({ onboarding }: { onboarding: OnboardingEmpr
 
         {!onboarding.publicado && (
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-            <p className="text-xs text-indigo-700">
+            <p className="text-xs text-primary">
               Tu empresa aún <strong>no es visible</strong> en el marketplace.
               {onboarding.listoParaPublicar
                 ? ' ¡Todo listo para publicar!'

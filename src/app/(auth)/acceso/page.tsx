@@ -8,7 +8,7 @@ import { LoginForm } from '@/components/auth/LoginForm'
  */
 export default function AccesoStaffPage() {
   return (
-    <Suspense fallback={<div className="text-slate-400">Cargando...</div>}>
+    <Suspense fallback={<div className="text-white/60">Cargando...</div>}>
       <LoginForm audience="staff" />
     </Suspense>
   )

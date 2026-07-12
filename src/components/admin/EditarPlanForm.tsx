@@ -42,7 +42,7 @@ export function EditarPlanForm({
       <input type="hidden" name="planId" value={plan.id} />
 
       {state.error && (
-        <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{state.error}</p>
+        <p className="rounded-lg bg-destructive/10 px-4 py-2 text-sm text-destructive">{state.error}</p>
       )}
 
       <div className="space-y-1.5">
@@ -66,17 +66,17 @@ export function EditarPlanForm({
         <div className="space-y-1.5">
           <Label htmlFor="orden">Orden</Label>
           <Input id="orden" name="orden" type="number" defaultValue={plan.orden} />
-          <p className="text-xs text-slate-400">Menor número = primero.</p>
+          <p className="text-xs text-muted-foreground">Menor número = primero.</p>
         </div>
       </div>
 
       <div className="flex items-center gap-2">
-        <input type="checkbox" id="esIlimitado" name="esIlimitado" defaultChecked={plan.esIlimitado} className="h-4 w-4 rounded border-slate-300" />
+        <input type="checkbox" id="esIlimitado" name="esIlimitado" defaultChecked={plan.esIlimitado} className="h-4 w-4 rounded border-border" />
         <Label htmlFor="esIlimitado">Usos ilimitados</Label>
       </div>
 
       <div className="flex items-center gap-2">
-        <input type="checkbox" id="activo" name="activo" defaultChecked={plan.activo} className="h-4 w-4 rounded border-slate-300" />
+        <input type="checkbox" id="activo" name="activo" defaultChecked={plan.activo} className="h-4 w-4 rounded border-border" />
         <Label htmlFor="activo">Plan activo (visible para clientes)</Label>
       </div>
 
@@ -98,7 +98,7 @@ export function EditarPlanForm({
           name="beneficios"
           rows={4}
           defaultValue={plan.beneficios.join('\n')}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
 
@@ -109,7 +109,7 @@ export function EditarPlanForm({
           name="condiciones"
           rows={2}
           defaultValue={plan.condiciones ?? ''}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
 
