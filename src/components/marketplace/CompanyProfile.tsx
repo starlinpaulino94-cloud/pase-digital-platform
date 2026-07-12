@@ -389,6 +389,14 @@ export function CompanyProfile({
                         Elegir plan <ArrowRight className="h-4 w-4" />
                       </Link>
                     )}
+
+                    {/* Fase E8: página pública y compartible del plan */}
+                    <Link
+                      href={`/plan/${plan.id}`}
+                      className="mt-2 inline-flex items-center justify-center gap-1.5 text-sm font-medium text-primary hover:underline"
+                    >
+                      Ver y compartir plan <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
                   </div>
                 )
               })}

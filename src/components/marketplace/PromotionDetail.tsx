@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { SharePromocion } from '@/components/public/SharePromocion'
+import { SharePromocionMenu } from '@/components/public/SharePromocionMenu'
 import type { PromotionPublic } from '@/modules/marketplace/types'
 import { formatDescuento, PROMO_TIPO_LABEL } from '@/lib/promociones'
 
@@ -97,6 +97,15 @@ export function PromotionDetail({ mode, promotion, comprarSlot }: PromotionDetai
               )}
             </div>
 
+            {/* Compartir — acción primaria, prominente al inicio del detalle */}
+            <div className="flex justify-start">
+              <SharePromocionMenu
+                promocionId={promotion.id}
+                titulo={promotion.titulo}
+                companyName={promotion.company.name}
+              />
+            </div>
+
             {/* Main Info */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-6 border-y border-border">
               {/* Discount */}
@@ -185,17 +194,10 @@ export function PromotionDetail({ mode, promotion, comprarSlot }: PromotionDetai
               </div>
             )}
 
-            {/* Stats + compartir */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex gap-4 text-sm text-muted-foreground">
-                <span>{promotion.viewCount} vistas</span>
-                <span>{promotion.shareCount} compartidas</span>
-              </div>
-              <SharePromocion
-                promocionId={promotion.id}
-                titulo={promotion.titulo}
-                companyName={promotion.company.name}
-              />
+            {/* Stats */}
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+              <span>{promotion.viewCount} vistas</span>
+              <span>{promotion.shareCount} compartidas</span>
             </div>
 
             {/* CTA */}
@@ -215,7 +217,7 @@ export function PromotionDetail({ mode, promotion, comprarSlot }: PromotionDetai
                     href={registroHref}
                     className="w-full block text-center bg-primary text-white px-6 py-4 rounded-lg hover:bg-primary transition-colors font-bold text-lg"
                   >
-                    Registrarse para acceder a esta promoción
+                    Adquirir promoción
                   </Link>
                 )}
               </div>

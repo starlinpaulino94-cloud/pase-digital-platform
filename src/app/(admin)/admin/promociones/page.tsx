@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { CompraEstado } from '@prisma/client'
 import { ADMIN_ROLES } from '@/types'
 import { requireRole } from '@/lib/auth/guards'
 import { companyFilter } from '@/modules/admin/queries'
@@ -137,25 +138,39 @@ function PromoCard({ p, showCompany }: { p: PromoRow; showCompany: boolean }) {
   )
 }
 
-/** Fase E5: métricas de ventas del ciclo de compras de promociones. */
+/**
+ * Fase E5/E8: métricas del ciclo de beneficios digitales. Todo se calcula
+ * desde el dato real (ProductoCompra) — sin estimaciones:
+ *   ventas · conversión · abandonos · QR usados · clientes nuevos/recurrentes.
+ */
 async function fetchVentas(companyId: string | null) {
   const where = companyId ? { companyId } : {}
-  const [porEstado, ingresos] = await Promise.all([
-    prisma.productoCompra.groupBy({
-      by: ['estado'],
-      where,
-      _count: { _all: true },
-    }),
+  const activadas: CompraEstado[] = ['ACTIVA', 'CONSUMIDA', 'EXPIRADA']
+  const [porEstado, ingresos, usos, porCliente] = await Promise.all([
+    prisma.productoCompra.groupBy({ by: ['estado'], where, _count: { _all: true } }),
     prisma.productoCompra.aggregate({
       where: { ...where, pagoConfirmado: true },
       _sum: { montoPagado: true },
     }),
+    // QR usados = usos consumidos = usosIncluidos − usosRestantes en las que
+    // llegaron a activarse (mismo cálculo que ve el cliente).
+    prisma.productoCompra.aggregate({
+      where: { ...where, estado: { in: activadas } },
+      _sum: { usosIncluidos: true, usosRestantes: true },
+    }),
+    // Clientes distintos que adquirieron: nuevos (1 compra) vs recurrentes (>1).
+    prisma.productoCompra.groupBy({ by: ['clienteId'], where, _count: { _all: true } }),
   ])
   const count = (estados: string[]) =>
     porEstado.filter((r) => estados.includes(r.estado)).reduce((s, r) => s + r._count._all, 0)
 
   const total = porEstado.reduce((s, r) => s + r._count._all, 0)
-  const vendidas = count(['ACTIVA', 'CONSUMIDA', 'EXPIRADA'])
+  const vendidas = count(activadas)
+  // Abandonos: solicitudes que se cancelaron o quedaron sin pagar (no vendidas).
+  const abandonos = count(['CANCELADA', 'RECHAZADA'])
+  const qrUsados = Number(usos._sum?.usosIncluidos ?? 0) - Number(usos._sum?.usosRestantes ?? 0)
+  const clientes = porCliente.length
+  const recurrentes = porCliente.filter((c) => c._count._all > 1).length
   return {
     total,
     vendidas,
@@ -166,6 +181,12 @@ async function fetchVentas(companyId: string | null) {
     vencidas: count(['EXPIRADA']),
     conversion: total > 0 ? Math.round((vendidas / total) * 100) : 0,
     ingresos: Number(ingresos._sum.montoPagado ?? 0),
+    abandonos,
+    tasaAbandono: total > 0 ? Math.round((abandonos / total) * 100) : 0,
+    qrUsados: Math.max(0, qrUsados),
+    clientes,
+    clientesNuevos: clientes - recurrentes,
+    clientesRecurrentes: recurrentes,
   }
 }
 
@@ -186,6 +207,19 @@ export default async function PromocionesPage() {
 
   const activas = promociones.filter((p) => !p.archivada)
   const archivadas = promociones.filter((p) => p.archivada)
+
+  // Destacados calculados desde el dato real (contadores de la promoción).
+  const publicadas = promociones.filter(
+    (p) => p.activo && !p.archivada && p.visibilidad === 'publica'
+  ).length
+  const masCompartida = promociones.reduce<PromoRow | null>(
+    (best, p) => (p.shareCount > (best?.shareCount ?? -1) ? p : best),
+    null
+  )
+  const masCanjeada = promociones.reduce<PromoRow | null>(
+    (best, p) => (p.canjes > (best?.canjes ?? -1) ? p : best),
+    null
+  )
 
   return (
     <div className="space-y-6">
@@ -256,6 +290,70 @@ export default async function PromocionesPage() {
               </p>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* Fase E8: panel ampliado de beneficios digitales */}
+      {ventas && ventas.total > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardContent className="p-5">
+              <p className="text-sm font-medium text-muted-foreground">Publicadas</p>
+              <p className="mt-1 text-2xl font-bold text-foreground">{publicadas}</p>
+              <p className="mt-1 text-xs text-muted-foreground">visibles en el marketplace</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-5">
+              <p className="text-sm font-medium text-muted-foreground">QR usados</p>
+              <p className="mt-1 text-2xl font-bold text-foreground">{ventas.qrUsados}</p>
+              <p className="mt-1 text-xs text-muted-foreground">canjes registrados en el escáner</p>
+            </CardContent>
+          </Card>
+          <Card className={ventas.tasaAbandono >= 40 ? 'border-warning/40' : ''}>
+            <CardContent className="p-5">
+              <p className="text-sm font-medium text-muted-foreground">Abandonos</p>
+              <p className="mt-1 text-2xl font-bold text-foreground">{ventas.tasaAbandono}%</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {ventas.abandonos} canceladas o rechazadas
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-5">
+              <p className="text-sm font-medium text-muted-foreground">Clientes</p>
+              <p className="mt-1 text-2xl font-bold text-foreground">{ventas.clientes}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {ventas.clientesNuevos} nuevos · {ventas.clientesRecurrentes} recurrentes
+              </p>
+            </CardContent>
+          </Card>
+          {masCompartida && masCompartida.shareCount > 0 && (
+            <Card className="sm:col-span-2">
+              <CardContent className="flex items-center gap-3 p-5">
+                <Share2 className="h-5 w-5 shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-muted-foreground">Más compartida</p>
+                  <p className="truncate font-semibold text-foreground">{masCompartida.titulo}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {masCompartida.shareCount} veces compartida
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {masCanjeada && masCanjeada.canjes > 0 && (
+            <Card className="sm:col-span-2">
+              <CardContent className="flex items-center gap-3 p-5">
+                <Gift className="h-5 w-5 shrink-0 text-success" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-muted-foreground">Más canjeada</p>
+                  <p className="truncate font-semibold text-foreground">{masCanjeada.titulo}</p>
+                  <p className="text-xs text-muted-foreground">{masCanjeada.canjes} canjes</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 

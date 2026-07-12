@@ -322,6 +322,18 @@ model MetodoPago {
   @@map("metodos_pago")
 }
 
+// FASE E8 · Tipo de Beneficio Digital. Concepto unificado: promociones,
+// membresías, cupones, bonos, gift cards y entradas comparten el mismo ciclo
+// (adquirir → QR → canjear). Añadir un tipo nuevo NO requiere rediseñar.
+enum BeneficioTipo {
+  PROMOTION
+  MEMBERSHIP
+  COUPON
+  VOUCHER
+  GIFT
+  EVENT
+}
+
 // Promociones publicadas por una empresa, visibles para sus clientes
 // (incluyendo clientes afiliados a varias empresas, vía Cliente.companyId).
 model Promocion {
@@ -373,6 +385,10 @@ model Promocion {
   horaHasta              String? // "HH:MM"
   // Imágenes subidas al storage del proyecto (galería futura; [0] = principal).
   imagenes               String[]  @default([])
+  // FASE E8 · Beneficio Digital: toda promoción es un beneficio con un TIPO.
+  // Hoy se usa PROMOTION; la arquitectura queda lista para cupones, gift cards,
+  // bonos y entradas a eventos sin rediseño (solo se añaden reglas del tipo).
+  beneficioTipo          BeneficioTipo @default(PROMOTION)
 
   compras     ProductoCompra[]
   guardadaPor PromocionGuardada[]

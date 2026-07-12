@@ -177,7 +177,7 @@ export function PromotionCard({
               <span />
             )}
             <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-              Ver promoción <ArrowRight className="h-3.5 w-3.5" />
+              Adquirir promoción <ArrowRight className="h-3.5 w-3.5" />
             </span>
           </div>
         </div>

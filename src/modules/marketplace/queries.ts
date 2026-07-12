@@ -441,6 +441,135 @@ export async function getPromotionDetail(promotionId: string): Promise<Promotion
   }
 }
 
+/** Fase E8 · Datos mínimos para la vista previa al compartir (Open Graph).
+ *  Solo promociones PÚBLICAS (activa, publicada, no privada, no vencida). */
+export interface PromotionOg {
+  id: string
+  titulo: string
+  descripcion: string
+  imagenUrl: string | null
+  tipo: string
+  beneficioTipo: string
+  descuento: number | null
+  empresa: string
+  logoUrl: string | null
+}
+
+export async function getPromotionOg(promotionId: string): Promise<PromotionOg | null> {
+  if (!promotionId) return null
+  try {
+    const now = new Date()
+    const p = await prisma.promocion.findFirst({
+      where: {
+        id: promotionId,
+        activo: true,
+        archivada: false,
+        visibilidad: 'publica',
+        company: { isPublished: true, isActive: true },
+        OR: [{ vigenciaHasta: null }, { vigenciaHasta: { gte: now } }],
+      },
+      select: {
+        id: true, titulo: true, descripcion: true, imagenUrl: true, tipo: true,
+        beneficioTipo: true, descuento: true,
+        company: { select: { name: true, logoUrl: true } },
+      },
+    })
+    if (!p) return null
+    return {
+      id: p.id, titulo: p.titulo, descripcion: p.descripcion, imagenUrl: p.imagenUrl,
+      tipo: p.tipo, beneficioTipo: p.beneficioTipo, descuento: p.descuento,
+      empresa: p.company.name, logoUrl: p.company.logoUrl,
+    }
+  } catch (e) {
+    console.error('[getPromotionOg]', e)
+    return null
+  }
+}
+
+/** Fase E8 · Membresías promocionables — plan como beneficio público con
+ *  landing propia (compartible). Un plan es público si su empresa está
+ *  publicada/activa y el plan activo. */
+export interface PlanLanding {
+  id: string
+  nombre: string
+  descripcion: string | null
+  precio: number
+  esIlimitado: boolean
+  lavadosIncluidos: number
+  beneficios: string[]
+  vigenciaDias: number
+  condiciones: string | null
+  color: string | null
+  company: { id: string; name: string; slug: string; logoUrl: string | null }
+}
+
+export async function getPlanPublic(planId: string): Promise<PlanLanding | null> {
+  if (!planId) return null
+  try {
+    const plan = await prisma.plan.findUnique({
+      where: { id: planId },
+      select: {
+        id: true, nombre: true, descripcion: true, precio: true, esIlimitado: true,
+        lavadosIncluidos: true, beneficios: true, vigenciaDias: true, condiciones: true,
+        color: true, activo: true,
+        company: {
+          select: { id: true, name: true, slug: true, logoUrl: true, isPublished: true, isActive: true },
+        },
+      },
+    })
+    if (!plan || !plan.activo || !plan.company) return null
+    if (!plan.company.isPublished || !plan.company.isActive) return null
+    const { isPublished: _p, isActive: _a, ...company } = plan.company
+    return {
+      id: plan.id, nombre: plan.nombre, descripcion: plan.descripcion,
+      precio: Number(plan.precio), esIlimitado: plan.esIlimitado,
+      lavadosIncluidos: plan.lavadosIncluidos, beneficios: plan.beneficios,
+      vigenciaDias: plan.vigenciaDias, condiciones: plan.condiciones, color: plan.color,
+      company,
+    }
+  } catch (e) {
+    console.error('[getPlanPublic]', e)
+    return null
+  }
+}
+
+/** Datos mínimos y seguros para la vista previa al compartir un plan. */
+export interface PlanOg {
+  id: string
+  nombre: string
+  descripcion: string
+  precio: number
+  esIlimitado: boolean
+  lavadosIncluidos: number
+  empresa: string
+  logoUrl: string | null
+}
+
+export async function getPlanOg(planId: string): Promise<PlanOg | null> {
+  if (!planId) return null
+  try {
+    const plan = await prisma.plan.findUnique({
+      where: { id: planId },
+      select: {
+        id: true, nombre: true, descripcion: true, precio: true, esIlimitado: true,
+        lavadosIncluidos: true, activo: true,
+        company: { select: { name: true, logoUrl: true, isPublished: true, isActive: true } },
+      },
+    })
+    if (!plan || !plan.activo || !plan.company) return null
+    if (!plan.company.isPublished || !plan.company.isActive) return null
+    return {
+      id: plan.id, nombre: plan.nombre, descripcion: plan.descripcion ?? '',
+      precio: Number(plan.precio), esIlimitado: plan.esIlimitado,
+      lavadosIncluidos: plan.lavadosIncluidos,
+      empresa: plan.company.name, logoUrl: plan.company.logoUrl,
+    }
+  } catch (e) {
+    console.error('[getPlanOg]', e)
+    return null
+  }
+}
+
 export async function getCategoriesPublic(): Promise<CategoryPublic[]> {
   try {
     const categories = await prisma.businessCategory.findMany({

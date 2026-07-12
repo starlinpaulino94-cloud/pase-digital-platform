@@ -16,7 +16,8 @@ import { Badge } from '@/components/ui/badge'
 import { QRDisplay } from '@/components/qr/QRDisplay'
 import { ComprobanteCompraForm } from '@/components/cliente/ComprobanteCompraForm'
 import { CancelarCompraButton } from '@/components/cliente/CancelarCompraButton'
-import { compraEstadoUi } from '@/components/cliente/compra-estado'
+import { SharePromocionMenu } from '@/components/public/SharePromocionMenu'
+import { compraEstadoUi, compraEstadoVisual } from '@/components/cliente/compra-estado'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,10 +51,15 @@ export default async function MiCompraPage({
   })
   if (!compra || compra.clienteId !== user.metadata.clienteId) notFound()
 
-  const ui = compraEstadoUi(compra.estado)
+  const ui = compraEstadoVisual(compra.estado, {
+    usosRestantes: compra.usosRestantes,
+    usosTotales: compra.usosIncluidos,
+  })
+  const EstadoIcon = ui.icon
   const promo = compra.promocion
   const qr = compra.qrTokens[0] ?? null
   const precio = Number(compra.precioCongelado ?? 0)
+  const promoPublica = promo?.visibilidad === 'publica'
 
   // Cuentas bancarias activas de la empresa (transferencia).
   const metodosPago = ESPERA_PAGO.includes(compra.estado)
@@ -78,10 +84,22 @@ export default async function MiCompraPage({
           <h1 className="text-2xl font-bold text-foreground">{promo?.titulo ?? 'Promoción'}</h1>
           <p className="text-muted-foreground">{compra.company.name}</p>
         </div>
-        <Badge variant={ui.badge} className="mt-1 shrink-0">
+        <Badge variant={ui.badge} className="mt-1 shrink-0 gap-1">
+          <EstadoIcon className="h-3.5 w-3.5" />
           {ui.label}
         </Badge>
       </div>
+
+      {/* Acciones: compartir la promoción pública */}
+      {promo && promoPublica && (
+        <div className="flex flex-wrap items-center gap-3">
+          <SharePromocionMenu
+            promocionId={promo.id}
+            titulo={promo.titulo}
+            companyName={compra.company.name}
+          />
+        </div>
+      )}
 
       {promo?.imagenUrl && (
         // eslint-disable-next-line @next/next/no-img-element

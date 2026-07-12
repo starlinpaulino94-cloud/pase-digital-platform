@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { compraEstadoUi } from '@/components/cliente/compra-estado'
+import { compraEstadoVisual } from '@/components/cliente/compra-estado'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,13 +19,18 @@ interface CompraItem {
   id: string
   estado: string
   usosRestantes: number
+  usosIncluidos: number
   createdAt: Date
   promocion: { titulo: string; imagenUrl: string | null; tipo: string } | null
   company: { name: string }
 }
 
 function Item({ compra }: { compra: CompraItem }) {
-  const ui = compraEstadoUi(compra.estado)
+  const ui = compraEstadoVisual(compra.estado, {
+    usosRestantes: compra.usosRestantes,
+    usosTotales: compra.usosIncluidos,
+  })
+  const Icon = ui.icon
   return (
     <Link
       href={`/cliente/mis-promociones/${compra.id}`}
@@ -50,11 +55,12 @@ function Item({ compra }: { compra: CompraItem }) {
         <p className="text-xs text-muted-foreground">
           {compra.company.name} · {fmtFecha(compra.createdAt)}
           {compra.estado === 'ACTIVA' && (
-            <> · {compra.usosRestantes} uso{compra.usosRestantes !== 1 ? 's' : ''} restante{compra.usosRestantes !== 1 ? 's' : ''}</>
+            <> · {compra.usosRestantes} de {compra.usosIncluidos} uso{compra.usosIncluidos !== 1 ? 's' : ''} disponible{compra.usosRestantes !== 1 ? 's' : ''}</>
           )}
         </p>
       </div>
-      <Badge variant={ui.badge} className="shrink-0 text-[10px]">
+      <Badge variant={ui.badge} className="shrink-0 gap-1 text-[10px]">
+        <Icon className="h-3 w-3" />
         {ui.label}
       </Badge>
       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -98,7 +104,12 @@ export default async function MisPromocionesPage() {
   const compras = await prisma.productoCompra
     .findMany({
       where: { clienteId },
-      include: {
+      select: {
+        id: true,
+        estado: true,
+        usosRestantes: true,
+        usosIncluidos: true,
+        createdAt: true,
         promocion: { select: { titulo: true, imagenUrl: true, tipo: true } },
         company: { select: { name: true } },
       },
