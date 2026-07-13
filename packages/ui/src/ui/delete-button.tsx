@@ -3,8 +3,8 @@
 import { useState, useTransition } from 'react'
 import { Loader2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { Button } from './button'
+import { ConfirmDialog } from './confirm-dialog'
 
 export interface DeleteButtonProps {
   /** Acción de servidor a ejecutar al confirmar. Lanza o devuelve { error } para fallar. */

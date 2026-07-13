@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { cn } from '@membego/ui/cn'
+import { cn } from '../cn'
 
 interface StatCardProps {
   label: string
