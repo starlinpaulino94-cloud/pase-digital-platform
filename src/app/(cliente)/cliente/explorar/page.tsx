@@ -1,10 +1,9 @@
 import Link from 'next/link'
-import { Search, Store } from 'lucide-react'
+import { Search, Store, Compass } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
 import { getCompaniesPublic } from '@/modules/marketplace/queries'
 import { getSeguidasIds } from '@/modules/social/queries'
 import { ExplorarEmpresasList } from '@/components/cliente/ExplorarEmpresasList'
-import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
@@ -12,13 +11,9 @@ export const dynamic = 'force-dynamic'
 
 export const metadata = {
   title: 'Explorar empresas',
+  description: 'Descubre negocios afiliados y únete a sus membresías',
 }
 
-/**
- * Directorio de todas las empresas DENTRO del portal del cliente (misma
- * navegación, sin salir a la landing pública). Desde aquí puede seguir
- * empresas y entrar a su perfil para afiliarse.
- */
 export default async function ExplorarEmpresasPage({
   searchParams,
 }: {
@@ -34,63 +29,98 @@ export default async function ExplorarEmpresasPage({
   ])
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Explorar empresas</h1>
-        <p className="text-muted-foreground">
-          Descubre negocios afiliados, síguelos y únete a sus membresías, todo
-          desde tu cuenta.
-        </p>
-      </div>
-
-      {/* Búsqueda (GET: funciona sin JS y conserva el término en la URL) */}
-      <form action="/cliente/explorar" className="flex max-w-md gap-2">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            name="q"
-            defaultValue={search}
-            placeholder="Buscar por nombre o descripción…"
-            className="pl-9"
-          />
-        </div>
-        <Button type="submit" variant="outline">
-          Buscar
-        </Button>
-      </form>
-
-      {companies.length === 0 ? (
-        <Card>
-          <CardContent className="py-16 text-center text-muted-foreground">
-            <Store className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
-            <p className="font-medium">
-              {search
-                ? `No encontramos empresas para “${search}”`
-                : 'No hay empresas disponibles todavía'}
+    <main className="container max-w-5xl py-8">
+      {/* ── Cabecera ──────────────────────────────────────────────────────── */}
+      <header className="mb-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+              Directorio
             </p>
+            <h1 className="mt-1.5 text-h1 tracking-tight text-foreground">
+              Explorar empresas
+            </h1>
+            <p className="mt-1 text-small text-muted-foreground">
+              Descubre negocios afiliados, síguelos y únete a sus membresías.
+            </p>
+          </div>
+        </div>
+
+        {/* Barra de búsqueda */}
+        <form
+          action="/cliente/explorar"
+          className="mt-6 flex max-w-lg gap-2"
+        >
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              name="q"
+              defaultValue={search}
+              placeholder="Buscar por nombre o descripción…"
+              className="rounded-xl pl-9"
+            />
+          </div>
+          <Button type="submit" variant="outline" className="rounded-xl">
+            Buscar
+          </Button>
+        </form>
+      </header>
+
+      {/* ── Contenido ─────────────────────────────────────────────────────── */}
+      {companies.length === 0 ? (
+        <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card p-10 text-center shadow-card">
+          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-info/10 blur-3xl" />
+          <div className="relative mx-auto flex max-w-md flex-col items-center gap-5">
+            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+              <Store className="h-8 w-8 text-muted-foreground" />
+            </span>
+            <div>
+              <h2 className="text-xl font-bold text-foreground">
+                {search
+                  ? `Sin resultados para "${search}"`
+                  : 'No hay empresas disponibles'}
+              </h2>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                {search
+                  ? 'Prueba con otro término o mira todas las empresas.'
+                  : 'Vuelve pronto, nuevas empresas se unen cada día.'}
+              </p>
+            </div>
             {search && (
-              <Button asChild variant="outline" className="mt-4">
+              <Button asChild variant="outline">
                 <Link href="/cliente/explorar">Ver todas</Link>
               </Button>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
-        <ExplorarEmpresasList
-          empresas={companies.map((c) => ({
-            id: c.id,
-            name: c.name,
-            slug: c.slug,
-            type: c.type,
-            logoUrl: c.logoUrl,
-            bannerUrl: c.bannerUrl,
-            ciudad: c.ciudad,
-            totalMembersCount: c.totalMembersCount,
-            activePromotionsCount: c.activePromotionsCount,
-          }))}
-          seguidasIds={[...seguidas]}
-        />
+        <>
+          {/* Result count */}
+          <div className="mb-5 flex items-center gap-2">
+            <Compass className="h-4 w-4 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              {companies.length} empresa{companies.length !== 1 ? 's' : ''}
+              {search ? ` para "${search}"` : ' disponibles'}
+            </p>
+          </div>
+
+          <ExplorarEmpresasList
+            empresas={companies.map((c) => ({
+              id: c.id,
+              name: c.name,
+              slug: c.slug,
+              type: c.type,
+              logoUrl: c.logoUrl,
+              bannerUrl: c.bannerUrl,
+              ciudad: c.ciudad,
+              totalMembersCount: c.totalMembersCount,
+              activePromotionsCount: c.activePromotionsCount,
+            }))}
+            seguidasIds={[...seguidas]}
+          />
+        </>
       )}
-    </div>
+    </main>
   )
 }

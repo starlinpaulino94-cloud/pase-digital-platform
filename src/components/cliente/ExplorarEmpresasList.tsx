@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Gift, MapPin, Plus, Check, Loader2, ArrowRight, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { toggleSeguirEmpresa } from '@/modules/social/actions'
+import { Button } from '@/components/ui/button'
 
 const TIPO_LABEL: Record<string, string> = {
   carwash: 'Car Wash',
@@ -27,11 +28,6 @@ export interface EmpresaExplorar {
   activePromotionsCount: number
 }
 
-/**
- * Directorio de empresas DENTRO del portal del cliente: seguir/dejar de seguir
- * sin salir de la app. "Ver perfil" abre la mini-web de la empresa (planes y
- * registro) porque ahí vive la afiliación.
- */
 export function ExplorarEmpresasList({
   empresas,
   seguidasIds,
@@ -69,43 +65,51 @@ export function ExplorarEmpresasList({
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {empresas.map((company) => {
         const siguiendo = seguidas.has(company.id)
         const pending = pendingId === company.id
         const initials = company.name.slice(0, 2).toUpperCase()
+
         return (
           <div
             key={company.id}
-            className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:border-info/30 hover:shadow-sm"
+            className="group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-card transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-premium"
           >
-            <div className="relative h-16 bg-gradient-to-br from-blue-600 to-sky-500">
+            {/* Banner */}
+            <div className="relative h-20 overflow-hidden bg-gradient-to-br from-primary/80 to-info/70">
               {company.bannerUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={company.bannerUrl}
                   alt=""
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover transition group-hover:scale-105"
                 />
               )}
+              {/* Gradient overlay for text legibility */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
             </div>
 
-            <div className="flex flex-1 flex-col p-4">
-              <div className="-mt-10 mb-2">
+            <div className="flex flex-1 flex-col p-4 pt-0">
+              {/* Logo — overlapping banner */}
+              <div className="-mt-7 mb-3">
                 {company.logoUrl ? (
-                  <div className="relative h-12 w-12 overflow-hidden rounded-xl border-2 border-white bg-card shadow">
+                  <div className="relative h-14 w-14 overflow-hidden rounded-2xl border-[3px] border-card bg-card shadow-card">
                     <Image src={company.logoUrl} alt={company.name} fill className="object-cover" />
                   </div>
                 ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-white bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white shadow">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border-[3px] border-card bg-gradient-to-br from-primary to-info text-sm font-bold text-white shadow-card">
                     {initials}
                   </div>
                 )}
               </div>
 
-              <h3 className="font-semibold text-foreground">{company.name}</h3>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span className="rounded-full bg-muted px-2 py-0.5">
+              {/* Company name */}
+              <h3 className="text-base font-bold text-foreground">{company.name}</h3>
+
+              {/* Type + location */}
+              <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span className="rounded-lg bg-muted px-2 py-0.5 font-medium">
                   {TIPO_LABEL[company.type] ?? company.type}
                 </span>
                 {company.ciudad && (
@@ -115,42 +119,47 @@ export function ExplorarEmpresasList({
                 )}
               </div>
 
-              <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5">
-                  <Gift className="h-4 w-4 text-destructive" />
-                  {company.activePromotionsCount} promos
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Users className="h-4 w-4 text-primary" />
-                  {company.totalMembersCount} miembros
-                </span>
+              {/* Stats */}
+              <div className="mt-3 flex items-center gap-4">
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-success/10">
+                    <Gift className="h-3.5 w-3.5 text-success" />
+                  </span>
+                  <span className="font-medium">{company.activePromotionsCount}</span>
+                  <span className="hidden sm:inline">promos</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/10">
+                    <Users className="h-3.5 w-3.5 text-primary" />
+                  </span>
+                  <span className="font-medium">{company.totalMembersCount}</span>
+                  <span className="hidden sm:inline">miembros</span>
+                </div>
               </div>
 
-              <div className="mt-4 flex items-center gap-2 border-t border-border/60 pt-3">
-                <button
+              {/* Actions */}
+              <div className="mt-auto flex items-center gap-2 pt-4">
+                <Button
                   onClick={() => toggleSeguir(company)}
                   disabled={pending}
-                  className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition disabled:opacity-60 ${
-                    siguiendo
-                      ? 'border border-border bg-muted text-foreground hover:bg-muted'
-                      : 'bg-primary text-white hover:bg-primary'
-                  }`}
+                  variant={siguiendo ? 'outline' : 'default'}
+                  size="sm"
+                  className="flex-1"
                 >
                   {pending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                   ) : siguiendo ? (
-                    <Check className="h-4 w-4" />
+                    <Check className="mr-1.5 h-3.5 w-3.5" />
                   ) : (
-                    <Plus className="h-4 w-4" />
+                    <Plus className="mr-1.5 h-3.5 w-3.5" />
                   )}
                   {siguiendo ? 'Siguiendo' : 'Seguir'}
-                </button>
-                <Link
-                  href={`/cliente/empresas/${company.slug}`}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition hover:border-info/30 hover:text-info"
-                >
-                  Ver perfil <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
+                </Button>
+                <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
+                  <Link href={`/cliente/empresas/${company.slug}`}>
+                    Ver perfil <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                  </Link>
+                </Button>
               </div>
             </div>
           </div>
