@@ -27,10 +27,13 @@ export default async function PerfilEmpresaPage({
   const params = await searchParams
   const esSuper = user.metadata.role === 'SUPERADMIN'
 
-  // El superadmin no usa la empresa de su sesión (puede no tener, o apuntar a
-  // una empresa borrada): elige cuál editar con ?empresa=<id>.
+  // El superadmin edita la empresa ACTIVA del selector del panel
+  // (metadata.companyId); ?empresa=<id> permite forzar otra sin cambiar el
+  // selector. Si no hay ninguna, cae al selector de empresas de abajo.
   const companyId = esSuper
-    ? (typeof params.empresa === 'string' ? params.empresa : null)
+    ? (typeof params.empresa === 'string' && params.empresa
+        ? params.empresa
+        : user.metadata.companyId ?? null)
     : user.metadata.companyId
 
   if (!companyId) {

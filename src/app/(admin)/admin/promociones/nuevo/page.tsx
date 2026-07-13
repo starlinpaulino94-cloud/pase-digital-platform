@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { requireRole } from '@/lib/auth/guards'
 import { ADMIN_ROLES } from '@/types'
-import { companyFilter } from '@/modules/admin/queries'
+import { resolveCompanyId } from '@/lib/auth/company-context'
 import { prisma } from '@/lib/prisma'
 import { promocionPrefill } from '@/modules/admin/plantillas'
 import { PromocionForm } from '@/components/admin/PromocionForm'
@@ -15,7 +15,9 @@ export default async function NuevaPromocionPage({
   searchParams: Promise<{ plantilla?: string }>
 }) {
   const user = await requireRole(ADMIN_ROLES)
-  const companyId = companyFilter(user)
+  // Empresa activa del selector (respeta la selección del superadmin), para que
+  // el selector de campañas se llene con las campañas de esa empresa.
+  const companyId = await resolveCompanyId(user)
   const { plantilla } = await searchParams
 
   // Fase E3: al llegar desde la galería, se copia la configuración de la

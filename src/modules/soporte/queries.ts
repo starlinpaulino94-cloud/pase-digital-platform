@@ -17,10 +17,13 @@ export interface CompanyContext {
 /**
  * Resuelve la empresa sobre la que opera el panel.
  * - ADMIN_EMPRESA: su propia empresa (companyId del metadata).
- * - SUPERADMIN: la empresa solicitada (requestedId) o la primera disponible.
+ * - SUPERADMIN: la empresa solicitada en la página (requestedId); si no, la
+ *   empresa ACTIVA del selector del panel (metadata.companyId); si tampoco,
+ *   la primera disponible.
  *
  * Esto corrige el error "Empresa requerida": el superadmin no tiene companyId
- * propio, así que necesita un selector explícito.
+ * propio, así que necesita un selector explícito; y además honra el selector
+ * global del panel para que el contexto sea consistente entre módulos.
  */
 export async function resolveCompanyContext(
   user: SessionUser,
@@ -41,8 +44,12 @@ export async function resolveCompanyContext(
     select: { id: true, name: true },
   })
 
+  const exists = (id?: string | null) =>
+    (id && companies.find((c) => c.id === id)?.id) || null
+
   const chosen =
-    (requestedId && companies.find((c) => c.id === requestedId)?.id) ||
+    exists(requestedId) ||
+    exists(user.metadata.companyId) ||
     companies[0]?.id ||
     null
 
