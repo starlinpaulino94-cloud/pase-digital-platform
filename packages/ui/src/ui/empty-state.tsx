@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'
+import { cn } from '@membego/ui/cn'
 
 interface EmptyStateProps {
   icon?: React.ReactNode

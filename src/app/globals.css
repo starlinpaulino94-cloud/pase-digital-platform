@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Design system compartido: Tailwind v4 debe escanear @membego/ui para generar
+   las clases usadas SOLO por sus componentes (si no, saldrían sin estilos). */
+@source "../../packages/ui/src";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

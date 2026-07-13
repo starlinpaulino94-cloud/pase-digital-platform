@@ -13,7 +13,7 @@ import {
   type ColumnFiltersState,
 } from '@tanstack/react-table'
 import { Search, ChevronLeft, ChevronRight, Download, ChevronsLeft, ChevronsRight } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@membego/ui/cn'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 

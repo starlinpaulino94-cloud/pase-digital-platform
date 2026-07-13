@@ -1,9 +1,7 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
+// `cn` es ahora parte del design system compartido (@membego/ui). Se reexporta
+// aquí para no cambiar los ~26 imports existentes `from '@/lib/utils'`. Fuente
+// única en packages/ui/src/cn.ts (sin duplicación).
+export { cn } from '@membego/ui/cn'
 
 /**
  * Devuelve una ruta interna segura para redirigir tras el login. Evita open
