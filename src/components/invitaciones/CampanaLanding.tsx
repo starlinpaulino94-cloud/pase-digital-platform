@@ -241,11 +241,11 @@ export function CampanaLanding({ campana, refCode, invitanteNombre }: Props) {
                 Comparte esta oportunidad
               </h2>
               <p className="text-center text-sm text-slate-600">
-                Ahora invita a tus amigos para que ellos también reciban{' '}
+                Invita a tus amigos a registrarse y ellos también recibirán{' '}
                 <span className="font-semibold text-slate-800">
                   {campana.beneficioInvitado?.descripcion || 'su regalo de bienvenida'}
-                </span>{' '}
-                y tú obtengas más recompensas.
+                </span>
+                . Sé parte de esta gran oportunidad.
               </p>
               <Button
                 onClick={compartirCelebracion}
