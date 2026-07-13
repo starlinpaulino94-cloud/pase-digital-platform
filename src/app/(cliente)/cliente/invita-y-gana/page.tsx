@@ -68,8 +68,11 @@ export default async function InvitaYGanaPage() {
   const beneficioInvitado = campana.beneficioInvitado as { descripcion?: string } | null
   const beneficioInvitante = campana.beneficioInvitante as { descripcion?: string } | null
   const regalo = beneficioInvitado?.descripcion || 'un regalo de bienvenida'
+  // El admin puede escribir un párrafo como descripción; para el mensaje de
+  // WhatsApp y los chips basta la primera frase (recortada).
+  const regaloCorto = regalo.split(/[.!\n]/)[0].trim().slice(0, 80) || 'un regalo de bienvenida'
 
-  const mensajeCompartir = `🎉 Te regalan ${regalo} solo por crear tu cuenta gratis en MembeGo. ¡Aprovéchalo!`
+  const mensajeCompartir = `🎉 Te regalan: ${regaloCorto}. Solo por crear tu cuenta gratis en MembeGo. ¡Aprovéchalo!`
 
   const statCards = [
     { label: 'Invitaciones enviadas', valor: stats.invitacionesEnviadas, icon: Send },
@@ -80,64 +83,81 @@ export default async function InvitaYGanaPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-1">
-        <h1 className="text-2xl font-bold text-foreground flex items-center justify-center gap-2">
-          <Gift className="h-6 w-6 text-emerald-500" />
-          Invita y Gana
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          Comparte, tus amigos ganan y tú también.
-        </p>
-      </div>
-
-      {/* Campaña activa */}
-      <Card className="overflow-hidden border-emerald-200">
+      {/* Campaña activa: protagonismo del arte + mínimo texto + animación. */}
+      <Card className="animate-slide-up overflow-hidden border-emerald-200 shadow-premium">
         {(campana.bannerUrl || campana.imagenUrl) && (
-          <div className="relative h-40 w-full sm:h-52">
+          <div className="relative h-44 w-full sm:h-60">
             <Image
               src={(campana.bannerUrl || campana.imagenUrl)!}
               alt={campana.titulo}
               fill
               className="object-cover"
               sizes="(max-width: 672px) 100vw, 672px"
+              priority
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
           </div>
         )}
-        <CardContent className="space-y-4 bg-gradient-to-br from-emerald-50 to-white py-6 text-center">
-          <div className="space-y-1.5">
-            <p className="text-xl font-bold text-foreground">{campana.titulo}</p>
-            <p className="text-sm text-muted-foreground">{campana.descripcion}</p>
+        <CardContent className="relative space-y-5 bg-gradient-to-br from-emerald-50 to-white pb-6 pt-0 text-center">
+          {/* Regalo flotante que "sale" del banner */}
+          <div className="-mt-9 flex justify-center">
+            <span className="animate-float flex h-[72px] w-[72px] items-center justify-center rounded-3xl bg-gradient-to-br from-emerald-400 to-teal-600 shadow-glow ring-4 ring-card">
+              <Gift className="h-9 w-9 text-white" />
+            </span>
           </div>
 
+          <div className="animate-fade-up space-y-1">
+            <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+              {campana.titulo}
+            </h1>
+            <p className="text-sm font-medium text-emerald-700">
+              Comparte · tus amigos ganan · tú también
+            </p>
+          </div>
+
+          {/* Beneficios: chips compactos, sin párrafos largos */}
           <div className="grid gap-2 sm:grid-cols-2">
-            <div className="rounded-xl border border-emerald-200 bg-white p-3 text-left">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
-                Tus amigos reciben
-              </p>
-              <p className="mt-0.5 text-sm font-semibold text-foreground">{regalo}</p>
+            <div className="animate-fade-up delay-100 flex items-center gap-3 rounded-2xl border border-emerald-200/80 bg-white p-3 text-left shadow-sm">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100">
+                <Gift className="h-5 w-5 text-emerald-600" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                  Tus amigos reciben
+                </p>
+                <p className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+                  {regaloCorto}
+                </p>
+              </div>
             </div>
-            <div className="rounded-xl border border-amber-200 bg-white p-3 text-left">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
-                Tú obtienes
-              </p>
-              <p className="mt-0.5 text-sm font-semibold text-foreground">
-                {beneficioInvitante?.descripcion || 'Recompensas por cada nuevo registro'}
-              </p>
+            <div className="animate-fade-up delay-150 flex items-center gap-3 rounded-2xl border border-amber-200/80 bg-white p-3 text-left shadow-sm">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100">
+                <Trophy className="h-5 w-5 text-amber-600" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                  Tú obtienes
+                </p>
+                <p className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+                  {beneficioInvitante?.descripcion || 'Recompensas por cada registro'}
+                </p>
+              </div>
             </div>
           </div>
 
-          <InvitaShareButton
-            campanaId={campana.id}
-            url={inviteUrl}
-            titulo={campana.titulo}
-            descripcion={mensajeCompartir}
-          />
+          <div className="animate-fade-up delay-200">
+            <InvitaShareButton
+              campanaId={campana.id}
+              url={inviteUrl}
+              titulo={campana.titulo}
+              descripcion={mensajeCompartir}
+            />
+          </div>
         </CardContent>
       </Card>
 
       {/* Mi progreso */}
-      <div>
+      <div className="animate-fade-up delay-300">
         <h2 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
           <Trophy className="h-4.5 w-4.5 text-muted-foreground" />
           Mi progreso
@@ -156,7 +176,7 @@ export default async function InvitaYGanaPage() {
       </div>
 
       {/* Historial */}
-      <Card>
+      <Card className="animate-fade-up delay-500">
         <CardContent className="py-5 space-y-4">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-muted-foreground" />

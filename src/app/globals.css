@@ -426,6 +426,7 @@
   .animate-float      { animation: float 6s ease-in-out infinite; }
   .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
   .animate-pulse-glow { animation: pulse-glow 5s ease-in-out infinite; }
+  .animate-shimmer    { animation: shimmer 2.6s linear infinite; }
   .scanner-line       { animation: scanner-line 2.2s ease-in-out infinite; }
 
   .delay-75  { animation-delay: 75ms; }
@@ -440,6 +441,7 @@
     .animate-float,
     .animate-float-slow,
     .animate-pulse-glow,
+    .animate-shimmer,
     .animate-fade-up,
     .animate-fade-in,
     .animate-slide-up,
