@@ -15,7 +15,37 @@ export interface CampanaOgData {
   colorPrimario: string | null
   colorSecundario: string | null
   beneficioInvitado: unknown
+  /** Arte subido por el admin: si existe, es el fondo de la tarjeta. */
+  bannerUrl?: string | null
+  imagenUrl?: string | null
   company?: { name: string } | null
+}
+
+/** Formatos que satori (next/og) rasteriza de forma fiable. */
+const OG_IMG_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif']
+
+/**
+ * Descarga el banner y lo devuelve como data URL para incrustarlo en la
+ * tarjeta. Se hace aquí (y no dejando que satori haga el fetch) para poder
+ * controlar timeout, tamaño y formato: cualquier problema → null y la
+ * tarjeta cae al diseño degradado, nunca a una imagen rota.
+ */
+async function fetchBannerDataUrl(url: string, timeoutMs = 4000): Promise<string | null> {
+  try {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+    const res = await fetch(url, { signal: ctrl.signal })
+    clearTimeout(timer)
+    if (!res.ok) return null
+    const tipo = (res.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase()
+    if (!OG_IMG_TYPES.includes(tipo)) return null
+    const buf = Buffer.from(await res.arrayBuffer())
+    // Banners desmedidos harían lenta la vista previa (WhatsApp corta ~5s).
+    if (buf.length === 0 || buf.length > 4_000_000) return null
+    return `data:${tipo};base64,${buf.toString('base64')}`
+  } catch {
+    return null
+  }
 }
 
 function MembeGoMark() {
@@ -74,8 +104,12 @@ export function genericOgResponse() {
   )
 }
 
-/** Tarjeta de campaña: colores de marca de la empresa, título y regalo. */
-export function campanaOgResponse(campana: CampanaOgData) {
+/**
+ * Tarjeta de campaña. Si el admin subió un banner/imagen, ese arte es el
+ * FONDO de la tarjeta (con degradado para legibilidad del texto); si no,
+ * se genera el diseño degradado con los colores de la campaña.
+ */
+export async function campanaOgResponse(campana: CampanaOgData) {
   const primary = campana.colorPrimario || '#10b981'
   const secondary = campana.colorSecundario || '#059669'
   const empresa = campana.company?.name ?? SITE_NAME
@@ -86,6 +120,109 @@ export function campanaOgResponse(campana: CampanaOgData) {
     descripcion?: string
   } | null
   const regalo = (beneficio?.descripcion || beneficio?.valor || '').slice(0, 80)
+
+  const arte = campana.bannerUrl || campana.imagenUrl
+  const fondo = arte ? await fetchBannerDataUrl(arte) : null
+
+  if (fondo) {
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            position: 'relative',
+            backgroundColor: '#0f172a',
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={fondo}
+            alt=""
+            width={OG_SIZE.width}
+            height={OG_SIZE.height}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+          />
+          {/* Velo para que el texto se lea sobre cualquier arte. */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              background:
+                'linear-gradient(180deg, rgba(2,6,23,0.45) 0%, rgba(2,6,23,0.10) 45%, rgba(2,6,23,0.85) 100%)',
+            }}
+          />
+          <div
+            style={{
+              position: 'relative',
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              padding: 56,
+              color: '#FFFFFF',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <MembeGoMark />
+              <span
+                style={{
+                  fontSize: 26,
+                  fontWeight: 600,
+                  color: '#FFFFFF',
+                  background: 'rgba(255,255,255,0.22)',
+                  padding: '10px 22px',
+                  borderRadius: 999,
+                }}
+              >
+                {empresa}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <span style={{ fontSize: 58, fontWeight: 800, letterSpacing: -1.5, lineHeight: 1.08 }}>
+                {titulo}
+              </span>
+              {regalo ? (
+                <span
+                  style={{
+                    display: 'flex',
+                    alignSelf: 'flex-start',
+                    fontSize: 32,
+                    fontWeight: 700,
+                    color: '#0f172a',
+                    background: '#FFFFFF',
+                    padding: '12px 28px',
+                    borderRadius: 16,
+                  }}
+                >
+                  {regalo}
+                </span>
+              ) : (
+                <span style={{ fontSize: 28, fontWeight: 600, opacity: 0.95 }}>
+                  Regístrate gratis y reclama tu regalo
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      ),
+      OG_SIZE
+    )
+  }
 
   return new ImageResponse(
     (
