@@ -117,26 +117,50 @@ export default async function PlanesPage() {
 
   return (
     <main className="container max-w-5xl py-8">
-      {/* ── Cabecera ──────────────────────────────────────────────────────── */}
-      <header className="mb-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-              {cliente.company.name}
+      {/* ── Hero VIP ──────────────────────────────────────────────────────── */}
+      <header className="animate-slide-up relative mb-8 overflow-hidden rounded-3xl bg-[oklch(0.15_0.04_260)] p-7 text-white shadow-premium sm:p-10">
+        {/* Halos de marca */}
+        <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-primary/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-info/20 blur-3xl" />
+
+        <div className="relative flex flex-col gap-6">
+          <div className="flex items-start justify-between gap-4">
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-sky-300">
+              Membresías · {cliente.company.name}
             </p>
-            <h1 className="mt-1.5 text-h1 tracking-tight text-foreground">
-              Planes disponibles
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="shrink-0 -mt-1 text-white/70 hover:bg-white/10 hover:text-white"
+            >
+              <Link href="/mis-membresias">
+                <ArrowLeft className="mr-1.5 h-4 w-4" />
+                Mis membresías
+              </Link>
+            </Button>
+          </div>
+
+          <div className="max-w-xl">
+            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+              Elige tu plan y empieza a ahorrar
             </h1>
-            <p className="mt-1 text-small text-muted-foreground">
-              Elige o cambia el plan que mejor se adapte a ti.
+            <p className="mt-2 text-white/70">
+              Beneficios exclusivos de miembro, validados con tu código QR en cada visita.
             </p>
           </div>
-          <Button asChild variant="outline" className="shrink-0">
-            <Link href="/mis-membresias">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Mis membresías
-            </Link>
-          </Button>
+
+          <div className="flex flex-wrap gap-2">
+            {['Activación con QR', 'Cambia cuando quieras', 'Ahorro en cada visita'].map((t) => (
+              <span
+                key={t}
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white/90 ring-1 ring-inset ring-white/15"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" />
+                {t}
+              </span>
+            ))}
+          </div>
         </div>
       </header>
 
@@ -234,16 +258,34 @@ export default async function PlanesPage() {
           </div>
         </div>
       ) : (
-        <PlanesGrid
-          planes={planes}
-          currentPlanId={isActive ? membership!.planId : null}
-          requestedPlanId={membership?.planIdSolicitado ?? null}
-          hasActive={!!isActive}
-          activeMembershipId={membership?.id ?? null}
-          currentPlanPrecio={isActive ? Number(membership!.plan.precio) : null}
-          prefs={cliente.company}
-          bienvenida={bienvenida}
-        />
+        <>
+          <PlanesGrid
+            planes={planes}
+            currentPlanId={isActive ? membership!.planId : null}
+            requestedPlanId={membership?.planIdSolicitado ?? null}
+            hasActive={!!isActive}
+            activeMembershipId={membership?.id ?? null}
+            currentPlanPrecio={isActive ? Number(membership!.plan.precio) : null}
+            prefs={cliente.company}
+            bienvenida={bienvenida}
+          />
+
+          {/* Confianza: reduce la fricción de compra sin agregar ruido. */}
+          <div className="animate-fade-up delay-500 mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+              Pago verificado por el equipo
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+              Tu QR se activa al aprobarse el pago
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+              Cambia de plan cuando quieras
+            </span>
+          </div>
+        </>
       )}
     </main>
   )
