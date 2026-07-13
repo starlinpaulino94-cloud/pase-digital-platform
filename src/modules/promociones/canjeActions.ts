@@ -14,6 +14,7 @@ import { SCANNER_ROLES } from '@/types'
 import { crearTransaccionAplicada } from '@/lib/transactions'
 import type { TicketPayload } from '@/modules/transacciones/actions'
 import { registrarTransicionCompra, validarConsumoCompra } from '@/modules/promociones/compra'
+import { registrarHitoInvitacion } from '@/modules/invitaciones/hitosConversion'
 
 export interface CanjeState {
   error?: string
@@ -179,6 +180,10 @@ export async function confirmarCanjePromocion(
 
       return { restantes, consumida, transaccion }
     })
+
+    // Growth Engine: primer canje de un cliente atribuido a una campaña de
+    // invitación (deduplicado internamente; nunca rompe el canje).
+    await registrarHitoInvitacion(compra.clienteId, 'PRIMER_CANJE')
 
     // Payload del ticket (Receipt Engine) — plantilla de la empresa.
     const [plantilla, promosActivas] = await Promise.all([

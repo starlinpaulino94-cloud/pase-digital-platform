@@ -9,6 +9,7 @@ import {
   actualizarCampanaInvitacion,
   type CampanaState,
 } from '@/modules/invitaciones/adminActions'
+import { CampanaImagenUpload } from '@/components/invitaciones/CampanaImagenUpload'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -214,23 +215,21 @@ export function CampanaInvitacionForm({ existing }: { existing?: Existing }) {
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="imagenUrl">URL de imagen</Label>
-            <Input
-              id="imagenUrl"
+            <Label>Imagen (compartir / OG)</Label>
+            <CampanaImagenUpload
               name="imagenUrl"
-              type="url"
-              placeholder="https://..."
-              defaultValue={existing?.imagenUrl ?? ''}
+              folder={existing?.id ?? 'nueva'}
+              currentUrl={existing?.imagenUrl ?? null}
+              label="Subir imagen"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="bannerUrl">URL de banner</Label>
-            <Input
-              id="bannerUrl"
+            <Label>Banner del landing</Label>
+            <CampanaImagenUpload
               name="bannerUrl"
-              type="url"
-              placeholder="https://..."
-              defaultValue={existing?.bannerUrl ?? ''}
+              folder={existing?.id ?? 'nueva'}
+              currentUrl={existing?.bannerUrl ?? null}
+              label="Subir banner"
             />
           </div>
         </div>

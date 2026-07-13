@@ -17,6 +17,7 @@ import {
   type TransaccionScanInfo,
 } from '@/modules/transacciones/actions'
 import { validarConsumoCompra, registrarTransicionCompra } from '@/modules/promociones/compra'
+import { registrarHitoInvitacion } from '@/modules/invitaciones/hitosConversion'
 
 export interface VisitaReciente {
   id: string
@@ -641,6 +642,10 @@ export async function confirmarVisita(
         payload: { cliente: factsCliente },
       })
     }
+
+    // Growth Engine: primer canje de un cliente atribuido a una campaña de
+    // invitación (deduplicado internamente; nunca rompe la visita).
+    await registrarHitoInvitacion(membership.clienteId, 'PRIMER_CANJE')
 
     // Payload del ticket (Receipt Engine): plantilla de la empresa + snapshot.
     const [plantilla, promosActivas] = await Promise.all([

@@ -14,6 +14,7 @@ import { prisma } from '@/lib/prisma'
 import { emitirEventoEstrategia } from '@/modules/estrategias/eventos'
 import { procesarReferidoCompletado } from '@/modules/referidos/actions'
 import { procesarConversionGrowth } from '@/modules/growth/registro'
+import { registrarHitoInvitacion } from '@/modules/invitaciones/hitosConversion'
 import { periodEnd } from '@/lib/server-utils'
 
 type Meta = { ipAddress: string | null; userAgent: string | null }
@@ -156,6 +157,10 @@ export async function activarMembresia(
     trigger: 'MEMBRESIA',
     planId: membership.planId,
   }).catch(() => {})
+  // Campañas "Invita y Gana": si este cliente llegó por una campaña de
+  // invitación, su primera membresía es un hito del embudo (nunca rompe la
+  // activación).
+  await registrarHitoInvitacion(membership.clienteId, 'MEMBRESIA_ADQUIRIDA')
 
   return {
     ok: true,

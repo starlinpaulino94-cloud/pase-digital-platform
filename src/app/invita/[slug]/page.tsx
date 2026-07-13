@@ -53,6 +53,11 @@ export default async function CampanaLandingPage({ params, searchParams }: Props
   const expirada = campana.estado === 'FINALIZADA' || new Date(campana.fechaFin) < new Date()
   const abierta = campana.estado === 'ACTIVA' && !expirada
 
+  // Embudo: la llegada con ?ref es el clic sobre un enlace compartido;
+  // la vista de landing se registra siempre (con o sin atribución).
+  if (refCode) {
+    await registrarEventoCampana(campana.id, 'ENLACE_ABIERTO', { slug, refCode })
+  }
   await registrarEventoCampana(campana.id, 'LANDING_VISTA', {
     slug,
     ...(refCode ? { refCode } : {}),

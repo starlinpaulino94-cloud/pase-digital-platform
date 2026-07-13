@@ -1,10 +1,11 @@
 'use client'
 
-import { useActionState, useEffect, useState, useCallback } from 'react'
+import { useActionState, useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Gift, Clock, Shield, CheckCircle2, PartyPopper } from 'lucide-react'
 import { toast } from 'sonner'
 import { registrarCliente, type RegistroState } from '@/modules/registro/actions'
+import { registrarEventoCampana } from '@/modules/invitaciones/clienteActions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -69,6 +70,17 @@ export function CampanaLanding({ campana, refCode }: Props) {
   const countdown = useCountdown(campana.fechaFin)
   const [state, action, pending] = useActionState(registrarCliente, init)
   const [registrado, setRegistrado] = useState(false)
+  const inicioTracked = useRef(false)
+
+  // Embudo: el primer contacto con el formulario cuenta como registro
+  // iniciado (una sola vez por vista de landing).
+  const trackInicio = useCallback(() => {
+    if (inicioTracked.current) return
+    inicioTracked.current = true
+    void registrarEventoCampana(campana.id, 'REGISTRO_INICIADO', {
+      ...(refCode ? { refCode } : {}),
+    })
+  }, [campana.id, refCode])
 
   const primary = campana.colorPrimario || '#10b981'
   const secondary = campana.colorSecundario || '#059669'
@@ -230,7 +242,7 @@ export function CampanaLanding({ campana, refCode }: Props) {
               Crea tu cuenta gratis
             </h2>
 
-            <form action={action} className="space-y-4">
+            <form action={action} className="space-y-4" onFocus={trackInicio}>
               <input type="hidden" name="companySlug" value={campana.empresa.slug} />
               <input type="hidden" name="campanaId" value={campana.id} />
               {refCode && <input type="hidden" name="refCode" value={refCode} />}

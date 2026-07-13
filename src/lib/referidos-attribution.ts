@@ -252,7 +252,7 @@ export async function vincularReferido(
         })
 
         if (campanaId) {
-          await incrementarProgresoCampana(campanaId, referente.id, companyId)
+          await incrementarProgresoCampana(campanaId, referente.id, companyId, referidoClienteId)
         }
       }
       return

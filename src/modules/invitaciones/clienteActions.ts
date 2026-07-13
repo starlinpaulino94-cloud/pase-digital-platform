@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
 import { createRateLimiter } from '@/lib/rate-limit'
+import { otorgarBeneficioCampana } from '@/modules/invitaciones/beneficios'
 
 const shareLimiter = createRateLimiter({
   interval: 60 * 60 * 1000,
@@ -146,6 +147,9 @@ export async function reclamarPremio(campanaId: string): Promise<ReclamarPremioR
         },
       }),
     ])
+
+    // Entrega real del premio vía Benefit Engine (grant canjeable + aviso).
+    await otorgarBeneficioCampana({ campanaId, clienteId, rol: 'INVITANTE' })
 
     return { ok: true }
   } catch (e) {
