@@ -9,6 +9,7 @@ import {
   Compass,
   ThumbsUp,
   Flame,
+  Tag,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
@@ -21,11 +22,14 @@ import {
 import { PromotionCard } from '@/components/public/PromotionCard'
 import { CompanyCard } from '@/components/public/CompanyCard'
 import { SavePromoButton } from '@/components/cliente/SavePromoButton'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import type { PromotionPublic } from '@/modules/marketplace/types'
 
 export const dynamic = 'force-dynamic'
+export const metadata = {
+  title: 'Promociones',
+  description: 'Ofertas y beneficios disponibles para ti',
+}
 
 function PromoGridConGuardar({
   promociones,
@@ -35,7 +39,7 @@ function PromoGridConGuardar({
   guardadasIds: Set<string>
 }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {promociones.map((p) => (
         <div key={p.id} className="relative">
           <PromotionCard promotion={p} hrefBase="/cliente/promociones" />
@@ -48,28 +52,43 @@ function PromoGridConGuardar({
 
 function SeccionPromos({
   icon: Icon,
+  iconBg,
   iconClass,
   titulo,
   descripcion,
+  count,
   promociones,
   guardadasIds,
 }: {
   icon: LucideIcon
+  iconBg: string
   iconClass: string
   titulo: string
   descripcion?: string
+  count?: number
   promociones: PromotionPublic[]
   guardadasIds: Set<string>
 }) {
   if (promociones.length === 0) return null
   return (
     <section className="space-y-4">
-      <div>
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <Icon className={`h-5 w-5 ${iconClass}`} />
-          {titulo}
-        </h2>
-        {descripcion && <p className="text-sm text-muted-foreground">{descripcion}</p>}
+      <div className="flex items-center gap-3">
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
+          <Icon className={`h-4.5 w-4.5 ${iconClass}`} />
+        </span>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-bold text-foreground">{titulo}</h2>
+            {count != null && (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+                {count}
+              </span>
+            )}
+          </div>
+          {descripcion && (
+            <p className="text-sm text-muted-foreground">{descripcion}</p>
+          )}
+        </div>
       </div>
       <PromoGridConGuardar promociones={promociones} guardadasIds={guardadasIds} />
     </section>
@@ -103,32 +122,54 @@ export default async function PromocionesDisponiblesPage() {
     feed.recomendadas.length === 0
 
   return (
-    <div className="space-y-10">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Promociones para ti</h1>
-        <p className="text-muted-foreground">
-          Primero lo de las empresas que sigues; después, lo mejor del
-          marketplace.
-        </p>
-      </div>
+    <main className="container max-w-5xl py-8">
+      {/* ── Cabecera ──────────────────────────────────────────────────────── */}
+      <header className="mb-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+              Beneficios
+            </p>
+            <h1 className="mt-1.5 text-h1 tracking-tight text-foreground">
+              Promociones para ti
+            </h1>
+            <p className="mt-1 text-small text-muted-foreground">
+              Primero lo de tus empresas favoritas; después, lo mejor del marketplace.
+            </p>
+          </div>
+          <Button asChild variant="outline" className="shrink-0">
+            <Link href="/cliente/explorar">
+              <Compass className="mr-2 h-4 w-4" />
+              Explorar empresas
+            </Link>
+          </Button>
+        </div>
+      </header>
 
       {loadError || feed == null ? (
-        <Card className="border-destructive/30 bg-destructive/5">
-          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-            <AlertCircle className="h-8 w-8 text-destructive" />
-            <p className="font-medium text-foreground">No pudimos cargar las promociones.</p>
-            <Button asChild variant="outline">
-              <Link href="/cliente/promociones">Reintentar</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center gap-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center">
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10">
+            <AlertCircle className="h-7 w-7 text-destructive" />
+          </span>
+          <div>
+            <p className="font-semibold text-foreground">No pudimos cargar las promociones.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Intenta de nuevo en unos momentos.
+            </p>
+          </div>
+          <Button asChild variant="outline">
+            <Link href="/cliente/promociones">Reintentar</Link>
+          </Button>
+        </div>
       ) : (
-        <>
+        <div className="space-y-10">
           {/* Guardadas */}
           <SeccionPromos
             icon={Heart}
+            iconBg="bg-destructive/10"
             iconClass="fill-rose-500 text-destructive"
-            titulo="Mis promociones guardadas"
+            titulo="Guardadas"
+            count={guardadas.length}
             promociones={guardadas}
             guardadasIds={guardadasIds}
           />
@@ -136,9 +177,11 @@ export default async function PromocionesDisponiblesPage() {
           {/* Empresas que sigo */}
           <SeccionPromos
             icon={Star}
+            iconBg="bg-warning/12"
             iconClass="fill-amber-400 text-warning-foreground"
             titulo="De empresas que sigues"
             descripcion="Tus empresas favoritas aparecen primero."
+            count={feed.seguidas.length}
             promociones={feed.seguidas}
             guardadasIds={guardadasIds}
           />
@@ -146,8 +189,10 @@ export default async function PromocionesDisponiblesPage() {
           {/* Destacadas */}
           <SeccionPromos
             icon={Flame}
+            iconBg="bg-warning/12"
             iconClass="text-warning-foreground"
-            titulo="Promociones destacadas"
+            titulo="Destacadas"
+            count={feed.destacadas.length}
             promociones={feed.destacadas}
             guardadasIds={guardadasIds}
           />
@@ -155,9 +200,11 @@ export default async function PromocionesDisponiblesPage() {
           {/* Nuevas */}
           <SeccionPromos
             icon={Sparkles}
+            iconBg="bg-primary/10"
             iconClass="text-primary"
-            titulo="Nuevas promociones"
+            titulo="Nuevas"
             descripcion="Publicadas en los últimos 14 días."
+            count={feed.nuevas.length}
             promociones={feed.nuevas}
             guardadasIds={guardadasIds}
           />
@@ -165,9 +212,11 @@ export default async function PromocionesDisponiblesPage() {
           {/* Expiran pronto */}
           <SeccionPromos
             icon={Clock}
+            iconBg="bg-destructive/10"
             iconClass="text-destructive"
             titulo="Expiran pronto"
             descripcion="Aprovéchalas antes de que venzan."
+            count={feed.expiranPronto.length}
             promociones={feed.expiranPronto}
             guardadasIds={guardadasIds}
           />
@@ -175,56 +224,69 @@ export default async function PromocionesDisponiblesPage() {
           {/* Recomendadas */}
           <SeccionPromos
             icon={ThumbsUp}
+            iconBg="bg-primary/10"
             iconClass="text-primary"
             titulo="Recomendadas para ti"
             descripcion="De empresas parecidas a las que sigues."
+            count={feed.recomendadas.length}
             promociones={feed.recomendadas}
             guardadasIds={guardadasIds}
           />
 
           {/* Sin promociones */}
           {sinPromos && guardadas.length === 0 && (
-            <Card>
-              <CardContent className="py-16 text-center text-muted-foreground">
-                <Gift className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
-                <p className="font-medium">No hay promociones activas por ahora</p>
-                <p className="text-sm">
-                  Sigue empresas para recibir sus promociones apenas se
-                  publiquen.
-                </p>
-                <Button asChild variant="outline" className="mt-4">
+            <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card p-10 text-center shadow-card">
+              <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-info/10 blur-3xl" />
+              <div className="relative mx-auto flex max-w-md flex-col items-center gap-5">
+                <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+                  <Tag className="h-8 w-8 text-muted-foreground" />
+                </span>
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">
+                    Sin promociones activas
+                  </h2>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
+                    Sigue empresas para recibir sus promociones apenas se publiquen.
+                  </p>
+                </div>
+                <Button asChild size="lg">
                   <Link href="/cliente/explorar">Explorar empresas</Link>
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {/* Descubrir empresas */}
           {feed.empresasRecomendadas.length > 0 && (
             <section className="space-y-4">
               <div className="flex flex-wrap items-end justify-between gap-3">
-                <div>
-                  <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-                    <Compass className="h-5 w-5 text-primary" />
-                    Descubrir empresas
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    También podría interesarte seguirlas.
-                  </p>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                    <Compass className="h-4.5 w-4.5 text-primary" />
+                  </span>
+                  <div>
+                    <h2 className="text-base font-bold text-foreground">
+                      Descubrir empresas
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      También podrían interesarte.
+                    </p>
+                  </div>
                 </div>
                 <Button asChild variant="outline" size="sm">
                   <Link href="/cliente/explorar">Ver todas</Link>
                 </Button>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 {feed.empresasRecomendadas.map((c) => (
                   <CompanyCard key={c.id} company={c} hrefBase="/cliente/empresas" />
                 ))}
               </div>
             </section>
           )}
-        </>
+        </div>
       )}
-    </div>
+    </main>
   )
 }
