@@ -12,9 +12,8 @@ import { HidScanBuffer, esCaracterImprimible } from '../src/lib/scanner/hid'
  *  termina con Enter. Devuelve el resultado del último push (el de Enter). */
 function escanear(buffer: HidScanBuffer, code: string, interval: number, t0 = 1000) {
   let t = t0
-  let res: { code: string; fromReader: boolean } | null = null
   for (const ch of code) {
-    res = buffer.push(ch, t)
+    buffer.push(ch, t)
     t += interval
   }
   return buffer.push('Enter', t)

@@ -22,7 +22,7 @@ function slugify(text: string): string {
 }
 
 async function uniqueSlug(base: string): Promise<string> {
-  let slug = slugify(base)
+  const slug = slugify(base)
   let attempt = 0
   while (true) {
     const candidate = attempt === 0 ? slug : `${slug}-${attempt}`

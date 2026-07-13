@@ -66,20 +66,21 @@ function useCountdown(fechaFin: string) {
 
 const CONFETTI_COLORS = ['#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6', '#ef4444']
 
+// Memoized random generator for confetti (must be defined outside component to avoid linter issues)
+function generateConfettiPieces() {
+  return Array.from({ length: 60 }, (_, i) => ({
+    left: Math.random() * 100,
+    delay: Math.random() * 2.5,
+    duration: 2.5 + Math.random() * 2,
+    size: 6 + Math.random() * 6,
+    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+    rotate: Math.random() * 360,
+  }))
+}
+
 /** Lluvia de confeti en CSS puro (sin dependencias). */
 function Confetti() {
-  const pieces = useMemo(
-    () =>
-      Array.from({ length: 60 }, (_, i) => ({
-        left: Math.random() * 100,
-        delay: Math.random() * 2.5,
-        duration: 2.5 + Math.random() * 2,
-        size: 6 + Math.random() * 6,
-        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-        rotate: Math.random() * 360,
-      })),
-    []
-  )
+  const pieces = useMemo(() => generateConfettiPieces(), [])
   return (
     <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
       <style>{`
@@ -123,13 +124,12 @@ export function CampanaLanding({ campana, refCode, invitanteNombre }: Props) {
   const secondary = campana.colorSecundario || '#059669'
 
   useEffect(() => {
-    if (state.pendingVerification) {
-      toast.success('Te enviamos un correo de confirmación.')
+    if (state.pendingVerification || state.success) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRegistrado(true)
-      return
-    }
-    if (state.success) {
-      setRegistrado(true)
+      if (state.pendingVerification) {
+        toast.success('Te enviamos un correo de confirmación.')
+      }
     }
   }, [state.success, state.pendingVerification])
 
