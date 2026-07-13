@@ -1,9 +1,17 @@
 {
   "name": "@membego/ui",
   "version": "0.1.0",
-  "private": true,
   "description": "Design system compartido de MembeGo (web y futura app móvil).",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/starlinpaulino94-cloud/membego-app.git",
+    "directory": "packages/ui"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "files": ["src", "README.md"],
   "exports": {
     "./cn": "./src/cn.ts",
     "./ui/*": "./src/ui/*.tsx"

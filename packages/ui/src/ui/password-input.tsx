@@ -2,8 +2,8 @@
 
 import * as React from 'react'
 import { Eye, EyeOff } from 'lucide-react'
-import { cn } from '@membego/ui/cn'
-import { Input } from '@/components/ui/input'
+import { cn } from '../cn'
+import { Input } from './input'
 
 /**
  * Input de contraseña con toggle mostrar/ocultar. Sustituye a los

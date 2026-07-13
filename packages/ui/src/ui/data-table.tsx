@@ -13,9 +13,9 @@ import {
   type ColumnFiltersState,
 } from '@tanstack/react-table'
 import { Search, ChevronLeft, ChevronRight, Download, ChevronsLeft, ChevronsRight } from 'lucide-react'
-import { cn } from '@membego/ui/cn'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { cn } from '../cn'
+import { Button } from './button'
+import { Input } from './input'
 
 export interface DataTableProps<TData extends Record<string, any>, TValue> {
   columns: ColumnDef<TData, TValue>[]

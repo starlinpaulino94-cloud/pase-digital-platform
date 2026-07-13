@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react'
 import { AlertTriangle, CheckCircle2, Info, XCircle } from 'lucide-react'
-import { cn } from '@membego/ui/cn'
+import { cn } from '../cn'
 
 type StatusVariant = 'success' | 'warning' | 'info' | 'destructive'
 
