@@ -1,12 +1,22 @@
 import Link from 'next/link'
-import { CheckCircle2, Clock, ArrowRightLeft, CreditCard } from 'lucide-react'
+import {
+  CheckCircle2,
+  Clock,
+  ArrowRightLeft,
+  CreditCard,
+  ArrowLeft,
+  Sparkles,
+} from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
 import { prisma } from '@/lib/prisma'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PlanesGrid, type PlanItem } from '@/components/cliente/PlanesGrid'
 
 export const dynamic = 'force-dynamic'
+export const metadata = {
+  title: 'Planes',
+  description: 'Elige o cambia tu plan de membresía',
+}
 
 const PENDIENTE_PAGO_ESTADOS = ['PENDIENTE', 'PENDIENTE_PAGO', 'RECHAZADA']
 
@@ -14,7 +24,11 @@ export default async function PlanesPage() {
   const user = await requireRole('CLIENTE')
 
   if (!user.metadata.clienteId) {
-    return <p className="text-muted-foreground">Tu cuenta no está completamente configurada.</p>
+    return (
+      <main className="container max-w-5xl py-8">
+        <p className="text-muted-foreground">Tu cuenta no está completamente configurada.</p>
+      </main>
+    )
   }
 
   let cliente
@@ -45,10 +59,20 @@ export default async function PlanesPage() {
     })
   } catch (e) {
     console.error('[cliente-planes]', e)
-    return <p className="text-muted-foreground">No pudimos cargar tu información. Intenta más tarde.</p>
+    return (
+      <main className="container max-w-5xl py-8">
+        <p className="text-muted-foreground">No pudimos cargar tu información. Intenta más tarde.</p>
+      </main>
+    )
   }
 
-  if (!cliente) return <p className="text-muted-foreground">No se encontró tu información.</p>
+  if (!cliente) {
+    return (
+      <main className="container max-w-5xl py-8">
+        <p className="text-muted-foreground">No se encontró tu información.</p>
+      </main>
+    )
+  }
 
   const planesRaw = await prisma.plan
     .findMany({
@@ -77,8 +101,6 @@ export default async function PlanesPage() {
 
   const membership = cliente.memberships[0] ?? null
   const isActive = membership?.estado === 'ACTIVA'
-  // O-13: el beneficio de bienvenida aplica solo si el cliente nunca activó
-  // una membresía en esta empresa (fechaInicio null = jamás activada).
   const elegibleBienvenida = !membership || membership.fechaInicio == null
   const bienvenida =
     elegibleBienvenida &&
@@ -94,95 +116,123 @@ export default async function PlanesPage() {
   const pendingChange = isActive && membership?.planIdSolicitado ? membership : null
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Planes disponibles</h1>
-        <p className="mt-1 text-muted-foreground">
-          Elige o cambia el plan que mejor se adapte a ti en {cliente.company.name}
-        </p>
-      </div>
+    <main className="container max-w-5xl py-8">
+      {/* ── Cabecera ──────────────────────────────────────────────────────── */}
+      <header className="mb-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+              {cliente.company.name}
+            </p>
+            <h1 className="mt-1.5 text-h1 tracking-tight text-foreground">
+              Planes disponibles
+            </h1>
+            <p className="mt-1 text-small text-muted-foreground">
+              Elige o cambia el plan que mejor se adapte a ti.
+            </p>
+          </div>
+          <Button asChild variant="outline" className="shrink-0">
+            <Link href="/mis-membresias">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Mis membresías
+            </Link>
+          </Button>
+        </div>
+      </header>
 
-      {/* Banner: pago pendiente */}
-      {pendingPayment && (
-        <Card className="border-warning/30 bg-warning/15">
-          <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+      {/* ── Banners de estado ─────────────────────────────────────────────── */}
+      <div className="mb-8 space-y-3">
+        {pendingPayment && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-warning/25 bg-warning/8 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
-              <Clock className="mt-0.5 h-5 w-5 text-warning-foreground" />
-              <div>
-                <p className="font-medium text-warning-foreground">
-                  Tienes el plan {pendingPayment.plan.nombre} pendiente de pago
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-warning/15">
+                <Clock className="h-4.5 w-4.5 text-warning-foreground" />
+              </span>
+              <div className="min-w-0">
+                <p className="font-semibold text-foreground">
+                  Plan {pendingPayment.plan.nombre} pendiente de pago
                 </p>
-                <p className="text-sm text-warning-foreground">
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   {pendingPayment.estado === 'RECHAZADA'
                     ? 'Tu comprobante fue rechazado. Envía uno nuevo para activarlo.'
                     : 'Sube tu comprobante para que el equipo active tu membresía.'}
                 </p>
               </div>
             </div>
-            <Button asChild className="bg-warning hover:bg-warning">
+            <Button asChild size="sm" className="shrink-0 bg-warning-foreground hover:bg-warning-foreground/90">
               <Link href={`/membresia/${pendingPayment.id}`}>
                 <CreditCard className="mr-2 h-4 w-4" /> Completar pago
               </Link>
             </Button>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-      {/* Banner: cambio de plan solicitado */}
-      {pendingChange && (
-        <Card className="border-info/30 bg-info/10">
-          <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+        {pendingChange && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
-              <ArrowRightLeft className="mt-0.5 h-5 w-5 text-primary" />
-              <div>
-                <p className="font-medium text-info">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                <ArrowRightLeft className="h-4.5 w-4.5 text-primary" />
+              </span>
+              <div className="min-w-0">
+                <p className="font-semibold text-foreground">
                   Cambio a {pendingChange.planSolicitado?.nombre} solicitado
                 </p>
-                <p className="text-sm text-info">
-                  Tu plan actual sigue activo. Sube el comprobante del nuevo plan para
-                  que el equipo lo apruebe.
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Tu plan actual sigue activo. Sube el comprobante del nuevo plan para completar el cambio.
                 </p>
               </div>
             </div>
-            <Button asChild className="bg-primary hover:bg-info/100">
+            <Button asChild size="sm" variant="outline" className="shrink-0">
               <Link href={`/membresia/${pendingChange.id}`}>
                 <CreditCard className="mr-2 h-4 w-4" /> Subir comprobante
               </Link>
             </Button>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-      {/* Banner: membresía activa sin cambios */}
-      {isActive && !pendingChange && (
-        <Card className="border-success/25 bg-success/10">
-          <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+        {isActive && !pendingChange && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-success/20 bg-success/5 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 text-success" />
-              <div>
-                <p className="font-medium text-success">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success/12">
+                <CheckCircle2 className="h-4.5 w-4.5 text-success" />
+              </span>
+              <div className="min-w-0">
+                <p className="font-semibold text-foreground">
                   Tu plan {membership?.plan.nombre} está activo
                 </p>
-                <p className="text-sm text-success">
-                  Puedes cambiar a otro plan cuando quieras; el actual sigue vigente
-                  hasta que se apruebe el cambio.
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Puedes cambiar a otro plan cuando quieras; el actual sigue vigente hasta que se apruebe el cambio.
                 </p>
               </div>
             </div>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" size="sm" className="shrink-0">
               <Link href="/mis-membresias">Ver mi membresía</Link>
             </Button>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
+      </div>
 
-      {/* Grid de planes */}
+      {/* ── Grid de planes ────────────────────────────────────────────────── */}
       {planes.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            No hay planes disponibles en este momento.
-          </CardContent>
-        </Card>
+        <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card p-10 text-center shadow-card">
+          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
+          <div className="relative mx-auto flex max-w-md flex-col items-center gap-5">
+            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+              <Sparkles className="h-8 w-8 text-muted-foreground" />
+            </span>
+            <div>
+              <h2 className="text-xl font-bold text-foreground">
+                Sin planes disponibles
+              </h2>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                Esta empresa aún no tiene planes publicados. Vuelve pronto.
+              </p>
+            </div>
+            <Button asChild variant="outline">
+              <Link href="/mis-membresias">Volver a mis membresías</Link>
+            </Button>
+          </div>
+        </div>
       ) : (
         <PlanesGrid
           planes={planes}
@@ -195,6 +245,6 @@ export default async function PlanesPage() {
           bienvenida={bienvenida}
         />
       )}
-    </div>
+    </main>
   )
 }
