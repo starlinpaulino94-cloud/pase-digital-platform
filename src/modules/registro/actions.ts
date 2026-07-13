@@ -7,6 +7,7 @@ import { registerLimiter } from '@/lib/rate-limit'
 import { getRequestMeta } from '@/lib/server-utils'
 import { vincularReferido } from '@/lib/referidos-attribution'
 import { ensureCodigoCorto } from '@/lib/referidos'
+import { otorgarRegaloBienvenida } from '@/modules/invitaciones/beneficios'
 import { procesarRegistroGrowth } from '@/modules/growth/registro'
 import { emitirEventoEstrategia } from '@/modules/estrategias/eventos'
 import { TERMS_VERSION } from '@/lib/legal'
@@ -198,6 +199,13 @@ export async function registrarCliente(
         campanaInvitacionId,
       })
 
+      // Regalo de bienvenida de la campaña: garantizado para TODO registro
+      // que venga de ella (con o sin código de amigo). Idempotente con la
+      // entrega del motor de referidos.
+      if (campanaInvitacionId) {
+        await otorgarRegaloBienvenida(campanaInvitacionId, cliente.id, company.id)
+      }
+
       await emitirEventoEstrategia({
         companyId: company.id,
         type: 'cliente.registrado',
@@ -309,6 +317,13 @@ export async function registrarCliente(
     await vincularReferido(refCode, company.id, result.cliente.id, ipAddress, {
       campanaInvitacionId,
     })
+
+    // Regalo de bienvenida de la campaña: garantizado para TODO registro que
+    // venga de ella (con o sin código de amigo). Idempotente con la entrega
+    // del motor de referidos.
+    if (campanaInvitacionId) {
+      await otorgarRegaloBienvenida(campanaInvitacionId, result.cliente.id, company.id)
+    }
 
     // Growth Engine 3.0: atribución al enlace + beneficio de bienvenida +
     // reglas del evento REGISTRO (no bloquea el registro si falla).

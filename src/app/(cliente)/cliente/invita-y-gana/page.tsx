@@ -66,7 +66,6 @@ export default async function InvitaYGanaPage() {
   const inviteUrl = absoluteUrl(`/invitar/${codigoCorto}`)
 
   const beneficioInvitado = campana.beneficioInvitado as { descripcion?: string } | null
-  const beneficioInvitante = campana.beneficioInvitante as { descripcion?: string } | null
   const regalo = beneficioInvitado?.descripcion || 'un regalo de bienvenida'
   // El admin puede escribir un párrafo como descripción; para el mensaje de
   // WhatsApp y los chips basta la primera frase (recortada).
@@ -115,35 +114,24 @@ export default async function InvitaYGanaPage() {
             </p>
           </div>
 
-          {/* Beneficios: chips compactos, sin párrafos largos */}
-          <div className="grid gap-2 sm:grid-cols-2">
-            <div className="animate-fade-up delay-100 flex items-center gap-3 rounded-2xl border border-emerald-200/80 bg-white p-3 text-left shadow-sm">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100">
-                <Gift className="h-5 w-5 text-emerald-600" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
-                  Tus amigos reciben
-                </p>
-                <p className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
-                  {regaloCorto}
-                </p>
-              </div>
-            </div>
-            <div className="animate-fade-up delay-150 flex items-center gap-3 rounded-2xl border border-amber-200/80 bg-white p-3 text-left shadow-sm">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100">
-                <Trophy className="h-5 w-5 text-amber-600" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
-                  Tú obtienes
-                </p>
-                <p className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
-                  {beneficioInvitante?.descripcion || 'Recompensas por cada registro'}
-                </p>
-              </div>
+          {/* Beneficio: un solo mensaje claro, sin límites ni condiciones. */}
+          <div className="animate-fade-up delay-100 mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-emerald-200/80 bg-white p-4 text-left shadow-sm">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100">
+              <Gift className="h-5.5 w-5.5 text-emerald-600" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                Tus amigos reciben al registrarse
+              </p>
+              <p className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+                {regaloCorto}
+              </p>
             </div>
           </div>
+
+          <p className="animate-fade-up delay-150 text-xs font-medium text-muted-foreground">
+            Invita a todos los que quieras — sin límite de invitaciones.
+          </p>
 
           <div className="animate-fade-up delay-200">
             <InvitaShareButton

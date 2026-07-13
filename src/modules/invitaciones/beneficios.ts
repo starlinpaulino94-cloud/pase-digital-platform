@@ -180,3 +180,41 @@ async function otorgarComoBenefitGrant(
   })
   return true
 }
+
+/**
+ * MVP "Invita y Gana" · Regalo de bienvenida GARANTIZADO para todo registro
+ * que venga de una campaña, CON o SIN código de amigo.
+ *
+ * Antes el regalo solo se entregaba dentro de la atribución de referidos
+ * (vincularReferido → motorProgreso), así que quien se registraba con el
+ * enlace del NEGOCIO (sin ref) —o quedaba marcado sospechoso por registrarse
+ * desde la red del local— no recibía lo prometido en la landing.
+ *
+ * Valida que la campaña exista, sea de la MISMA empresa del registro, esté
+ * ACTIVA y vigente (el campanaId viene de un hidden del formulario, es
+ * manipulable). La entrega en sí es idempotente. Nunca lanza.
+ */
+export async function otorgarRegaloBienvenida(
+  campanaId: string,
+  clienteId: string,
+  companyId: string
+): Promise<void> {
+  try {
+    const ahora = new Date()
+    const campana = await prisma.campanaInvitacion.findFirst({
+      where: {
+        id: campanaId,
+        companyId,
+        estado: 'ACTIVA',
+        fechaInicio: { lte: ahora },
+        fechaFin: { gte: ahora },
+      },
+      select: { id: true },
+    })
+    if (!campana) return
+
+    await otorgarBeneficioCampana({ campanaId, clienteId, rol: 'INVITADO' })
+  } catch (e) {
+    console.error('[invitaciones] otorgarRegaloBienvenida error:', e)
+  }
+}
