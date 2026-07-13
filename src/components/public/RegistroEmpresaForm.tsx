@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Loader2, Rocket } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -19,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { landingUrlFor } from '@/lib/site'
 
 const init: RegistroEmpresaState = {}
 
@@ -127,13 +127,13 @@ export function RegistroEmpresaForm() {
         <input type="checkbox" name="terminos" required className="mt-0.5 h-4 w-4 rounded border-border" />
         <span>
           Acepto los{' '}
-          <a href={landingUrlFor('/terms')} target="_blank" className="text-primary underline">
+          <Link href="/terms" target="_blank" className="text-primary underline">
             términos y condiciones
-          </a>{' '}
+          </Link>{' '}
           y la{' '}
-          <a href={landingUrlFor('/privacy')} target="_blank" className="text-primary underline">
+          <Link href="/privacy" target="_blank" className="text-primary underline">
             política de privacidad
-          </a>
+          </Link>
           .
         </span>
       </label>

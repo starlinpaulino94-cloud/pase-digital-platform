@@ -14,6 +14,16 @@ const nextConfig: NextConfig = {
     ],
   },
   transpilePackages: ['@membego/ui'],
+  redirects: async () => {
+    return [
+      // Alias amigable del perfil público (membego.com/empresa/slug).
+      {
+        source: '/empresa/:slug*',
+        destination: '/empresas/:slug*',
+        permanent: true,
+      },
+    ]
+  },
   headers: async () => {
     return [
       {
