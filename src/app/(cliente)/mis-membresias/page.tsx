@@ -22,6 +22,8 @@ import { getMomentosVivos, type MomentosVivos as MomentosData } from '@/modules/
 import { getCampanasVivas, type CampanaViva } from '@/modules/engagement/campanas'
 import { getPruebaSocial, type PruebaSocial as PruebaSocialData } from '@/modules/engagement/pruebaSocial'
 import { getGamificacion, type GamificacionData } from '@/modules/engagement/gamificacion'
+import { getEngagementConfig } from '@/modules/engagement/config'
+import { normalizeEngagementConfig, type EngagementConfig } from '@/lib/engagementConfig'
 import { MomentosVivos } from '@/components/engagement/MomentosVivos'
 import { CampanasVivas } from '@/components/engagement/CampanasVivas'
 import { PruebaSocial } from '@/components/engagement/PruebaSocial'
@@ -124,14 +126,19 @@ export default async function MisMembresias() {
   let campanas: CampanaViva[] = []
   let pruebaSocial: PruebaSocialData | null = null
   let gamificacion: GamificacionData | null = null
+  // Fase 7: personalización del motor por empresa (color + módulos visibles).
+  let engagement: EngagementConfig = normalizeEngagementConfig(null, null)
   if (user.metadata.clienteId && user.metadata.companyId) {
-    ;[momentos, campanas, pruebaSocial, gamificacion] = await Promise.all([
+    ;[momentos, campanas, pruebaSocial, gamificacion, engagement] = await Promise.all([
       getMomentosVivos(user.metadata.clienteId, user.metadata.companyId).catch(
         () => ({ nombre: null, momentos: [] }) as MomentosData
       ),
       getCampanasVivas(user.metadata.companyId).catch(() => []),
       getPruebaSocial(user.metadata.companyId).catch(() => null),
       getGamificacion(user.metadata.clienteId, user.metadata.companyId).catch(() => null),
+      getEngagementConfig(user.metadata.companyId).catch(() =>
+        normalizeEngagementConfig(null, null)
+      ),
     ])
   }
 
@@ -240,18 +247,20 @@ export default async function MisMembresias() {
         )}
       </header>
 
-      {/* Engagement Engine · Fase 2: campañas de marketing vivas (banner + contador) */}
-      {!loadError && <CampanasVivas campanas={campanas} />}
+      {/* Engagement Engine · Fase 2/5: campañas vivas (banner rotativo) — Fase 7: opcional */}
+      {!loadError && engagement.campanas && <CampanasVivas campanas={campanas} />}
 
-      {/* Engagement Engine · Fase 6A: gamificación (nivel, puntos, logros reales) */}
-      {!loadError && gamificacion && <Gamificacion data={gamificacion} />}
+      {/* Engagement Engine · Fase 6: gamificación + ruleta — Fase 7: opcional */}
+      {!loadError && engagement.gamificacion && gamificacion && (
+        <Gamificacion data={gamificacion} color={engagement.color} />
+      )}
 
       {/* Engagement Engine · Momentos vivos (datos reales, con urgencia) */}
       {!loadError && <MomentosVivos nombre={momentos.nombre} momentos={momentos.momentos} />}
 
-      {/* Engagement Engine · Fase 4: prueba social (datos reales) */}
-      {!loadError && mostrarPruebaSocial && pruebaSocial && (
-        <PruebaSocial data={pruebaSocial} />
+      {/* Engagement Engine · Fase 4: prueba social — Fase 7: opcional */}
+      {!loadError && engagement.pruebaSocial && mostrarPruebaSocial && pruebaSocial && (
+        <PruebaSocial data={pruebaSocial} color={engagement.color} />
       )}
 
       {/* Onboarding B2C: solo la primera visita */}
@@ -307,7 +316,7 @@ export default async function MisMembresias() {
               </div>
             </div>
           </div>
-          {feed && <CarrouselesHome feed={feed} />}
+          {feed && engagement.carruseles && <CarrouselesHome feed={feed} />}
           <FeedNovedades novedades={novedades} />
         </div>
       ) : (
@@ -363,7 +372,7 @@ export default async function MisMembresias() {
           </section>
 
           {/* ── Carruseles tipo Netflix (Engagement Engine · Fase 3) ──────── */}
-          {feed && <CarrouselesHome feed={feed} />}
+          {feed && engagement.carruseles && <CarrouselesHome feed={feed} />}
 
           {/* ── Novedades ─────────────────────────────────────────────────── */}
           <FeedNovedades novedades={novedades} />

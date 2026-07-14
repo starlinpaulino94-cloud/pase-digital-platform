@@ -64,8 +64,9 @@ function LogroBadge({ logro }: { logro: LogroData }) {
  * Muestra nivel, puntos, progreso al siguiente nivel y logros. Los puntos se
  * derivan de hechos reales, así que la tarjeta siempre es honesta.
  */
-export function Gamificacion({ data }: { data: GamificacionData }) {
+export function Gamificacion({ data, color }: { data: GamificacionData; color?: string }) {
   const { nivel, puntos, siguiente, progreso, faltan, logros } = data
+  const accent = color || '#0ea5e9'
 
   return (
     <div className="mb-6 overflow-hidden rounded-2xl border border-border/70 bg-card shadow-card">
@@ -128,9 +129,13 @@ export function Gamificacion({ data }: { data: GamificacionData }) {
       {data.hayRuleta && (
         <Link
           href="/cliente/ruleta"
-          className="group flex items-center gap-3 border-t border-border/60 bg-gradient-to-r from-primary/5 to-transparent px-4 py-3 transition hover:from-primary/10"
+          className="group flex items-center gap-3 border-t border-border/60 px-4 py-3 transition"
+          style={{ backgroundColor: `${accent}0f` }}
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <span
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+            style={{ backgroundColor: `${accent}1f`, color: accent }}
+          >
             <RotateCw className="h-5 w-5" />
           </span>
           <span className="min-w-0 flex-1">

@@ -120,6 +120,7 @@ const ADMIN_NAV: NavGroup[] = [
     label: 'Empresa',
     items: [
       { href: '/admin/perfil', label: 'Perfil público', icon: Store },
+      { href: '/admin/personalizacion', label: 'Personalización', icon: Sparkles },
       { href: '/admin/metodos-pago', label: 'Métodos de pago', icon: Landmark },
       { href: '/admin/empleados', label: 'Empleados', icon: UserCog },
     ],

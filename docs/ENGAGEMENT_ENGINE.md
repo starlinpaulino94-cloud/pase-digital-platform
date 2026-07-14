@@ -93,8 +93,23 @@ solo el gasto se registra (`RuletaJugada`), así que saldo = ganados − gastado
 Rasca-y-gana (reusa el catálogo de premios), rachas por visita, ranking entre
 clientes, retos/misiones, calendario de recompensas.
 
-## Fase 7 — Personalización por empresa (schema)
-Tema, colores, animaciones, tipos de campaña, prioridad, banners por empresa.
+## Fase 7 — Personalización por empresa  ✅
+Cada empresa controla el color de acento y qué módulos del motor ve su cliente.
+Los tipos de campaña, prioridad y banners ya eran por empresa (Fase 2/5); aquí
+se añade la configuración a nivel de experiencia.
+- Schema: `Company.engagementConfig Json?` (un solo campo). Migración
+  `20260714_company_engagement_config` (ADD COLUMN JSONB).
+- `lib/engagementConfig.ts` — normaliza el JSON a { color, gamificacion,
+  pruebaSocial, campanas, carruseles } con defaults (todo activo, color =
+  colorPrimario de la empresa).
+- `modules/engagement/config.ts` — `getEngagementConfig(companyId)`.
+- Home: cada bloque del motor se muestra según el toggle y usa el color de
+  acento (gamificación/ruleta y prueba social).
+- Admin `/admin/personalizacion` — color de acento + interruptores por módulo.
+
+### Pendiente (personalización profunda)
+Re-tematizar toda la app por empresa (colores globales, estilos de animación),
+tipografías y plantillas de banner por empresa.
 
 ## Fase 8 — Popups inteligentes + Sistema de eventos + Recomendaciones
 Popups importantes (no molestos) disparados por eventos del motor

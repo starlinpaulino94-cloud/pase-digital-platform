@@ -27,9 +27,10 @@ function compact(n: number): string {
  * Muestra miembros, registros de la semana y beneficios reclamados, con un
  * "ticker" en vivo de la actividad reciente. Respeta prefers-reduced-motion.
  */
-export function PruebaSocial({ data }: { data: PruebaSocialData }) {
+export function PruebaSocial({ data, color }: { data: PruebaSocialData; color?: string }) {
   const reduced = useReducedMotion()
   const { recientes } = data
+  const accent = color || '#0ea5e9'
   const [idx, setIdx] = useState(0)
 
   // Rota la actividad reciente cada ~3.5s (salvo movimiento reducido).
@@ -63,9 +64,9 @@ export function PruebaSocial({ data }: { data: PruebaSocialData }) {
             <p className="truncate text-sm text-foreground">
               <span className="inline-flex items-center gap-1 font-semibold">
                 {actual.tipo === 'beneficio' ? (
-                  <Gift className="h-3.5 w-3.5 text-primary" />
+                  <Gift className="h-3.5 w-3.5" style={{ color: accent }} />
                 ) : (
-                  <UserPlus className="h-3.5 w-3.5 text-primary" />
+                  <UserPlus className="h-3.5 w-3.5" style={{ color: accent }} />
                 )}
                 {actual.nombre}
               </span>{' '}
@@ -83,7 +84,7 @@ export function PruebaSocial({ data }: { data: PruebaSocialData }) {
           {stats.map((s) => (
             <div key={s.label} className="flex flex-col items-center gap-0.5 px-2 py-3 text-center">
               <span className="flex items-center gap-1.5 text-lg font-extrabold text-foreground">
-                <s.icon className="h-4 w-4 text-primary" />
+                <s.icon className="h-4 w-4" style={{ color: accent }} />
                 {s.value}
               </span>
               <span className="text-[11px] leading-tight text-muted-foreground">{s.label}</span>
