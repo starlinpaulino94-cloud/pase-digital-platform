@@ -120,9 +120,15 @@ export async function registrarCliente(
   // el Cliente. Un fallback con id ficticio provocaría una violación de FK y
   // dejaría un usuario huérfano en Supabase Auth, así que devolvemos un error
   // limpio si no se encuentra o si la BD no está disponible.
+  // select explícito: si la BD de producción aún no tiene una columna recién
+  // agregada al modelo Company, un findUnique sin select falla y bloquea TODO
+  // el registro. Con select, solo dependemos de columnas que siempre existen.
   let company: { id: string; name: string; slug: string; type: string } | null = null
   try {
-    company = await prisma.company.findUnique({ where: { slug: companySlug } })
+    company = await prisma.company.findUnique({
+      where: { slug: companySlug },
+      select: { id: true, name: true, slug: true, type: true },
+    })
   } catch (e) {
     console.error('[registro] company lookup error:', e)
     return { error: 'No se pudo verificar la empresa. Intenta de nuevo.' }

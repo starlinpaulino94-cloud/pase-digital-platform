@@ -18,8 +18,21 @@ export default async function RegistroPage({
   const { companySlug } = await params
   const { ref } = await searchParams
 
+  // select explícito: el registro es la puerta de entrada de clientes y no
+  // puede caerse porque el modelo Company tenga una columna más nueva que la
+  // BD de producción (p. ej. un deploy cuya migración aún no se aplicó).
   const company = await prisma.company.findUnique({
     where: { slug: companySlug },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      type: true,
+      isActive: true,
+      logoUrl: true,
+      bannerUrl: true,
+      colorPrimario: true,
+    },
   })
 
   if (!company || !company.isActive) notFound()
