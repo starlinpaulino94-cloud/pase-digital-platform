@@ -360,11 +360,27 @@ errores**. Fuente única creada en **`src/lib/estados.ts`**.
 10. ✅ **Estados vacíos**: revisados — ya siguen el patrón "Aún no…" (no-items) /
     "No se encontró…" (búsqueda). Sin cambios necesarios. C13.
 
-### 🟢 Prioridad BAJA (limpieza / deuda)
-11. Unificar los 2 embudos de eventos (`InvitacionEventoTipo` vs `ReferralEventTipo`).
-12. Documentar/renombrar los 3 modelos "campaña" para el equipo técnico.
-13. `TransaccionRecord`: traducir los estados en inglés a los labels oficiales.
-14. Extraer la vigencia por defecto (30 días) a una constante única.
+### 🟢 Prioridad BAJA (limpieza / deuda) — ✅ HECHA
+11. ✅ **2 embudos de eventos**: documentada la equivalencia
+    `ReferralEventTipo`↔`InvitacionEventoTipo` (comentario en el schema). El
+    merge de enums queda como tarea mayor aparte (migración de datos).
+12. ✅ **3 modelos "campaña"**: comentarios de desambiguación en el schema
+    (`Campana`, `CampanaInvitacion`, `MarketingCampaign`).
+13. ✅ **TransaccionRecord**: el badge ahora muestra el label en español
+    (`ui.label`) en vez del valor crudo del enum en inglés.
+14. ✅ **Vigencia por defecto**: extraída a `VIGENCIA_BENEFICIO_DEFAULT_DIAS`
+    (`src/lib/beneficios.ts`); usada en `modules/invitaciones/beneficios.ts`.
+
+---
+
+## Cierre
+
+Normalización **completa** (Alta + Media + Baja). El sistema habla un solo
+idioma: fuente única de estados (`src/lib/estados.ts` + `compra-estado.ts`),
+vocabulario del glosario, verbos de botón y tono de mensajes unificados.
+Tareas mayores que quedan como decisión de producto/arquitectura (no bloqueantes):
+consolidar los módulos Referidos↔Invita y Gana, y el merge de los 2 embudos de
+eventos de referidos.
 
 ---
 

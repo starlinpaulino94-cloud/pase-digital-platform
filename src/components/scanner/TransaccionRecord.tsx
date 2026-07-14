@@ -206,7 +206,7 @@ export function TransaccionRecord({
           <p className="text-sm text-muted-foreground">{ui.desc}</p>
         </div>
         <Badge variant={ui.badge} className="ml-auto shrink-0 text-[10px]">
-          {tx.estado}
+          {ui.label.replace(/^Transacción /, '')}
         </Badge>
       </div>
 

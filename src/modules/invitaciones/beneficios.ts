@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { VIGENCIA_BENEFICIO_DEFAULT_DIAS } from '@/lib/beneficios'
 import { crearNotificacion } from '@/modules/notificaciones/service'
 import { otorgarBeneficioReferido } from '@/modules/growth/rewards'
 import type { BenefitType } from '@prisma/client'
@@ -77,7 +78,7 @@ export async function otorgarBeneficioCampana(opts: {
     ) as BeneficioCampanaJson | null
     if (!beneficio?.descripcion && !beneficio?.valor && !beneficio?.promocionId) return
 
-    const vigenciaDias = Number(beneficio.vigenciaDias ?? 30)
+    const vigenciaDias = Number(beneficio.vigenciaDias ?? VIGENCIA_BENEFICIO_DEFAULT_DIAS)
     let enWallet = false
 
     // Vía principal: Beneficio Digital E8 → ProductoCompra + QR + Wallet.
@@ -144,7 +145,7 @@ async function otorgarComoBenefitGrant(
         status: 'PUBLISHED',
         config: {
           valor: beneficio.valor ?? '',
-          vigenciaDias: beneficio.vigenciaDias ?? 30,
+          vigenciaDias: beneficio.vigenciaDias ?? VIGENCIA_BENEFICIO_DEFAULT_DIAS,
           campanaInvitacionId: campana.id,
           rol: opts.rol,
         },
@@ -165,7 +166,7 @@ async function otorgarComoBenefitGrant(
   })
   if (existente) return false
 
-  const vigenciaDias = Number(beneficio.vigenciaDias ?? 30)
+  const vigenciaDias = Number(beneficio.vigenciaDias ?? VIGENCIA_BENEFICIO_DEFAULT_DIAS)
   await prisma.benefitGrant.create({
     data: {
       companyId: campana.companyId,
