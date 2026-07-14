@@ -547,6 +547,13 @@ enum TipoRecompensa {
 // Evento del programa de referidos: cada acción del embudo (compartir, clic,
 // registro, membresía) con sus puntos. Base de estadísticas, niveles y ranking.
 // Diseñado para extenderse (campañas, afiliados) vía canal/meta sin migrar.
+// ⚠️ Embudo PARALELO a InvitacionEventoTipo (mismos hitos, otros nombres).
+// Equivalencias (ReferralEventTipo ↔ InvitacionEventoTipo):
+//   SHARE↔COMPARTIDA · CLICK↔ENLACE_ABIERTO · LANDING_VIEW↔LANDING_VISTA ·
+//   REGISTRO_INICIADO↔REGISTRO_INICIADO · REGISTRO↔REGISTRO_COMPLETADO ·
+//   MEMBRESIA↔MEMBRESIA_ADQUIRIDA · PRIMER_USO↔PRIMER_CANJE · RECOMPENSA↔PREMIO_RECLAMADO.
+// Unificarlos en un solo enum es una tarea mayor (migración de datos en dos
+// subsistemas); documentado en docs/GUIA_LENGUAJE_MEMBEGO.md.
 enum ReferralEventTipo {
   LINK // Fase E6: enlace de referido generado (código corto emitido)
   SHARE // el referente compartió su enlace
@@ -1325,6 +1332,12 @@ model ClienteNota {
   @@map("cliente_notas")
 }
 
+// ⚠️ DESAMBIGUACIÓN: hay TRES modelos "campaña" con propósitos distintos
+// (ver docs/GUIA_LENGUAJE_MEMBEGO.md §1.4):
+//   1. Campana            → agrupador de promociones/posts (/admin/campanas).
+//   2. CampanaInvitacion  → programa "Invita y Gana" (/admin/invitaciones).
+//   3. MarketingCampaign  → banners vivos del Home (/admin/marketing).
+//
 // F4.6: campañas — agrupan promociones y publicaciones bajo un mismo
 // paraguas (ej. "Black Friday") para medirlas en conjunto.
 model Campana {
@@ -2449,6 +2462,7 @@ enum InvitacionEventoTipo {
   CONVERSION_FINAL
 }
 
+// Campaña "Invita y Gana" (uno de los 3 modelos "campaña"; ver Campana arriba).
 model CampanaInvitacion {
   id             String                   @id @default(cuid())
   companyId      String
@@ -2551,6 +2565,7 @@ enum MarketingCampaignEstado {
   FINALIZADA
 }
 
+// Banner vivo del Home (uno de los 3 modelos "campaña"; ver Campana arriba).
 model MarketingCampaign {
   id          String                  @id @default(cuid())
   companyId   String
