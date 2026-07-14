@@ -53,6 +53,7 @@ interface Existing {
   maxPremios: number | null
   colorPrimario: string | null
   colorSecundario: string | null
+  usarBanner: boolean
 }
 
 const BENEFICIO_TIPOS = [
@@ -223,6 +224,28 @@ export function CampanaInvitacionForm({
           defaults={existing?.beneficioInvitado}
           promociones={promociones}
         />
+      </div>
+
+      <div className="space-y-5 rounded-xl border border-border p-5">
+        <h3 className="font-semibold text-foreground">Experiencia del enlace</h3>
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4">
+          <input
+            type="checkbox"
+            name="usarBanner"
+            defaultChecked={existing?.usarBanner ?? false}
+            className="mt-0.5 h-4 w-4 accent-primary"
+          />
+          <span className="text-sm">
+            <span className="block font-medium text-foreground">
+              Mostrar página de presentación (banner) antes del registro
+            </span>
+            <span className="mt-0.5 block text-muted-foreground">
+              Si lo dejas desmarcado, el enlace lleva al cliente{' '}
+              <strong>directo al formulario de registro</strong> (recomendado). Márcalo
+              para mostrar primero el banner con la descripción de la promoción.
+            </span>
+          </span>
+        </label>
       </div>
 
       <div className="space-y-5 rounded-xl border border-border p-5">

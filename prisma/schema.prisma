@@ -2458,6 +2458,9 @@ model CampanaInvitacion {
   colorPrimario  String?
   colorSecundario String?
   orden          Int                      @default(0)
+  // Si es true, el enlace muestra la página de presentación (banner/hero) antes
+  // del formulario. Si es false (por defecto), lleva directo al registro.
+  usarBanner     Boolean                  @default(false)
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
 

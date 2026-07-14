@@ -76,6 +76,7 @@ export async function CampanaLandingScreen({
         fechaFin: campana.fechaFin.toISOString(),
         colorPrimario: campana.colorPrimario,
         colorSecundario: campana.colorSecundario,
+        usarBanner: campana.usarBanner,
         abierta,
         expirada,
         beneficioInvitado: beneficioInvitado ?? null,
