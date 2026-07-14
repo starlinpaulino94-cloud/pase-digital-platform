@@ -51,8 +51,15 @@ Todo desde hechos reales (nunca inventado). Genera FOMO.
 - Urgencia por cupos ya existía en `CampanasVivas`; se añade "✅ X ya reclamaron"
   (reclamosCount real) a cada banner de campaña.
 
-## Fase 5 — Banners dinámicos rotativos (schema)
+## Fase 5 — Banners dinámicos rotativos  ✅
 Varios banners por empresa que rotan con animación; prioridad configurable.
+Reutiliza el modelo `MarketingCampaign` de la Fase 2 (ya tiene bannerUrl,
+prioridad, destacada, colores, CTA), así que NO requiere esquema nuevo.
+- `CampanasVivas` pasa de banners apilados a un **carrusel** que rota cada 6s
+  con animación, en el orden de prioridad del resolver (destacada → prioridad →
+  cierre). Con una sola campaña se muestra fija.
+- Controles: flechas, indicadores (dots), swipe táctil; pausa al pasar el ratón.
+- Respeta prefers-reduced-motion (sin auto-rotación ni animación de entrada).
 
 ## Fase 6 — Gamificación (schema)
 Niveles, logros, insignias, retos, puntos, ranking, rachas, ruleta, rasca y gana,

@@ -1,12 +1,25 @@
 'use client'
 
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
-import { Flame, ArrowRight } from 'lucide-react'
+import { Flame, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { CampanaViva } from '@/modules/engagement/campanas'
 
 const emptySubscribe = () => () => {}
 const pad = (n: number) => n.toString().padStart(2, '0')
+
+/** Detecta prefers-reduced-motion (SSR-safe: false hasta montar). */
+function useReducedMotion() {
+  const [reduced, setReduced] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const on = () => setReduced(mq.matches)
+    on()
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  return reduced
+}
 
 /** Contador grande en vivo (SSR-safe). */
 function Contador({ expiraEn }: { expiraEn: string }) {
@@ -103,14 +116,97 @@ function Banner({ c }: { c: CampanaViva }) {
   )
 }
 
-/** Campañas de marketing vivas en el Home (banner + contador + urgencia). */
+/**
+ * Engagement Engine · Fase 5 — Banners rotativos.
+ * Muestra las campañas vivas como un carrusel que rota con animación, en el
+ * orden de prioridad que resuelve el servidor (destacada → prioridad → cierre).
+ * Con una sola campaña se muestra fija; con varias, rota automáticamente
+ * (salvo prefers-reduced-motion) y permite avanzar a mano.
+ */
 export function CampanasVivas({ campanas }: { campanas: CampanaViva[] }) {
-  if (campanas.length === 0) return null
+  const reduced = useReducedMotion()
+  const [i, setI] = useState(0)
+  const [pausado, setPausado] = useState(false)
+  const n = campanas.length
+  const idx = n > 0 ? i % n : 0
+
+  // Si cambia el número de campañas, evita un índice fuera de rango.
+  useEffect(() => {
+    if (i >= n && n > 0) setI(0)
+  }, [i, n])
+
+  // Auto-rotación (cada 6s), salvo movimiento reducido, pausa o una sola.
+  useEffect(() => {
+    if (reduced || pausado || n <= 1) return
+    const id = setInterval(() => setI((x) => (x + 1) % n), 6000)
+    return () => clearInterval(id)
+  }, [reduced, pausado, n])
+
+  const touchX = useRef<number | null>(null)
+
+  if (n === 0) return null
+
+  const ir = (delta: number) => setI((x) => (x + delta + n) % n)
+
   return (
-    <div className="mb-8 space-y-4">
-      {campanas.map((c) => (
-        <Banner key={c.id} c={c} />
-      ))}
+    <div
+      className="mb-8"
+      onMouseEnter={() => setPausado(true)}
+      onMouseLeave={() => setPausado(false)}
+      onTouchStart={(e) => (touchX.current = e.touches[0].clientX)}
+      onTouchEnd={(e) => {
+        if (touchX.current == null) return
+        const dx = e.changedTouches[0].clientX - touchX.current
+        if (Math.abs(dx) > 40) ir(dx < 0 ? 1 : -1)
+        touchX.current = null
+      }}
+      aria-roledescription="carrusel"
+    >
+      <div className="relative">
+        {/* La key fuerza el re-montaje → dispara la animación de entrada. */}
+        <div key={reduced ? 'static' : idx} className={reduced ? '' : 'animate-slide-up'}>
+          <Banner c={campanas[idx]} />
+        </div>
+
+        {n > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={() => ir(-1)}
+              aria-label="Anterior"
+              className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/40"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => ir(1)}
+              aria-label="Siguiente"
+              className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/40"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Indicadores de posición */}
+      {n > 1 && (
+        <div className="mt-3 flex justify-center gap-2">
+          {campanas.map((c, k) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setI(k)}
+              aria-label={`Ir a la campaña ${k + 1}`}
+              aria-current={k === idx}
+              className={`h-2 rounded-full transition-all ${
+                k === idx ? 'w-6 bg-primary' : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50'
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
