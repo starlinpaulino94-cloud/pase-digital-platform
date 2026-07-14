@@ -38,9 +38,18 @@ Personalizada.
 Filas horizontales reutilizando datos: 🔥 Ofertas · ❤️ Empresas que sigues ·
 🎁 Beneficios · ⭐ Recomendaciones · 👑 Exclusivas de miembro · 🏆 Destacadas.
 
-## Fase 4 — Urgencia y prueba social (datos reales)
-"Quedan X cupones", "245 personas ya reclamaron", "Juan reclamó hace 2 min".
-Todo desde eventos reales (nunca inventado). Genera FOMO.
+## Fase 4 — Urgencia y prueba social (datos reales)  ✅
+"Quedan X cupones", "245 personas ya reclamaron", "Juan R. reclamó hace 2 min".
+Todo desde hechos reales (nunca inventado). Genera FOMO.
+- Resolver `modules/engagement/pruebaSocial.ts` — `getPruebaSocial(companyId)`:
+  miembros totales, registros de la última semana, beneficios reclamados
+  (ProductoCompra ACTIVA/CONSUMIDA) y actividad reciente ("Juan R. · hace 2 min",
+  solo nombre + inicial). Devuelve null si falla (realce, no núcleo).
+- `components/engagement/PruebaSocial.tsx` — franja en el Home con estadísticas
+  reales + ticker "En vivo" que rota la actividad reciente (respeta
+  prefers-reduced-motion). Solo se muestra con masa suficiente (≥3 miembros).
+- Urgencia por cupos ya existía en `CampanasVivas`; se añade "✅ X ya reclamaron"
+  (reclamosCount real) a cada banner de campaña.
 
 ## Fase 5 — Banners dinámicos rotativos (schema)
 Varios banners por empresa que rotan con animación; prioridad configurable.

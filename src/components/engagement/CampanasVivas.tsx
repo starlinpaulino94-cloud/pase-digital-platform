@@ -74,6 +74,12 @@ function Banner({ c }: { c: CampanaViva }) {
               🔥 ¡Solo quedan {c.cuposRestantes} cupo{c.cuposRestantes !== 1 ? 's' : ''}!
             </p>
           )}
+          {c.reclamados > 0 && (
+            <p className="text-xs font-semibold text-white/90">
+              ✅ {c.reclamados} persona{c.reclamados !== 1 ? 's' : ''} ya
+              {c.reclamados !== 1 ? ' reclamaron' : ' reclamó'}
+            </p>
+          )}
         </div>
 
         <div className="flex shrink-0 flex-col items-start gap-3 sm:items-end">

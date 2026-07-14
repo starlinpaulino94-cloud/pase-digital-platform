@@ -40,6 +40,8 @@ export interface CampanaViva {
   terminaEn: string
   /** Cupones restantes (urgencia); null = sin límite. */
   cuposRestantes: number | null
+  /** Cupones ya reclamados (prueba social); 0 si nadie aún. */
+  reclamados: number
 }
 
 export async function getCampanasVivas(companyId: string): Promise<CampanaViva[]> {
@@ -90,6 +92,7 @@ export async function getCampanasVivas(companyId: string): Promise<CampanaViva[]
         destacada: c.destacada,
         terminaEn: new Date(finMs).toISOString(),
         cuposRestantes,
+        reclamados: c.reclamosCount,
       })
     }
 

@@ -20,8 +20,10 @@ import { getClienteAllMemberships } from '@/modules/cliente/queries'
 import { getNovedadesInicio, getOnboardingCliente, getPromoFeed, type PromoFeed } from '@/modules/social/queries'
 import { getMomentosVivos, type MomentosVivos as MomentosData } from '@/modules/engagement/momentos'
 import { getCampanasVivas, type CampanaViva } from '@/modules/engagement/campanas'
+import { getPruebaSocial, type PruebaSocial as PruebaSocialData } from '@/modules/engagement/pruebaSocial'
 import { MomentosVivos } from '@/components/engagement/MomentosVivos'
 import { CampanasVivas } from '@/components/engagement/CampanasVivas'
+import { PruebaSocial } from '@/components/engagement/PruebaSocial'
 import { CarrouselesHome } from '@/components/engagement/CarrouselesHome'
 import { MembershipCard } from '@/components/cliente/MembershipCard'
 import { CelebracionBienvenida } from '@/components/cliente/CelebracionBienvenida'
@@ -118,14 +120,21 @@ export default async function MisMembresias() {
   // en silencio porque es realce, no núcleo).
   let momentos: MomentosData = { nombre: null, momentos: [] }
   let campanas: CampanaViva[] = []
+  let pruebaSocial: PruebaSocialData | null = null
   if (user.metadata.clienteId && user.metadata.companyId) {
-    ;[momentos, campanas] = await Promise.all([
+    ;[momentos, campanas, pruebaSocial] = await Promise.all([
       getMomentosVivos(user.metadata.clienteId, user.metadata.companyId).catch(
         () => ({ nombre: null, momentos: [] }) as MomentosData
       ),
       getCampanasVivas(user.metadata.companyId).catch(() => []),
+      getPruebaSocial(user.metadata.companyId).catch(() => null),
     ])
   }
+
+  // Prueba social: solo si hay masa suficiente (evita "1 miembro" poco creíble).
+  const mostrarPruebaSocial =
+    !!pruebaSocial &&
+    (pruebaSocial.totalMiembros >= 3 || pruebaSocial.recientes.length >= 2)
 
   const cookieStore = await cookies()
   const onboardingSeen = cookieStore.has('membego_onboarding_seen')
@@ -232,6 +241,11 @@ export default async function MisMembresias() {
 
       {/* Engagement Engine · Momentos vivos (datos reales, con urgencia) */}
       {!loadError && <MomentosVivos nombre={momentos.nombre} momentos={momentos.momentos} />}
+
+      {/* Engagement Engine · Fase 4: prueba social (datos reales) */}
+      {!loadError && mostrarPruebaSocial && pruebaSocial && (
+        <PruebaSocial data={pruebaSocial} />
+      )}
 
       {/* Onboarding B2C: solo la primera visita */}
       {onboarding && (
