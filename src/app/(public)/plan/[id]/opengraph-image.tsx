@@ -129,7 +129,7 @@ export default async function Image({ params }: { params: { id: string } }) {
           >
             {incluye}
           </span>
-          <span style={{ fontSize: 28, fontWeight: 700, opacity: 0.95 }}>Adquirir plan →</span>
+          <span style={{ fontSize: 28, fontWeight: 700, opacity: 0.95 }}>Elegir este plan →</span>
         </div>
       </div>
     ),

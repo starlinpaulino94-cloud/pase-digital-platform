@@ -127,9 +127,9 @@ export default async function MisPromocionesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Mis promociones</h1>
+        <h1 className="text-2xl font-bold text-foreground">Mis beneficios</h1>
         <p className="text-muted-foreground">
-          Tus promociones adquiridas: activas, pendientes de pago e historial.
+          Tus beneficios adquiridos: activos, pendientes de pago e historial.
         </p>
       </div>
 

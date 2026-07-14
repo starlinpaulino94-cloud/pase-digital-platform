@@ -83,7 +83,7 @@ const ADMIN_NAV: NavGroup[] = [
     id: 'marketing',
     label: 'Marketing',
     items: [
-      { href: '/admin/marketing', label: 'Campañas vivas', icon: Sparkles },
+      { href: '/admin/marketing', label: 'Banners', icon: Sparkles },
       { href: '/admin/campanas', label: 'Campañas', icon: Flag },
       { href: '/admin/publicaciones', label: 'Publicaciones', icon: Newspaper },
       { href: '/admin/notificaciones', label: 'Notificaciones', icon: Bell },
@@ -94,7 +94,7 @@ const ADMIN_NAV: NavGroup[] = [
     id: 'operaciones',
     label: 'Operaciones',
     items: [
-      { href: '/admin/scanner', label: 'Escáner QR', icon: ScanLine },
+      { href: '/admin/scanner', label: 'Escanear QR', icon: ScanLine },
       { href: '/admin/pagos', label: 'Pagos', icon: Wallet },
       { href: '/admin/sucursales', label: 'Sucursales', icon: Building2 },
     ],
@@ -150,7 +150,7 @@ const CLIENTE_NAV: NavGroup[] = [
       { href: '/cliente/explorar', label: 'Explorar empresas', icon: Compass },
       { href: '/cliente/empresas', label: 'Mis empresas', icon: Building2 },
       { href: '/cliente/promociones', label: 'Promociones', icon: Megaphone },
-      { href: '/cliente/mis-promociones', label: 'Mis promociones', icon: Ticket },
+      { href: '/cliente/mis-promociones', label: 'Mis beneficios', icon: Ticket },
       // Unificación: el antiguo módulo "Referidos" vive dentro de Invita y Gana.
       { href: '/cliente/invita-y-gana', label: 'Invita y Gana', icon: Gift },
       { href: '/cliente/ruleta', label: 'Ruleta de premios', icon: Trophy },

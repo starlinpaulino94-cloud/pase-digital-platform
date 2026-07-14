@@ -40,7 +40,7 @@ export function ChangePasswordForm() {
 
     setPassword('')
     setConfirm('')
-    toast.success('Contraseña actualizada correctamente.')
+    toast.success('Contraseña actualizada.')
   }
 
   return (

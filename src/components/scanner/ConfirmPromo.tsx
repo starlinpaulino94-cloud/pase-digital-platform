@@ -66,7 +66,7 @@ export function ConfirmPromo({
   const [printCount, setPrintCount] = useState(0)
 
   useEffect(() => {
-    if (state.success) toast.success('Canje confirmado correctamente.')
+    if (state.success) toast.success('Canje registrado.')
     if (state.error) toast.error(state.error)
   }, [state.success, state.error])
 

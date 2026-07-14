@@ -90,7 +90,7 @@ export default async function PlanPublicPage({ params }: PlanPageProps) {
                 href={registroHref}
                 className="flex-1 rounded-xl bg-primary px-6 py-4 text-center text-lg font-bold text-white shadow-glow transition hover:opacity-95"
               >
-                Adquirir plan
+                Elegir este plan
               </Link>
               <ShareMenu
                 title={plan.nombre}
@@ -151,7 +151,7 @@ export default async function PlanPublicPage({ params }: PlanPageProps) {
             href={registroHref}
             className="mt-4 inline-block rounded-lg bg-primary px-6 py-3 font-semibold text-white transition hover:opacity-95"
           >
-            Adquirir plan
+            Elegir este plan
           </Link>
         </div>
       </div>

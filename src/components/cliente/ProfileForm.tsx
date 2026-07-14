@@ -41,7 +41,7 @@ export function ProfileForm({
   const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    if (state.success) toast.success('Perfil actualizado correctamente.')
+    if (state.success) toast.success('Perfil actualizado.')
     if (state.error) toast.error(state.error)
   }, [state.success, state.error])
 
@@ -72,7 +72,7 @@ export function ProfileForm({
       {state.success && (
         <div className="flex items-center gap-2 rounded-xl bg-success/10 px-4 py-3 text-sm text-success">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
-          Perfil actualizado correctamente.
+          Perfil actualizado.
         </div>
       )}
 

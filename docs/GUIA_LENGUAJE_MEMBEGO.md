@@ -347,13 +347,18 @@ errores**. Fuente única creada en **`src/lib/estados.ts`**.
 5. ✅ **Estado fantasma SOSPECHOSO** en referidos: eliminado del mapa (era código
    muerto); el chip de marca queda como follow-up (requiere llevar el boolean). C8.
 
-### 🟡 Prioridad MEDIA (consistencia, menos visible)
-6. **Verbo de plan**: unificar a "Elegir este plan" / "Cambiar de plan". C10.
-7. **Navegación**: "Mis beneficios", consolidar Referidos↔Invita y Gana, "Escanear QR",
-   renombrar "Campañas vivas"→"Banners". C11.
-8. **Membresía sin usos**: no regenerar QR al llegar a 0; mostrar "Sin usos disponibles". §2.3.
-9. **Toasts**: pasar todos al estándar (humano, con punto, sin "correctamente"). C12.
-10. **Estados vacíos**: aplicar el patrón "Aún no…" / "No se encontró…". C13.
+### 🟡 Prioridad MEDIA (consistencia, menos visible) — ✅ HECHA
+6. ✅ **Verbo de plan**: "Elegir este plan" (grid, público, PlanSelector→"Elegir plan"). C10.
+7. ✅ **Navegación**: nav "Mis promociones"→"Mis beneficios" (+ título de página),
+   "Escáner QR"→"Escanear QR", "Campañas vivas"→"Banners". (Consolidar el módulo
+   Referidos↔Invita y Gana queda como tarea de producto aparte: son páginas
+   distintas). C11.
+8. ✅ **Membresía sin usos**: al agotar los usos del ciclo ya NO se regenera QR
+   (`visitas/actions.ts`); el detalle muestra "Sin usos disponibles". §2.3.
+9. ✅ **Toasts**: quitado "correctamente" de todos; puntuación uniforme; rechazos
+   con "El cliente fue notificado". C12.
+10. ✅ **Estados vacíos**: revisados — ya siguen el patrón "Aún no…" (no-items) /
+    "No se encontró…" (búsqueda). Sin cambios necesarios. C13.
 
 ### 🟢 Prioridad BAJA (limpieza / deuda)
 11. Unificar los 2 embudos de eventos (`InvitacionEventoTipo` vs `ReferralEventTipo`).

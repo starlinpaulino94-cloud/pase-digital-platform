@@ -529,8 +529,13 @@ export async function confirmarVisita(
         },
       })
 
+      // Regenerar el QR solo si el beneficio SIGUE teniendo usos. Al agotarse
+      // (planes con saldo) no se emite uno nuevo: la membresía queda "Sin usos
+      // disponibles" hasta la renovación (alinea con las promociones, que no
+      // regeneran QR tras el último uso). Los planes ilimitados siempre regeneran.
+      const regenerar = qrTokenId != null && (!descontado || restantes > 0)
       let nuevoQrId: string | null = null
-      if (qrTokenId) {
+      if (regenerar) {
         const nuevoQr = await tx.qrToken.create({
           data: {
             clienteId: membership.clienteId,
@@ -555,7 +560,9 @@ export async function confirmarVisita(
             sucursalId,
           },
         },
-        ...(qrTokenId && nuevoQrId
+        // El QR usado se invalidó siempre que existía: se audita aunque no se
+        // regenere (último uso).
+        ...(qrTokenId
           ? [
               {
                 ...auditBase,
@@ -568,6 +575,11 @@ export async function confirmarVisita(
                   visitId: visit.id,
                 },
               },
+            ]
+          : []),
+        // La regeneración solo ocurre si quedaban usos.
+        ...(nuevoQrId
+          ? [
               {
                 ...auditBase,
                 accion: 'QR_GENERADO' as const,
