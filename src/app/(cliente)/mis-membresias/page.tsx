@@ -24,6 +24,7 @@ import { MomentosVivos } from '@/components/engagement/MomentosVivos'
 import { CampanasVivas } from '@/components/engagement/CampanasVivas'
 import { CarrouselesHome } from '@/components/engagement/CarrouselesHome'
 import { MembershipCard } from '@/components/cliente/MembershipCard'
+import { CelebracionBienvenida } from '@/components/cliente/CelebracionBienvenida'
 import { FeedNovedades } from '@/components/cliente/FeedNovedades'
 import { OnboardingClienteFirstVisit } from '@/components/cliente/OnboardingClienteFirstVisit'
 import { Button } from '@/components/ui/button'
@@ -172,6 +173,8 @@ export default async function MisMembresias() {
 
   return (
     <main className="container max-w-5xl py-8">
+      {/* Felicitación por encima de la app tras registrarse con auto-login */}
+      <CelebracionBienvenida />
       {/* ── Cabecera ──────────────────────────────────────────────────────── */}
       <header className="mb-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

@@ -1,26 +1,20 @@
 'use client'
 
-import { useActionState, useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { useActionState, useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  Loader2,
-  Gift,
-  Clock,
-  Shield,
-  CheckCircle2,
-  PartyPopper,
-  Wallet,
-  Share2,
-  Sparkles,
-} from 'lucide-react'
+import { Loader2, Gift, Clock, Shield, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { registrarCliente, type RegistroState } from '@/modules/registro/actions'
 import { registrarEventoCampana } from '@/modules/invitaciones/clienteActions'
+import { createClient } from '@/lib/supabase/client'
+import {
+  CelebracionOverlay,
+  type CelebracionData,
+} from '@/components/invitaciones/CelebracionOverlay'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { QRDisplay } from '@/components/qr/QRDisplay'
 import { landingUrlFor } from '@/lib/site'
 
 interface CampanaData {
@@ -81,48 +75,6 @@ function useCountdown(fechaFin: string) {
   return time
 }
 
-const CONFETTI_COLORS = ['#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6', '#ef4444']
-
-function generateConfettiPieces() {
-  return Array.from({ length: 70 }, (_, i) => ({
-    left: Math.random() * 100,
-    delay: Math.random() * 2.5,
-    duration: 2.5 + Math.random() * 2,
-    size: 6 + Math.random() * 7,
-    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-    rotate: Math.random() * 360,
-  }))
-}
-
-/** Lluvia de confeti en CSS puro (sin dependencias). */
-function Confetti() {
-  const pieces = useMemo(() => generateConfettiPieces(), [])
-  return (
-    <div className="pointer-events-none fixed inset-0 z-[110] overflow-hidden" aria-hidden>
-      <style>{`
-        @keyframes confetti-fall {
-          0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
-          100% { transform: translateY(110vh) rotate(720deg); opacity: 0.6; }
-        }
-      `}</style>
-      {pieces.map((p, i) => (
-        <span
-          key={i}
-          className="absolute top-0 block"
-          style={{
-            left: `${p.left}%`,
-            width: p.size,
-            height: p.size * 0.45,
-            backgroundColor: p.color,
-            transform: `rotate(${p.rotate}deg)`,
-            animation: `confetti-fall ${p.duration}s linear ${p.delay}s infinite`,
-          }}
-        />
-      ))}
-    </div>
-  )
-}
-
 const init: RegistroState = {}
 
 /** Chips del contador (compartido por ambos modos). */
@@ -147,8 +99,24 @@ function Countdown({ d, h, m, s }: { d: number; h: number; m: number; s: number 
 export function CampanaLanding({ campana, refCode, invitanteNombre }: Props) {
   const router = useRouter()
   const countdown = useCountdown(campana.fechaFin)
-  const [state, action, pending] = useActionState(registrarCliente, init)
+
+  // Wrapper del cliente: captura las credenciales del formulario para el
+  // auto-login tras el registro, y delega en la server action.
+  const credsRef = useRef<{ email: string; password: string } | null>(null)
+  const registrarConCaptura = useCallback(
+    async (prev: RegistroState, fd: FormData): Promise<RegistroState> => {
+      credsRef.current = {
+        email: String(fd.get('email') ?? '').trim().toLowerCase(),
+        password: String(fd.get('password') ?? ''),
+      }
+      return registrarCliente(prev, fd)
+    },
+    []
+  )
+  const [state, action, pending] = useActionState(registrarConCaptura, init)
+
   const [registrado, setRegistrado] = useState(false)
+  const [entrando, setEntrando] = useState(false)
   // En modo banner el formulario se revela tras "Quiero mi regalo"; en modo
   // registro directo (por defecto) el formulario está visible de entrada.
   const [mostrarFormulario, setMostrarFormulario] = useState(!campana.usarBanner)
@@ -159,14 +127,54 @@ export function CampanaLanding({ campana, refCode, invitanteNombre }: Props) {
   const secondary = campana.colorSecundario || '#059669'
   const regalo = campana.beneficioInvitado?.descripcion || campana.beneficioInvitado?.valor
 
+  const celebracion: CelebracionData = {
+    regalo: regalo ?? null,
+    qrToken: state.qrBienvenida ?? null,
+    codigoInvitacion: state.codigoInvitacion ?? null,
+    empresaName: campana.empresa.name,
+    vigenciaDias: campana.beneficioInvitado?.vigenciaDias ?? null,
+    pendingVerification: state.pendingVerification,
+    colorPrimario: campana.colorPrimario,
+    colorSecundario: campana.colorSecundario,
+    titulo: campana.titulo,
+  }
+
+  // Tras registrarse: auto-login e ir a la app (celebración por encima del
+  // Home). Si no se puede iniciar sesión (correo por verificar o error), se
+  // muestra la celebración aquí mismo como respaldo.
   useEffect(() => {
-    if (state.pendingVerification || state.success) {
+    if (state.pendingVerification) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setRegistrado(true)
-      if (state.pendingVerification) {
-        toast.success('Te enviamos un correo de confirmación.')
-      }
+      toast.success('Te enviamos un correo de confirmación.')
+      return
     }
+    if (!state.success) return
+    const creds = credsRef.current
+    if (!creds?.password) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRegistrado(true)
+      return
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setEntrando(true)
+    ;(async () => {
+      try {
+        const supabase = createClient()
+        const { error } = await supabase.auth.signInWithPassword(creds)
+        if (!error) {
+          sessionStorage.setItem('membego_celebracion', JSON.stringify(celebracion))
+          router.replace('/mis-membresias')
+          return
+        }
+        console.error('[invita] auto-login:', error.message)
+      } catch (e) {
+        console.error('[invita] auto-login:', e)
+      }
+      setEntrando(false)
+      setRegistrado(true)
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.success, state.pendingVerification])
 
   // En registro directo, marca REGISTRO_INICIADO al montar (el form ya está a la vista).
@@ -190,29 +198,6 @@ export function CampanaLanding({ campana, refCode, invitanteNombre }: Props) {
     requestAnimationFrame(() => {
       formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     })
-  }
-
-  // El recién registrado comparte SU propio enlace desde la celebración, sin
-  // esperar a iniciar sesión (el código viene en el state del registro).
-  const compartirCelebracion = async () => {
-    if (!state.codigoInvitacion) return
-    const url = `${window.location.origin}/invitar/${state.codigoInvitacion}`
-    const regaloTexto = regalo || 'un regalo de bienvenida'
-    const text = `🎉 ¡A mí ya me regalaron: ${regaloTexto}!\n\nAcabo de registrarme en MembeGo y tú también puedes recibir el tuyo GRATIS al crear tu cuenta.\n\nRegístrate aquí:`
-    const copiar = async () => {
-      await navigator.clipboard.writeText(`${text} ${url}`)
-      toast.success('Enlace copiado. ¡Compártelo con tus amigos!')
-    }
-    try {
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: campana.titulo, text, url })
-        return
-      }
-      await copiar()
-    } catch (e) {
-      if (e instanceof DOMException && e.name === 'AbortError') return
-      await copiar().catch(() => toast.error('No se pudo compartir.'))
-    }
   }
 
   // ── Formulario de registro (compartido) ──────────────────────────────────
@@ -256,12 +241,20 @@ export function CampanaLanding({ campana, refCode, invitanteNombre }: Props) {
 
       <Button
         type="submit"
-        disabled={pending}
+        disabled={pending || entrando}
         className="w-full py-6 text-base font-bold text-white shadow-lg transition-transform hover:scale-[1.02]"
         style={{ backgroundColor: primary }}
       >
-        {pending ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Gift className="mr-2 h-5 w-5" />}
-        {pending ? 'Creando tu cuenta...' : 'Registrarme y obtener mi regalo'}
+        {pending || entrando ? (
+          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+        ) : (
+          <Gift className="mr-2 h-5 w-5" />
+        )}
+        {pending
+          ? 'Creando tu cuenta...'
+          : entrando
+            ? 'Entrando...'
+            : 'Registrarme y obtener mi regalo'}
       </Button>
 
       <p className="text-center text-xs text-slate-500">
@@ -278,95 +271,16 @@ export function CampanaLanding({ campana, refCode, invitanteNombre }: Props) {
     </form>
   )
 
-  // ── Celebración post-registro: MODAL por encima de todo (estilo Temu) ─────
-  const Celebracion = registrado ? (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Fondo oscuro difuminado: el modal queda "por encima" de la pantalla */}
-      <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" />
-      <Confetti />
-      <style>{`
-        @keyframes celebra-pop {
-          0% { transform: scale(0.85) translateY(12px); opacity: 0; }
-          100% { transform: scale(1) translateY(0); opacity: 1; }
-        }
-      `}</style>
-      <div
-        className="relative z-[120] max-h-[92vh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-6 text-center shadow-2xl"
-        style={{ animation: 'celebra-pop 0.45s cubic-bezier(0.16,1,0.3,1)' }}
-        role="dialog"
-        aria-modal="true"
-      >
-        <div className="mx-auto flex h-20 w-20 animate-bounce items-center justify-center rounded-full bg-emerald-100 shadow-lg">
-          <PartyPopper className="h-10 w-10 text-emerald-600" />
-        </div>
-        <h1 className="mt-4 text-3xl font-extrabold text-slate-900">🎉 ¡Felicidades!</h1>
-        <p className="mt-1.5 text-slate-600">
-          {state.pendingVerification
-            ? 'Revisa tu correo y confirma tu cuenta para activar tu regalo.'
-            : `Ya eres parte de ${campana.empresa.name}.`}
-        </p>
-
-        {/* Regalo destacado */}
-        <div className="mt-5 rounded-2xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm">
-          <Gift className="mx-auto mb-1.5 h-9 w-9 text-emerald-600" />
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-            Por tu registro recibiste
-          </p>
-          <p className="mt-1 text-2xl font-extrabold text-slate-900">
-            {regalo || 'Un lavado GRATIS'}
-          </p>
-          {campana.beneficioInvitado?.vigenciaDias ? (
-            <p className="mt-1 text-xs text-slate-500">
-              Vigencia: {campana.beneficioInvitado.vigenciaDias} días
-            </p>
-          ) : null}
-        </div>
-
-        {/* QR del regalo, inmediato */}
-        {state.qrBienvenida && (
-          <div className="mt-5 flex flex-col items-center gap-2">
-            <QRDisplay token={state.qrBienvenida} size={180} />
-            <p className="text-xs text-slate-500">
-              Presenta este código QR en el negocio para usar tu beneficio.
-            </p>
-          </div>
-        )}
-
-        {/* Invitar amigos: el momento de máxima emoción → cadena viral */}
-        {state.codigoInvitacion && (
-          <div className="mt-5 rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm">
-            <Sparkles className="mx-auto mb-1.5 h-8 w-8 text-amber-500" />
-            <h2 className="text-lg font-bold text-slate-900">Invita a tus amigos</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Ellos también recibirán{' '}
-              <span className="font-semibold text-slate-800">
-                {regalo || 'su regalo de bienvenida'}
-              </span>{' '}
-              al registrarse con tu enlace.
-            </p>
-            <Button
-              onClick={compartirCelebracion}
-              className="mt-3 w-full py-6 text-lg font-bold text-white shadow-lg transition-transform hover:scale-[1.02]"
-              style={{ backgroundColor: secondary }}
-            >
-              <Share2 className="mr-2 h-5 w-5" />
-              Compartir mi enlace
-            </Button>
-          </div>
-        )}
-
-        {!state.pendingVerification && (
-          <Button
-            onClick={() => router.push('/login?next=/mis-membresias')}
-            variant="outline"
-            className="mt-4 w-full py-5 font-semibold"
-          >
-            <Wallet className="mr-2 h-5 w-5" />
-            Entrar a mi cuenta
-          </Button>
-        )}
+  // ── Overlay: spinner de auto-login → o celebración de respaldo ────────────
+  const Overlay = entrando ? (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/70 backdrop-blur-sm">
+      <div className="flex flex-col items-center gap-3 text-white">
+        <Loader2 className="h-10 w-10 animate-spin" />
+        <p className="font-semibold">Entrando a tu cuenta…</p>
       </div>
     </div>
+  ) : registrado ? (
+    <CelebracionOverlay data={celebracion} mode="entrar" />
   ) : null
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -378,7 +292,7 @@ export function CampanaLanding({ campana, refCode, invitanteNombre }: Props) {
         className="min-h-screen px-4 py-10"
         style={{ background: `linear-gradient(160deg, ${primary}14, #ffffff 42%, ${secondary}14)` }}
       >
-        {Celebracion}
+        {Overlay}
         <div className="mx-auto w-full max-w-md">
           {/* Marca */}
           <div className="mb-6 flex flex-col items-center gap-2 text-center">
@@ -483,7 +397,7 @@ export function CampanaLanding({ campana, refCode, invitanteNombre }: Props) {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-white">
-      {Celebracion}
+      {Overlay}
       {/* Hero */}
       <section
         className="relative px-4 py-16 text-center text-white"
