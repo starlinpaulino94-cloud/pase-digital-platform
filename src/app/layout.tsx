@@ -49,10 +49,12 @@ export const metadata: Metadata = {
     images: ['/og-image.png'],
   },
   icons: {
-    // Google exige un favicon de al menos 48x48 (múltiplo de 48) para
-    // mostrar el logo del sitio en los resultados de búsqueda.
+    // Google exige un favicon de al menos 48x48 (múltiplo de 48) para mostrar
+    // el logo del sitio en los resultados de búsqueda. favicon.ico es
+    // multi-resolución (16/32/48) para que la pestaña se vea nítida y Google
+    // tenga su entrada de 48px.
     icon: [
-      { url: '/favicon.ico', sizes: '32x32' },
+      { url: '/favicon.ico', sizes: 'any' },
       { url: '/icon-48.png', sizes: '48x48', type: 'image/png' },
       { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
       { url: '/logo.svg', type: 'image/svg+xml' },
