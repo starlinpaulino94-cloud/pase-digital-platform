@@ -127,7 +127,7 @@ export function ConfirmVisit({
   const isValid = cliente.puedeUsar
 
   useEffect(() => {
-    if (state.success) toast.success('Visita confirmada correctamente.')
+    if (state.success) toast.success('Uso registrado.')
     if (state.error) toast.error(state.error)
   }, [state.success, state.error])
 

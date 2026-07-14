@@ -100,7 +100,7 @@ export function PlanSelector({
           className="w-full bg-primary hover:bg-primary/90 md:w-auto"
         >
           {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Seleccionar plan
+          Elegir plan
         </Button>
       )}
     </form>

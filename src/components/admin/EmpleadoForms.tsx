@@ -43,7 +43,7 @@ export function NuevoEmpleadoForm() {
 
   useEffect(() => {
     if (state.success) {
-      toast.success('Miembro del equipo creado correctamente.')
+      toast.success('Empleado creado.')
       router.push('/admin/empleados')
       router.refresh()
     }

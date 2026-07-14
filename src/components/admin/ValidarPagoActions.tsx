@@ -76,7 +76,7 @@ export function RechazarPagoButton({ membershipId }: { membershipId: string }) {
   const open = manualOpen && !state.success
 
   useEffect(() => {
-    if (state.success) toast.success('Pago rechazado correctamente.')
+    if (state.success) toast.success('Pago rechazado. El cliente fue notificado.')
     if (state.error) toast.error(state.error)
   }, [state.success, state.error])
 
