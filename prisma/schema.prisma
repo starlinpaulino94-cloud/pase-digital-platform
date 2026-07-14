@@ -283,6 +283,9 @@ model Company {
 
   // Engagement Engine · Fase 2 (Motor de Campañas de marketing).
   marketingCampaigns MarketingCampaign[]
+  // Engagement Engine · Fase 6B (Ruleta de premios).
+  ruletaPremios      RuletaPremio[]
+  ruletaJugadas      RuletaJugada[]
 
   @@index([isPublished, isFeatured])
   @@index([ciudad, provincia])
@@ -407,6 +410,9 @@ model Promocion {
   growthLinks          GrowthLink[] @relation("GrowthLinkBeneficio")
   growthRulesBeneficio GrowthRule[] @relation("GrowthRuleBeneficio")
 
+  // Engagement Engine · Fase 6B: promoción como premio de la ruleta.
+  ruletaPremios RuletaPremio[]
+
   @@index([companyId, activo])
   @@index([isFeatured, vigenciaHasta])
   @@index([tipo])
@@ -508,6 +514,9 @@ model Cliente {
   growthLinks   GrowthLink[]   @relation("GrowthLinks")
   growthRewards GrowthReward[] @relation("GrowthRewards")
   growthWallets GrowthWallet[] @relation("GrowthWallet")
+
+  // Engagement Engine · Fase 6B (Ruleta de premios).
+  ruletaJugadas RuletaJugada[]
 
   @@unique([supabaseId, companyId])
   // Filtros frecuentes solo por empresa (adminMetrics, reportes, /admin/clientes).
@@ -2575,4 +2584,53 @@ model MarketingCampaign {
   @@index([companyId, estado, fechaInicio, fechaFin])
   @@index([estado, fechaFin])
   @@map("marketing_campaigns")
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Engagement Engine · Fase 6B — Ruleta de premios (gasta puntos ganados).
+// ─────────────────────────────────────────────────────────────────────────
+
+enum RuletaPremioTipo {
+  PROMOCION // entrega una promoción como beneficio (ProductoCompra + QR)
+  NADA      // segmento "sigue participando" (no otorga premio)
+}
+
+model RuletaPremio {
+  id           String           @id @default(cuid())
+  companyId    String
+  company      Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  nombre       String
+  tipo         RuletaPremioTipo @default(PROMOCION)
+  promocionId  String?
+  promocion    Promocion?       @relation(fields: [promocionId], references: [id])
+  probabilidad Int              @default(1) // peso relativo (mayor = más probable)
+  color        String?
+  activo       Boolean          @default(true)
+  orden        Int              @default(0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  jugadas RuletaJugada[]
+
+  @@index([companyId, activo])
+  @@map("ruleta_premios")
+}
+
+model RuletaJugada {
+  id               String   @id @default(cuid())
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  clienteId        String
+  cliente          Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  costoPuntos      Int
+  premioId         String?
+  premio           RuletaPremio? @relation(fields: [premioId], references: [id])
+  premioNombre     String
+  gano             Boolean  @default(false)
+  productoCompraId String?
+  createdAt        DateTime @default(now())
+
+  @@index([companyId, clienteId])
+  @@index([clienteId, createdAt])
+  @@map("ruleta_jugadas")
 }

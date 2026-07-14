@@ -75,10 +75,23 @@ referidos completados, membresías activas), no se guardan ni se inventan.
 - `components/engagement/Gamificacion.tsx` — tarjeta en el Home: nivel, puntos,
   barra al siguiente nivel y logros (desbloqueados vs. en progreso).
 
-### Pendiente (requiere esquema / libro mayor de puntos)
-Rachas por visita, ranking entre clientes, retos/misiones, ruleta y rasca-y-gana
-(gastar puntos), calendario de recompensas. Se añaden cuando exista un libro
-mayor de puntos y catálogo de premios por empresa.
+### Fase 6B — Ruleta de premios + libro mayor de puntos  ✅
+Permite GASTAR los puntos ganados. Los puntos ganados siguen siendo derivados;
+solo el gasto se registra (`RuletaJugada`), así que saldo = ganados − gastados.
+- Schema: `RuletaPremio` (premios por empresa: promoción o "sigue participando",
+  probabilidad, color, activo) + `RuletaJugada` (libro mayor de gasto + premio
+  ganado). Migración `20260714_ruleta_premios` (validada en Postgres efímera).
+- `modules/gamificacion/ruletaActions.ts` — `girarRuleta()`: valida saldo,
+  elige premio ponderado EN EL SERVIDOR, entrega la promoción como beneficio
+  (ProductoCompra + QR, vía `otorgarBeneficioDirecto`) y registra la jugada.
+  CRUD de premios para el admin.
+- Cliente `/cliente/ruleta` — rueda animada (respeta reduced-motion) con
+  contador de saldo e historial de giros. Acceso desde la tarjeta de nivel.
+- Admin `/admin/gamificacion` — configurar premios, probabilidad y estado.
+
+### Pendiente de Fase 6 (siguiente incremento)
+Rasca-y-gana (reusa el catálogo de premios), rachas por visita, ranking entre
+clientes, retos/misiones, calendario de recompensas.
 
 ## Fase 7 — Personalización por empresa (schema)
 Tema, colores, animaciones, tipos de campaña, prioridad, banners por empresa.

@@ -26,7 +26,14 @@ export interface LogroData {
 }
 
 export interface GamificacionData {
+  /** Puntos GANADOS (derivados; determinan el nivel). */
   puntos: number
+  /** Puntos gastados en la ruleta (libro mayor). */
+  gastados: number
+  /** Saldo disponible para gastar = ganados − gastados. */
+  saldo: number
+  /** ¿La empresa tiene premios de ruleta activos? (para mostrar el acceso). */
+  hayRuleta: boolean
   nivel: { nivel: number; nombre: string; color: string }
   siguiente: { nombre: string; min: number } | null
   progreso: number
@@ -40,19 +47,30 @@ export async function getGamificacion(
   companyId: string
 ): Promise<GamificacionData | null> {
   try {
-    const [beneficiosReclamados, beneficiosUsados, referidosCompletados, membresiasActivas] =
-      await Promise.all([
-        prisma.productoCompra.count({
-          where: { clienteId, companyId, estado: { in: ['ACTIVA', 'CONSUMIDA'] } },
-        }),
-        prisma.productoCompra.count({
-          where: { clienteId, companyId, estado: 'CONSUMIDA' },
-        }),
-        prisma.referido.count({
-          where: { referenteClienteId: clienteId, companyId, estado: 'COMPLETADO' },
-        }),
-        prisma.membership.count({ where: { clienteId, companyId, estado: 'ACTIVA' } }),
-      ])
+    const [
+      beneficiosReclamados,
+      beneficiosUsados,
+      referidosCompletados,
+      membresiasActivas,
+      gastoAgg,
+      premiosActivos,
+    ] = await Promise.all([
+      prisma.productoCompra.count({
+        where: { clienteId, companyId, estado: { in: ['ACTIVA', 'CONSUMIDA'] } },
+      }),
+      prisma.productoCompra.count({
+        where: { clienteId, companyId, estado: 'CONSUMIDA' },
+      }),
+      prisma.referido.count({
+        where: { referenteClienteId: clienteId, companyId, estado: 'COMPLETADO' },
+      }),
+      prisma.membership.count({ where: { clienteId, companyId, estado: 'ACTIVA' } }),
+      prisma.ruletaJugada.aggregate({
+        where: { clienteId, companyId },
+        _sum: { costoPuntos: true },
+      }),
+      prisma.ruletaPremio.count({ where: { companyId, activo: true } }),
+    ])
 
     const stats: GamificacionStats = {
       beneficiosReclamados,
@@ -62,6 +80,8 @@ export async function getGamificacion(
     }
 
     const puntos = calcularPuntos(stats)
+    const gastados = gastoAgg._sum.costoPuntos ?? 0
+    const saldo = Math.max(0, puntos - gastados)
     const { actual, siguiente, progreso, faltan } = nivelPara(puntos)
 
     const logros: LogroData[] = LOGROS.map((l) => {
@@ -79,6 +99,9 @@ export async function getGamificacion(
 
     return {
       puntos,
+      gastados,
+      saldo,
+      hayRuleta: premiosActivos > 0,
       nivel: { nivel: actual.nivel, nombre: actual.nombre, color: actual.color },
       siguiente: siguiente ? { nombre: siguiente.nombre, min: siguiente.min } : null,
       progreso,

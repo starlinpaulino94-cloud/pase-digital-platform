@@ -298,6 +298,34 @@ export async function otorgarBeneficioReferido(input: {
   }
 }
 
+/**
+ * Entrega DIRECTA de una promoción como beneficio (ProductoCompra ACTIVA + QR),
+ * SIN el candado de idempotencia por cliente+promoción. Pensada para premios
+ * que se pueden ganar más de una vez (p. ej. la ruleta de la Fase 6B). Devuelve
+ * el compraId o null. Solo debe llamarse desde código de servidor autorizado.
+ */
+export async function otorgarBeneficioDirecto(input: {
+  companyId: string
+  clienteId: string
+  promocionId: string
+  motivo?: string
+}): Promise<string | null> {
+  try {
+    return await prisma.$transaction((tx) =>
+      crearBeneficioCompra(
+        tx,
+        input.companyId,
+        input.clienteId,
+        input.promocionId,
+        input.motivo ?? 'Premio de gamificación'
+      )
+    )
+  } catch (e) {
+    console.error('[growth] otorgarBeneficioDirecto', e)
+    return null
+  }
+}
+
 /** Suma puntos/créditos al wallet del cliente (crea la fila si no existe). */
 async function sumarWallet(
   tx: Tx,

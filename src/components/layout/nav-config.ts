@@ -27,6 +27,7 @@ import {
   Zap,
   Ticket,
   Sparkles,
+  Trophy,
   type LucideIcon,
 } from 'lucide-react'
 import type { AppRole } from '@/types'
@@ -74,6 +75,7 @@ const ADMIN_NAV: NavGroup[] = [
       { href: '/admin/promociones', label: 'Promociones', icon: Megaphone },
       { href: '/admin/referidos', label: 'Referidos', icon: Gift },
       { href: '/admin/invitaciones', label: 'Invitaciones', icon: Ticket },
+      { href: '/admin/gamificacion', label: 'Ruleta de premios', icon: Trophy },
       { href: '/admin/crecimiento', label: 'Crecimiento', icon: Rocket },
     ],
   },
@@ -150,6 +152,7 @@ const CLIENTE_NAV: NavGroup[] = [
       { href: '/cliente/mis-promociones', label: 'Mis promociones', icon: Ticket },
       // Unificación: el antiguo módulo "Referidos" vive dentro de Invita y Gana.
       { href: '/cliente/invita-y-gana', label: 'Invita y Gana', icon: Gift },
+      { href: '/cliente/ruleta', label: 'Ruleta de premios', icon: Trophy },
     ],
   },
   {

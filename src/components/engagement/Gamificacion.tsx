@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import {
   Sparkles,
   Gift,
@@ -8,6 +9,8 @@ import {
   Flame,
   Trophy,
   Lock,
+  RotateCw,
+  ArrowRight,
   type LucideIcon,
 } from 'lucide-react'
 import type { GamificacionData, LogroData } from '@/modules/engagement/gamificacion'
@@ -120,6 +123,25 @@ export function Gamificacion({ data }: { data: GamificacionData }) {
           ))}
         </div>
       </div>
+
+      {/* Ruleta: acceso solo si la empresa configuró premios (Fase 6B) */}
+      {data.hayRuleta && (
+        <Link
+          href="/cliente/ruleta"
+          className="group flex items-center gap-3 border-t border-border/60 bg-gradient-to-r from-primary/5 to-transparent px-4 py-3 transition hover:from-primary/10"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <RotateCw className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-foreground">Ruleta de premios</span>
+            <span className="block text-xs text-muted-foreground">
+              Tienes {data.saldo.toLocaleString('es-DO')} pts para gastar
+            </span>
+          </span>
+          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground/50 transition group-hover:translate-x-0.5 group-hover:text-primary" />
+        </Link>
+      )}
     </div>
   )
 }

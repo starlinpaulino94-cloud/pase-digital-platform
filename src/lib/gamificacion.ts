@@ -20,6 +20,9 @@ export const PUNTOS = {
   membresia: 200,
 } as const
 
+/** Costo en puntos de un giro de ruleta (Fase 6B). Configurable a futuro. */
+export const COSTO_RULETA = 500
+
 export function calcularPuntos(s: GamificacionStats): number {
   return (
     PUNTOS.base +
