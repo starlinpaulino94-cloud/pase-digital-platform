@@ -54,6 +54,7 @@ export default async function EditarCampanaPage({
     maxPremios: campana.maxPremios,
     colorPrimario: campana.colorPrimario,
     colorSecundario: campana.colorSecundario,
+    usarBanner: campana.usarBanner,
   }
 
   return (

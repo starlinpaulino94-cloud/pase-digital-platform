@@ -71,6 +71,7 @@ export async function crearCampanaInvitacion(
   const maxPremios = maxPremiosRaw ? Number(maxPremiosRaw) : null
   const colorPrimario = String(formData.get('colorPrimario') ?? '').trim() || null
   const colorSecundario = String(formData.get('colorSecundario') ?? '').trim() || null
+  const usarBanner = formData.get('usarBanner') === 'on'
 
   if (!nombre || !titulo || !descripcion) {
     return { error: 'Nombre, título y descripción son obligatorios.' }
@@ -108,6 +109,7 @@ export async function crearCampanaInvitacion(
         maxPremios,
         colorPrimario,
         colorSecundario,
+        usarBanner,
         estado: 'BORRADOR',
       },
     })
@@ -141,6 +143,7 @@ export async function actualizarCampanaInvitacion(
   const maxPremios = maxPremiosRaw ? Number(maxPremiosRaw) : null
   const colorPrimario = String(formData.get('colorPrimario') ?? '').trim() || null
   const colorSecundario = String(formData.get('colorSecundario') ?? '').trim() || null
+  const usarBanner = formData.get('usarBanner') === 'on'
 
   if (!nombre || !titulo || !descripcion) {
     return { error: 'Nombre, título y descripción son obligatorios.' }
@@ -167,6 +170,7 @@ export async function actualizarCampanaInvitacion(
         maxPremios,
         colorPrimario,
         colorSecundario,
+        usarBanner,
       },
     })
 
