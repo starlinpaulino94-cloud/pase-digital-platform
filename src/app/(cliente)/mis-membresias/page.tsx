@@ -28,6 +28,7 @@ import { MomentosVivos } from '@/components/engagement/MomentosVivos'
 import { CampanasVivas } from '@/components/engagement/CampanasVivas'
 import { PruebaSocial } from '@/components/engagement/PruebaSocial'
 import { Gamificacion } from '@/components/engagement/Gamificacion'
+import { PopupInteligente } from '@/components/engagement/PopupInteligente'
 import { CarrouselesHome } from '@/components/engagement/CarrouselesHome'
 import { MembershipCard } from '@/components/cliente/MembershipCard'
 import { CelebracionBienvenida } from '@/components/cliente/CelebracionBienvenida'
@@ -195,6 +196,15 @@ export default async function MisMembresias() {
     <main className="container max-w-5xl py-8">
       {/* Felicitación por encima de la app tras registrarse con auto-login */}
       <CelebracionBienvenida />
+
+      {/* Engagement Engine · Fase 8: popup inteligente (aviso oportuno, máx 1/día) */}
+      {!loadError && engagement.popups && (
+        <PopupInteligente
+          momentos={momentos.momentos}
+          campanas={campanas}
+          color={engagement.color}
+        />
+      )}
       {/* ── Cabecera ──────────────────────────────────────────────────────── */}
       <header className="mb-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

@@ -28,6 +28,7 @@ export async function guardarPersonalizacion(
       pruebaSocial: fd.get('pruebaSocial') === 'on',
       campanas: fd.get('campanas') === 'on',
       carruseles: fd.get('carruseles') === 'on',
+      popups: fd.get('popups') === 'on',
     },
     null
   )

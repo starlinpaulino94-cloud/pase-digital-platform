@@ -111,10 +111,20 @@ se añade la configuración a nivel de experiencia.
 Re-tematizar toda la app por empresa (colores globales, estilos de animación),
 tipografías y plantillas de banner por empresa.
 
-## Fase 8 — Popups inteligentes + Sistema de eventos + Recomendaciones
-Popups importantes (no molestos) disparados por eventos del motor
-(registro → bienvenida → regalo → invita → confeti). Recomendaciones por
-comportamiento del usuario.
+## Fase 8 — Popups inteligentes + Recomendaciones  ✅
+Popups importantes (no molestos) disparados por el estado REAL del cliente, y
+recomendaciones por comportamiento.
+- `components/engagement/PopupInteligente.tsx` — elige UN aviso accionable por
+  prioridad (beneficio por vencer → beneficio listo → campaña destacada) y lo
+  muestra como popup en el Home. No molesto: máx. 1 vez cada 24h por aviso
+  (frecuencia guardada en localStorage), cerrable, respeta reduced-motion.
+- Reutiliza los datos ya cargados (momentos vivos + campañas vivas); sin schema.
+- Toggle por empresa `popups` en `engagementConfig` (Fase 7) + interruptor en
+  /admin/personalizacion.
+- Recomendaciones por comportamiento: cubiertas por el feed recomendado de la
+  Fase 3 (`getPromoFeed` → recomendadas / empresasRecomendadas en los carruseles).
+- Celebración post-registro (registro → bienvenida → regalo → invita → confeti):
+  ya implementada como `CelebracionOverlay` / `CelebracionBienvenida`.
 
 ---
 
