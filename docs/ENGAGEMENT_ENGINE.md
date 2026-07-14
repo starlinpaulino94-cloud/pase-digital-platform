@@ -61,9 +61,24 @@ prioridad, destacada, colores, CTA), así que NO requiere esquema nuevo.
 - Controles: flechas, indicadores (dots), swipe táctil; pausa al pasar el ratón.
 - Respeta prefers-reduced-motion (sin auto-rotación ni animación de entrada).
 
-## Fase 6 — Gamificación (schema)
+## Fase 6 — Gamificación
 Niveles, logros, insignias, retos, puntos, ranking, rachas, ruleta, rasca y gana,
 misiones, calendario de recompensas. Todo sobre el mismo motor.
+
+### Fase 6A — Puntos + Niveles + Logros  ✅ (sin esquema)
+Los puntos se DERIVAN de hechos reales del cliente (beneficios reclamados/usados,
+referidos completados, membresías activas), no se guardan ni se inventan.
+- `lib/gamificacion.ts` — lógica pura: pesos de puntos, 6 niveles (Nuevo→Diamante),
+  `nivelPara(puntos)`, catálogo de logros derivados.
+- `modules/engagement/gamificacion.ts` — `getGamificacion(clienteId, companyId)`:
+  cuenta hechos reales y arma nivel + progreso + logros. Falla en silencio.
+- `components/engagement/Gamificacion.tsx` — tarjeta en el Home: nivel, puntos,
+  barra al siguiente nivel y logros (desbloqueados vs. en progreso).
+
+### Pendiente (requiere esquema / libro mayor de puntos)
+Rachas por visita, ranking entre clientes, retos/misiones, ruleta y rasca-y-gana
+(gastar puntos), calendario de recompensas. Se añaden cuando exista un libro
+mayor de puntos y catálogo de premios por empresa.
 
 ## Fase 7 — Personalización por empresa (schema)
 Tema, colores, animaciones, tipos de campaña, prioridad, banners por empresa.

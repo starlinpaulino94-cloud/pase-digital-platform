@@ -21,9 +21,11 @@ import { getNovedadesInicio, getOnboardingCliente, getPromoFeed, type PromoFeed 
 import { getMomentosVivos, type MomentosVivos as MomentosData } from '@/modules/engagement/momentos'
 import { getCampanasVivas, type CampanaViva } from '@/modules/engagement/campanas'
 import { getPruebaSocial, type PruebaSocial as PruebaSocialData } from '@/modules/engagement/pruebaSocial'
+import { getGamificacion, type GamificacionData } from '@/modules/engagement/gamificacion'
 import { MomentosVivos } from '@/components/engagement/MomentosVivos'
 import { CampanasVivas } from '@/components/engagement/CampanasVivas'
 import { PruebaSocial } from '@/components/engagement/PruebaSocial'
+import { Gamificacion } from '@/components/engagement/Gamificacion'
 import { CarrouselesHome } from '@/components/engagement/CarrouselesHome'
 import { MembershipCard } from '@/components/cliente/MembershipCard'
 import { CelebracionBienvenida } from '@/components/cliente/CelebracionBienvenida'
@@ -121,13 +123,15 @@ export default async function MisMembresias() {
   let momentos: MomentosData = { nombre: null, momentos: [] }
   let campanas: CampanaViva[] = []
   let pruebaSocial: PruebaSocialData | null = null
+  let gamificacion: GamificacionData | null = null
   if (user.metadata.clienteId && user.metadata.companyId) {
-    ;[momentos, campanas, pruebaSocial] = await Promise.all([
+    ;[momentos, campanas, pruebaSocial, gamificacion] = await Promise.all([
       getMomentosVivos(user.metadata.clienteId, user.metadata.companyId).catch(
         () => ({ nombre: null, momentos: [] }) as MomentosData
       ),
       getCampanasVivas(user.metadata.companyId).catch(() => []),
       getPruebaSocial(user.metadata.companyId).catch(() => null),
+      getGamificacion(user.metadata.clienteId, user.metadata.companyId).catch(() => null),
     ])
   }
 
@@ -238,6 +242,9 @@ export default async function MisMembresias() {
 
       {/* Engagement Engine · Fase 2: campañas de marketing vivas (banner + contador) */}
       {!loadError && <CampanasVivas campanas={campanas} />}
+
+      {/* Engagement Engine · Fase 6A: gamificación (nivel, puntos, logros reales) */}
+      {!loadError && gamificacion && <Gamificacion data={gamificacion} />}
 
       {/* Engagement Engine · Momentos vivos (datos reales, con urgencia) */}
       {!loadError && <MomentosVivos nombre={momentos.nombre} momentos={momentos.momentos} />}
