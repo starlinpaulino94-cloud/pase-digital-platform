@@ -19,7 +19,6 @@ import {
 } from 'lucide-react'
 import { QRShareCard } from '@/components/qr/QRShareCard'
 import { ComprobanteForm } from '@/components/membresia/ComprobanteForm'
-import { WalletCard, type WalletCardTone } from '@/components/wallet/WalletCard'
 import { Reveal } from '@/components/ui/reveal'
 import { formatMoney } from '@/lib/format'
 
@@ -148,8 +147,8 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
   const estadoLabel = membresiaEstadoUi(membership.estado).label
   const company = membership.cliente.company
 
-  // Tarjeta wallet: el consumo es el protagonista, el estado pasa a secundario.
-  const tone: WalletCardTone = isActive
+  // Tono del chip de estado en la cabecera.
+  const tone = isActive
     ? 'active'
     : membership.estado === 'VENCIDA' ||
         (membership.fechaVencimiento && membership.fechaVencimiento <= now)
@@ -175,27 +174,26 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
         <ArrowLeft className="h-4 w-4" /> Mis membresías
       </Link>
 
-      {/* Tarjeta wallet con el color de marca del negocio */}
-      <div className="mb-8">
-        <WalletCard
-          data={{
-            company: {
-              name: company.name,
-              logoUrl: company.logoUrl,
-              colorPrimario: company.colorPrimario,
-            },
-            planNombre: membership.plan.nombre,
-            estadoLabel,
-            tone,
-            expiryText: membership.fechaVencimiento
-              ? `${isActive ? 'Vence' : 'Venció'} el ${fmtFechaLarga(membership.fechaVencimiento)}`
-              : null,
-            esIlimitado: membership.plan.esIlimitado ?? false,
-            usosRestantes: membership.lavadosRestantes ?? 0,
-            usosTotales: membership.plan.lavadosIncluidos ?? null,
-          }}
-        />
-      </div>
+      {/* Cabecera simple: la tarjeta visual vive en Mis membresías */}
+      <header className="mb-8 flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm text-muted-foreground">{company.name}</p>
+          <h1 className="mt-0.5 truncate text-h2 text-foreground">
+            {membership.plan.nombre}
+          </h1>
+        </div>
+        <span
+          className={`mt-1 shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
+            tone === 'active'
+              ? 'bg-success/15 text-success'
+              : tone === 'expired'
+                ? 'bg-destructive/10 text-destructive'
+                : 'bg-warning/15 text-warning-foreground'
+          }`}
+        >
+          {estadoLabel}
+        </span>
+      </header>
 
       <div className="space-y-6">
         {/* Sección de pago */}

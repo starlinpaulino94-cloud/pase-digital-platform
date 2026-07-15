@@ -1,11 +1,17 @@
 import { Skeleton } from '@/components/ui/skeleton'
 
-/** Skeleton del detalle: tarjeta wallet → QR → historial de visitas. */
+/** Skeleton del detalle: cabecera → QR → historial de visitas. */
 export default function Loading() {
   return (
     <main className="container max-w-2xl py-8">
       <Skeleton className="h-4 w-32" />
-      <Skeleton className="mt-6 aspect-[1.586/1] min-h-[196px] w-full rounded-[1.4rem]" />
+      <div className="mt-6 flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-36" />
+          <Skeleton className="h-8 w-56" />
+        </div>
+        <Skeleton className="h-7 w-20 rounded-full" />
+      </div>
       <div className="mt-8 flex flex-col items-center rounded-3xl border border-border/60 px-6 py-8">
         <Skeleton className="h-6 w-40" />
         <Skeleton className="mt-4 h-7 w-36 rounded-full" />
