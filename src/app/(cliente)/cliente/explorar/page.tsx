@@ -1,11 +1,12 @@
 import Link from 'next/link'
-import { Search, Store, Compass } from 'lucide-react'
+import { Search, Store } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
-import { getCompaniesPublic } from '@/modules/marketplace/queries'
+import { getCompaniesPublic, getCategoriesPublic } from '@/modules/marketplace/queries'
 import { getSeguidasIds } from '@/modules/social/queries'
 import { ExplorarEmpresasList } from '@/components/cliente/ExplorarEmpresasList'
-import { Input } from '@/components/ui/input'
+import { EmptyState } from '@/components/system/EmptyState'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,104 +23,123 @@ export default async function ExplorarEmpresasPage({
   const user = await requireRole('CLIENTE')
   const params = await searchParams
   const search = typeof params.q === 'string' ? params.q.trim() : ''
+  const category = typeof params.category === 'string' ? params.category : ''
 
-  const [companies, seguidas] = await Promise.all([
-    getCompaniesPublic({ search: search || undefined, limit: 100 }),
+  const [companies, seguidas, categorias] = await Promise.all([
+    getCompaniesPublic({
+      search: search || undefined,
+      category: category || undefined,
+      limit: 100,
+    }),
     getSeguidasIds(user.metadata.dbUserId),
+    getCategoriesPublic().catch(() => []),
   ])
+
+  /** Chips: conservan la búsqueda activa al cambiar de categoría. */
+  const chipHref = (slug: string | null) => {
+    const qs = new URLSearchParams()
+    if (search) qs.set('q', search)
+    if (slug) qs.set('category', slug)
+    const s = qs.toString()
+    return `/cliente/explorar${s ? `?${s}` : ''}`
+  }
 
   return (
     <main className="container max-w-5xl py-8">
-      {/* ── Cabecera ──────────────────────────────────────────────────────── */}
-      <header className="mb-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-              Directorio
-            </p>
-            <h1 className="mt-1.5 text-h1 tracking-tight text-foreground">
-              Explorar empresas
-            </h1>
-            <p className="mt-1 text-small text-muted-foreground">
-              Descubre negocios afiliados, síguelos y únete a sus membresías.
-            </p>
-          </div>
-        </div>
+      {/* ── Cabecera app-style: título grande + buscador protagonista ──────── */}
+      <header className="animate-fade-up mb-6">
+        <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+          Encuentra membresías
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Explora y suscríbete a los mejores negocios locales.
+        </p>
 
-        {/* Barra de búsqueda */}
-        <form
-          action="/cliente/explorar"
-          className="mt-6 flex max-w-lg gap-2"
-        >
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
+        {/* Buscador grande, redondo, de app móvil */}
+        <form action="/cliente/explorar" className="mt-5">
+          {category && <input type="hidden" name="category" value={category} />}
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground/60" />
+            <input
               name="q"
               defaultValue={search}
-              placeholder="Buscar por nombre o descripción…"
-              className="rounded-xl pl-9"
+              placeholder="Buscar lavados, peluquerías, gym…"
+              className="h-13 w-full rounded-2xl border border-border/60 bg-card pl-12 pr-4 text-[15px] text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground/50 focus:border-ring focus:ring-2 focus:ring-ring/20"
             />
           </div>
-          <Button type="submit" variant="outline" className="rounded-xl">
-            Buscar
-          </Button>
         </form>
+
+        {/* Chips de categoría */}
+        {categorias.length > 0 && (
+          <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto pb-1">
+            <Link
+              href={chipHref(null)}
+              className={cn(
+                'shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition',
+                !category
+                  ? 'bg-foreground text-background'
+                  : 'bg-muted text-muted-foreground hover:text-foreground'
+              )}
+            >
+              Todos
+            </Link>
+            {categorias.map((cat) => (
+              <Link
+                key={cat.slug}
+                href={chipHref(cat.slug)}
+                className={cn(
+                  'shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition',
+                  category === cat.slug
+                    ? 'bg-foreground text-background'
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {cat.name}
+              </Link>
+            ))}
+          </div>
+        )}
       </header>
 
       {/* ── Contenido ─────────────────────────────────────────────────────── */}
       {companies.length === 0 ? (
-        <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card p-10 text-center shadow-card">
-          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-info/10 blur-3xl" />
-          <div className="relative mx-auto flex max-w-md flex-col items-center gap-5">
-            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
-              <Store className="h-8 w-8 text-muted-foreground" />
-            </span>
-            <div>
-              <h2 className="text-xl font-bold text-foreground">
-                {search
-                  ? `Sin resultados para "${search}"`
-                  : 'No hay empresas disponibles'}
-              </h2>
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                {search
-                  ? 'Prueba con otro término o mira todas las empresas.'
-                  : 'Vuelve pronto, nuevas empresas se unen cada día.'}
-              </p>
-            </div>
-            {search && (
+        <EmptyState
+          icon={Store}
+          title={
+            search
+              ? `Sin resultados para "${search}"`
+              : 'No hay empresas disponibles'
+          }
+          description={
+            search
+              ? 'Prueba con otro término o mira todas las empresas.'
+              : 'Vuelve pronto, nuevas empresas se unen cada día.'
+          }
+          action={
+            (search || category) && (
               <Button asChild variant="outline">
                 <Link href="/cliente/explorar">Ver todas</Link>
               </Button>
-            )}
-          </div>
-        </div>
+            )
+          }
+        />
       ) : (
-        <>
-          {/* Result count */}
-          <div className="mb-5 flex items-center gap-2">
-            <Compass className="h-4 w-4 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              {companies.length} empresa{companies.length !== 1 ? 's' : ''}
-              {search ? ` para "${search}"` : ' disponibles'}
-            </p>
-          </div>
-
-          <ExplorarEmpresasList
-            empresas={companies.map((c) => ({
-              id: c.id,
-              name: c.name,
-              slug: c.slug,
-              type: c.type,
-              logoUrl: c.logoUrl,
-              bannerUrl: c.bannerUrl,
-              ciudad: c.ciudad,
-              totalMembersCount: c.totalMembersCount,
-              activePromotionsCount: c.activePromotionsCount,
-            }))}
-            seguidasIds={[...seguidas]}
-          />
-        </>
+        <ExplorarEmpresasList
+          empresas={companies.map((c) => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            type: c.type,
+            logoUrl: c.logoUrl,
+            bannerUrl: c.bannerUrl,
+            ciudad: c.ciudad,
+            descripcion: c.description,
+            totalMembersCount: c.totalMembersCount,
+            activePromotionsCount: c.activePromotionsCount,
+            desdePlan: c.desdePlan ?? null,
+          }))}
+          seguidasIds={[...seguidas]}
+        />
       )}
     </main>
   )

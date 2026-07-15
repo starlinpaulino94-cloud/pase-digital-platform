@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Gift, MapPin, Plus, Check, Loader2, ArrowRight, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { toggleSeguirEmpresa } from '@/modules/social/actions'
+import { formatMoney } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 
 const TIPO_LABEL: Record<string, string> = {
@@ -24,8 +25,11 @@ export interface EmpresaExplorar {
   logoUrl: string | null
   bannerUrl: string | null
   ciudad: string | null
+  descripcion?: string | null
   totalMembersCount: number
   activePromotionsCount: number
+  /** Plan activo más barato: ancla "desde $X/mes" de la tarjeta. */
+  desdePlan?: { nombre: string; precio: number } | null
 }
 
 export function ExplorarEmpresasList({
@@ -74,93 +78,96 @@ export function ExplorarEmpresasList({
         return (
           <div
             key={company.id}
-            className="group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-card transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-premium"
+            className="group flex flex-col rounded-3xl border border-border/60 bg-card p-5 shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:shadow-premium"
           >
-            {/* Banner */}
-            <div className="relative h-20 overflow-hidden bg-gradient-to-br from-primary/80 to-info/70">
-              {company.bannerUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={company.bannerUrl}
-                  alt=""
-                  className="h-full w-full object-cover transition group-hover:scale-105"
-                />
-              )}
-              {/* Gradient overlay for text legibility */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-            </div>
-
-            <div className="flex flex-1 flex-col p-4 pt-0">
-              {/* Logo — overlapping banner */}
-              <div className="-mt-7 mb-3">
+            {/* Cabecera: logo cuadrado en color + nombre + precio ancla */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
                 {company.logoUrl ? (
-                  <div className="relative h-14 w-14 overflow-hidden rounded-2xl border-[3px] border-card bg-card shadow-card">
-                    <Image src={company.logoUrl} alt={company.name} fill className="object-cover" />
+                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-2xl shadow-card">
+                    <Image src={company.logoUrl} alt="" fill sizes="48px" className="object-cover" />
                   </div>
                 ) : (
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border-[3px] border-card bg-gradient-to-br from-primary to-info text-sm font-bold text-white shadow-card">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-info text-sm font-bold text-white shadow-card">
                     {initials}
                   </div>
                 )}
+                <div className="min-w-0">
+                  <h3 className="truncate text-[15px] font-bold text-foreground">
+                    {company.name}
+                  </h3>
+                  <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-muted-foreground">
+                    {TIPO_LABEL[company.type] ?? company.type}
+                    {company.ciudad && (
+                      <>
+                        <span aria-hidden>·</span>
+                        <MapPin className="h-3 w-3" aria-hidden /> {company.ciudad}
+                      </>
+                    )}
+                  </p>
+                </div>
               </div>
+              {company.desdePlan && (
+                <div className="shrink-0 text-right">
+                  <p className="text-base font-extrabold tabular-nums text-primary">
+                    {formatMoney(company.desdePlan.precio)}
+                  </p>
+                  <p className="text-[10px] font-medium text-muted-foreground">desde / mes</p>
+                </div>
+              )}
+            </div>
 
-              {/* Company name */}
-              <h3 className="text-base font-bold text-foreground">{company.name}</h3>
+            {/* Plan de entrada + descripción */}
+            <div className="mt-4 min-h-[3.5rem]">
+              {company.desdePlan && (
+                <p className="text-sm font-semibold text-foreground">
+                  {company.desdePlan.nombre}
+                </p>
+              )}
+              {company.descripcion && (
+                <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                  {company.descripcion}
+                </p>
+              )}
+            </div>
 
-              {/* Type + location */}
-              <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span className="rounded-lg bg-muted px-2 py-0.5 font-medium">
-                  {TIPO_LABEL[company.type] ?? company.type}
-                </span>
-                {company.ciudad && (
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin className="h-3 w-3" /> {company.ciudad}
-                  </span>
+            {/* Prueba social compacta */}
+            <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <Gift className="h-3.5 w-3.5 text-success" aria-hidden />
+                {company.activePromotionsCount} promos
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5 text-primary" aria-hidden />
+                {company.totalMembersCount} miembros
+              </span>
+            </div>
+
+            {/* CTA gigante + seguir */}
+            <div className="mt-auto flex items-center gap-2 pt-5">
+              <Button
+                asChild
+                className="min-h-12 flex-1 rounded-2xl bg-gradient-to-r from-primary to-sky-500 text-sm font-bold text-white shadow-md transition hover:opacity-95"
+              >
+                <Link href={`/cliente/empresas/${company.slug}`}>
+                  Ver membresías <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button
+                onClick={() => toggleSeguir(company)}
+                disabled={pending}
+                variant="outline"
+                aria-label={siguiendo ? `Dejar de seguir ${company.name}` : `Seguir a ${company.name}`}
+                className="min-h-12 shrink-0 rounded-2xl px-4"
+              >
+                {pending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : siguiendo ? (
+                  <Check className="h-4 w-4 text-success" />
+                ) : (
+                  <Plus className="h-4 w-4" />
                 )}
-              </div>
-
-              {/* Stats */}
-              <div className="mt-3 flex items-center gap-4">
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-success/10">
-                    <Gift className="h-3.5 w-3.5 text-success" />
-                  </span>
-                  <span className="font-medium">{company.activePromotionsCount}</span>
-                  <span className="hidden sm:inline">promos</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/10">
-                    <Users className="h-3.5 w-3.5 text-primary" />
-                  </span>
-                  <span className="font-medium">{company.totalMembersCount}</span>
-                  <span className="hidden sm:inline">miembros</span>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="mt-auto flex items-center gap-2 pt-4">
-                <Button
-                  onClick={() => toggleSeguir(company)}
-                  disabled={pending}
-                  variant={siguiendo ? 'outline' : 'default'}
-                  size="sm"
-                  className="flex-1"
-                >
-                  {pending ? (
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  ) : siguiendo ? (
-                    <Check className="mr-1.5 h-3.5 w-3.5" />
-                  ) : (
-                    <Plus className="mr-1.5 h-3.5 w-3.5" />
-                  )}
-                  {siguiendo ? 'Siguiendo' : 'Seguir'}
-                </Button>
-                <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
-                  <Link href={`/cliente/empresas/${company.slug}`}>
-                    Ver perfil <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                  </Link>
-                </Button>
-              </div>
+              </Button>
             </div>
           </div>
         )

@@ -237,6 +237,36 @@ export function activeMembership<
   )
 }
 
+/**
+ * Membresía activa "principal" del cliente (la de vencimiento más lejano):
+ * destino del FAB "Mi QR". null = sin membresía activa (el FAB se oculta).
+ */
+export async function getMembresiaActivaPrincipalId(
+  supabaseId: string,
+  clienteId?: string | null
+): Promise<string | null> {
+  if (!supabaseId && !clienteId) return null
+  try {
+    const or = [
+      ...(supabaseId ? [{ supabaseId }] : []),
+      ...(clienteId ? [{ id: clienteId }] : []),
+    ]
+    const m = await prisma.membership.findFirst({
+      where: {
+        estado: 'ACTIVA',
+        OR: [{ fechaVencimiento: null }, { fechaVencimiento: { gt: new Date() } }],
+        cliente: { OR: or },
+      },
+      orderBy: { fechaVencimiento: 'desc' },
+      select: { id: true },
+    })
+    return m?.id ?? null
+  } catch (e) {
+    console.error('[getMembresiaActivaPrincipalId]', e)
+    return null
+  }
+}
+
 export interface PagoHistorialItem {
   id: string
   tipo: 'APROBADO' | 'RECHAZADO'

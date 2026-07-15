@@ -26,6 +26,8 @@ export interface CompanyPublic {
   averageRating: number | null
   isFeatured: boolean
   categories: string[] // slugs
+  /** Plan activo más barato ("desde $X/mes") para tarjetas del Explorar. */
+  desdePlan?: { nombre: string; precio: number } | null
   createdAt: Date
 }
 

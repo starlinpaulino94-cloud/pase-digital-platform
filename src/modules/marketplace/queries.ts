@@ -81,6 +81,13 @@ export async function getCompaniesPublic(filters: MarketplaceFilters = {}): Prom
             },
           },
         },
+        // Plan de entrada ("desde $X/mes") para las tarjetas del Explorar.
+        plans: {
+          where: { activo: true },
+          orderBy: { precio: 'asc' },
+          take: 1,
+          select: { nombre: true, precio: true },
+        },
       },
       orderBy: [
         { isFeatured: 'desc' },
@@ -93,7 +100,11 @@ export async function getCompaniesPublic(filters: MarketplaceFilters = {}): Prom
     return companies.map((c) => ({
       ...c,
       categories: c.categories.map((cc) => cc.category.slug),
-    })) as CompanyPublic[]
+      desdePlan: c.plans[0]
+        ? { nombre: c.plans[0].nombre, precio: Number(c.plans[0].precio) }
+        : null,
+      plans: undefined,
+    })) as unknown as CompanyPublic[]
   } catch (error) {
     console.error('[getCompaniesPublic] Error:', error)
     return []
