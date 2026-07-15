@@ -31,6 +31,8 @@ import { Gamificacion } from '@/components/engagement/Gamificacion'
 import { PopupInteligente } from '@/components/engagement/PopupInteligente'
 import { CarrouselesHome } from '@/components/engagement/CarrouselesHome'
 import { WalletStack, type WalletStackItem } from '@/components/wallet/WalletStack'
+import { AnimatedCounter } from '@/components/system/AnimatedCounter'
+import { EmptyState } from '@/components/system/EmptyState'
 import { CelebracionBienvenida } from '@/components/cliente/CelebracionBienvenida'
 import { FeedNovedades } from '@/components/cliente/FeedNovedades'
 import { OnboardingClienteFirstVisit } from '@/components/cliente/OnboardingClienteFirstVisit'
@@ -47,12 +49,22 @@ function StatPill({
   label,
   value,
   tone = 'default',
+  animateNumber = false,
 }: {
   icon: typeof Gauge
   label: string
   value: string
   tone?: 'default' | 'success' | 'warning'
+  /** Anima el valor numérico contando hacia arriba al entrar en pantalla. */
+  animateNumber?: boolean
 }) {
+  const numero = animateNumber ? Number(value.replace(/[^\d]/g, '')) : NaN
+  const contenido =
+    animateNumber && Number.isFinite(numero) ? (
+      <AnimatedCounter value={numero} />
+    ) : (
+      value
+    )
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-4 py-3 shadow-card">
       <span
@@ -67,7 +79,7 @@ function StatPill({
         <Icon className="h-4.5 w-4.5" />
       </span>
       <div className="min-w-0">
-        <p className="truncate text-lg font-bold leading-tight text-foreground">{value}</p>
+        <p className="truncate text-lg font-bold leading-tight text-foreground">{contenido}</p>
         <p className="truncate text-xs text-muted-foreground">{label}</p>
       </div>
     </div>
@@ -252,60 +264,67 @@ export default async function MisMembresias() {
           color={engagement.color}
         />
       )}
-      {/* ── Cabecera ──────────────────────────────────────────────────────── */}
-      <header className="mb-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-              Tu wallet digital
-            </p>
-            <h1 className="mt-1.5 text-h1 tracking-tight text-foreground">
-              Mis membresías
-            </h1>
-            <p className="mt-1 text-small text-muted-foreground">
-              Tus membresías digitales y sus códigos QR, en un solo lugar.
-            </p>
+      {/* ── 1 · Header de app: saludo + avatar (patrón premium mobile) ────── */}
+      <header className="animate-fade-up mb-6">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <span
+              aria-hidden
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-sky-500 text-sm font-bold text-white shadow-glow"
+            >
+              {(momentos.nombre ?? 'M').trim().slice(0, 2).toUpperCase()}
+            </span>
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-extrabold tracking-tight text-foreground sm:text-2xl">
+                {momentos.nombre ? `¡Hola, ${momentos.nombre.split(' ')[0]}!` : '¡Hola! 👋'}
+              </h1>
+              <p className="truncate text-xs text-muted-foreground">
+                Tu wallet digital MembeGo
+              </p>
+            </div>
           </div>
-          <Button asChild variant="outline" className="shrink-0">
+          <Button asChild variant="outline" size="sm" className="shrink-0">
             <Link href="/cliente/explorar">
-              <Compass className="mr-2 h-4 w-4" />
-              Explorar empresas
+              <Compass className="mr-1.5 h-4 w-4" />
+              Explorar
             </Link>
           </Button>
         </div>
-
-        {/* Resumen — solo si hay membresías (evita ruido en el vacío) */}
-        {!loadError && memberships.length > 0 && (
-          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <StatPill
-              icon={WalletCards}
-              label={`Membresía${activas.length !== 1 ? 's' : ''} activa${activas.length !== 1 ? 's' : ''}`}
-              value={String(activas.length)}
-              tone="success"
-            />
-            <StatPill
-              icon={Gauge}
-              label="Usos disponibles"
-              value={tieneIlimitado ? 'Ilimitados' : String(usosDisponibles)}
-            />
-            <StatPill
-              icon={CalendarClock}
-              label="Próximo vencimiento"
-              value={
-                diasProximo === null
-                  ? '—'
-                  : diasProximo === 0
-                    ? 'Hoy'
-                    : `${diasProximo} día${diasProximo !== 1 ? 's' : ''}`
-              }
-              tone={diasProximo !== null && diasProximo <= 7 ? 'warning' : 'default'}
-            />
-          </div>
-        )}
       </header>
 
-      {/* Engagement Engine · Fase 2/5: campañas vivas (banner rotativo) — Fase 7: opcional */}
+      {/* ── 2 · Hero banner: la campaña viva manda (rotativo, con contador) ── */}
       {!loadError && engagement.campanas && <CampanasVivas campanas={campanas} />}
+
+      {/* ── 3 · Vistazo rápido: contadores animados ─────────────────────────── */}
+      {!loadError && memberships.length > 0 && (
+        <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <StatPill
+            icon={WalletCards}
+            label={`Membresía${activas.length !== 1 ? 's' : ''} activa${activas.length !== 1 ? 's' : ''}`}
+            value={String(activas.length)}
+            tone="success"
+            animateNumber
+          />
+          <StatPill
+            icon={Gauge}
+            label="Usos disponibles"
+            value={tieneIlimitado ? 'Ilimitados' : String(usosDisponibles)}
+            animateNumber={!tieneIlimitado}
+          />
+          <StatPill
+            icon={CalendarClock}
+            label="Próximo vencimiento"
+            value={
+              diasProximo === null
+                ? '—'
+                : diasProximo === 0
+                  ? 'Hoy'
+                  : `${diasProximo} día${diasProximo !== 1 ? 's' : ''}`
+            }
+            tone={diasProximo !== null && diasProximo <= 7 ? 'warning' : 'default'}
+          />
+        </div>
+      )}
 
       {/* Engagement Engine · Fase 6: gamificación + ruleta — Fase 7: opcional */}
       {!loadError && engagement.gamificacion && gamificacion && (
@@ -329,51 +348,33 @@ export default async function MisMembresias() {
       )}
 
       {loadError ? (
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10">
-            <AlertCircle className="h-7 w-7 text-destructive" />
-          </span>
-          <div>
-            <p className="font-semibold text-foreground">
-              No pudimos cargar tus membresías.
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Hubo un problema al conectar con el servidor. Intenta de nuevo en unos
-              momentos.
-            </p>
-          </div>
-          <Button asChild variant="outline">
-            <Link href="/mis-membresias">Reintentar</Link>
-          </Button>
-        </div>
+        <EmptyState
+          icon={AlertCircle}
+          title="No pudimos cargar tus membresías"
+          description="Hubo un problema al conectar con el servidor. Intenta de nuevo en unos momentos."
+          action={
+            <Button asChild variant="outline">
+              <Link href="/mis-membresias">Reintentar</Link>
+            </Button>
+          }
+        />
       ) : memberships.length === 0 ? (
         <div className="space-y-8">
-          <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card p-10 text-center shadow-card">
-            <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-info/10 blur-3xl" />
-            <div className="relative mx-auto flex max-w-md flex-col items-center gap-5">
-              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-                <CreditCard className="h-8 w-8 text-primary" />
-              </span>
-              <div>
-                <h2 className="text-xl font-bold text-foreground">
-                  Tu wallet está lista
-                </h2>
-                <p className="mt-1.5 text-sm text-muted-foreground">
-                  Explora las empresas disponibles y activa tu primera membresía
-                  para empezar a disfrutar beneficios con tu QR.
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
+          <EmptyState
+            icon={CreditCard}
+            title="Tu wallet está lista"
+            description="Explora las empresas disponibles y activa tu primera membresía para empezar a disfrutar beneficios con tu QR."
+            action={
+              <>
                 <Button asChild size="lg">
                   <Link href="/cliente/explorar">Explorar empresas</Link>
                 </Button>
                 <Button asChild size="lg" variant="outline">
                   <Link href="/cliente/promociones">Ver promociones</Link>
                 </Button>
-              </div>
-            </div>
-          </div>
+              </>
+            }
+          />
           {feed && engagement.carruseles && <CarrouselesHome feed={feed} />}
           <FeedNovedades novedades={novedades} />
         </div>

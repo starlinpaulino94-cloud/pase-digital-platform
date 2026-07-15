@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import {
-  Gift,
   AlertCircle,
   Heart,
   Star,
@@ -20,6 +19,7 @@ import {
   type PromoFeed,
 } from '@/modules/social/queries'
 import { PromotionCard } from '@/components/public/PromotionCard'
+import { EmptyState } from '@/components/system/EmptyState'
 import { CompanyCard } from '@/components/public/CompanyCard'
 import { SavePromoButton } from '@/components/cliente/SavePromoButton'
 import { Button } from '@/components/ui/button'
@@ -147,20 +147,16 @@ export default async function PromocionesDisponiblesPage() {
       </header>
 
       {loadError || feed == null ? (
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10">
-            <AlertCircle className="h-7 w-7 text-destructive" />
-          </span>
-          <div>
-            <p className="font-semibold text-foreground">No pudimos cargar las promociones.</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Intenta de nuevo en unos momentos.
-            </p>
-          </div>
-          <Button asChild variant="outline">
-            <Link href="/cliente/promociones">Reintentar</Link>
-          </Button>
-        </div>
+        <EmptyState
+          icon={AlertCircle}
+          title="No pudimos cargar las promociones"
+          description="Intenta de nuevo en unos momentos."
+          action={
+            <Button asChild variant="outline">
+              <Link href="/cliente/promociones">Reintentar</Link>
+            </Button>
+          }
+        />
       ) : (
         <div className="space-y-10">
           {/* Guardadas */}
@@ -235,26 +231,16 @@ export default async function PromocionesDisponiblesPage() {
 
           {/* Sin promociones */}
           {sinPromos && guardadas.length === 0 && (
-            <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card p-10 text-center shadow-card">
-              <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-info/10 blur-3xl" />
-              <div className="relative mx-auto flex max-w-md flex-col items-center gap-5">
-                <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
-                  <Tag className="h-8 w-8 text-muted-foreground" />
-                </span>
-                <div>
-                  <h2 className="text-xl font-bold text-foreground">
-                    Sin promociones activas
-                  </h2>
-                  <p className="mt-1.5 text-sm text-muted-foreground">
-                    Sigue empresas para recibir sus promociones apenas se publiquen.
-                  </p>
-                </div>
+            <EmptyState
+              icon={Tag}
+              title="Sin promociones activas"
+              description="Sigue empresas para recibir sus promociones apenas se publiquen."
+              action={
                 <Button asChild size="lg">
                   <Link href="/cliente/explorar">Explorar empresas</Link>
                 </Button>
-              </div>
-            </div>
+              }
+            />
           )}
 
           {/* Descubrir empresas */}

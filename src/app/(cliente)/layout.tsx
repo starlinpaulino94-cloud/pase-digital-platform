@@ -1,8 +1,10 @@
 import { requireRole } from '@/lib/auth/guards'
 import { AppShell } from '@/components/layout/AppShell'
 import { SentryUserSync } from '@/components/SentryUserSync'
+import { QrFab } from '@/components/system/QrFab'
 import { getUnreadCount } from '@/modules/notificaciones/actions'
 import { getClienteCompanies } from '@/modules/cliente/actions'
+import { getMembresiaActivaPrincipalId } from '@/modules/cliente/queries'
 
 export default async function ClienteLayout({
   children,
@@ -10,9 +12,10 @@ export default async function ClienteLayout({
   children: React.ReactNode
 }) {
   const user = await requireRole('CLIENTE')
-  const [notifCount, clienteCompanies] = await Promise.all([
+  const [notifCount, clienteCompanies, membresiaQrId] = await Promise.all([
     getUnreadCount().catch(() => 0),
     getClienteCompanies().catch(() => []),
+    getMembresiaActivaPrincipalId(user.supabaseId, user.metadata.clienteId),
   ])
   const companies = clienteCompanies.map((c) => ({
     companyId: c.companyId,
@@ -30,6 +33,8 @@ export default async function ClienteLayout({
     >
       <SentryUserSync userId={user.metadata.dbUserId} email={user.email} role={user.metadata.role} companyId={user.metadata.companyId} />
       {children}
+      {/* FAB "Mi QR": el código de acceso siempre a un toque (mockup premium) */}
+      {membresiaQrId && <QrFab href={`/membresia/${membresiaQrId}`} />}
     </AppShell>
   )
 }
