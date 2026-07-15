@@ -53,7 +53,7 @@ export const ROLE_HOME: Record<AppRole, string> = {
   EMPLEADO: '/empleado/scanner',
   // Directo a /mis-membresias: /cliente/dashboard era solo un redirect y
   // duplicaba middleware + layout justo después del login.
-  CLIENTE: '/mis-membresias',
+  CLIENTE: '/cliente/inicio',
   // Legacy
   ADMIN_EMPRESA: '/admin/dashboard',
 }

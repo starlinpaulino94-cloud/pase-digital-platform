@@ -1,4 +1,5 @@
 import {
+  WalletCards,
   LayoutDashboard,
   Users,
   CreditCard,
@@ -133,7 +134,10 @@ const CLIENTE_NAV: NavGroup[] = [
     label: 'Inicio',
     // Enlace directo a la vista real (evita el salto de redirect por
     // /cliente/dashboard -> /mis-membresias).
-    items: [{ href: '/mis-membresias', label: 'Mis membresías', icon: LayoutDashboard }],
+    items: [
+      { href: '/cliente/inicio', label: 'Inicio', icon: LayoutDashboard },
+      { href: '/mis-membresias', label: 'Mis membresías', icon: WalletCards },
+    ],
   },
   {
     id: 'membresia',
