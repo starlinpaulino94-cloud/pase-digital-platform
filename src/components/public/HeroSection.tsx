@@ -18,7 +18,7 @@ export function HeroSection({ stats }: { stats: PlatformStats }) {
   return (
     <section className="relative overflow-hidden bg-slate-950">
       {/* Base de marca + glows + textura */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-800 via-blue-700 to-indigo-900" />
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-950" />
       <div className="absolute inset-0 bg-grid-light mask-fade" />
       <div className="absolute -top-32 -right-24 h-[28rem] w-[28rem] animate-pulse-glow rounded-full bg-primary/25 blur-3xl" />
       <div className="absolute -bottom-40 -left-24 h-[28rem] w-[28rem] animate-pulse-glow rounded-full bg-primary/25 blur-3xl delay-500" />

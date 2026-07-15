@@ -23,7 +23,7 @@ const TIPO_META: Record<string, TipoMeta> = {
   PROMOCION: {
     label: 'Promoción',
     icon: Megaphone,
-    bg: 'bg-gradient-to-br from-blue-600 via-blue-500 to-sky-500',
+    bg: 'bg-gradient-to-br from-rose-500 via-orange-500 to-amber-500',
     chip: 'bg-white/20 text-white',
     cta: 'Obtener beneficio',
   },

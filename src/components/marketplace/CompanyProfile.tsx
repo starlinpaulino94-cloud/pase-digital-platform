@@ -136,7 +136,7 @@ export function CompanyProfile({
   return (
     <div className={isApp ? 'bg-card' : 'min-h-screen bg-card'}>
       {/* Hero / Banner */}
-      <section className="relative h-56 w-full overflow-hidden bg-gradient-to-br from-blue-800 via-blue-700 to-indigo-900 sm:h-72">
+      <section className="relative h-56 w-full overflow-hidden bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-950 sm:h-72">
         {company.bannerUrl ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -174,7 +174,7 @@ export function CompanyProfile({
                   <Image src={company.logoUrl} alt={company.name} fill className="object-cover" />
                 </div>
               ) : (
-                <div className="flex h-28 w-28 items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br from-blue-500 to-indigo-600 text-3xl font-bold text-white shadow-md sm:h-32 sm:w-32">
+                <div className="flex h-28 w-28 items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br from-primary to-teal-500 text-3xl font-bold text-white shadow-md sm:h-32 sm:w-32">
                   {initials}
                 </div>
               )}

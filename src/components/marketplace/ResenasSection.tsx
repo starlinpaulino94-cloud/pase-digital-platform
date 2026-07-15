@@ -81,7 +81,7 @@ export function ResenasSection({
               <div className="flex items-center gap-3">
                 <span
                   aria-hidden
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/80 to-sky-500/80 text-xs font-bold text-primary-foreground"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/80 to-teal-400/80 text-xs font-bold text-primary-foreground"
                 >
                   {r.clienteNombre.trim().slice(0, 2).toUpperCase()}
                 </span>

@@ -26,7 +26,7 @@ export function CompanyCard({ company, hrefBase = '/empresas' }: CompanyCardProp
     <Link href={`${hrefBase}/${company.slug}`} className="group block">
       <div className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-border/80 bg-card shadow-card transition-all duration-300 hover:-translate-y-1.5 hover:border-info/30 hover:shadow-premium-lg">
         {/* Banner o gradiente de marca */}
-        <div className="relative h-28 w-full overflow-hidden bg-gradient-to-br from-blue-600 via-blue-500 to-sky-500">
+        <div className="relative h-28 w-full overflow-hidden bg-gradient-to-br from-rose-500 via-orange-500 to-amber-500">
           {company.bannerUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -57,7 +57,7 @@ export function CompanyCard({ company, hrefBase = '/empresas' }: CompanyCardProp
               <Image src={company.logoUrl} alt={company.name} fill className="object-cover" />
             </div>
           ) : (
-            <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br from-blue-500 to-indigo-600 text-xl font-bold text-white shadow-premium">
+            <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br from-primary to-teal-500 text-xl font-bold text-white shadow-premium">
               {initials}
             </div>
           )}

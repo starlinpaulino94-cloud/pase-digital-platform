@@ -27,7 +27,7 @@ import type { PromotionPublic } from '@/modules/marketplace/types'
 
 export const dynamic = 'force-dynamic'
 export const metadata = {
-  title: 'Promociones',
+  title: 'Ofertas',
   description: 'Ofertas y beneficios disponibles para ti',
 }
 

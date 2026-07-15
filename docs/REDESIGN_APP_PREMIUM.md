@@ -65,3 +65,20 @@ solo con propósito (marca del negocio, promo, recomendado).
 - **Fase 3**: perfil de empresa (galería + reseñas), Invita y Gana campaña
   total (metas visuales + confeti en hitos).
 - **Fase 4**: panel admin con KPIs animados, gráficas y menos tablas.
+
+
+---
+
+## 5 · Arquitectura de color por módulo (regla vigente)
+
+| Módulo | Familia de color | Uso |
+|---|---|---|
+| Marca / Membresías / Explorar / QR | **Esmeralda → teal** (primario) | CTAs, gradientes de marca, FAB, recomendado |
+| Promociones / Ofertas | **Rosa → naranja** | Badges de descuento, CTA "Aprovechar ahora", fallback de imagen |
+| Pagos | **Neutro + semánticos** | Extracto sobrio; verde/rojo solo para aprobado/rechazado |
+| Perfil de empresa / Wallet | **Color de la empresa** (dato) | Tarjetas y hero heredan `colorPrimario` del negocio; fallback esmeralda profundo |
+| Novedades (feed) | Por tipo: promo=naranja, beneficio=esmeralda, evento=violeta, noticia=gris | Distinción de categoría |
+| Estados | success/warning/info/destructive (tokens) | Nunca decorativos |
+
+Regla: NINGÚN azul/índigo decorativo suelto — el azul quedó reservado al
+token semántico `info`. Todo gradiente de marca es esmeralda→teal.

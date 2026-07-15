@@ -201,7 +201,7 @@ export default async function SuperadminDashboard() {
                           <Image src={c.logoUrl} alt="" fill className="object-cover" />
                         </span>
                       ) : (
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-[10px] font-bold text-white">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-teal-500 text-[10px] font-bold text-white">
                           {c.name.slice(0, 2).toUpperCase()}
                         </span>
                       )}
