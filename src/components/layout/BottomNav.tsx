@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Compass, Megaphone, Gift, User, type LucideIcon } from 'lucide-react'
+import { LayoutDashboard, Compass, Megaphone, WalletCards, User, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface BottomNavItem {
@@ -15,10 +15,10 @@ interface BottomNavItem {
 
 /** Navegación inferior del cliente en móvil (5 destinos curados). */
 const CLIENTE_ITEMS: BottomNavItem[] = [
-  { href: '/mis-membresias', label: 'Inicio', icon: LayoutDashboard, match: ['/cliente/dashboard', '/membresia'] },
+  { href: '/cliente/inicio', label: 'Inicio', icon: LayoutDashboard, match: ['/cliente/dashboard'] },
   { href: '/cliente/explorar', label: 'Explorar', icon: Compass, match: ['/cliente/empresas'] },
+  { href: '/mis-membresias', label: 'Tarjetas', icon: WalletCards, match: ['/membresia'] },
   { href: '/cliente/promociones', label: 'Ofertas', icon: Megaphone },
-  { href: '/cliente/invita-y-gana', label: 'Invitar', icon: Gift, match: ['/cliente/referidos'] },
   { href: '/cliente/perfil', label: 'Perfil', icon: User, match: ['/cliente/pagos', '/cliente/historial', '/cliente/ayuda'] },
 ]
 
