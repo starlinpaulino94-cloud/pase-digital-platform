@@ -228,7 +228,7 @@ export function LoginForm({
         {!isStaff && (
           <p className="mt-2 text-center text-sm text-white/60">
             ¿No tienes cuenta?{' '}
-            <Link href="/registro" className="text-primary hover:underline">
+            <Link href="/registro/cuenta" className="text-primary hover:underline">
               Regístrate
             </Link>
           </p>
