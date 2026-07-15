@@ -208,14 +208,14 @@ export function PromotionDetail({ mode, promotion, comprarSlot }: PromotionDetai
                 {isApp && comprarSlot ? null : isApp ? (
                   <Link
                     href={empresaHref}
-                    className="w-full block text-center bg-primary text-white px-6 py-4 rounded-lg hover:bg-primary transition-colors font-bold text-lg"
+                    className="w-full block text-center bg-primary text-primary-foreground px-6 py-4 rounded-lg hover:bg-primary transition-colors font-bold text-lg"
                   >
                     Ver empresa y sus planes
                   </Link>
                 ) : (
                   <Link
                     href={registroHref}
-                    className="w-full block text-center bg-primary text-white px-6 py-4 rounded-lg hover:bg-primary transition-colors font-bold text-lg"
+                    className="w-full block text-center bg-primary text-primary-foreground px-6 py-4 rounded-lg hover:bg-primary transition-colors font-bold text-lg"
                   >
                     Adquirir promoción
                   </Link>
@@ -235,7 +235,7 @@ export function PromotionDetail({ mode, promotion, comprarSlot }: PromotionDetai
           </p>
           <Link
             href={empresaHref}
-            className="inline-block bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary transition-colors"
+            className="inline-block bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary transition-colors"
           >
             Ver empresa completa
           </Link>

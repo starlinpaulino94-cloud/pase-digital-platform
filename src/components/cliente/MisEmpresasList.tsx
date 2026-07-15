@@ -113,7 +113,7 @@ export function MisEmpresasList({ empresas }: { empresas: EmpresaSeguida[] }) {
               <div className="mt-4 flex items-center gap-2 border-t border-border/60 pt-3">
                 <Link
                   href={`/cliente/empresas/${company.slug}`}
-                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition hover:bg-primary"
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary"
                 >
                   Ver perfil <ArrowRight className="h-3.5 w-3.5" />
                 </Link>

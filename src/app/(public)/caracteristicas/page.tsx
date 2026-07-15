@@ -107,7 +107,7 @@ export default function CaracteristicasPage() {
           <div className="flex flex-wrap justify-center gap-3">
             <Link
               href="/registro-empresa"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-white shadow-glow transition hover:opacity-95"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-glow transition hover:opacity-95"
             >
               Registrar mi empresa <ArrowRight className="h-4 w-4" />
             </Link>

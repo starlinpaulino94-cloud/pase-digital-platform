@@ -74,7 +74,7 @@ export default async function InvitacionPage({ params }: InvitacionPageProps) {
           </p>
           <Link
             href={`/empresas/${data.empresa.slug}`}
-            className="mt-6 inline-block rounded-xl bg-primary px-6 py-3 font-bold text-white transition hover:opacity-95"
+            className="mt-6 inline-block rounded-xl bg-primary px-6 py-3 font-bold text-primary-foreground transition hover:opacity-95"
           >
             Ver otras promociones
           </Link>
@@ -151,7 +151,7 @@ export default async function InvitacionPage({ params }: InvitacionPageProps) {
             {/* CTA principal */}
             <Link
               href={ctaHref}
-              className="block w-full rounded-2xl bg-primary px-6 py-4 text-center text-lg font-bold text-white shadow-glow transition hover:opacity-95"
+              className="block w-full rounded-2xl bg-primary px-6 py-4 text-center text-lg font-bold text-primary-foreground shadow-glow transition hover:opacity-95"
             >
               Quiero aprovechar esta promoción
             </Link>

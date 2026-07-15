@@ -103,7 +103,7 @@ function QuickAction({
       href={href}
       className="group flex items-center gap-3.5 rounded-2xl border border-border/70 bg-card p-4 shadow-card transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-premium"
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-white">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
         <Icon className="h-5 w-5" />
       </span>
       <span className="min-w-0">
@@ -270,7 +270,7 @@ export default async function MisMembresias() {
           <div className="flex min-w-0 items-center gap-3">
             <span
               aria-hidden
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-sky-500 text-sm font-bold text-white shadow-glow"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-sky-500 text-sm font-bold text-primary-foreground shadow-glow"
             >
               {(momentos.nombre ?? 'M').trim().slice(0, 2).toUpperCase()}
             </span>

@@ -90,7 +90,7 @@ export function ConfettiCelebration({
 
         <Link
           href={href}
-          className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-lg font-bold text-white shadow-glow transition hover:opacity-95"
+          className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-lg font-bold text-primary-foreground shadow-glow transition hover:opacity-95"
         >
           {ctaLabel} <ArrowRight className="h-5 w-5" />
         </Link>

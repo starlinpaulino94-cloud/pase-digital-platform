@@ -89,7 +89,7 @@ export function WizardEmpresa({
                 ) : (
                   <span
                     className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
-                      isCurrent ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
+                      isCurrent ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                     }`}
                   >
                     {i + 1}

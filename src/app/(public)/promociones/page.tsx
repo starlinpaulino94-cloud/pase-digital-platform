@@ -73,7 +73,7 @@ export default async function PromotionsPage({
             href="/promociones"
             className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-150 ${
               !filters.type
-                ? 'bg-primary text-white shadow-glow'
+                ? 'bg-primary text-primary-foreground shadow-glow'
                 : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground'
             }`}
           >
@@ -85,7 +85,7 @@ export default async function PromotionsPage({
               href={`/promociones?type=${type}`}
               className={`rounded-full px-3.5 py-1.5 text-sm font-medium capitalize transition-all duration-150 ${
                 filters.type === type
-                  ? 'bg-primary text-white shadow-glow'
+                  ? 'bg-primary text-primary-foreground shadow-glow'
                   : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground'
               }`}
             >

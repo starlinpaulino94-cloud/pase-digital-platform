@@ -154,7 +154,7 @@ export default async function AdminDashboard() {
             href={a.href}
             className="card-interactive group relative flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-4 shadow-card"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20 transition-colors group-hover:bg-primary group-hover:text-white dark:text-primary">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20 transition-colors group-hover:bg-primary group-hover:text-primary-foreground dark:text-primary">
               <a.icon className="h-5 w-5" />
             </span>
             <span className="text-sm font-medium text-foreground">{a.label}</span>

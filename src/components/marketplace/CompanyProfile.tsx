@@ -243,7 +243,7 @@ export function CompanyProfile({
                 planesHref && (
                   <Link
                     href={planesHref}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-primary sm:w-auto"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-sm transition hover:bg-primary sm:w-auto"
                   >
                     Ver planes <ArrowRight className="h-4 w-4" />
                   </Link>
@@ -251,7 +251,7 @@ export function CompanyProfile({
               ) : (
                 <Link
                   href={registroHref}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-primary sm:w-auto"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-sm transition hover:bg-primary sm:w-auto"
                 >
                   Quiero una membresía <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -340,7 +340,7 @@ export function CompanyProfile({
                     }`}
                   >
                     {featured && (
-                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3.5 py-1 text-xs font-semibold text-white shadow-glow">
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3.5 py-1 text-xs font-semibold text-primary-foreground shadow-glow">
                         Más popular
                       </span>
                     )}
@@ -394,7 +394,7 @@ export function CompanyProfile({
                         href={planCtaHref}
                         className={`mt-6 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 font-semibold transition ${
                           featured
-                            ? 'bg-primary text-white hover:bg-primary'
+                            ? 'bg-primary text-primary-foreground hover:bg-primary'
                             : 'bg-muted text-foreground hover:bg-muted'
                         }`}
                       >

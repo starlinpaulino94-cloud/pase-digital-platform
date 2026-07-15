@@ -88,7 +88,7 @@ export default async function PlanPublicPage({ params }: PlanPageProps) {
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link
                 href={registroHref}
-                className="flex-1 rounded-xl bg-primary px-6 py-4 text-center text-lg font-bold text-white shadow-glow transition hover:opacity-95"
+                className="flex-1 rounded-xl bg-primary px-6 py-4 text-center text-lg font-bold text-primary-foreground shadow-glow transition hover:opacity-95"
               >
                 Elegir este plan
               </Link>
@@ -149,7 +149,7 @@ export default async function PlanPublicPage({ params }: PlanPageProps) {
           </p>
           <Link
             href={registroHref}
-            className="mt-4 inline-block rounded-lg bg-primary px-6 py-3 font-semibold text-white transition hover:opacity-95"
+            className="mt-4 inline-block rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:opacity-95"
           >
             Elegir este plan
           </Link>
