@@ -75,7 +75,7 @@ export function PublicNav() {
             Ingresar
           </Link>
           <Link
-            href="/registro"
+            href="/registro/cuenta"
             className="group inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-glow transition-all hover:bg-primary hover:shadow-glow-strong active:scale-[0.98]"
           >
             Registrarse
@@ -116,7 +116,7 @@ export function PublicNav() {
               Ingresar
             </Link>
             <Link
-              href="/registro"
+              href="/registro/cuenta"
               onClick={() => setOpen(false)}
               className="block rounded-xl bg-primary px-3 py-2.5 text-center text-sm font-semibold text-white shadow-glow"
             >
