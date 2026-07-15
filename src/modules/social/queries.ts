@@ -636,8 +636,10 @@ export async function getOnboardingCliente(
     },
     {
       key: 'perfil',
-      label: 'Perfil completado (fecha de nacimiento)',
-      done: !!cliente?.fechaNacimiento,
+      // El teléfono y la fecha de nacimiento son opcionales en el registro:
+      // aquí es donde se SUGIERE completarlos (nunca se exigen).
+      label: 'Perfil completado (teléfono y fecha de nacimiento)',
+      done: !!cliente?.fechaNacimiento && !!cliente?.telefono,
       href: '/cliente/perfil',
       cta: 'Completar perfil',
     },
