@@ -37,6 +37,11 @@ export default async function PlanesPage() {
       where: { id: user.metadata.clienteId },
       select: {
         id: true,
+        nombre: true,
+        vehiculos: {
+          select: { id: true, marca: true, modelo: true },
+          orderBy: { createdAt: 'desc' },
+        },
         company: {
           select: {
             id: true, name: true, moneda: true, idioma: true,
@@ -117,51 +122,28 @@ export default async function PlanesPage() {
 
   return (
     <main className="container max-w-5xl py-8">
-      {/* ── Hero VIP ──────────────────────────────────────────────────────── */}
-      <header className="animate-slide-up relative mb-8 overflow-hidden rounded-3xl bg-[oklch(0.15_0.04_260)] p-7 text-white shadow-premium sm:p-10">
-        {/* Halos de marca */}
-        <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-primary/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-info/20 blur-3xl" />
-
-        <div className="relative flex flex-col gap-6">
-          <div className="flex items-start justify-between gap-4">
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-sky-300">
-              Membresías · {cliente.company.name}
-            </p>
-            <Button
-              asChild
-              variant="ghost"
-              size="sm"
-              className="shrink-0 -mt-1 text-white/70 hover:bg-white/10 hover:text-white"
-            >
-              <Link href="/mis-membresias">
-                <ArrowLeft className="mr-1.5 h-4 w-4" />
-                Mis membresías
-              </Link>
-            </Button>
-          </div>
-
-          <div className="max-w-xl">
-            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Elige tu plan y empieza a ahorrar
-            </h1>
-            <p className="mt-2 text-white/70">
-              Beneficios exclusivos de miembro, validados con tu código QR en cada visita.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {['Activación con QR', 'Cambia cuando quieras', 'Ahorro en cada visita'].map((t) => (
-              <span
-                key={t}
-                className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white/90 ring-1 ring-inset ring-white/15"
-              >
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" />
-                {t}
-              </span>
-            ))}
-          </div>
+      {/* ── Cabecera integrada y limpia (adiós al banner gigante) ─────────── */}
+      <header className="animate-fade-up mb-8">
+        <div className="flex items-start justify-between gap-4">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">
+            Membresías · {cliente.company.name}
+          </p>
+          <Button asChild variant="ghost" size="sm" className="-mt-1 shrink-0 text-muted-foreground">
+            <Link href="/mis-membresias">
+              <ArrowLeft className="mr-1.5 h-4 w-4" />
+              Mis membresías
+            </Link>
+          </Button>
         </div>
+        <h1 className="mt-2 max-w-2xl text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+          {cliente.nombre
+            ? `Hola ${cliente.nombre.split(' ')[0]}, elige tu plan ideal`
+            : 'Elige tu plan ideal'}
+        </h1>
+        <p className="mt-2 max-w-xl text-muted-foreground">
+          Beneficios de miembro validados con tu QR en cada visita. Cambia de plan
+          cuando quieras.
+        </p>
       </header>
 
       {/* ── Banners de estado ─────────────────────────────────────────────── */}
@@ -250,6 +232,7 @@ export default async function PlanesPage() {
             currentPlanPrecio={isActive ? Number(membership!.plan.precio) : null}
             prefs={cliente.company}
             bienvenida={bienvenida}
+            vehiculos={cliente.vehiculos}
           />
 
           {/* Confianza: reduce la fricción de compra sin agregar ruido. */}
