@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Share2, Download, ShieldCheck, Clock, Loader2, Check } from 'lucide-react'
+import { Download, ShieldCheck, Clock, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { compartirQrToken } from '@/modules/cliente/qrActions'
+import { NativeShareButton } from '@/components/wallet/NativeShareButton'
 
 interface QRShareCardProps {
   qrTokenId: string
@@ -50,7 +51,6 @@ export function QRShareCard({
   ultimoCompartidoISO,
 }: QRShareCardProps) {
   const [dataUrl, setDataUrl] = useState<string | null>(null)
-  const [sharing, setSharing] = useState(false)
   const [count, setCount] = useState(compartidoCount)
   const [ultimo, setUltimo] = useState<string | null>(ultimoCompartidoISO)
   const shareFileRef = useRef<File | null>(null)
@@ -154,67 +154,20 @@ export function QRShareCard({
     }
   }, [qrTokenId, count])
 
-  const handleShare = useCallback(async () => {
-    setSharing(true)
-    try {
-      const blob = shareFileRef.current
-        ? null
-        : await buildShareImage()
-      const file =
-        shareFileRef.current ??
-        (blob ? new File([blob], 'mi-qr-membresia.png', { type: 'image/png' }) : null)
-      if (file) shareFileRef.current = file
+  /** Imagen lista para compartir, cacheada tras la primera generación. */
+  const getShareFile = useCallback(async (): Promise<File | null> => {
+    if (shareFileRef.current) return shareFileRef.current
+    const blob = await buildShareImage()
+    if (!blob) return null
+    const file = new File([blob], 'mi-qr-membresia.png', { type: 'image/png' })
+    shareFileRef.current = file
+    return file
+  }, [buildShareImage])
 
-      const texto = `Mi código de ${companyName} · ${vigencia.texto}. Preséntalo en el negocio para canjear.`
-
-      const nav = navigator as Navigator & {
-        canShare?: (data?: ShareData) => boolean
-      }
-
-      // 1) Compartir nativo con la imagen (incluye WhatsApp en móvil).
-      if (
-        file &&
-        typeof nav.share === 'function' &&
-        nav.canShare?.({ files: [file] })
-      ) {
-        try {
-          await nav.share({
-            files: [file],
-            title: `QR de ${companyName}`,
-            text: texto,
-          })
-          await registrarCompartido()
-          toast.success('QR compartido. Quedó registrado en tu historial.')
-          return
-        } catch (err) {
-          // El usuario canceló el diálogo: no es un error.
-          if (err instanceof DOMException && err.name === 'AbortError') return
-          // Si falla el compartir de archivos, caemos a WhatsApp por texto.
-        }
-      }
-
-      // 2) Fallback: descargar la imagen y abrir WhatsApp con el mensaje.
-      if (file) {
-        const url = URL.createObjectURL(file)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = 'mi-qr-membresia.png'
-        document.body.appendChild(a)
-        a.click()
-        a.remove()
-        setTimeout(() => URL.revokeObjectURL(url), 4000)
-      }
-      window.open(
-        `https://wa.me/?text=${encodeURIComponent(texto)}`,
-        '_blank',
-        'noopener,noreferrer'
-      )
-      await registrarCompartido()
-      toast.success('Guardamos tu QR y abrimos WhatsApp. Adjunta la imagen descargada.')
-    } finally {
-      setSharing(false)
-    }
-  }, [buildShareImage, companyName, vigencia.texto, registrarCompartido])
+  const handleShared = useCallback(async () => {
+    await registrarCompartido()
+    toast.success('QR compartido. Quedó registrado en tu historial.')
+  }, [registrarCompartido])
 
   const handleDownload = useCallback(async () => {
     const blob = await buildShareImage()
@@ -234,7 +187,7 @@ export function QRShareCard({
   }, [buildShareImage])
 
   return (
-    <div className="mb-8 flex flex-col items-center rounded-2xl border border-border/60 bg-card px-6 py-8 text-center shadow-card">
+    <div className="mb-8 flex flex-col items-center rounded-3xl border border-border/60 bg-card px-6 py-8 text-center shadow-sm">
       <h2 className="text-h2 text-foreground">Tu código QR</h2>
       <p className="mt-1 max-w-sm text-small text-muted-foreground">
         Muéstralo en {companyName} para validar tu membresía al instante.
@@ -262,7 +215,9 @@ export function QRShareCard({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={dataUrl}
-              alt="Tu código para canjear"
+              alt="Código QR único de validación de membresía"
+              role="img"
+              aria-label="Código QR único de validación de membresía"
               width={size}
               height={size}
               className="animate-scale-in"
@@ -276,25 +231,23 @@ export function QRShareCard({
         </div>
       </div>
 
-      {/* Acciones: compartir + descargar */}
-      <div className="mt-6 flex w-full max-w-sm flex-col gap-2 sm:flex-row">
-        <button
-          onClick={handleShare}
-          disabled={sharing}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-success px-5 py-3 font-semibold text-white transition hover:bg-success disabled:opacity-60"
+      {/* Acciones: dos botones simétricos con targets táctiles ≥48px.
+          Compartir usa la hoja nativa del sistema (WhatsApp, Telegram, fotos…)
+          en vez de un botón verde acoplado a una sola app. */}
+      <div className="mt-6 grid w-full max-w-sm grid-cols-2 gap-2">
+        <NativeShareButton
+          title={`QR de ${companyName}`}
+          text={`Mi código de ${companyName} · ${vigencia.texto}. Preséntalo en el negocio para canjear.`}
+          getFile={getShareFile}
+          onShared={handleShared}
         >
-          {sharing ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Share2 className="h-4 w-4" />
-          )}
-          Compartir por WhatsApp
-        </button>
+          Compartir
+        </NativeShareButton>
         <button
           onClick={handleDownload}
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-5 py-3 font-semibold text-foreground transition hover:bg-muted"
+          className="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-border bg-card px-5 text-sm font-semibold text-foreground transition hover:bg-muted active:scale-[0.98]"
         >
-          <Download className="h-4 w-4" />
+          <Download className="h-4 w-4" aria-hidden />
           Descargar
         </button>
       </div>
