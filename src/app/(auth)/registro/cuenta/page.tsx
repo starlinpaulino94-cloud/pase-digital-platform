@@ -17,7 +17,10 @@ export const metadata = {
  */
 export default async function RegistroCuentaPage() {
   // Si ya hay sesión de cliente, no tiene sentido registrarse otra vez.
-  const user = await getUser()
+  // El chequeo es opcional: si la verificación de sesión falla (env de
+  // Supabase ausente, outage), el formulario se muestra igual — la puerta
+  // de entrada de clientes nunca puede caerse por esto.
+  const user = await getUser().catch(() => null)
   if (user && user.metadata.role === 'CLIENTE') {
     redirect('/cliente/explorar')
   }

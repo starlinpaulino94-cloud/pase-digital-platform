@@ -41,8 +41,9 @@ export default async function RegistroPage({
   if (ref) await registrarRegistroIniciado(ref)
 
   // Si el usuario ya inició sesión como cliente, no debe registrarse de nuevo:
-  // se afilia a esta empresa con su cuenta existente (un clic).
-  const user = await getUser()
+  // se afilia a esta empresa con su cuenta existente (un clic). El chequeo es
+  // opcional: si la verificación de sesión falla, se ofrece el registro normal.
+  const user = await getUser().catch(() => null)
   if (user && user.metadata.role === 'CLIENTE') {
     const yaEsMiembro = await prisma.cliente
       .findUnique({
