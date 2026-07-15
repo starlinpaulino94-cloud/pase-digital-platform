@@ -38,7 +38,7 @@ export default function BlogPage() {
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link
                 href="/caracteristicas"
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 font-semibold text-white shadow-glow transition hover:opacity-95"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 font-semibold text-primary-foreground shadow-glow transition hover:opacity-95"
               >
                 Ver características <ArrowRight className="h-4 w-4" />
               </Link>

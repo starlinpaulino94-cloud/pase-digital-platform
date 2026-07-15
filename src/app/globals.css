@@ -69,8 +69,8 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.14 0.02 264);
 
-  /* Primary — electric blue (matches logo gradient start) */
-  --primary: oklch(0.55 0.22 255);
+  /* Primary — verde esmeralda de marca (identidad MEMBEGO-GOOGLE) */
+  --primary: oklch(0.527 0.154 150);
   --primary-foreground: oklch(0.99 0 0);
 
   /* Secondary */
@@ -99,32 +99,34 @@
   /* Borders */
   --border: oklch(0.914 0.005 264);
   --input: oklch(0.914 0.005 264);
-  --ring: oklch(0.55 0.22 255);
+  --ring: oklch(0.527 0.154 150);
 
   /* Sidebar — deep navy (matches logo background) */
   --sidebar: oklch(0.14 0.035 260);
   --sidebar-foreground: oklch(0.80 0.010 260);
-  --sidebar-primary: oklch(0.62 0.20 230);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-primary: oklch(0.723 0.219 150);
+  --sidebar-primary-foreground: oklch(0.16 0.03 150);
   --sidebar-accent: oklch(0.20 0.035 260);
   --sidebar-accent-foreground: oklch(0.92 0.008 260);
   --sidebar-border: oklch(0.22 0.030 260);
-  --sidebar-ring: oklch(0.62 0.20 230);
+  --sidebar-ring: oklch(0.723 0.219 150);
 }
 
 .dark {
-  --background: oklch(0.13 0.030 260);
+  /* Lienzo casi negro neutro (#090A0B) y superficies (#121315) del prototipo */
+  --background: oklch(0.15 0.005 260);
   --foreground: oklch(0.96 0.005 260);
-  --card: oklch(0.17 0.030 260);
+  --card: oklch(0.19 0.005 260);
   --card-foreground: oklch(0.96 0.005 260);
-  --popover: oklch(0.17 0.030 260);
+  --popover: oklch(0.19 0.005 260);
   --popover-foreground: oklch(0.96 0.005 260);
-  --primary: oklch(0.62 0.20 230);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.22 0.030 260);
+  /* Esmeralda #22C55E; texto oscuro encima (como el FAB del prototipo) */
+  --primary: oklch(0.723 0.219 150);
+  --primary-foreground: oklch(0.16 0.03 150);
+  --secondary: oklch(0.24 0.006 260);
   --secondary-foreground: oklch(0.92 0.008 260);
-  --muted: oklch(0.22 0.030 260);
-  --muted-foreground: oklch(0.60 0.012 260);
+  --muted: oklch(0.24 0.006 260);
+  --muted-foreground: oklch(0.62 0.010 260);
   --accent: oklch(0.24 0.04 200);
   --accent-foreground: oklch(0.72 0.15 200);
   --destructive: oklch(0.704 0.191 22.216);
@@ -136,15 +138,15 @@
   --info-foreground: oklch(0.15 0.03 230);
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.62 0.20 230);
-  --sidebar: oklch(0.10 0.025 260);
+  --ring: oklch(0.723 0.219 150);
+  --sidebar: oklch(0.12 0.004 260);
   --sidebar-foreground: oklch(0.80 0.010 260);
-  --sidebar-primary: oklch(0.62 0.20 230);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.17 0.030 260);
+  --sidebar-primary: oklch(0.723 0.219 150);
+  --sidebar-primary-foreground: oklch(0.16 0.03 150);
+  --sidebar-accent: oklch(0.19 0.005 260);
   --sidebar-accent-foreground: oklch(0.92 0.008 260);
   --sidebar-border: oklch(1 0 0 / 6%);
-  --sidebar-ring: oklch(0.62 0.20 230);
+  --sidebar-ring: oklch(0.723 0.219 150);
 }
 
 @layer base {
@@ -207,10 +209,10 @@
   }
   /* Glow de marca para CTAs y elementos flotantes */
   .shadow-glow {
-    box-shadow: 0 8px 30px -6px rgb(37 99 235 / 0.45);
+    box-shadow: 0 8px 30px -6px rgb(34 197 94 / 0.45);
   }
   .shadow-glow-strong {
-    box-shadow: 0 12px 44px -8px rgb(37 99 235 / 0.6);
+    box-shadow: 0 12px 44px -8px rgb(34 197 94 / 0.6);
   }
 
   /* Texturas sutiles de fondo */

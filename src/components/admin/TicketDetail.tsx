@@ -182,7 +182,7 @@ function MensajeBubble({ m }: { m: Mensaje }) {
             ? 'border border-warning/30 bg-warning/15 text-warning-foreground'
             : isCliente
               ? 'bg-muted text-foreground'
-              : 'bg-primary text-white'
+              : 'bg-primary text-primary-foreground'
         }`}
       >
         <div className="mb-1 flex items-center gap-1.5 text-xs opacity-80">

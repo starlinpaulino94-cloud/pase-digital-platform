@@ -18,7 +18,7 @@ export function QrFab({ href }: { href: string }) {
     <Link
       href={href}
       aria-label="Ver mi código QR de acceso"
-      className="fixed bottom-20 right-4 z-40 inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-5 font-semibold text-white shadow-glow-strong transition-all hover:scale-105 active:scale-95 lg:bottom-8 lg:right-8"
+      className="fixed bottom-20 right-4 z-40 inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-5 font-semibold text-primary-foreground shadow-glow-strong transition-all hover:scale-105 active:scale-95 lg:bottom-8 lg:right-8"
       style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
     >
       <QrCode className="h-5 w-5" aria-hidden />

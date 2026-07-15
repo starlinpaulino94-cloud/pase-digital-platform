@@ -55,7 +55,7 @@ export default async function RegistroPage({ searchParams }: RegistroPageProps) 
             </div>
             <Link
               href="/registro/cuenta"
-              className="inline-flex shrink-0 items-center rounded-xl bg-primary px-5 py-2.5 font-semibold text-white transition hover:bg-primary"
+              className="inline-flex shrink-0 items-center rounded-xl bg-primary px-5 py-2.5 font-semibold text-primary-foreground transition hover:bg-primary"
             >
               Crear cuenta sin empresa
             </Link>
@@ -96,7 +96,7 @@ export default async function RegistroPage({ searchParams }: RegistroPageProps) 
           </p>
           <a
             href="mailto:contacto@membego.com"
-            className="inline-block bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary transition-colors"
+            className="inline-block bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary transition-colors"
           >
             Contactar Soporte
           </a>

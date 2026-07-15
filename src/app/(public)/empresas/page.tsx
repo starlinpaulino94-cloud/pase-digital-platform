@@ -91,7 +91,7 @@ export default async function EmpresasPage({ searchParams }: EmpresasPageProps) 
             href={filters.featured ? '/empresas' : '/empresas?featured=true'}
             className={`hidden flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-150 sm:inline-flex ${
               filters.featured
-                ? 'bg-primary text-white shadow-glow'
+                ? 'bg-primary text-primary-foreground shadow-glow'
                 : 'bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground'
             }`}
           >

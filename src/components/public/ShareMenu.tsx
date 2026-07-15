@@ -143,7 +143,7 @@ export function ShareMenu({ title, text, path, onShared, label = 'Compartir' }: 
         onClick={handlePrimary}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 font-bold text-white shadow-premium transition hover:opacity-95 sm:w-auto"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 font-bold text-primary-foreground shadow-premium transition hover:opacity-95 sm:w-auto"
       >
         <Share2 className="h-5 w-5" />
         {label}

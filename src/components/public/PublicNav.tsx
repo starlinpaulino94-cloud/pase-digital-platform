@@ -76,7 +76,7 @@ export function PublicNav() {
           </Link>
           <Link
             href="/registro/cuenta"
-            className="group inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-glow transition-all hover:bg-primary hover:shadow-glow-strong active:scale-[0.98]"
+            className="group inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-glow transition-all hover:bg-primary hover:shadow-glow-strong active:scale-[0.98]"
           >
             Registrarse
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -118,7 +118,7 @@ export function PublicNav() {
             <Link
               href="/registro/cuenta"
               onClick={() => setOpen(false)}
-              className="block rounded-xl bg-primary px-3 py-2.5 text-center text-sm font-semibold text-white shadow-glow"
+              className="block rounded-xl bg-primary px-3 py-2.5 text-center text-sm font-semibold text-primary-foreground shadow-glow"
             >
               Registrarse
             </Link>
