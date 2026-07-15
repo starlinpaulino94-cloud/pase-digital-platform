@@ -84,7 +84,10 @@ export function AppHeader({
   }
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border/60 bg-background/80 px-4 glass md:px-6">
+    // z-50: el header sticky SIEMPRE por encima del contenido de la página
+    // (tarjetas con sombras/transforms creaban stacking contexts que lo
+    // tapaban al hacer scroll, p. ej. los botones del QR).
+    <header className="sticky top-0 z-50 flex h-14 items-center gap-3 border-b border-border/60 bg-background/80 px-4 glass md:px-6">
       {/* Menú móvil */}
       <button
         type="button"

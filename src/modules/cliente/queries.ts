@@ -44,7 +44,9 @@ export async function getClienteAllMemberships(
       where: { clienteId: { in: clienteIds } },
       include: {
         plan: true,
-        company: { select: { id: true, name: true, logoUrl: true, type: true } },
+        company: {
+          select: { id: true, name: true, logoUrl: true, type: true, colorPrimario: true },
+        },
       },
       orderBy: [{ estado: 'asc' }, { fechaVencimiento: 'desc' }],
     })
@@ -77,6 +79,7 @@ export async function getClienteAllMemberships(
           nombre: m.plan.nombre,
           precio: Number(m.plan.precio),
           esIlimitado: m.plan.esIlimitado,
+          lavadosIncluidos: m.plan.lavadosIncluidos,
         },
         estado: m.estado,
         fechaVencimiento: m.fechaVencimiento,

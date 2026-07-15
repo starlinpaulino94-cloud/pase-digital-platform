@@ -29,7 +29,7 @@ import { CampanasVivas } from '@/components/engagement/CampanasVivas'
 import { PruebaSocial } from '@/components/engagement/PruebaSocial'
 import { Gamificacion } from '@/components/engagement/Gamificacion'
 import { CarrouselesHome } from '@/components/engagement/CarrouselesHome'
-import { MembershipCard } from '@/components/cliente/MembershipCard'
+import { WalletStack, type WalletStackItem } from '@/components/wallet/WalletStack'
 import { CelebracionBienvenida } from '@/components/cliente/CelebracionBienvenida'
 import { FeedNovedades } from '@/components/cliente/FeedNovedades'
 import { OnboardingClienteFirstVisit } from '@/components/cliente/OnboardingClienteFirstVisit'
@@ -191,6 +191,53 @@ export default async function MisMembresias() {
     ? differenceInDays(proximoVencimiento, now)
     : null
 
+  // Wallet Stack: tarjetas "físicas digitales" con el color de marca de cada
+  // negocio, apiladas estilo Apple Wallet (tocar una la trae al frente; tocar
+  // la del frente la gira para revelar su QR).
+  const ESTADO_LABEL: Record<string, string> = {
+    ACTIVA: 'Activa',
+    PENDIENTE: 'Pendiente',
+    PENDIENTE_PAGO: 'Esperando pago',
+    VENCIDA: 'Vencida',
+    CANCELADA: 'Cancelada',
+    RECHAZADA: 'Rechazada',
+  }
+  const walletItems: WalletStackItem[] = memberships.map((m) => {
+    const vencimiento = m.fechaVencimiento ? new Date(m.fechaVencimiento) : null
+    const activa = m.estado === 'ACTIVA' && (!vencimiento || vencimiento > now)
+    const vencida =
+      m.estado === 'VENCIDA' || (vencimiento !== null && vencimiento <= now)
+    let expiryText: string | null = null
+    if (vencimiento) {
+      const dias = differenceInDays(vencimiento, now)
+      expiryText =
+        dias > 0
+          ? `Vence en ${dias} día${dias !== 1 ? 's' : ''}`
+          : dias === 0
+            ? 'Vence hoy'
+            : `Venció hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? 's' : ''}`
+    }
+    return {
+      id: m.id,
+      card: {
+        company: {
+          name: m.company.name,
+          logoUrl: m.company.logoUrl,
+          colorPrimario: m.company.colorPrimario,
+        },
+        planNombre: m.plan.nombre,
+        estadoLabel: ESTADO_LABEL[m.estado] ?? m.estado,
+        tone: activa ? ('active' as const) : vencida ? ('expired' as const) : ('pending' as const),
+        expiryText,
+        esIlimitado: m.plan.esIlimitado,
+        usosRestantes: m.lavadosRestantes,
+        usosTotales: m.plan.lavadosIncluidos ?? null,
+      },
+      qrToken: m.qrToken?.token ?? null,
+      isActive: activa,
+    }
+  })
+
   return (
     <main className="container max-w-5xl py-8">
       {/* Felicitación por encima de la app tras registrarse con auto-login */}
@@ -321,7 +368,7 @@ export default async function MisMembresias() {
         </div>
       ) : (
         <div className="space-y-10">
-          {/* ── Tarjetas ──────────────────────────────────────────────────── */}
+          {/* ── Wallet Stack (estilo Apple Wallet) ────────────────────────── */}
           <section className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-lg font-semibold tracking-tight text-foreground">
@@ -331,11 +378,7 @@ export default async function MisMembresias() {
                 </span>
               </h2>
             </div>
-            <div className="grid gap-5 sm:grid-cols-2">
-              {memberships.map((membership) => (
-                <MembershipCard key={membership.id} membership={membership} />
-              ))}
-            </div>
+            <WalletStack items={walletItems} />
           </section>
 
           {/* ── Accesos rápidos ───────────────────────────────────────────── */}

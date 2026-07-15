@@ -3,21 +3,23 @@ import { getUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { differenceInCalendarDays } from 'date-fns'
 import Link from 'next/link'
-import Image from 'next/image'
 import {
   ArrowLeft,
+  Car,
   Check,
   Gift,
-  Clock,
   Infinity as InfinityIcon,
   History,
   Share2,
-  Shield,
+  Store,
+  Utensils,
   Calendar,
   Gauge,
 } from 'lucide-react'
 import { QRShareCard } from '@/components/qr/QRShareCard'
 import { ComprobanteForm } from '@/components/membresia/ComprobanteForm'
+import { WalletCard, type WalletCardTone } from '@/components/wallet/WalletCard'
+import { Reveal } from '@/components/ui/reveal'
 import { formatMoney } from '@/lib/format'
 
 export const metadata = {
@@ -42,12 +44,32 @@ const fmtFechaHora = (d: Date) =>
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(d)
-const fmtFechaHoraCorta = (d: Date) =>
+const fmtHora = (d: Date) =>
+  new Intl.DateTimeFormat('es-DO', { timeZone: TZ, timeStyle: 'short' }).format(d)
+const fmtDiaClave = (d: Date) =>
   new Intl.DateTimeFormat('es-DO', {
     timeZone: TZ,
-    dateStyle: 'short',
-    timeStyle: 'short',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
   }).format(d)
+const fmtDiaCorto = (d: Date) =>
+  new Intl.DateTimeFormat('es-DO', { timeZone: TZ, day: 'numeric', month: 'long' }).format(d)
+
+/** Cabecera de fecha relativa del timeline: Hoy · Ayer · "12 de julio". */
+function labelDiaRelativo(d: Date, now: Date): string {
+  const clave = fmtDiaClave(d)
+  if (clave === fmtDiaClave(now)) return 'Hoy'
+  if (clave === fmtDiaClave(new Date(now.getTime() - 24 * 60 * 60 * 1000))) return 'Ayer'
+  return fmtDiaCorto(d)
+}
+
+/** Icono temático del timeline según el rubro del negocio. */
+function iconoNegocio(type: string) {
+  if (type === 'carwash') return Car
+  if (type === 'restaurante') return Utensils
+  return Store
+}
 
 export default async function MembershipDetail({ params }: { params: Promise<{ membresiaId: string }> }) {
   const { membresiaId } = await params
@@ -134,6 +156,24 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
   const estadoLabel = ESTADO_LABEL[membership.estado] ?? membership.estado
   const company = membership.cliente.company
 
+  // Tarjeta wallet: el consumo es el protagonista, el estado pasa a secundario.
+  const tone: WalletCardTone = isActive
+    ? 'active'
+    : membership.estado === 'VENCIDA' ||
+        (membership.fechaVencimiento && membership.fechaVencimiento <= now)
+      ? 'expired'
+      : 'pending'
+  const IconoVisita = iconoNegocio(company.type)
+
+  // Timeline agrupado por día relativo (Hoy / Ayer / "12 de julio").
+  const visitasPorDia: { label: string; visitas: typeof visits }[] = []
+  for (const visit of visits) {
+    const label = labelDiaRelativo(visit.fechaVisita, now)
+    const grupo = visitasPorDia[visitasPorDia.length - 1]
+    if (grupo && grupo.label === label) grupo.visitas.push(visit)
+    else visitasPorDia.push({ label, visitas: [visit] })
+  }
+
   return (
     <main className="container max-w-2xl py-8">
       <Link
@@ -143,81 +183,26 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
         <ArrowLeft className="h-4 w-4" /> Mis membresías
       </Link>
 
-      {/* Hero card */}
-      <div
-        className={`relative mb-8 overflow-hidden rounded-2xl p-6 text-white sm:p-8 ${
-          isActive
-            ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 ring-1 ring-white/10'
-            : 'bg-gradient-to-br from-slate-500 to-slate-600 ring-1 ring-white/10'
-        }`}
-      >
-        {isActive && (
-          <>
-            <div className="pointer-events-none absolute -left-20 -top-20 h-52 w-52 rounded-full bg-blue-500/20 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-16 -right-16 h-44 w-44 rounded-full bg-indigo-500/15 blur-3xl" />
-          </>
-        )}
-        <div className="pointer-events-none absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
-
-        <div className="relative">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
-              {company.logoUrl ? (
-                <span className="relative block h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-white/15 bg-white shadow-lg">
-                  <Image src={company.logoUrl} alt="" fill className="object-cover" />
-                </span>
-              ) : (
-                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-sm font-bold backdrop-blur">
-                  {company.name.slice(0, 2).toUpperCase()}
-                </span>
-              )}
-              <div className="min-w-0">
-                <h1 className="truncate text-xl font-bold tracking-tight sm:text-2xl">
-                  {company.name}
-                </h1>
-                <p className="mt-0.5 flex items-center gap-1.5 text-sm text-white/60">
-                  <Shield className="h-3.5 w-3.5" />
-                  {membership.plan.nombre}
-                </p>
-              </div>
-            </div>
-            <span
-              className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-                isActive
-                  ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-400/30'
-                  : membership.estado === 'VENCIDA'
-                    ? 'bg-red-500/20 text-red-300 ring-1 ring-red-400/30'
-                    : 'bg-amber-500/20 text-amber-300 ring-1 ring-amber-400/30'
-              }`}
-            >
-              {estadoLabel}
-            </span>
-          </div>
-
-          <div className="mt-6 border-t border-white/[0.08] pt-4">
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-white/60">
-              {membership.fechaVencimiento && (
-                <span className="inline-flex items-center gap-1.5">
-                  <Clock className="h-4 w-4" />
-                  {isActive ? 'Vence' : 'Venció'} el{' '}
-                  {fmtFechaLarga(membership.fechaVencimiento)}
-                </span>
-              )}
-              {isActive &&
-                (membership.plan.esIlimitado ? (
-                  <span className="inline-flex items-center gap-1.5 font-medium text-blue-300">
-                    <InfinityIcon className="h-4 w-4" /> Usos ilimitados
-                  </span>
-                ) : (
-                  <span className="font-medium text-white/80">
-                    {membership.lavadosRestantes} uso
-                    {membership.lavadosRestantes !== 1 ? 's' : ''} restante
-                    {membership.lavadosRestantes !== 1 ? 's' : ''}
-                  </span>
-                ))}
-            </div>
-          </div>
-        </div>
+      {/* Tarjeta wallet con el color de marca del negocio */}
+      <div className="mb-8">
+        <WalletCard
+          data={{
+            company: {
+              name: company.name,
+              logoUrl: company.logoUrl,
+              colorPrimario: company.colorPrimario,
+            },
+            planNombre: membership.plan.nombre,
+            estadoLabel,
+            tone,
+            expiryText: membership.fechaVencimiento
+              ? `${isActive ? 'Vence' : 'Venció'} el ${fmtFechaLarga(membership.fechaVencimiento)}`
+              : null,
+            esIlimitado: membership.plan.esIlimitado ?? false,
+            usosRestantes: membership.lavadosRestantes ?? 0,
+            usosTotales: membership.plan.lavadosIncluidos ?? null,
+          }}
+        />
       </div>
 
       <div className="space-y-6">
@@ -315,31 +300,57 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
           </div>
         ) : null}
 
-        {/* Envíos QR */}
-        {enviosQr.length > 0 && (
-          <section className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
+        {/* Historial de visitas: timeline con fechas relativas e iconos del rubro */}
+        {visits.length > 0 ? (
+          <section className="rounded-3xl border border-border/60 bg-card p-6 shadow-sm">
             <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-foreground">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10 dark:bg-blue-500/15">
-                <Share2 className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/10 dark:bg-violet-500/15">
+                <History className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
               </div>
-              Envíos de tu QR
+              Historial de visitas
             </h2>
-            <div className="space-y-0 divide-y divide-border/50">
-              {enviosQr.map((envio) => (
-                <div
-                  key={envio.id}
-                  className="flex items-center justify-between py-3 text-sm first:pt-0 last:pb-0"
-                >
-                  <span className="inline-flex items-center gap-1.5 text-foreground">
-                    <Share2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /> QR compartido
-                  </span>
-                  <span className="text-muted-foreground">
-                    {fmtFechaHora(envio.createdAt)}
-                  </span>
-                </div>
+            <div className="space-y-5">
+              {visitasPorDia.map((grupo, gIdx) => (
+                <Reveal key={grupo.label} delay={Math.min(gIdx, 4) * 60}>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    {grupo.label}
+                  </p>
+                  <div className="space-y-0 divide-y divide-border/50">
+                    {grupo.visitas.map((visit) => (
+                      <div
+                        key={visit.id}
+                        className="flex items-center gap-3 py-3 text-sm first:pt-0 last:pb-0"
+                      >
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                          <IconoVisita className="h-4.5 w-4.5" aria-hidden />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium text-foreground">
+                            {visit.servicio}
+                          </p>
+                          {visit.vehiculo && (
+                            <p className="truncate text-xs text-muted-foreground">
+                              {visit.vehiculo.marca} {visit.vehiculo.modelo}
+                              {visit.vehiculo.color ? ` · ${visit.vehiculo.color}` : ''}
+                              {visit.vehiculo.placa ? ` · Placa ${visit.vehiculo.placa}` : ''}
+                            </p>
+                          )}
+                        </div>
+                        <span className="shrink-0 text-muted-foreground">
+                          {fmtHora(visit.fechaVisita)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </Reveal>
               ))}
             </div>
           </section>
+        ) : (
+          <div className="rounded-3xl border border-dashed border-border/80 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
+            <Gauge className="mx-auto mb-2 h-6 w-6 text-muted-foreground/50" />
+            Cuando uses tu membresía, tus visitas aparecerán aquí.
+          </div>
         )}
 
         {/* Beneficios */}
@@ -406,41 +417,31 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
           </div>
         </section>
 
-        {/* Historial de visitas */}
-        {visits.length > 0 ? (
-          <section className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
+        {/* Envíos QR */}
+        {enviosQr.length > 0 && (
+          <section className="rounded-3xl border border-border/60 bg-card p-6 shadow-sm">
             <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-foreground">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/10 dark:bg-violet-500/15">
-                <History className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10 dark:bg-blue-500/15">
+                <Share2 className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
               </div>
-              Historial de visitas
+              Envíos de tu QR
             </h2>
             <div className="space-y-0 divide-y divide-border/50">
-              {visits.map((visit) => (
+              {enviosQr.map((envio) => (
                 <div
-                  key={visit.id}
+                  key={envio.id}
                   className="flex items-center justify-between py-3 text-sm first:pt-0 last:pb-0"
                 >
-                  <div>
-                    <p className="font-medium text-foreground">{visit.servicio}</p>
-                    {visit.vehiculo && (
-                      <p className="text-xs text-muted-foreground">
-                        {visit.vehiculo.marca} {visit.vehiculo.modelo}
-                      </p>
-                    )}
-                  </div>
+                  <span className="inline-flex items-center gap-1.5 text-foreground">
+                    <Share2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /> QR compartido
+                  </span>
                   <span className="text-muted-foreground">
-                    {fmtFechaHoraCorta(visit.fechaVisita)}
+                    {fmtFechaHora(envio.createdAt)}
                   </span>
                 </div>
               ))}
             </div>
           </section>
-        ) : (
-          <div className="rounded-2xl border border-dashed border-border/80 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
-            <Gauge className="mx-auto mb-2 h-6 w-6 text-muted-foreground/50" />
-            Cuando uses tu membresía, tus visitas aparecerán aquí.
-          </div>
         )}
       </div>
     </main>
