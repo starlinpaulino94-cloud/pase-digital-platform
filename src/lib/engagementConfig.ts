@@ -9,6 +9,8 @@ export interface EngagementConfig {
   pruebaSocial: boolean
   campanas: boolean
   carruseles: boolean
+  /** Popups inteligentes en el Home (Fase 8). */
+  popups: boolean
 }
 
 export const DEFAULT_COLOR = '#0ea5e9'
@@ -40,5 +42,6 @@ export function normalizeEngagementConfig(
     pruebaSocial: bool(o.pruebaSocial, true),
     campanas: bool(o.campanas, true),
     carruseles: bool(o.carruseles, true),
+    popups: bool(o.popups, true),
   }
 }

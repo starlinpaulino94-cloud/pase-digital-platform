@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Trophy, Users, Megaphone, LayoutGrid } from 'lucide-react'
+import { Loader2, Trophy, Users, Megaphone, LayoutGrid, Bell } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   guardarPersonalizacion,
@@ -40,6 +40,12 @@ const MODULOS = [
     icon: LayoutGrid,
     titulo: 'Carruseles',
     desc: 'Filas tipo Netflix con ofertas, empresas y recomendaciones.',
+  },
+  {
+    key: 'popups' as const,
+    icon: Bell,
+    titulo: 'Popups inteligentes',
+    desc: 'Aviso oportuno (máx. 1 al día) cuando el cliente tiene un beneficio por vencer o listo para usar.',
   },
 ]
 

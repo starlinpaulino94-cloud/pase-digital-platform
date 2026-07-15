@@ -14,7 +14,12 @@ import { formSubmitLimiter } from '@/lib/rate-limit'
 import { notificarAdmins } from '@/modules/notificaciones/service'
 import { getPaymentProvider } from '@/lib/payments'
 import { activarCompraPromocion } from '@/modules/pagos/activacionCompra'
-import { registrarTransicionCompra, validarVentanaAdquisicion } from '@/modules/promociones/compra'
+import {
+  registrarTransicionCompra,
+  validarVentanaAdquisicion,
+  estadoLimiteCliente,
+  mensajeLimitePorCliente,
+} from '@/modules/promociones/compra'
 
 export interface CompraState {
   error?: string
@@ -86,6 +91,15 @@ export async function solicitarCompraPromocion(
       return viva.estado === 'ACTIVA'
         ? { error: 'Ya tienes esta promoción activa.', compraId: viva.id }
         : { error: 'Ya tienes una compra de esta promoción en proceso.', compraId: viva.id }
+    }
+
+    // Límite por cliente: promociones de un solo uso (ej. "primer lavado gratis")
+    // no pueden re-adquirirse aunque ya se hayan usado o vencido.
+    if (promo.limitePorCliente != null) {
+      const limite = await estadoLimiteCliente(cliente.id, promo.id, promo.limitePorCliente)
+      if (limite.alcanzado) {
+        return { error: mensajeLimitePorCliente(promo.limitePorCliente) }
+      }
     }
 
     const precio = Number(promo.precio ?? 0)

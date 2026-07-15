@@ -396,6 +396,7 @@ export async function getPromotionDetail(promotionId: string): Promise<Promotion
         usosPorCompra: true,
         beneficioVigenciaDias: true,
         beneficioVigenciaHasta: true,
+        limitePorCliente: true,
         maxCanjes: true,
         canjes: true,
       },
@@ -420,7 +421,7 @@ export async function getPromotionDetail(promotionId: string): Promise<Promotion
     const {
       activo: _activo, archivada: _arch, visibilidad: _vis,
       esComprable, precio, usosPorCompra, beneficioVigenciaDias, beneficioVigenciaHasta,
-      maxCanjes, canjes,
+      limitePorCliente, maxCanjes, canjes,
       ...rest
     } = promotion
     // No exponer flags internos de la empresa en el payload público.
@@ -432,6 +433,7 @@ export async function getPromotionDetail(promotionId: string): Promise<Promotion
           agotada: maxCanjes != null && canjes >= maxCanjes,
           beneficioVigenciaDias,
           beneficioVigenciaHasta,
+          limitePorCliente: limitePorCliente ?? null,
         }
       : null
     return { ...rest, company, venta } as PromotionPublic

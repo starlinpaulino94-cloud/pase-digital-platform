@@ -35,6 +35,7 @@ function parsePromocion(formData: FormData): { error: string } | {
     esComprable: boolean
     precio: number | null
     usosPorCompra: number
+    limitePorCliente: number | null
     beneficioVigenciaDias: number | null
     beneficioVigenciaHasta: Date | null
     diasPermitidos: number[]
@@ -85,6 +86,8 @@ function parsePromocion(formData: FormData): { error: string } | {
   const precio = precioRaw ? Number(precioRaw) : null
   const usosRaw = String(formData.get('usosPorCompra') ?? '').trim()
   const usosPorCompra = usosRaw ? Number(usosRaw) : 1
+  const limiteClienteRaw = String(formData.get('limitePorCliente') ?? '').trim()
+  const limitePorCliente = limiteClienteRaw ? Number(limiteClienteRaw) : null
   const benefDiasRaw = String(formData.get('beneficioVigenciaDias') ?? '').trim()
   const beneficioVigenciaDias = benefDiasRaw ? Number(benefDiasRaw) : null
   const benefHastaRaw = String(formData.get('beneficioVigenciaHasta') ?? '').trim()
@@ -105,6 +108,9 @@ function parsePromocion(formData: FormData): { error: string } | {
     }
     if (Number.isNaN(usosPorCompra) || usosPorCompra < 1) {
       return { error: 'Los usos por compra deben ser al menos 1.' }
+    }
+    if (limitePorCliente != null && (Number.isNaN(limitePorCliente) || limitePorCliente < 1)) {
+      return { error: 'El límite por cliente debe ser al menos 1 (o vacío para sin límite).' }
     }
     if (beneficioVigenciaDias != null && (Number.isNaN(beneficioVigenciaDias) || beneficioVigenciaDias < 1)) {
       return { error: 'La vigencia del beneficio debe ser al menos 1 día.' }
@@ -134,6 +140,7 @@ function parsePromocion(formData: FormData): { error: string } | {
       esComprable,
       precio: esComprable ? precio : null,
       usosPorCompra: esComprable ? usosPorCompra : 1,
+      limitePorCliente: esComprable ? limitePorCliente : null,
       beneficioVigenciaDias: esComprable ? beneficioVigenciaDias : null,
       beneficioVigenciaHasta: esComprable ? beneficioVigenciaHasta : null,
       diasPermitidos: esComprable ? diasPermitidos : [],

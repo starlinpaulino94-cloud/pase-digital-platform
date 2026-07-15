@@ -10,6 +10,11 @@ import {
   type CampanaState,
 } from '@/modules/invitaciones/adminActions'
 import { CampanaImagenUpload } from '@/components/invitaciones/CampanaImagenUpload'
+import {
+  INVITA_CONTENIDO_CAMPOS,
+  INVITA_CONTENIDO_DEFAULT,
+  type InvitaContenido,
+} from '@/lib/invitaContenido'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -54,6 +59,7 @@ interface Existing {
   colorPrimario: string | null
   colorSecundario: string | null
   usarBanner: boolean
+  contenido: Partial<InvitaContenido> | null
 }
 
 const BENEFICIO_TIPOS = [
@@ -294,6 +300,8 @@ export function CampanaInvitacionForm({
         </div>
       </div>
 
+      <ContenidoModulo defaults={existing?.contenido ?? null} />
+
       <div className="flex justify-end gap-3">
         <Button type="button" variant="outline" onClick={() => router.back()}>
           Cancelar
@@ -304,6 +312,57 @@ export function CampanaInvitacionForm({
         </Button>
       </div>
     </form>
+  )
+}
+
+/**
+ * Textos del módulo "Invita y Gana" que ve el cliente. Cada campo trae su
+ * valor por defecto como placeholder: si se deja vacío, el cliente ve el texto
+ * por defecto. Permite editar TODO el contenido desde el panel (superadmin/admin).
+ */
+function ContenidoModulo({ defaults }: { defaults: Partial<InvitaContenido> | null }) {
+  return (
+    <div className="space-y-5 rounded-xl border border-border p-5">
+      <div>
+        <h3 className="font-semibold text-foreground">Textos del módulo del cliente</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Personaliza lo que el cliente ve en “Invita y Gana”. Deja un campo vacío para
+          usar el texto por defecto (se muestra como sugerencia).
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        {INVITA_CONTENIDO_CAMPOS.map((campo) => {
+          const name = `contenido_${campo.key}`
+          const value = defaults?.[campo.key] ?? ''
+          const placeholder = INVITA_CONTENIDO_DEFAULT[campo.key]
+          return (
+            <div key={campo.key} className="space-y-2">
+              <Label htmlFor={name}>{campo.label}</Label>
+              {campo.multiline ? (
+                <Textarea
+                  id={name}
+                  name={name}
+                  defaultValue={value}
+                  placeholder={placeholder}
+                  rows={2}
+                />
+              ) : (
+                <Input
+                  id={name}
+                  name={name}
+                  defaultValue={value}
+                  placeholder={placeholder}
+                />
+              )}
+              {campo.hint && (
+                <p className="text-xs text-muted-foreground">{campo.hint}</p>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 

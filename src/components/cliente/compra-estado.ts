@@ -51,7 +51,7 @@ export interface CompraEstadoVisual {
 const BASE: Record<string, CompraEstadoVisual> = {
   SOLICITADA: {
     key: 'SOLICITADA',
-    label: 'Disponible',
+    label: 'Solicitada',
     badge: 'secondary',
     icon: Sparkles,
     dot: 'bg-muted-foreground',
@@ -91,7 +91,7 @@ const BASE: Record<string, CompraEstadoVisual> = {
   },
   RECHAZADA: {
     key: 'RECHAZADA',
-    label: 'Pago rechazado',
+    label: 'Rechazada',
     badge: 'destructive',
     icon: XCircle,
     dot: 'bg-destructive',
@@ -99,18 +99,18 @@ const BASE: Record<string, CompraEstadoVisual> = {
   },
   CONSUMIDA: {
     key: 'CONSUMIDA',
-    label: 'Completada',
+    label: 'Usada',
     badge: 'secondary',
     icon: CheckCircle2,
     dot: 'bg-muted-foreground',
-    hint: 'Todos los usos fueron canjeados.',
+    hint: 'Ya usaste todos los canjes de este beneficio.',
   },
   EXPIRADA: {
     key: 'EXPIRADA',
-    label: 'Expirada',
-    badge: 'warning',
+    label: 'Vencida',
+    badge: 'secondary',
     icon: CalendarX,
-    dot: 'bg-warning',
+    dot: 'bg-muted-foreground',
     hint: 'La vigencia terminó sin usarse por completo.',
   },
   CANCELADA: {
@@ -126,7 +126,7 @@ const BASE: Record<string, CompraEstadoVisual> = {
 // Estados derivados de presentación (no son valores del enum).
 const PARCIAL: CompraEstadoVisual = {
   key: 'PARCIAL',
-  label: 'Parcialmente utilizada',
+  label: 'Parcialmente usada',
   badge: 'info',
   icon: PieChart,
   dot: 'bg-info',

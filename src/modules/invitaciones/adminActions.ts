@@ -1,10 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/auth/guards'
 import { resolveCompanyId } from '@/lib/auth/company-context'
 import { ADMIN_ROLES } from '@/types'
+import { INVITA_CONTENIDO_CAMPOS, INVITA_CONTENIDO_DEFAULT } from '@/lib/invitaContenido'
 
 export interface CampanaState {
   error?: string
@@ -34,6 +36,20 @@ async function uniqueSlug(base: string): Promise<string> {
     attempt++
     if (attempt > 20) return `${slug}-${Date.now()}`
   }
+}
+
+/**
+ * Recoge los textos editables del módulo del cliente desde el formulario.
+ * Solo guarda los que difieren del texto por defecto (para no persistir ruido);
+ * si ninguno cambia devuelve null y se usan los valores por defecto.
+ */
+function parseContenido(fd: FormData): Record<string, string> | null {
+  const out: Record<string, string> = {}
+  for (const { key } of INVITA_CONTENIDO_CAMPOS) {
+    const v = String(fd.get(`contenido_${key}`) ?? '').trim()
+    if (v && v !== INVITA_CONTENIDO_DEFAULT[key]) out[key] = v
+  }
+  return Object.keys(out).length > 0 ? out : null
 }
 
 function parseBeneficio(fd: FormData, prefix: string): object {
@@ -88,6 +104,7 @@ export async function crearCampanaInvitacion(
 
   const beneficioInvitante = parseBeneficio(formData, 'beneficioInvitante')
   const beneficioInvitado = parseBeneficio(formData, 'beneficioInvitado')
+  const contenido = parseContenido(formData)
   const slug = await uniqueSlug(nombre)
 
   try {
@@ -110,6 +127,7 @@ export async function crearCampanaInvitacion(
         colorPrimario,
         colorSecundario,
         usarBanner,
+        contenido: contenido ?? undefined,
         estado: 'BORRADOR',
       },
     })
@@ -151,6 +169,7 @@ export async function actualizarCampanaInvitacion(
 
   const beneficioInvitante = parseBeneficio(formData, 'beneficioInvitante')
   const beneficioInvitado = parseBeneficio(formData, 'beneficioInvitado')
+  const contenido = parseContenido(formData)
 
   try {
     await prisma.campanaInvitacion.update({
@@ -171,6 +190,8 @@ export async function actualizarCampanaInvitacion(
         colorPrimario,
         colorSecundario,
         usarBanner,
+        // null limpia los textos personalizados → vuelve a los valores por defecto.
+        contenido: contenido ?? (Prisma.DbNull as never),
       },
     })
 

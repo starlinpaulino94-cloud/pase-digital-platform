@@ -11,9 +11,20 @@ interface Props {
   url: string
   titulo: string
   descripcion: string
+  /** Etiqueta del botón principal (editable desde el panel). */
+  ctaCompartir?: string
+  /** Etiqueta del botón para copiar el enlace (editable desde el panel). */
+  ctaCopiar?: string
 }
 
-export function InvitaShareButton({ campanaId, url, titulo, descripcion }: Props) {
+export function InvitaShareButton({
+  campanaId,
+  url,
+  titulo,
+  descripcion,
+  ctaCompartir = 'Compartir ahora',
+  ctaCopiar = 'Copiar enlace',
+}: Props) {
   const [copied, setCopied] = useState(false)
   const [, startTransition] = useTransition()
 
@@ -61,11 +72,11 @@ export function InvitaShareButton({ campanaId, url, titulo, descripcion }: Props
           className="animate-shimmer pointer-events-none absolute inset-0 bg-[linear-gradient(110deg,transparent_30%,rgba(255,255,255,0.35)_50%,transparent_70%)] bg-[length:200%_100%]"
         />
         <Share2 className="h-5 w-5" />
-        Compartir ahora
+        {ctaCompartir}
       </Button>
       <Button variant="outline" onClick={handleCopy} className="w-full gap-2">
         {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-        {copied ? 'Copiado' : 'Copiar enlace'}
+        {copied ? 'Copiado' : ctaCopiar}
       </Button>
     </div>
   )

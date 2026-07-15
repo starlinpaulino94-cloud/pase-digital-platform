@@ -49,6 +49,7 @@ interface Existing {
   esComprable: boolean
   precio: number | null
   usosPorCompra: number
+  limitePorCliente: number | null
   beneficioVigenciaDias: number | null
   beneficioVigenciaHasta: Date | null
   diasPermitidos: number[]
@@ -308,6 +309,23 @@ export function PromocionForm({
                   min={1}
                   defaultValue={existing?.usosPorCompra ?? 1}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="limitePorCliente">Límite por cliente</Label>
+                <Input
+                  id="limitePorCliente"
+                  name="limitePorCliente"
+                  type="number"
+                  min={1}
+                  defaultValue={existing?.limitePorCliente ?? ''}
+                  placeholder="Vacío = sin límite"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Cuántas veces puede adquirirla un mismo cliente. Escribe{' '}
+                  <strong>1</strong> para un solo uso por cliente (ej: primer
+                  lavado gratis): no podrá volver a adquirirla ni siquiera tras
+                  usarla.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="beneficioVigenciaDias">Vigencia del beneficio (días)</Label>

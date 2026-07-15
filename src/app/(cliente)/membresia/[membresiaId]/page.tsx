@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { getUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { membresiaEstadoUi } from '@/lib/estados'
 import { differenceInCalendarDays } from 'date-fns'
 import Link from 'next/link'
 import {
@@ -24,15 +25,6 @@ import { formatMoney } from '@/lib/format'
 
 export const metadata = {
   title: 'Detalles de Membresía',
-}
-
-const ESTADO_LABEL: Record<string, string> = {
-  ACTIVA: 'Activa',
-  PENDIENTE: 'Pendiente',
-  PENDIENTE_PAGO: 'Esperando pago',
-  VENCIDA: 'Vencida',
-  CANCELADA: 'Cancelada',
-  RECHAZADA: 'Rechazada',
 }
 
 const TZ = 'America/Santo_Domingo'
@@ -153,7 +145,7 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
       })
     : []
 
-  const estadoLabel = ESTADO_LABEL[membership.estado] ?? membership.estado
+  const estadoLabel = membresiaEstadoUi(membership.estado).label
   const company = membership.cliente.company
 
   // Tarjeta wallet: el consumo es el protagonista, el estado pasa a secundario.
@@ -294,9 +286,15 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
             compartidoCount={qrToken.compartidoCount}
             ultimoCompartidoISO={qrToken.ultimoCompartido?.toISOString() ?? null}
           />
+        ) : !qrToken && isActive && !membership.plan.esIlimitado && (membership.lavadosRestantes ?? 0) <= 0 ? (
+          <div className="rounded-2xl border border-border/60 bg-card p-6 text-center text-sm text-muted-foreground shadow-sm">
+            Sin usos disponibles en este período. Renueva tu membresía para seguir
+            usando tus beneficios.
+          </div>
         ) : !qrToken && isActive ? (
           <div className="rounded-2xl border border-border/60 bg-card p-6 text-center text-sm text-muted-foreground shadow-sm">
-            Tu código QR se está generando. Vuelve a cargar la página en un momento.
+            Tu código para canjear se está generando. Vuelve a cargar la página en un
+            momento.
           </div>
         ) : null}
 

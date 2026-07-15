@@ -17,6 +17,7 @@ import { getClientePagos } from '@/modules/cliente/queries'
 import { getRegionalPrefs } from '@/modules/empresas/regional'
 import { formatMoney } from '@/lib/format'
 import { EstadoBadge } from '@/components/EstadoBadge'
+import { membresiaEstadoUi } from '@/lib/estados'
 import { Button } from '@/components/ui/button'
 import type { MembershipEstado } from '@/types'
 
@@ -40,15 +41,6 @@ function fmtDateTime(d: Date) {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(d)
-}
-
-const ESTADO_LABEL: Record<MembershipEstado, string> = {
-  PENDIENTE: 'Pendiente de pago',
-  PENDIENTE_PAGO: 'Comprobante enviado',
-  RECHAZADA: 'Pago rechazado',
-  ACTIVA: 'Activo',
-  VENCIDA: 'Vencida',
-  CANCELADA: 'Cancelada',
 }
 
 const NECESITA_PAGO = ['PENDIENTE', 'RECHAZADA']
@@ -169,7 +161,7 @@ export default async function PagosPage() {
                 <div className="rounded-xl bg-muted/50 px-3 py-2.5">
                   <p className="text-xs text-muted-foreground">Estado</p>
                   <p className="mt-0.5 text-sm font-semibold text-foreground">
-                    {ESTADO_LABEL[m.estado as MembershipEstado]}
+                    {membresiaEstadoUi(m.estado).label}
                   </p>
                 </div>
                 <div className="rounded-xl bg-muted/50 px-3 py-2.5">

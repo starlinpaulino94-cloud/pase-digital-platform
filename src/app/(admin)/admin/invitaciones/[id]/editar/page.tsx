@@ -4,6 +4,7 @@ import { ADMIN_ROLES } from '@/types'
 import { prisma } from '@/lib/prisma'
 import { PageHeader } from '@/components/ui/page-header'
 import { CampanaInvitacionForm } from '@/components/invitaciones/CampanaInvitacionForm'
+import type { InvitaContenido } from '@/lib/invitaContenido'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Editar campaña de invitación' }
@@ -55,6 +56,7 @@ export default async function EditarCampanaPage({
     colorPrimario: campana.colorPrimario,
     colorSecundario: campana.colorSecundario,
     usarBanner: campana.usarBanner,
+    contenido: (campana.contenido as Partial<InvitaContenido> | null) ?? null,
   }
 
   return (

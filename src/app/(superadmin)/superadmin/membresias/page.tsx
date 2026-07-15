@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { requireRole } from '@/lib/auth/guards'
 import { prisma } from '@/lib/prisma'
 import { EstadoBadge } from '@/components/EstadoBadge'
+import { membresiaEstadoUi } from '@/lib/estados'
 import { MembershipAdminActions } from '@/components/admin/MembershipAdminActions'
 import type { MembershipEstado } from '@/types'
 
@@ -13,14 +14,6 @@ function fmtDate(d: Date | null) {
 
 const ESTADOS = ['PENDIENTE', 'PENDIENTE_PAGO', 'RECHAZADA', 'ACTIVA', 'VENCIDA', 'CANCELADA'] as const
 
-const ESTADO_LABEL: Record<string, string> = {
-  PENDIENTE: 'Pendiente',
-  PENDIENTE_PAGO: 'Pago por revisar',
-  RECHAZADA: 'Rechazada',
-  ACTIVA: 'Activa',
-  VENCIDA: 'Vencida',
-  CANCELADA: 'Cancelada',
-}
 
 export default async function SuperadminMembresiasPage({
   searchParams,
@@ -105,7 +98,7 @@ export default async function SuperadminMembresiasPage({
         >
           <option value="">Todos los estados</option>
           {ESTADOS.map((e) => (
-            <option key={e} value={e}>{ESTADO_LABEL[e]}</option>
+            <option key={e} value={e}>{membresiaEstadoUi(e).label}</option>
           ))}
         </select>
         <select

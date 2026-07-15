@@ -9,6 +9,10 @@ import {
   getInvitaYGanaStats,
 } from '@/modules/invitaciones/queries'
 import { InvitaShareButton } from '@/components/invitaciones/InvitaShareButton'
+import {
+  normalizeInvitaContenido,
+  mensajeCompartirConRegalo,
+} from '@/lib/invitaContenido'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
@@ -44,16 +48,18 @@ export default async function InvitaYGanaPage() {
   const campana = await getCampanaActiva(companyId)
 
   if (!campana) {
+    const t = normalizeInvitaContenido(null)
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center px-4">
         <Gift className="h-16 w-16 text-muted-foreground/40 mb-4" />
-        <h1 className="text-xl font-bold text-foreground">Sin campañas activas</h1>
-        <p className="mt-2 text-muted-foreground max-w-sm">
-          No hay campañas de invitación activas en este momento. Vuelve pronto.
-        </p>
+        <h1 className="text-xl font-bold text-foreground">{t.sinCampanaTitulo}</h1>
+        <p className="mt-2 text-muted-foreground max-w-sm">{t.sinCampanaTexto}</p>
       </div>
     )
   }
+
+  // Textos editables del módulo (superadmin/admin). Ausente = valores por defecto.
+  const t = normalizeInvitaContenido(campana.contenido)
 
   const [codigoCorto, invitados, stats] = await Promise.all([
     ensureCodigoCorto(clienteId),
@@ -71,13 +77,13 @@ export default async function InvitaYGanaPage() {
   // WhatsApp y los chips basta la primera frase (recortada).
   const regaloCorto = regalo.split(/[.!\n]/)[0].trim().slice(0, 80) || 'un regalo de bienvenida'
 
-  const mensajeCompartir = `🎉 Te regalan: ${regaloCorto}. Solo por crear tu cuenta gratis en MembeGo. ¡Aprovéchalo!`
+  const mensajeCompartir = mensajeCompartirConRegalo(t.mensajeCompartir, regaloCorto)
 
   const statCards = [
-    { label: 'Invitaciones enviadas', valor: stats.invitacionesEnviadas, icon: Send },
-    { label: 'Personas registradas', valor: stats.personasRegistradas, icon: Users },
-    { label: 'Recompensas obtenidas', valor: stats.recompensasObtenidas, icon: Trophy },
-    { label: 'Beneficios activos', valor: stats.beneficiosActivos, icon: Ticket },
+    { label: t.statInvitaciones, valor: stats.invitacionesEnviadas, icon: Send },
+    { label: t.statRegistradas, valor: stats.personasRegistradas, icon: Users },
+    { label: t.statRecompensas, valor: stats.recompensasObtenidas, icon: Trophy },
+    { label: t.statBeneficios, valor: stats.beneficiosActivos, icon: Ticket },
   ]
 
   return (
@@ -109,9 +115,7 @@ export default async function InvitaYGanaPage() {
             <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
               {campana.titulo}
             </h1>
-            <p className="text-sm font-medium text-emerald-700">
-              Comparte · tus amigos ganan · tú también
-            </p>
+            <p className="text-sm font-medium text-emerald-700">{t.subtitulo}</p>
           </div>
 
           {/* Beneficio: un solo mensaje claro, sin límites ni condiciones. */}
@@ -121,7 +125,7 @@ export default async function InvitaYGanaPage() {
             </span>
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
-                Tus amigos reciben al registrarse
+                {t.beneficioEtiqueta}
               </p>
               <p className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
                 {regaloCorto}
@@ -130,7 +134,7 @@ export default async function InvitaYGanaPage() {
           </div>
 
           <p className="animate-fade-up delay-150 text-xs font-medium text-muted-foreground">
-            Invita a todos los que quieras — sin límite de invitaciones.
+            {t.notaSinLimite}
           </p>
 
           <div className="animate-fade-up delay-200">
@@ -139,6 +143,8 @@ export default async function InvitaYGanaPage() {
               url={inviteUrl}
               titulo={campana.titulo}
               descripcion={mensajeCompartir}
+              ctaCompartir={t.ctaCompartir}
+              ctaCopiar={t.ctaCopiar}
             />
           </div>
         </CardContent>
@@ -148,7 +154,7 @@ export default async function InvitaYGanaPage() {
       <div className="animate-fade-up delay-300">
         <h2 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
           <Trophy className="h-4.5 w-4.5 text-muted-foreground" />
-          Mi progreso
+          {t.progresoTitulo}
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {statCards.map((s) => (
@@ -168,9 +174,7 @@ export default async function InvitaYGanaPage() {
         <CardContent className="py-5 space-y-4">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-muted-foreground" />
-            <span className="font-semibold text-foreground">
-              Personas que se registraron gracias a ti
-            </span>
+            <span className="font-semibold text-foreground">{t.historialTitulo}</span>
             {invitados.length > 0 && (
               <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
                 {invitados.length}
@@ -179,9 +183,7 @@ export default async function InvitaYGanaPage() {
           </div>
 
           {invitados.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-              Aún nadie se ha registrado con tu enlace. ¡Compártelo y aparecerán aquí!
-            </p>
+            <p className="py-4 text-center text-sm text-muted-foreground">{t.historialVacio}</p>
           ) : (
             <ul className="divide-y divide-border/60">
               {invitados.map((inv) => (

@@ -8,6 +8,7 @@
  */
 
 import type { Prisma, PrismaClient, CompraEstado } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 
 export type Db = PrismaClient | Prisma.TransactionClient
 
@@ -173,6 +174,59 @@ export function validarVentanaAdquisicion(promo: PromoComprable, now = new Date(
     return { ok: false, mensaje: 'Esta promoción está agotada.' }
   }
   return { ok: true }
+}
+
+// ── Límite por cliente ───────────────────────────────────────────────────────
+
+/**
+ * Estados que "consumen" el derecho de un cliente a una promoción, para efectos
+ * del límite por cliente. Incluye las adquisiciones ya entregadas (ACTIVA,
+ * CONSUMIDA, EXPIRADA) además de las que están en proceso: una promoción de un
+ * solo uso no se puede volver a adquirir aunque ya se haya usado o vencido.
+ * Se excluyen CANCELADA y RECHAZADA (nunca se entregó el beneficio).
+ */
+export const ESTADOS_CUENTAN_LIMITE: CompraEstado[] = [
+  'SOLICITADA',
+  'PENDIENTE_PAGO',
+  'EN_VALIDACION',
+  'APROBADA',
+  'ACTIVA',
+  'CONSUMIDA',
+  'EXPIRADA',
+]
+
+/** Mensaje al cliente cuando ya alcanzó el límite de adquisiciones. */
+export function mensajeLimitePorCliente(limite: number): string {
+  return limite <= 1
+    ? 'Ya adquiriste esta promoción. Es de un solo uso por cliente.'
+    : `Alcanzaste el límite de ${limite} adquisiciones de esta promoción por cliente.`
+}
+
+export interface EstadoLimiteCliente {
+  /** Límite configurado (null = sin límite). */
+  limite: number | null
+  /** Adquisiciones del cliente que cuentan para el límite. */
+  adquiridas: number
+  /** true → el cliente ya no puede volver a adquirirla. */
+  alcanzado: boolean
+}
+
+/**
+ * Estado del límite por cliente de una promoción: cuántas veces la ha adquirido
+ * y si ya llegó al tope. Fuente única para el enforcement (acción de compra) y
+ * para la UI (botón "ya adquirida"). Con límite null nunca bloquea.
+ */
+export async function estadoLimiteCliente(
+  clienteId: string,
+  promocionId: string,
+  limite: number | null,
+  db: Db = prisma
+): Promise<EstadoLimiteCliente> {
+  if (limite == null) return { limite: null, adquiridas: 0, alcanzado: false }
+  const adquiridas = await db.productoCompra.count({
+    where: { clienteId, promocionId, estado: { in: ESTADOS_CUENTAN_LIMITE } },
+  })
+  return { limite, adquiridas, alcanzado: adquiridas >= limite }
 }
 
 /** Vencimiento del beneficio al activar: días desde activación o fecha fija. */

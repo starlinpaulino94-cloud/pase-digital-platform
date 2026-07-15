@@ -12,7 +12,8 @@
 
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Sparkles, Ticket } from 'lucide-react'
+import Link from 'next/link'
+import { Loader2, Sparkles, Ticket, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { solicitarCompraPromocion, type CompraState } from '@/modules/promociones/compraActions'
 import { Button } from '@/components/ui/button'
@@ -28,10 +29,16 @@ export function ComprarPromoButton({
   promocionId,
   precio,
   agotada,
+  yaAdquirida = false,
+  unSoloUso = false,
 }: {
   promocionId: string
   precio: number
   agotada: boolean
+  /** El cliente ya alcanzó el límite de adquisiciones de esta promoción. */
+  yaAdquirida?: boolean
+  /** El límite por cliente es 1 (mostrar "un solo uso"). */
+  unSoloUso?: boolean
 }) {
   const router = useRouter()
   const [state, formAction, pending] = useActionState(solicitarCompraPromocion, init)
@@ -53,6 +60,20 @@ export function ComprarPromoButton({
       if (state.compraId) router.push(`/cliente/mis-promociones/${state.compraId}`)
     }
   }, [state, router])
+
+  if (yaAdquirida) {
+    return (
+      <div className="space-y-2">
+        <Button size="xl" className="w-full gap-2 font-bold" disabled>
+          <CheckCircle2 className="h-5 w-5" />
+          Ya la adquiriste{unSoloUso ? ' · un solo uso' : ''}
+        </Button>
+        <Button asChild variant="outline" size="lg" className="w-full">
+          <Link href="/cliente/mis-promociones">Ver mis beneficios</Link>
+        </Button>
+      </div>
+    )
+  }
 
   if (agotada) {
     return (

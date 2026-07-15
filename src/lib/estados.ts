@@ -1,0 +1,86 @@
+// Fuente ÚNICA de verdad de estados de MembeGo (label + color por estado).
+// Ver docs/GUIA_LENGUAJE_MEMBEGO.md. Regla de color:
+//   success=activo/listo · info=en proceso · warning=requiere acción ·
+//   secondary/outline=terminado/neutro · destructive=SOLO error/rechazo.
+// Para compras/beneficios (CompraEstado) la fuente es
+// `components/cliente/compra-estado.ts` (ya centralizada).
+
+import type { MembershipEstado } from '@/types'
+
+/** Variantes válidas del componente Badge. */
+export type BadgeVariant =
+  | 'default'
+  | 'secondary'
+  | 'destructive'
+  | 'outline'
+  | 'success'
+  | 'warning'
+  | 'info'
+
+export interface EstadoUi {
+  label: string
+  variant: BadgeVariant
+}
+
+// ── Membresías (MembershipEstado) ───────────────────────────────────────────
+// "Activa" (nunca "Activo"/"Activas"); "En validación" para pago en revisión;
+// "Vencida" en gris (no es error); "Rechazada" en rojo (sí es rechazo).
+export const MEMBRESIA_ESTADO: Record<MembershipEstado, EstadoUi> = {
+  PENDIENTE: { label: 'Pendiente de pago', variant: 'warning' },
+  PENDIENTE_PAGO: { label: 'En validación', variant: 'info' },
+  ACTIVA: { label: 'Activa', variant: 'success' },
+  VENCIDA: { label: 'Vencida', variant: 'secondary' },
+  RECHAZADA: { label: 'Rechazada', variant: 'destructive' },
+  CANCELADA: { label: 'Cancelada', variant: 'secondary' },
+}
+
+export function membresiaEstadoUi(estado: string): EstadoUi {
+  return (
+    MEMBRESIA_ESTADO[estado as MembershipEstado] ?? {
+      label: estado,
+      variant: 'secondary',
+    }
+  )
+}
+
+// ── Campañas (CampanaInvitacion / MarketingCampaign) ────────────────────────
+// "Activa" en VERDE (no azul); "Finalizada" en GRIS (no rojo: es fin normal).
+export const CAMPANA_ESTADO: Record<string, EstadoUi> = {
+  BORRADOR: { label: 'Borrador', variant: 'outline' },
+  ACTIVA: { label: 'Activa', variant: 'success' },
+  PAUSADA: { label: 'Pausada', variant: 'warning' },
+  FINALIZADA: { label: 'Finalizada', variant: 'secondary' },
+}
+
+export function campanaEstadoUi(estado: string): EstadoUi {
+  return CAMPANA_ESTADO[estado] ?? { label: estado, variant: 'secondary' }
+}
+
+// ── Referidos (ReferidoEstado) ──────────────────────────────────────────────
+// PENDIENTE/COMPLETADO son los ÚNICOS estados. "Sospechoso" es una MARCA
+// (boolean) aparte, no un estado (ver REFERIDO_MARCA_SOSPECHOSO).
+export interface ReferidoEstadoUi extends EstadoUi {
+  /** Texto más humano para el cliente (vs. el término de admin en `label`). */
+  labelCliente: string
+}
+
+export const REFERIDO_ESTADO: Record<string, ReferidoEstadoUi> = {
+  PENDIENTE: { label: 'Pendiente', labelCliente: 'Invitación enviada', variant: 'warning' },
+  COMPLETADO: { label: 'Convertido', labelCliente: 'Ya se registró', variant: 'success' },
+}
+
+export function referidoEstadoUi(estado: string): ReferidoEstadoUi {
+  return (
+    REFERIDO_ESTADO[estado] ?? {
+      label: estado,
+      labelCliente: estado,
+      variant: 'secondary',
+    }
+  )
+}
+
+/** Marca (no estado) para un referido bajo sospecha de fraude. */
+export const REFERIDO_MARCA_SOSPECHOSO: EstadoUi = {
+  label: 'Sospechoso',
+  variant: 'warning',
+}

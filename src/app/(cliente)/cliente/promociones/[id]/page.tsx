@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { requireRole } from '@/lib/auth/guards'
 import { recordPromotionView } from '@/modules/marketplace/actions'
 import { getPromotionDetail } from '@/modules/marketplace/queries'
+import { estadoLimiteCliente } from '@/modules/promociones/compra'
 import { PromotionDetail } from '@/components/marketplace/PromotionDetail'
 import { ComprarPromoButton } from '@/components/cliente/ComprarPromoButton'
 
@@ -18,7 +19,7 @@ interface ClientePromocionPageProps {
 export default async function ClientePromocionPage({
   params,
 }: ClientePromocionPageProps) {
-  await requireRole('CLIENTE')
+  const user = await requireRole('CLIENTE')
   const { id } = await params
 
   const promotion = await getPromotionDetail(id)
@@ -26,6 +27,14 @@ export default async function ClientePromocionPage({
 
   // Registrar vista (no bloqueante)
   recordPromotionView(id).catch(console.error)
+
+  // Límite por cliente (ej. "primer lavado gratis" = un solo uso): si ya llegó
+  // al tope, el botón muestra "ya adquirida" en vez de dejar reintentar.
+  const clienteId = user.metadata.clienteId as string | undefined
+  const limite =
+    promotion.venta && clienteId
+      ? await estadoLimiteCliente(clienteId, promotion.id, promotion.venta.limitePorCliente)
+      : { limite: null, adquiridas: 0, alcanzado: false }
 
   return (
     <PromotionDetail
@@ -37,6 +46,8 @@ export default async function ClientePromocionPage({
             promocionId={promotion.id}
             precio={promotion.venta.precio}
             agotada={promotion.venta.agotada}
+            yaAdquirida={limite.alcanzado}
+            unSoloUso={promotion.venta.limitePorCliente === 1}
           />
         ) : undefined
       }

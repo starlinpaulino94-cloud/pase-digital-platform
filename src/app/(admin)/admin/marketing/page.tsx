@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Sparkles, Plus, Pencil, Clock, Users } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
+import { campanaEstadoUi } from '@/lib/estados'
 import { ADMIN_ROLES } from '@/types'
 import { resolveCompanyId } from '@/lib/auth/company-context'
 import { getCampanasMarketingAdmin } from '@/modules/engagement/campanas'
@@ -17,15 +18,6 @@ import {
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Campañas de Marketing' }
 
-const ESTADO_BADGE: Record<
-  string,
-  { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
-> = {
-  BORRADOR: { label: 'Borrador', variant: 'outline' },
-  ACTIVA: { label: 'Activa', variant: 'default' },
-  PAUSADA: { label: 'Pausada', variant: 'secondary' },
-  FINALIZADA: { label: 'Finalizada', variant: 'destructive' },
-}
 
 function fmt(d: Date) {
   return new Intl.DateTimeFormat('es-DO', {
@@ -83,7 +75,7 @@ export default async function AdminMarketingPage() {
       ) : (
         <div className="grid gap-4">
           {campanas.map((c) => {
-            const badge = ESTADO_BADGE[c.estado] ?? ESTADO_BADGE.BORRADOR
+            const badge = campanaEstadoUi(c.estado)
             const cupos =
               c.maxReclamos != null
                 ? `${Math.max(0, c.maxReclamos - c.reclamosCount)} / ${c.maxReclamos} cupos`

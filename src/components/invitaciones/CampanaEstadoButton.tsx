@@ -28,7 +28,7 @@ export function CampanaEstadoButton({ id, estado }: Props) {
       if (res.error) {
         toast.error(res.error)
       } else {
-        toast.success(`Campaña ${nextEstado === 'ACTIVA' ? 'activada' : 'pausada'}`)
+        toast.success(`Campaña ${nextEstado === 'ACTIVA' ? 'activada' : 'pausada'}.`)
         router.refresh()
       }
     })

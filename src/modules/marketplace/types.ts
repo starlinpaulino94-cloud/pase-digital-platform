@@ -58,6 +58,8 @@ export interface PromotionPublic {
     agotada: boolean
     beneficioVigenciaDias: number | null
     beneficioVigenciaHasta: Date | null
+    /** Máx. adquisiciones por cliente (null = sin límite; 1 = un solo uso). */
+    limitePorCliente: number | null
   } | null
 }
 

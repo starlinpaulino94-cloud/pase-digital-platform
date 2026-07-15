@@ -132,7 +132,7 @@ export function QRShareCard({
       // Pie
       ctx.fillStyle = '#94a3b8'
       ctx.font = '24px system-ui, -apple-system, Segoe UI, sans-serif'
-      ctx.fillText('Válido para un solo uso · MembeGo', W / 2, badgeY + 96)
+      ctx.fillText('Preséntalo en el negocio para canjear · MembeGo', W / 2, badgeY + 96)
 
       return await new Promise<Blob | null>((resolve) =>
         canvas.toBlob((b) => resolve(b), 'image/png', 0.95)
@@ -237,7 +237,7 @@ export function QRShareCard({
       <div className="mt-6 grid w-full max-w-sm grid-cols-2 gap-2">
         <NativeShareButton
           title={`QR de ${companyName}`}
-          text={`Mi QR de membresía de ${companyName} · ${vigencia.texto}. Válido para un solo uso.`}
+          text={`Mi código de ${companyName} · ${vigencia.texto}. Preséntalo en el negocio para canjear.`}
           getFile={getShareFile}
           onShared={handleShared}
         >

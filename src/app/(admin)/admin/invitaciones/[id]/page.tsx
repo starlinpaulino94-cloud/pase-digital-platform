@@ -18,6 +18,7 @@ import {
   Link2,
 } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
+import { campanaEstadoUi } from '@/lib/estados'
 import { ADMIN_ROLES } from '@/types'
 import { getCampanaDashboard } from '@/modules/invitaciones/queries'
 import { absoluteUrl } from '@/lib/site'
@@ -31,12 +32,6 @@ import { CampanaEliminarButton } from '@/components/invitaciones/CampanaEliminar
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Detalle de campaña' }
 
-const ESTADO_BADGE: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  BORRADOR: { label: 'Borrador', variant: 'outline' },
-  ACTIVA: { label: 'Activa', variant: 'default' },
-  PAUSADA: { label: 'Pausada', variant: 'secondary' },
-  FINALIZADA: { label: 'Finalizada', variant: 'destructive' },
-}
 
 function fmtDate(d: Date) {
   return new Intl.DateTimeFormat('es-DO', {
@@ -73,7 +68,7 @@ export default async function CampanaDetallePage({
   if (!data || !data.campana) notFound()
 
   const { campana, embudoStats, participantes, metasAlcanzadas, premiosReclamados, topCompartidores } = data
-  const badge = ESTADO_BADGE[campana.estado] ?? ESTADO_BADGE.BORRADOR
+  const badge = campanaEstadoUi(campana.estado)
   const url = absoluteUrl(`/invita/${campana.slug}`)
 
   return (

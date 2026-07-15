@@ -10,6 +10,7 @@ import {
   Megaphone,
 } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
+import { referidoEstadoUi } from '@/lib/estados'
 import { ADMIN_ROLES } from '@/types'
 import { companyFilter } from '@/modules/admin/queries'
 import { getRegionalPrefs } from '@/modules/empresas/regional'
@@ -139,12 +140,6 @@ export default async function ReferidosPage() {
     FRAUDE: 'intento bloqueado (antifraude)',
     REGISTRO_GLOBAL: 'registro global MembeGo',
     MEMBRESIA_GLOBAL: 'membresía global MembeGo',
-  }
-
-  const ESTADO_REFERIDO: Record<string, { label: string; badge: 'success' | 'warning' | 'destructive' | 'secondary' }> = {
-    PENDIENTE: { label: 'Pendiente', badge: 'warning' },
-    COMPLETADO: { label: 'Convertido', badge: 'success' },
-    SOSPECHOSO: { label: 'Sospechoso', badge: 'destructive' },
   }
 
   return (
@@ -421,7 +416,7 @@ export default async function ReferidosPage() {
             ) : (
               <ul className="space-y-2">
                 {dash.referidosRecientes.slice(0, 10).map((r) => {
-                  const e = ESTADO_REFERIDO[r.estado] ?? ESTADO_REFERIDO.PENDIENTE
+                  const e = referidoEstadoUi(r.estado)
                   return (
                     <li key={r.id} className="flex items-center justify-between gap-2 text-sm">
                       <span className="min-w-0 truncate text-foreground">
@@ -432,7 +427,7 @@ export default async function ReferidosPage() {
                         <span className="text-xs text-muted-foreground">
                           {new Intl.DateTimeFormat('es-DO', { dateStyle: 'short' }).format(r.fecha)}
                         </span>
-                        <Badge variant={e.badge} className="text-[10px]">{e.label}</Badge>
+                        <Badge variant={e.variant} className="text-[10px]">{e.label}</Badge>
                       </span>
                     </li>
                   )

@@ -436,7 +436,7 @@ export function PlanesGrid({
                       )}
                     >
                       {isFeatured && <Shine />}
-                      Quiero este plan
+                      Elegir este plan
                     </SubmitButton>
                   </form>
                 )}

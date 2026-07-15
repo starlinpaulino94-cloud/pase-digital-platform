@@ -10,6 +10,7 @@ import { ADMIN_ROLES } from '@/types'
 import { resolveCompanyId } from '@/lib/auth/company-context'
 import { getCampanasEmpresa } from '@/modules/invitaciones/queries'
 import { absoluteUrl } from '@/lib/site'
+import { campanaEstadoUi } from '@/lib/estados'
 import { PageHeader } from '@/components/ui/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -18,13 +19,6 @@ import { CampanaEstadoButton } from '@/components/invitaciones/CampanaEstadoButt
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Campañas de Invitación' }
-
-const ESTADO_BADGE: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  BORRADOR: { label: 'Borrador', variant: 'outline' },
-  ACTIVA: { label: 'Activa', variant: 'default' },
-  PAUSADA: { label: 'Pausada', variant: 'secondary' },
-  FINALIZADA: { label: 'Finalizada', variant: 'destructive' },
-}
 
 function fmtDate(d: Date) {
   return new Intl.DateTimeFormat('es-DO', {
@@ -77,7 +71,7 @@ export default async function AdminInvitacionesPage() {
       ) : (
         <div className="grid gap-4">
           {campanas.map((c) => {
-            const badge = ESTADO_BADGE[c.estado] ?? ESTADO_BADGE.BORRADOR
+            const badge = campanaEstadoUi(c.estado)
             const url = absoluteUrl(`/invita/${c.slug}`)
             return (
               <Card key={c.id}>
