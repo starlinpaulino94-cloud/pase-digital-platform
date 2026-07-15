@@ -25,6 +25,7 @@ import { OnboardingChecklist } from '@/components/admin/OnboardingChecklist'
 import { prisma } from '@/lib/prisma'
 import { formatMoney } from '@/lib/format'
 import { StatCard } from '@/components/ui/stat-card'
+import { AnimatedCounter } from '@/components/system/AnimatedCounter'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
@@ -71,10 +72,10 @@ export default async function AdminDashboard() {
       <div className="space-y-8 animate-fade-up">
         <h1 className="text-2xl font-bold tracking-tight">Todas las empresas</h1>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Clientes" value={metrics.totalClientes} icon={Users} accent="sky" />
-          <StatCard label="Membresías activas" value={metrics.activas} icon={CheckCircle2} accent="green" />
-          <StatCard label="Pagos pendientes" value={metrics.pendientes} icon={Clock} accent="amber" />
-          <StatCard label="Visitas hoy" value={metrics.visitasHoy} icon={CalendarCheck} accent="indigo" />
+          <StatCard label="Clientes" value={<AnimatedCounter value={metrics.totalClientes} />} icon={Users} accent="sky" />
+          <StatCard label="Membresías activas" value={<AnimatedCounter value={metrics.activas} />} icon={CheckCircle2} accent="green" />
+          <StatCard label="Pagos pendientes" value={<AnimatedCounter value={metrics.pendientes} />} icon={Clock} accent="amber" />
+          <StatCard label="Visitas hoy" value={<AnimatedCounter value={metrics.visitasHoy} />} icon={CalendarCheck} accent="indigo" />
         </div>
       </div>
     )
@@ -170,21 +171,21 @@ export default async function AdminDashboard() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Clientes activos"
-          value={d.membresiasActivas}
+          value={<AnimatedCounter value={d.membresiasActivas} />}
           icon={CheckCircle2}
           accent="green"
           sub={`${fmt(d.clientesTotal)} clientes en total`}
         />
         <StatCard
           label="Clientes nuevos"
-          value={d.clientesNuevos30d}
+          value={<AnimatedCounter value={d.clientesNuevos30d} />}
           icon={UserPlus}
           accent="sky"
           sub="Últimos 30 días"
         />
         <StatCard
           label="Por vencer"
-          value={d.porVencer7d}
+          value={<AnimatedCounter value={d.porVencer7d} />}
           icon={Clock}
           accent="amber"
           sub="Próximos 7 días"
@@ -202,26 +203,26 @@ export default async function AdminDashboard() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Seguidores"
-          value={d.seguidores}
+          value={<AnimatedCounter value={d.seguidores} />}
           icon={Heart}
           accent="red"
           sub={`+${d.nuevosSeguidores30d} este mes`}
         />
         <StatCard
           label="Promociones activas"
-          value={d.promosActivas}
+          value={<AnimatedCounter value={d.promosActivas} />}
           icon={Gift}
           accent="amber"
         />
         <StatCard
           label="Referidos completados"
-          value={d.referidosCompletados}
+          value={<AnimatedCounter value={d.referidosCompletados} />}
           icon={Share2}
           accent="indigo"
         />
         <StatCard
           label="Visitas"
-          value={d.visitasHoy}
+          value={<AnimatedCounter value={d.visitasHoy} />}
           icon={CalendarCheck}
           accent="sky"
           sub={`${fmt(d.visitasMes)} este mes`}
@@ -266,11 +267,14 @@ export default async function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="flex h-32 items-end gap-1.5">
-              {d.visitasPorDia.map((v) => (
+              {d.visitasPorDia.map((v, idx) => (
                 <div
                   key={v.fecha}
-                  className="group relative flex-1 rounded-t-md bg-gradient-to-t from-blue-500 to-sky-400 opacity-70 transition-opacity hover:opacity-100"
-                  style={{ height: `${Math.max(4, (v.total / maxVisitas) * 100)}%` }}
+                  className="animate-grow-y group relative flex-1 rounded-t-md bg-gradient-to-t from-blue-500 to-sky-400 opacity-70 transition-opacity hover:opacity-100"
+                  style={{
+                    height: `${Math.max(4, (v.total / maxVisitas) * 100)}%`,
+                    animationDelay: `${idx * 35}ms`,
+                  }}
                   title={`${v.fecha}: ${v.total} visita(s)`}
                 />
               ))}

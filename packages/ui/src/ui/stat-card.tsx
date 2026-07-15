@@ -1,9 +1,11 @@
 import type { LucideIcon } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { cn } from '../cn'
 
 interface StatCardProps {
   label: string
-  value: string | number
+  /** Valor del KPI. Acepta un nodo (p. ej. un contador animado). */
+  value: ReactNode
   sub?: string
   icon?: LucideIcon
   trend?: { value: number; positive?: boolean }

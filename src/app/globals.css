@@ -416,6 +416,10 @@
   0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
   50%      { transform: scale(1.04); box-shadow: 0 0 0 6px rgba(255,255,255,0.18); }
 }
+@keyframes grow-y {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
 @keyframes scanner-line {
   0%   { top: 4%;  opacity: 0.4; }
   50%  { top: 92%; opacity: 1; }
@@ -432,6 +436,7 @@
   .animate-pulse-glow { animation: pulse-glow 5s ease-in-out infinite; }
   .animate-shimmer    { animation: shimmer 2.6s linear infinite; }
   .animate-pulse-soft { animation: pulse-soft 1.8s ease-in-out infinite; }
+  .animate-grow-y     { animation: grow-y 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: bottom; }
 
   /* Carruseles tipo Netflix: scroll horizontal sin barra visible. */
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -451,6 +456,7 @@
     .animate-float-slow,
     .animate-pulse-glow,
     .animate-shimmer,
+    .animate-grow-y,
     .animate-pulse-soft,
     .animate-fade-up,
     .animate-fade-in,
