@@ -188,9 +188,9 @@ export function QRShareCard({
 
   return (
     <div className="mb-8 flex flex-col items-center rounded-3xl border border-border/60 bg-card px-6 py-8 text-center shadow-sm">
-      <h2 className="text-h2 text-foreground">Tu código QR</h2>
+      <h2 className="text-h2 text-foreground">Tu llave de acceso</h2>
       <p className="mt-1 max-w-sm text-small text-muted-foreground">
-        Muéstralo en {companyName} para validar tu membresía al instante.
+        Muéstralo en {companyName} y listo: tu membresía se valida al instante.
       </p>
 
       {/* Días restantes: bien explícito, encima del QR */}

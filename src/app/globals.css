@@ -10,6 +10,7 @@
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -154,6 +155,13 @@
     @apply border-border outline-ring/50;
   }
 
+  /* Toda la jerarquía de títulos usa la fuente display de marca, incluso
+     donde aún se componen tamaños a mano. Números siempre alineados. */
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
+  }
+
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -253,30 +261,35 @@
      Usar estas clases en vez de combinar text-*/font-* a mano, para que
      todas las pantallas compartan exactamente la misma jerarquía. */
   .text-display {          /* Héroes / landing */
+    font-family: var(--font-display);
     font-size: clamp(2.5rem, 6vw, 4.5rem);
     font-weight: 800;
     letter-spacing: -0.03em;
     line-height: 1.05;
   }
-  .text-h1 {               /* Título de página */
-    font-size: 1.75rem;
-    font-weight: 700;
+  .text-h1 {               /* Título de página — fluido: respira en móvil */
+    font-family: var(--font-display);
+    font-size: clamp(1.55rem, 4.5vw, 1.875rem);
+    font-weight: 800;
     letter-spacing: -0.02em;
-    line-height: 1.2;
+    line-height: 1.15;
   }
   .text-h2 {               /* Título de sección */
-    font-size: 1.375rem;
+    font-family: var(--font-display);
+    font-size: clamp(1.2rem, 3.5vw, 1.375rem);
     font-weight: 700;
     letter-spacing: -0.015em;
     line-height: 1.25;
   }
   .text-h3 {               /* Título de tarjeta */
+    font-family: var(--font-display);
     font-size: 1.0625rem;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: -0.01em;
     line-height: 1.3;
   }
   .text-h4 {               /* Subtítulo / grupo */
+    font-family: var(--font-display);
     font-size: 0.9375rem;
     font-weight: 600;
     line-height: 1.35;

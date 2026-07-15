@@ -48,11 +48,9 @@ export default async function ExplorarEmpresasPage({
     <main className="container max-w-5xl py-8">
       {/* ── Cabecera app-style: título grande + buscador protagonista ──────── */}
       <header className="animate-fade-up mb-6">
-        <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-          Encuentra membresías
-        </h1>
+        <h1 className="text-h1 text-foreground">Encuentra membresías</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Explora y suscríbete a los mejores negocios locales.
+          Suscríbete a los mejores negocios cerca de ti y ahorra en cada visita.
         </p>
 
         {/* Buscador grande, redondo, de app móvil */}

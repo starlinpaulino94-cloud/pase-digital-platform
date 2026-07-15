@@ -142,8 +142,7 @@ export default async function PlanesPage() {
             : 'Elige tu plan ideal'}
         </h1>
         <p className="mt-2 max-w-xl text-muted-foreground">
-          Beneficios de miembro validados con tu QR en cada visita. Cambia de plan
-          cuando quieras.
+          Paga menos por lo que ya haces. Entra con tu QR y cambia de plan cuando quieras.
         </p>
       </header>
 
