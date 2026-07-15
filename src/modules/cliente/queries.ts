@@ -244,6 +244,12 @@ export interface PagoHistorialItem {
   monto: number | null
   motivo: string | null
   planNombre: string | null
+  /** Método de pago de la membresía de esa transacción (ej. "Banco Popular"). */
+  metodoPagoNombre: string | null
+  /** Comprobante subido para esa membresía (para el visor integrado). */
+  comprobanteUrl: string | null
+  /** Nombre del miembro del equipo que aprobó/rechazó el pago. */
+  validadoPor: string | null
 }
 
 export interface ClientePagos {
@@ -307,12 +313,35 @@ export async function getClientePagos(clienteId: string): Promise<ClientePagos> 
         : []
       const planName = new Map(planes.map((p) => [p.id, p.nombre]))
 
+      // Método de pago y comprobante por membresía (constancia de la
+      // transacción en el extracto) + nombre del staff que la validó.
+      const membershipInfo = new Map(
+        memberships.map((mem) => [
+          mem.id,
+          {
+            metodoPagoNombre: mem.metodoPago?.nombre ?? null,
+            comprobanteUrl: mem.comprobanteUrl ?? null,
+          },
+        ])
+      )
+      const validadorIds = [...new Set(logs.map((l) => l.userId).filter((u): u is string => !!u))]
+      const validadores = validadorIds.length
+        ? await prisma.user
+            .findMany({
+              where: { id: { in: validadorIds } },
+              select: { id: true, name: true },
+            })
+            .catch(() => [])
+        : []
+      const validadorName = new Map(validadores.map((u) => [u.id, u.name]))
+
       historial = logs.map((l) => {
         const p = (l.payload ?? {}) as Record<string, unknown>
         const planRef =
           (typeof p.planNuevo === 'string' && p.planNuevo) ||
           (typeof p.planId === 'string' && p.planId) ||
           null
+        const info = membershipInfo.get(l.entidadId ?? '') ?? null
         return {
           id: l.id,
           tipo: l.accion === 'PAGO_APROBADO' ? 'APROBADO' : 'RECHAZADO',
@@ -320,6 +349,9 @@ export async function getClientePagos(clienteId: string): Promise<ClientePagos> 
           monto: typeof p.monto === 'number' ? p.monto : null,
           motivo: typeof p.motivo === 'string' ? p.motivo : null,
           planNombre: planRef ? planName.get(planRef) ?? null : null,
+          metodoPagoNombre: info?.metodoPagoNombre ?? null,
+          comprobanteUrl: info?.comprobanteUrl ?? null,
+          validadoPor: l.userId ? validadorName.get(l.userId) ?? null : null,
         }
       })
     } catch (e) {

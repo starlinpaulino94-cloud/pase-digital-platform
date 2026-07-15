@@ -4,22 +4,20 @@ import {
   ExternalLink,
   FileText,
   ArrowRightLeft,
-  CheckCircle2,
   XCircle,
   ArrowLeft,
   Receipt,
-  Wallet,
-  CalendarClock,
   Sparkles,
 } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
 import { getClientePagos } from '@/modules/cliente/queries'
 import { getRegionalPrefs } from '@/modules/empresas/regional'
 import { formatMoney } from '@/lib/format'
-import { EstadoBadge } from '@/components/EstadoBadge'
-import { membresiaEstadoUi } from '@/lib/estados'
+import { membresiaEstadoUi, type BadgeVariant } from '@/lib/estados'
 import { Button } from '@/components/ui/button'
-import type { MembershipEstado } from '@/types'
+import { BillingCycleHeader } from '@/components/cliente/pagos/BillingCycleHeader'
+import { PagosLedger } from '@/components/cliente/pagos/PagosLedger'
+import { cn } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 export const metadata = {
@@ -35,15 +33,40 @@ function fmtDate(d: Date | null) {
   }).format(d)
 }
 
-function fmtDateTime(d: Date) {
-  return new Intl.DateTimeFormat('es-DO', {
-    timeZone: 'America/Santo_Domingo',
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(d)
+const NECESITA_PAGO = ['PENDIENTE', 'RECHAZADA']
+
+/** Color del micro-punto de estado según la variante semántica del estado. */
+const DOT_COLOR: Record<BadgeVariant, string> = {
+  success: 'bg-emerald-500',
+  warning: 'bg-amber-500',
+  info: 'bg-sky-500',
+  destructive: 'bg-rose-500',
+  secondary: 'bg-slate-400',
+  outline: 'bg-slate-400',
+  default: 'bg-primary',
 }
 
-const NECESITA_PAGO = ['PENDIENTE', 'RECHAZADA']
+/**
+ * Micro-badge de estado minimalista (`● Activa`): la mitad de tamaño que un
+ * badge tradicional; cuando el servicio está vivo (Activa) el punto late con
+ * un pulso muy lento.
+ */
+function EstadoDot({ estado }: { estado: string }) {
+  const ui = membresiaEstadoUi(estado)
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground">
+      <span
+        aria-hidden
+        className={cn(
+          'h-2 w-2 rounded-full',
+          DOT_COLOR[ui.variant],
+          estado === 'ACTIVA' && 'animate-pulse [animation-duration:2.5s]'
+        )}
+      />
+      {ui.label}
+    </span>
+  )
+}
 
 export default async function PagosPage() {
   const user = await requireRole('CLIENTE')
@@ -138,58 +161,45 @@ export default async function PagosPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          {/* ── Estado actual de membresía ─────────────────────────────────── */}
-          <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-card">
-            <div className="flex items-center justify-between border-b border-border/50 px-5 py-3">
+          {/* ── Membresía actual: panel de suscripción estilo Stripe Billing ─
+               Sin sub-cajas grises ni datos repetidos: el monto y el estado
+               aparecen UNA sola vez. */}
+          <section className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+            <div className="flex items-center justify-between border-b border-border/40 px-5 py-3">
               <h2 className="text-sm font-semibold text-muted-foreground">Membresía actual</h2>
-              <EstadoBadge estado={m.estado as MembershipEstado} />
+              <EstadoDot estado={m.estado} />
             </div>
 
             <div className="p-5">
-              {/* Plan name + amount hero */}
-              <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+              {/* Plan + monto: única aparición del precio en la tarjeta */}
+              <div className="mb-6 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
                 <h3 className="text-xl font-bold text-foreground">{m.planNombre}</h3>
                 {m.montoPagado != null && (
-                  <span className="text-2xl font-extrabold tracking-tight text-foreground">
+                  <span className="font-mono text-2xl font-bold tabular-nums tracking-tight text-foreground">
                     {fmtMonto(m.montoPagado)}
                   </span>
                 )}
               </div>
 
-              {/* Key data grid */}
-              <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <div className="rounded-xl bg-muted/50 px-3 py-2.5">
-                  <p className="text-xs text-muted-foreground">Estado</p>
-                  <p className="mt-0.5 text-sm font-semibold text-foreground">
-                    {membresiaEstadoUi(m.estado).label}
-                  </p>
-                </div>
-                <div className="rounded-xl bg-muted/50 px-3 py-2.5">
-                  <p className="text-xs text-muted-foreground">Monto</p>
-                  <p className="mt-0.5 text-sm font-semibold text-foreground">
-                    {fmtMonto(m.montoPagado)}
-                  </p>
-                </div>
-                <div className="rounded-xl bg-muted/50 px-3 py-2.5">
-                  <p className="text-xs text-muted-foreground">Inicio</p>
-                  <p className="mt-0.5 text-sm font-semibold text-foreground">
-                    {fmtDate(m.fechaInicio)}
-                  </p>
-                </div>
-                <div className="rounded-xl bg-muted/50 px-3 py-2.5">
-                  <p className="text-xs text-muted-foreground">Vencimiento</p>
-                  <p className="mt-0.5 text-sm font-semibold text-foreground">
-                    {fmtDate(m.fechaVencimiento)}
-                  </p>
-                </div>
+              {/* Ciclo de facturación en fila fluida con divisores finos */}
+              <div className="mb-6">
+                <BillingCycleHeader
+                  items={[
+                    {
+                      label: 'Ciclo de facturación',
+                      value:
+                        m.fechaInicio || m.fechaVencimiento
+                          ? `${fmtDate(m.fechaInicio)} – ${fmtDate(m.fechaVencimiento)}`
+                          : '—',
+                    },
+                    { label: 'Método', value: m.metodoPagoNombre ?? '—' },
+                    {
+                      label: 'Próximo cobro',
+                      value: m.estado === 'ACTIVA' ? fmtDate(m.fechaVencimiento) : '—',
+                    },
+                  ]}
+                />
               </div>
-
-              {m.metodoPagoNombre && (
-                <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-                  <Wallet className="h-4 w-4" />
-                  Método: <span className="font-medium text-foreground">{m.metodoPagoNombre}</span>
-                </div>
-              )}
 
               {m.comprobanteUrl && (
                 <a
@@ -254,64 +264,8 @@ export default async function PagosPage() {
               )}
             </div>
 
-            {historial.length === 0 ? (
-              <div className="rounded-2xl border border-border/70 bg-card px-5 py-10 text-center shadow-card">
-                <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
-                  <CalendarClock className="h-6 w-6 text-muted-foreground" />
-                </span>
-                <p className="text-sm font-medium text-foreground">Sin historial</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Aquí aparecerán tus pagos aprobados y rechazados.
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-card">
-                <div className="divide-y divide-border/50">
-                  {historial.map((h) => (
-                    <div key={h.id} className="flex items-start gap-3.5 px-5 py-4">
-                      <span
-                        className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-                          h.tipo === 'APROBADO'
-                            ? 'bg-success/12 text-success'
-                            : 'bg-destructive/10 text-destructive'
-                        }`}
-                      >
-                        {h.tipo === 'APROBADO' ? (
-                          <CheckCircle2 className="h-4.5 w-4.5" />
-                        ) : (
-                          <XCircle className="h-4.5 w-4.5" />
-                        )}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="text-sm font-semibold text-foreground">
-                            {h.tipo === 'APROBADO' ? 'Pago aprobado' : 'Pago rechazado'}
-                            {h.planNombre && (
-                              <span className="ml-1 font-normal text-muted-foreground">
-                                · {h.planNombre}
-                              </span>
-                            )}
-                          </p>
-                          {h.tipo === 'APROBADO' && h.monto != null && (
-                            <span className="text-sm font-bold text-foreground">
-                              {fmtMonto(h.monto)}
-                            </span>
-                          )}
-                        </div>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          {fmtDateTime(h.fecha)}
-                        </p>
-                        {h.motivo && (
-                          <p className="mt-1 text-xs text-muted-foreground italic">
-                            Motivo: {h.motivo}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Extracto contable limpio con visor de comprobantes integrado */}
+            <PagosLedger items={historial} prefs={prefs} />
           </section>
         </div>
       )}
