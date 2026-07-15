@@ -320,7 +320,8 @@ export default async function MisMembresias() {
         <PruebaSocial data={pruebaSocial} color={engagement.color} />
       )}
 
-      {/* Onboarding B2C: solo la primera visita */}
+      {/* Onboarding B2C: sugerencia para completar la cuenta (nunca obligatoria).
+          Se muestra mientras falten pasos; cerrarla la pospone unos días. */}
       {onboarding && (
         <div className="mb-6">
           <OnboardingClienteFirstVisit onboarding={onboarding} />

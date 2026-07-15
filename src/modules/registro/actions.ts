@@ -106,7 +106,9 @@ export async function registrarCliente(
   const color = String(formData.get('color') ?? '').trim()
   const placa = String(formData.get('placa') ?? '').trim()
 
-  if (!nombre || !email || !password || !telefono) {
+  // Solo lo esencial es obligatorio; el teléfono se puede completar luego
+  // desde el perfil (se sugiere, no se exige).
+  if (!nombre || !email || !password) {
     return { error: 'Completa todos los campos obligatorios.' }
   }
   if (password.length < 6) {
@@ -390,7 +392,9 @@ export async function registrarCuentaGeneral(
     const aceptaTerminos = formData.get('terminos') === 'on'
     const marketingConsent = formData.getAll('marketingConsent').at(-1) === 'on'
 
-    if (!nombre || !email || !password || !telefono) {
+    // Solo lo esencial es obligatorio; el teléfono se puede completar luego
+    // desde el perfil (se sugiere, no se exige).
+    if (!nombre || !email || !password) {
       return { error: 'Completa todos los campos obligatorios.' }
     }
     if (password.length < 6) {

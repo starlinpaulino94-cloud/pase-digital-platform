@@ -132,15 +132,17 @@ export function RegisterGeneralForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="telefono">Teléfono *</Label>
+            <Label htmlFor="telefono">Teléfono (opcional)</Label>
             <Input
               id="telefono"
               name="telefono"
               type="tel"
-              required
               className="bg-white/10 text-white placeholder:text-white/50"
               placeholder="809-555-0000"
             />
+            <p className="text-xs text-white/50">
+              Puedes agregarlo luego desde tu perfil.
+            </p>
           </div>
 
           <label className="flex items-start gap-2 text-sm text-white/70">
