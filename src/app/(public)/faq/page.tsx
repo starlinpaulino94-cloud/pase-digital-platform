@@ -30,7 +30,7 @@ const FAQS = [
   },
   {
     q: '¿Cómo se validan las membresías y los beneficios?',
-    a: 'Con un QR de un solo uso. El personal del negocio lo escanea con la cámara o con un lector físico; tras cada canje se genera uno nuevo automáticamente.',
+    a: 'Con un QR de un solo uso. El personal del negocio lo escanea con la cámara o con un lector físico. Mientras te queden usos disponibles, verás tu código vigente en la app.',
   },
   {
     q: '¿Cómo funcionan los referidos?',

@@ -98,7 +98,7 @@ const ERROR_CONFIG: Record<ErrorCode, { icon: typeof XCircle; title: string; ton
     icon: Ban,
     title: 'Código QR ya utilizado',
     tone: 'warning',
-    action: 'Este QR es de un solo uso. Pide al cliente que abra su app para generar uno nuevo.',
+    action: 'Este QR es de un solo uso y ya fue canjeado. Pide al cliente que muestre el código vigente en su app; si no le aparece, ya no tiene usos disponibles.',
   },
   WRONG_COMPANY: {
     icon: Building2,

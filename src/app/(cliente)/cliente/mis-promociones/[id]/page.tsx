@@ -151,8 +151,7 @@ export default async function MiCompraPage({
           <CardContent className="flex flex-col items-center gap-3 pb-6">
             <QRDisplay token={qr.token} />
             <p className="max-w-sm text-center text-xs text-muted-foreground">
-              Muestra este código en el local. Es de un solo uso: tras cada
-              canje se genera uno nuevo automáticamente.
+              Muestra este código en el local. Es de un solo uso.
             </p>
           </CardContent>
         </Card>

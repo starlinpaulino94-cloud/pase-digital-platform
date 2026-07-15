@@ -268,7 +268,7 @@ export function QRShareCard({
 
       <p className="mt-3 inline-flex items-center gap-1.5 text-caption">
         <ShieldCheck className="h-3.5 w-3.5" />
-        Por seguridad, el código se renueva cada vez que usas tu membresía.
+        Por seguridad, cada código es de un solo uso: al canjearlo deja de ser válido.
       </p>
     </div>
   )
