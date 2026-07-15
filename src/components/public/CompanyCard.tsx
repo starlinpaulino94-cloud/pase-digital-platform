@@ -57,7 +57,7 @@ export function CompanyCard({ company, hrefBase = '/empresas' }: CompanyCardProp
               <Image src={company.logoUrl} alt={company.name} fill className="object-cover" />
             </div>
           ) : (
-            <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br from-primary to-teal-500 text-xl font-bold text-white shadow-premium">
+            <div className="flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br from-blue-500 to-indigo-600 text-xl font-bold text-white shadow-premium">
               {initials}
             </div>
           )}
