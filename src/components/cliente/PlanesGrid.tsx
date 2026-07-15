@@ -265,7 +265,7 @@ export function PlanesGrid({
               )}
               {isRecommended && (
                 <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2">
-                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-b-xl bg-gradient-to-r from-primary to-sky-500 px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-primary-foreground shadow-glow">
+                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-b-xl bg-gradient-to-r from-primary to-teal-400 px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-primary-foreground shadow-glow">
                     <Sparkles className="h-3 w-3" />
                     {vehiculo && recomendadoId
                       ? `Para tu ${titleCase(vehiculo.modelo)}`
@@ -426,7 +426,7 @@ export function PlanesGrid({
                         className={cn(
                           'min-h-12 w-full font-bold shadow-md transition hover:opacity-95',
                           isRecommended
-                            ? 'bg-gradient-to-r from-primary to-sky-500 text-primary-foreground shadow-glow'
+                            ? 'bg-gradient-to-r from-primary to-teal-400 text-primary-foreground shadow-glow'
                             : 'bg-foreground text-background hover:bg-foreground'
                         )}
                       >

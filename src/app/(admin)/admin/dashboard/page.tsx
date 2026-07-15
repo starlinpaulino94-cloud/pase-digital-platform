@@ -270,7 +270,7 @@ export default async function AdminDashboard() {
               {d.visitasPorDia.map((v, idx) => (
                 <div
                   key={v.fecha}
-                  className="animate-grow-y group relative flex-1 rounded-t-md bg-gradient-to-t from-blue-500 to-sky-400 opacity-70 transition-opacity hover:opacity-100"
+                  className="animate-grow-y group relative flex-1 rounded-t-md bg-gradient-to-t from-emerald-500 to-emerald-300 opacity-70 transition-opacity hover:opacity-100"
                   style={{
                     height: `${Math.max(4, (v.total / maxVisitas) * 100)}%`,
                     animationDelay: `${idx * 35}ms`,

@@ -88,7 +88,7 @@ export function ExplorarEmpresasList({
                     <Image src={company.logoUrl} alt="" fill sizes="48px" className="object-cover" />
                   </div>
                 ) : (
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-info text-sm font-bold text-primary-foreground shadow-card">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-teal-500 text-sm font-bold text-primary-foreground shadow-card">
                     {initials}
                   </div>
                 )}
@@ -147,7 +147,7 @@ export function ExplorarEmpresasList({
             <div className="mt-auto flex items-center gap-2 pt-5">
               <Button
                 asChild
-                className="min-h-12 flex-1 rounded-2xl bg-gradient-to-r from-primary to-sky-500 text-sm font-bold text-primary-foreground shadow-md transition hover:opacity-95"
+                className="min-h-12 flex-1 rounded-2xl bg-gradient-to-r from-primary to-teal-400 text-sm font-bold text-primary-foreground shadow-md transition hover:opacity-95"
               >
                 <Link href={`/cliente/empresas/${company.slug}`}>
                   Ver membresías <ArrowRight className="ml-1 h-4 w-4" />

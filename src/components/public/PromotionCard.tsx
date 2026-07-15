@@ -79,7 +79,7 @@ export function PromotionCard({
     <Link href={`${hrefBase}/${promotion.id}`} className="group block h-full">
       <div className="card-interactive relative flex h-full flex-col overflow-hidden rounded-3xl border border-border/60 bg-card">
         {/* Imagen protagonista */}
-        <div className="relative h-44 w-full overflow-hidden bg-gradient-to-br from-blue-600 via-blue-500 to-sky-500">
+        <div className="relative h-44 w-full overflow-hidden bg-gradient-to-br from-rose-500 via-orange-500 to-amber-500">
           {promotion.imagenUrl ? (
             <Image
               src={promotion.imagenUrl}
@@ -202,7 +202,7 @@ export function PromotionCard({
                   ? 'bg-slate-400'
                   : promotion.descuento
                     ? 'bg-gradient-to-r from-rose-500 to-orange-500'
-                    : 'bg-gradient-to-r from-primary to-sky-500'
+                    : 'bg-gradient-to-r from-primary to-teal-400'
               }`}
             >
               {isExpired ? 'Ver detalle' : agotada ? 'Agotada · ver detalle' : 'Aprovechar ahora'}

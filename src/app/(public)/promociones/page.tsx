@@ -43,7 +43,7 @@ export default async function PromotionsPage({
   return (
     <div className="min-h-screen bg-card">
       {/* Header */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-800 via-blue-700 to-indigo-900 pb-16 pt-14">
+      <section className="relative overflow-hidden bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-950 pb-16 pt-14">
         <div className="absolute inset-0 bg-grid-light mask-fade" />
         <div className="absolute -top-16 right-10 h-56 w-56 rounded-full bg-primary/25 blur-3xl" />
         <div className="absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-primary/40/20 blur-3xl" />

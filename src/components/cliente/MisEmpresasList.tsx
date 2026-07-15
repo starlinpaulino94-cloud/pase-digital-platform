@@ -86,7 +86,7 @@ export function MisEmpresasList({ empresas }: { empresas: EmpresaSeguida[] }) {
                     <Image src={company.logoUrl} alt={company.name} fill className="object-cover" />
                   </div>
                 ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-white bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white shadow">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-white bg-gradient-to-br from-primary to-teal-500 text-sm font-bold text-white shadow">
                     {initials}
                   </div>
                 )}
