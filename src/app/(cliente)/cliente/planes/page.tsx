@@ -11,6 +11,7 @@ import { requireRole } from '@/lib/auth/guards'
 import { prisma } from '@/lib/prisma'
 import { Button } from '@/components/ui/button'
 import { PlanesGrid, type PlanItem } from '@/components/cliente/PlanesGrid'
+import { EmptyState } from '@/components/system/EmptyState'
 
 export const dynamic = 'force-dynamic'
 export const metadata = {
@@ -202,25 +203,16 @@ export default async function PlanesPage() {
 
       {/* ── Grid de planes ────────────────────────────────────────────────── */}
       {planes.length === 0 ? (
-        <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card p-10 text-center shadow-card">
-          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
-          <div className="relative mx-auto flex max-w-md flex-col items-center gap-5">
-            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
-              <Sparkles className="h-8 w-8 text-muted-foreground" />
-            </span>
-            <div>
-              <h2 className="text-xl font-bold text-foreground">
-                Sin planes disponibles
-              </h2>
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                Esta empresa aún no tiene planes publicados. Vuelve pronto.
-              </p>
-            </div>
+        <EmptyState
+          icon={Sparkles}
+          title="Sin planes disponibles"
+          description="Esta empresa aún no tiene planes publicados. Vuelve pronto."
+          action={
             <Button asChild variant="outline">
               <Link href="/mis-membresias">Volver a mis membresías</Link>
             </Button>
-          </div>
-        </div>
+          }
+        />
       ) : (
         <>
           <PlanesGrid

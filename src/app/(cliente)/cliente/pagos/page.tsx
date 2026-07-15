@@ -16,6 +16,7 @@ import { formatMoney } from '@/lib/format'
 import { membresiaEstadoUi, type BadgeVariant } from '@/lib/estados'
 import { Button } from '@/components/ui/button'
 import { BillingCycleHeader } from '@/components/cliente/pagos/BillingCycleHeader'
+import { EmptyState } from '@/components/system/EmptyState'
 import { PagosLedger } from '@/components/cliente/pagos/PagosLedger'
 import { cn } from '@/lib/utils'
 
@@ -121,44 +122,30 @@ export default async function PagosPage() {
       </header>
 
       {loadError ? (
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10">
-            <XCircle className="h-7 w-7 text-destructive" />
-          </span>
-          <div>
-            <p className="font-semibold text-foreground">No pudimos cargar tus pagos.</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Intenta de nuevo en unos momentos.
-            </p>
-          </div>
-          <Button asChild variant="outline">
-            <Link href="/cliente/pagos">Reintentar</Link>
-          </Button>
-        </div>
+        <EmptyState
+          icon={XCircle}
+          title="No pudimos cargar tus pagos"
+          description="Intenta de nuevo en unos momentos."
+          action={
+            <Button asChild variant="outline">
+              <Link href="/cliente/pagos">Reintentar</Link>
+            </Button>
+          }
+        />
       ) : !m ? (
-        <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card p-10 text-center shadow-card">
-          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-info/10 blur-3xl" />
-          <div className="relative mx-auto flex max-w-md flex-col items-center gap-5">
-            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
-              <Receipt className="h-8 w-8 text-muted-foreground" />
-            </span>
-            <div>
-              <h2 className="text-xl font-bold text-foreground">
-                Sin pagos todavía
-              </h2>
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                Selecciona un plan para comenzar tu membresía y aquí verás todos tus pagos.
-              </p>
-            </div>
+        <EmptyState
+          icon={Receipt}
+          title="Sin pagos todavía"
+          description="Selecciona un plan para comenzar tu membresía y aquí verás todos tus pagos."
+          action={
             <Button asChild size="lg">
               <Link href="/cliente/planes">
                 <Sparkles className="mr-2 h-4 w-4" />
                 Ver planes
               </Link>
             </Button>
-          </div>
-        </div>
+          }
+        />
       ) : (
         <div className="space-y-8">
           {/* ── Membresía actual: panel de suscripción estilo Stripe Billing ─

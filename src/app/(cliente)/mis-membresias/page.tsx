@@ -32,6 +32,7 @@ import { PopupInteligente } from '@/components/engagement/PopupInteligente'
 import { CarrouselesHome } from '@/components/engagement/CarrouselesHome'
 import { WalletStack, type WalletStackItem } from '@/components/wallet/WalletStack'
 import { AnimatedCounter } from '@/components/system/AnimatedCounter'
+import { EmptyState } from '@/components/system/EmptyState'
 import { CelebracionBienvenida } from '@/components/cliente/CelebracionBienvenida'
 import { FeedNovedades } from '@/components/cliente/FeedNovedades'
 import { OnboardingClienteFirstVisit } from '@/components/cliente/OnboardingClienteFirstVisit'
@@ -347,51 +348,33 @@ export default async function MisMembresias() {
       )}
 
       {loadError ? (
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10">
-            <AlertCircle className="h-7 w-7 text-destructive" />
-          </span>
-          <div>
-            <p className="font-semibold text-foreground">
-              No pudimos cargar tus membresías.
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Hubo un problema al conectar con el servidor. Intenta de nuevo en unos
-              momentos.
-            </p>
-          </div>
-          <Button asChild variant="outline">
-            <Link href="/mis-membresias">Reintentar</Link>
-          </Button>
-        </div>
+        <EmptyState
+          icon={AlertCircle}
+          title="No pudimos cargar tus membresías"
+          description="Hubo un problema al conectar con el servidor. Intenta de nuevo en unos momentos."
+          action={
+            <Button asChild variant="outline">
+              <Link href="/mis-membresias">Reintentar</Link>
+            </Button>
+          }
+        />
       ) : memberships.length === 0 ? (
         <div className="space-y-8">
-          <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-card p-10 text-center shadow-card">
-            <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-info/10 blur-3xl" />
-            <div className="relative mx-auto flex max-w-md flex-col items-center gap-5">
-              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-                <CreditCard className="h-8 w-8 text-primary" />
-              </span>
-              <div>
-                <h2 className="text-xl font-bold text-foreground">
-                  Tu wallet está lista
-                </h2>
-                <p className="mt-1.5 text-sm text-muted-foreground">
-                  Explora las empresas disponibles y activa tu primera membresía
-                  para empezar a disfrutar beneficios con tu QR.
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
+          <EmptyState
+            icon={CreditCard}
+            title="Tu wallet está lista"
+            description="Explora las empresas disponibles y activa tu primera membresía para empezar a disfrutar beneficios con tu QR."
+            action={
+              <>
                 <Button asChild size="lg">
                   <Link href="/cliente/explorar">Explorar empresas</Link>
                 </Button>
                 <Button asChild size="lg" variant="outline">
                   <Link href="/cliente/promociones">Ver promociones</Link>
                 </Button>
-              </div>
-            </div>
-          </div>
+              </>
+            }
+          />
           {feed && engagement.carruseles && <CarrouselesHome feed={feed} />}
           <FeedNovedades novedades={novedades} />
         </div>

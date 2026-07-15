@@ -5,6 +5,7 @@ import { CalendarClock, ExternalLink, FileText, Wallet } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatMoney, type RegionalPrefs } from '@/lib/format'
 import type { PagoHistorialItem } from '@/modules/cliente/queries'
+import { EmptyState } from '@/components/system/EmptyState'
 import {
   Sheet,
   SheetContent,
@@ -38,15 +39,11 @@ export function PagosLedger({
 
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-border/70 bg-card px-5 py-10 text-center shadow-card">
-        <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
-          <CalendarClock className="h-6 w-6 text-muted-foreground" />
-        </span>
-        <p className="text-sm font-medium text-foreground">Sin historial</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          Aquí aparecerán tus pagos aprobados y rechazados.
-        </p>
-      </div>
+      <EmptyState
+        icon={CalendarClock}
+        title="Sin historial"
+        description="Aquí aparecerán tus pagos aprobados y rechazados."
+      />
     )
   }
 
