@@ -275,11 +275,11 @@ export default async function MisMembresias() {
               {(momentos.nombre ?? 'M').trim().slice(0, 2).toUpperCase()}
             </span>
             <div className="min-w-0">
-              <h1 className="truncate text-xl font-extrabold tracking-tight text-foreground sm:text-2xl">
+              <h1 className="text-h1 truncate text-foreground">
                 {momentos.nombre ? `¡Hola, ${momentos.nombre.split(' ')[0]}!` : '¡Hola! 👋'}
               </h1>
               <p className="truncate text-xs text-muted-foreground">
-                Tu wallet digital MembeGo
+                Tus beneficios, siempre contigo
               </p>
             </div>
           </div>
@@ -383,7 +383,7 @@ export default async function MisMembresias() {
           {/* ── Wallet Stack (estilo Apple Wallet) ────────────────────────── */}
           <section className="space-y-4">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold tracking-tight text-foreground">
+              <h2 className="text-h2 text-foreground">
                 Tus tarjetas
                 <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
                   {memberships.length}
@@ -395,7 +395,7 @@ export default async function MisMembresias() {
 
           {/* ── Accesos rápidos ───────────────────────────────────────────── */}
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold tracking-tight text-foreground">
+            <h2 className="text-h2 text-foreground">
               Accesos rápidos
             </h2>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

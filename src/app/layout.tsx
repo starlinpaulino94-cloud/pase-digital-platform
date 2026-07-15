@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist, Geist_Mono, Plus_Jakarta_Sans } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { SITE_NAME, SITE_DESCRIPTION, getAppUrl } from '@/lib/site'
@@ -12,6 +12,13 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
+  subsets: ['latin'],
+})
+
+// Fuente display para títulos: geométrica y cálida, distingue la marca del
+// texto de lectura (Geist). Variable font: todos los pesos en un archivo.
+const jakarta = Plus_Jakarta_Sans({
+  variable: '--font-display',
   subsets: ['latin'],
 })
 
@@ -116,7 +123,7 @@ export default function RootLayout({
     // antes de hidratar (evita el flash de tema incorrecto).
     <html lang="es" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${jakarta.variable} antialiased`}
       >
         <ThemeProvider>
           <StructuredData />

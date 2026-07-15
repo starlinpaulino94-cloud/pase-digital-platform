@@ -131,10 +131,10 @@ export default async function PromocionesDisponiblesPage() {
               Beneficios
             </p>
             <h1 className="mt-1.5 text-h1 tracking-tight text-foreground">
-              Promociones para ti
+              Ofertas para ti
             </h1>
             <p className="mt-1 text-small text-muted-foreground">
-              Primero lo de tus empresas favoritas; después, lo mejor del marketplace.
+              Lo de tus empresas favoritas primero. Todo canjeable con tu QR.
             </p>
           </div>
           <Button asChild variant="outline" className="shrink-0">

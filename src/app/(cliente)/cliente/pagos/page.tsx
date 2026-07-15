@@ -109,7 +109,7 @@ export default async function PagosPage() {
               Mis pagos
             </h1>
             <p className="mt-1 text-small text-muted-foreground">
-              Estado de tu membresía e historial de pagos.
+              Tu plan, tu ciclo y cada pago. Todo claro, sin sorpresas.
             </p>
           </div>
           <Button asChild variant="outline" className="shrink-0">
