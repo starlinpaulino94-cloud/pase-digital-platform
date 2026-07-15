@@ -9,7 +9,7 @@ export const metadata = {
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="theme-landing flex min-h-screen flex-col bg-background text-foreground">
       <PublicNav />
       <main className="flex-1">
         {children}

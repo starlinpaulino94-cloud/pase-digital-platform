@@ -150,6 +150,41 @@
   --sidebar-ring: oklch(0.723 0.219 150);
 }
 
+/* Landing pública: identidad azul + blanco original de MembeGo. Se aplica al
+   subtree del layout (public) y GANA sobre :root y .dark porque las variables
+   se resuelven en el ancestro más cercano — la landing siempre se ve clara,
+   aunque la app esté en modo oscuro. */
+.theme-landing {
+  color-scheme: light;
+  --glow-color: 59 130 246;
+
+  --background: oklch(0.985 0.002 264);
+  --foreground: oklch(0.14 0.02 264);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.14 0.02 264);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.14 0.02 264);
+  /* Azul eléctrico del logo */
+  --primary: oklch(0.55 0.22 255);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.955 0.005 264);
+  --secondary-foreground: oklch(0.20 0.04 264);
+  --muted: oklch(0.960 0.004 264);
+  --muted-foreground: oklch(0.50 0.012 264);
+  --accent: oklch(0.945 0.025 200);
+  --accent-foreground: oklch(0.40 0.14 200);
+  --destructive: oklch(0.577 0.245 27.325);
+  --success: oklch(0.60 0.15 160);
+  --success-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.75 0.16 75);
+  --warning-foreground: oklch(0.25 0.06 75);
+  --info: oklch(0.62 0.14 230);
+  --info-foreground: oklch(0.99 0 0);
+  --border: oklch(0.914 0.005 264);
+  --input: oklch(0.914 0.005 264);
+  --ring: oklch(0.55 0.22 255);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -215,12 +250,13 @@
       0 8px 24px -4px rgb(15 23 42 / 0.08),
       0 24px 56px -12px rgb(15 23 42 / 0.14);
   }
-  /* Glow de marca para CTAs y elementos flotantes */
+  /* Glow de marca para CTAs y elementos flotantes (esmeralda en la app;
+     .theme-landing lo redefine a azul vía --glow-color) */
   .shadow-glow {
-    box-shadow: 0 8px 30px -6px rgb(34 197 94 / 0.45);
+    box-shadow: 0 8px 30px -6px rgb(var(--glow-color, 34 197 94) / 0.45);
   }
   .shadow-glow-strong {
-    box-shadow: 0 12px 44px -8px rgb(34 197 94 / 0.6);
+    box-shadow: 0 12px 44px -8px rgb(var(--glow-color, 34 197 94) / 0.6);
   }
 
   /* Texturas sutiles de fondo */
