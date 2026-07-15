@@ -9,6 +9,7 @@ import {
   getPromotionsPublic,
 } from '@/modules/marketplace/queries'
 import { getRegionalPrefs } from '@/modules/empresas/regional'
+import { getCompanyResenas } from '@/modules/resenas/queries'
 import { SITE_NAME } from '@/lib/site'
 
 interface CompanyDetailPageProps {
@@ -56,12 +57,13 @@ export default async function CompanyDetailPage({
   const company = await getCompanyPublic(companySlug)
   if (!company) notFound()
 
-  const [stats, planes, promotions, posts, prefs] = await Promise.all([
+  const [stats, planes, promotions, posts, prefs, resenas] = await Promise.all([
     getCompanyStats(companySlug),
     getCompanyPlanesPublic(company.id),
     getPromotionsPublic({ company: companySlug, limit: 12 }),
     getCompanyPostsPublic(company.id),
     getRegionalPrefs(company.id),
+    getCompanyResenas(company.id),
   ])
 
   return (
@@ -73,6 +75,7 @@ export default async function CompanyDetailPage({
       promotions={promotions}
       posts={posts}
       prefs={prefs}
+      resenas={resenas}
     />
   )
 }

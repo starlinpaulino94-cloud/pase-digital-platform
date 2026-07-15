@@ -9,6 +9,8 @@ import {
   getPromotionsPublic,
 } from '@/modules/marketplace/queries'
 import { getRegionalPrefs } from '@/modules/empresas/regional'
+import { getCompanyResenas, getMiResena } from '@/modules/resenas/queries'
+import { ResenaForm } from '@/components/marketplace/ResenaForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,13 +32,19 @@ export default async function ClienteEmpresaPage({
   const company = await getCompanyPublic(companySlug)
   if (!company) notFound()
 
-  const [stats, planes, promotions, posts, prefs] = await Promise.all([
-    getCompanyStats(companySlug),
-    getCompanyPlanesPublic(company.id),
-    getPromotionsPublic({ company: companySlug, limit: 12 }),
-    getCompanyPostsPublic(company.id),
-    getRegionalPrefs(company.id),
-  ])
+  const [stats, planes, promotions, posts, prefs, resenas, miResena] =
+    await Promise.all([
+      getCompanyStats(companySlug),
+      getCompanyPlanesPublic(company.id),
+      getPromotionsPublic({ company: companySlug, limit: 12 }),
+      getCompanyPostsPublic(company.id),
+      getRegionalPrefs(company.id),
+      getCompanyResenas(company.id),
+      getMiResena(company.id, user.supabaseId),
+    ])
+
+  // Solo clientes de la empresa pueden opinar (su ficha Cliente existe allí).
+  const puedeOpinar = miResena.esCliente
 
   // Solo si es la empresa activa del cliente puede elegir/cambiar plan desde
   // aquí (la pantalla de planes está acotada a esa empresa). Para el resto, el
@@ -54,6 +62,16 @@ export default async function ClienteEmpresaPage({
       posts={posts}
       prefs={prefs}
       planesHref={planesHref}
+      resenas={resenas}
+      resenaFormSlot={
+        puedeOpinar ? (
+          <ResenaForm
+            companyId={company.id}
+            companyName={company.name}
+            miResena={miResena.resena}
+          />
+        ) : undefined
+      }
     />
   )
 }

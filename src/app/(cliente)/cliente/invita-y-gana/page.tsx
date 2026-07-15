@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { Gift, Share2, Users, Clock, Trophy, Send, Ticket, CheckCircle2 } from 'lucide-react'
+import { Gift, Users, Clock, Trophy, Send, Ticket, CheckCircle2 } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
 import { absoluteUrl } from '@/lib/site'
 import { ensureCodigoCorto } from '@/lib/referidos'
@@ -9,6 +9,9 @@ import {
   getInvitaYGanaStats,
 } from '@/modules/invitaciones/queries'
 import { InvitaShareButton } from '@/components/invitaciones/InvitaShareButton'
+import { MilestoneConfetti } from '@/components/invitaciones/MilestoneConfetti'
+import { AnimatedCounter } from '@/components/system/AnimatedCounter'
+import { EmptyState } from '@/components/system/EmptyState'
 import {
   normalizeInvitaContenido,
   mensajeCompartirConRegalo,
@@ -50,10 +53,8 @@ export default async function InvitaYGanaPage() {
   if (!campana) {
     const t = normalizeInvitaContenido(null)
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-        <Gift className="h-16 w-16 text-muted-foreground/40 mb-4" />
-        <h1 className="text-xl font-bold text-foreground">{t.sinCampanaTitulo}</h1>
-        <p className="mt-2 text-muted-foreground max-w-sm">{t.sinCampanaTexto}</p>
+      <div className="mx-auto max-w-2xl py-8">
+        <EmptyState icon={Gift} title={t.sinCampanaTitulo} description={t.sinCampanaTexto} />
       </div>
     )
   }
@@ -88,6 +89,9 @@ export default async function InvitaYGanaPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
+      {/* Confeti al desbloquear una recompensa nueva desde la última visita */}
+      <MilestoneConfetti recompensas={stats.recompensasObtenidas} />
+
       {/* Campaña activa: protagonismo del arte + mínimo texto + animación. */}
       <Card className="animate-slide-up overflow-hidden border-emerald-200 shadow-premium">
         {(campana.bannerUrl || campana.imagenUrl) && (
@@ -161,7 +165,9 @@ export default async function InvitaYGanaPage() {
             <Card key={s.label}>
               <CardContent className="flex flex-col items-center gap-1 py-4 text-center">
                 <s.icon className="h-5 w-5 text-emerald-600" />
-                <p className="text-2xl font-bold text-foreground">{s.valor}</p>
+                <p className="text-2xl font-bold tabular-nums text-foreground">
+                  <AnimatedCounter value={s.valor} />
+                </p>
                 <p className="text-xs leading-tight text-muted-foreground">{s.label}</p>
               </CardContent>
             </Card>

@@ -26,6 +26,8 @@ import {
 import { PromotionGrid } from '@/components/public/PromotionGrid'
 import { FollowButton } from '@/components/public/FollowButton'
 import { ShareButton } from '@/components/public/ShareButton'
+import { ResenasSection } from '@/components/marketplace/ResenasSection'
+import type { CompanyResenas } from '@/modules/resenas/queries'
 import type { PlanPublic, CompanyPostsPublic } from '@/modules/marketplace/queries'
 import type {
   CompanyPublic,
@@ -62,6 +64,10 @@ export interface CompanyProfileProps {
    * muestran como información (sin CTA de compra), evitando salir a la Landing.
    */
   planesHref?: string | null
+  /** Reseñas de clientes (promedio + opiniones). null/ausente = sin sección. */
+  resenas?: CompanyResenas | null
+  /** Formulario "Escribe tu reseña" (solo si el visitante puede opinar). */
+  resenaFormSlot?: React.ReactNode
 }
 
 export function CompanyProfile({
@@ -73,7 +79,10 @@ export function CompanyProfile({
   posts,
   prefs,
   planesHref = null,
+  resenas = null,
+  resenaFormSlot,
 }: CompanyProfileProps) {
+  const hayResenas = !!resenas && (resenas.total > 0 || !!resenaFormSlot)
   const isApp = mode === 'app'
 
   // Rutas dependientes del contexto. En 'app' todo permanece dentro de la
@@ -98,6 +107,7 @@ export function CompanyProfile({
     posts.eventos.length > 0 && { id: 'eventos', label: 'Eventos' },
     posts.noticias.length > 0 && { id: 'noticias', label: 'Noticias' },
     company.galleryImages.length > 0 && { id: 'galeria', label: 'Galería' },
+    hayResenas && { id: 'resenas', label: 'Reseñas' },
     { id: 'informacion', label: 'Información' },
   ].filter(Boolean) as { id: string; label: string }[]
 
@@ -551,6 +561,18 @@ export function CompanyProfile({
                   />
                 </div>
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* Reseñas de clientes */}
+        {hayResenas && resenas && (
+          <section id="resenas" className="mt-14 scroll-mt-32">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+              Reseñas
+            </h2>
+            <div className="mt-6">
+              <ResenasSection resenas={resenas} formSlot={resenaFormSlot} />
             </div>
           </section>
         )}
