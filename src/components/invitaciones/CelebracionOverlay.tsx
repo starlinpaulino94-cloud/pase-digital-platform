@@ -86,7 +86,10 @@ export function CelebracionOverlay({
 
   const compartir = async () => {
     if (!data.codigoInvitacion) return
-    const url = `${window.location.origin}/invitar/${data.codigoInvitacion}`
+    // ?v con fecha del día: si WhatsApp cacheó una vista previa vieja de este
+    // enlace, la variante diaria fuerza una tarjeta fresca sin romper la ruta.
+    const v = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+    const url = `${window.location.origin}/invitar/${data.codigoInvitacion}?v=${v}`
     const text = `🎉 ¡A mí ya me regalaron: ${regalo}!\n\nAcabo de registrarme en MembeGo y tú también puedes recibir el tuyo GRATIS al crear tu cuenta.\n\nRegístrate aquí:`
     const copiar = async () => {
       await navigator.clipboard.writeText(`${text} ${url}`)
