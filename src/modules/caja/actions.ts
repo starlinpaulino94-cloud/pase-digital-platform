@@ -32,7 +32,14 @@ async function staffAutorizado() {
   const user = await requireRole(SCANNER_ROLES)
   const companyId = user.metadata.companyId
   if (!companyId) return null
-  return { user, companyId, userId: user.metadata.dbUserId ?? null }
+  const userId = user.metadata.dbUserId ?? null
+  // Documento comercial: SIEMPRE el nombre del empleado, nunca su correo.
+  const nombre = userId
+    ? ((await prisma.user.findUnique({ where: { id: userId }, select: { name: true } }))?.name ??
+      user.email ??
+      null)
+    : (user.email ?? null)
+  return { user, companyId, userId, nombre }
 }
 
 function num(v: FormDataEntryValue | null): number | null {
@@ -279,9 +286,30 @@ export async function cobrarOrden(
     snapshot: {
       detalle,
       cliente: clienteNombre,
+      empleado: auth.nombre,
+      sucursal: sesion.sucursal.nombre,
+      servicio: detalle,
       ordenTipo,
       ordenId,
       observaciones,
+      // Factura: líneas estructuradas + totales (consultables e imprimibles).
+      lineas: [
+        {
+          descripcion: detalle,
+          cantidad: 1,
+          precioUnitario: monto,
+          descuento: 0,
+          total: monto,
+        },
+      ],
+      subtotal: monto.toFixed(2),
+      total: monto.toFixed(2),
+      metodoCobroLabel:
+        metodoCobro === 'EFECTIVO'
+          ? 'Efectivo'
+          : metodoCobro === 'TRANSFERENCIA'
+            ? 'Transferencia'
+            : 'Otro',
     },
     auditoria: { ipAddress: meta.ipAddress, userAgent: meta.userAgent },
     resultado: observaciones,

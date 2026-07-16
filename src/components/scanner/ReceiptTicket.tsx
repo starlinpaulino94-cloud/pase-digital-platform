@@ -83,11 +83,14 @@ export function ReceiptTicket({
           @page { margin: 0; }
           body * { visibility: hidden !important; }
           .receipt-print, .receipt-print * { visibility: visible !important; }
+          /* position:absolute (no fixed): fixed recorta el ticket a una sola
+             página y los comprobantes largos salían cortados. */
           .receipt-print {
-            position: fixed; top: 0; left: 0;
+            position: absolute; top: 0; left: 0;
             width: ${doc.paperWidthMm}mm;
             padding: 2mm 3mm;
           }
+          html, body { height: auto !important; overflow: visible !important; }
         }
       `}</style>
       <div

@@ -46,6 +46,19 @@ export async function confirmarCanjePromocion(
     const sucursalId = String(formData.get('sucursalId') ?? '').trim() || null
     if (!compraId || !qrTokenId) return { error: 'Datos del canje incompletos.' }
 
+    // Documento comercial: SIEMPRE el nombre del empleado, nunca su correo.
+    const empleadoNombre =
+      (user.metadata.dbUserId
+        ? (
+            await prisma.user.findUnique({
+              where: { id: user.metadata.dbUserId },
+              select: { name: true },
+            })
+          )?.name
+        : null) ??
+      user.email ??
+      null
+
     const compra = await prisma.productoCompra.findUnique({
       where: { id: compraId },
       include: {
@@ -168,7 +181,7 @@ export async function confirmarCanjePromocion(
           promocion: promo.titulo,
           servicio: promo.titulo,
           descuento: promo.descuento != null ? String(promo.descuento) : undefined,
-          empleado: user.email ?? undefined,
+          empleado: empleadoNombre ?? undefined,
           restantes,
         },
         auditoria: { ...meta },
@@ -207,6 +220,8 @@ export async function confirmarCanjePromocion(
     const empresa = compra.cliente.company
     const ticket: TicketPayload = {
       transactionId: result.transaccion.id,
+      lineas: [],
+      metodoPago: null,
       timeZone: empresa.zonaHoraria,
       empresa: {
         nombre: empresa.name,
@@ -222,7 +237,7 @@ export async function confirmarCanjePromocion(
         ticketNumero: result.transaccion.ticketNumero,
         fecha: new Date().toISOString(),
         caja: null,
-        empleado: user.email ?? null,
+        empleado: empleadoNombre,
         cliente: compra.cliente.nombre,
         vehiculo: null,
         placa: null,

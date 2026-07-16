@@ -75,3 +75,53 @@ arquitectura existente (no en paralelo): órdenes = `Membership` /
 1. Ejecutar `scripts/supabase-20260747-caja-pos.sql` en Supabase (idempotente).
 2. Crear las sucursales en **Admin → Sucursales** (ya existía).
 3. El empleado abre su caja en **Empleado → Caja** cada turno.
+
+## Facturación e impresión (fase actual)
+
+### El documento
+
+Cada cobro de caja **ya es una factura**: la `Transaction` tipo SALE guarda el
+número secuencial por empresa (`ticketNumero`, ej. `TCK-000123`), el código
+único global (`codigo`, ej. `TX-20260716-000045`), el snapshot congelado con
+cliente, **nombre** del empleado, sucursal, caja, método de pago, observaciones
+y las **líneas** de detalle (`lineas: [{ descripcion, cantidad, precioUnitario,
+descuento, total }]` + `subtotal`/`total`/`metodoCobroLabel`). El snapshot no
+se recalcula jamás: reimprimir años después produce el mismo documento.
+
+### Reglas de oro
+
+- **Nunca se elimina una factura** — solo cambian estados
+  (APPLIED → Pagada · CANCELLED · REVERTED) y todo queda en `AuditLog`.
+- **Documentos comerciales muestran el NOMBRE del empleado, nunca su correo.**
+  `staffAutorizado()` (caja), `confirmarVisita` y `confirmarCanjePromocion`
+  resuelven `User.name` (fallback: email solo si no hay nombre).
+- **Reimprimir reutiliza el documento original**: `registrarImpresionTx`
+  marca COPIA #N y audita; no se genera una factura nueva.
+
+### Impresión multi-formato
+
+`FacturaPrintDialog` (usado en **Admin → Facturas**) ofrece:
+
+- **Térmica 58 mm / 80 mm**: mismo motor `buildDocFromPayload` de
+  `src/lib/receipts` (reflow por columnas de papel, nada se corta).
+- **Carta / A4**: `FacturaSheet` — factura profesional con logo, datos de la
+  empresa, RNC, grid cliente/empleado/caja/método, tabla de líneas con
+  descuentos, totales, observaciones, QR del código TX y mensaje de pie.
+- **Vista previa idéntica a la impresión** antes de imprimir; el bloque
+  `.factura-print` aísla el documento con `@page` (size A4/letter o margen 0
+  para térmicas).
+- Corrección global del recorte: en CSS de impresión se usa
+  `position: absolute` + `html,body{height:auto;overflow:visible}` —
+  `position: fixed` recorta a UNA página (bug de "facturas cortadas").
+
+### Historial
+
+**Admin → Facturas** (`/admin/facturas`): búsqueda por número de factura,
+código TX o cliente; estado, número de impresiones, empleado, total y fecha;
+vista previa + impresión/reimpresión auditada por fila. 
+
+### Listo para el futuro
+
+`TicketPayload` ya transporta líneas y método de pago: exportar a **PDF,
+correo o WhatsApp** solo requiere renderizar `FacturaSheet`/`ReceiptDoc` en el
+canal nuevo — sin tocar datos ni flujo de cobro.
