@@ -81,16 +81,23 @@
 }
 
 @theme {
-  /* ── MDS · Motion tokens ────────────────────────────────────────────
-     duration-instant/fast/base/slow/hero + ease-out-expo/spring. Toda
-     animación nueva DEBE usar estos valores, no números sueltos. */
-  --duration-instant: 100ms;
-  --duration-fast: 150ms;
-  --duration-base: 200ms;
-  --duration-slow: 350ms;
-  --duration-hero: 500ms;
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* ── MMS · Motion tokens ────────────────────────────────────────────
+     Duraciones y curvas oficiales del Membego Motion System. TODA
+     animación DEBE consumir estos valores, nunca números sueltos.
+     Ver docs/MMS.md. */
+  --duration-instant: 100ms;   /* feedback táctil (tap/press) */
+  --duration-fast: 150ms;      /* hover, toggles */
+  --duration-base: 200ms;      /* transiciones estándar */
+  --duration-slow: 350ms;      /* entradas de pantalla/tarjetas */
+  --duration-hero: 500ms;      /* héroes, banners protagonistas */
+  --duration-celebration: 900ms; /* confeti, contadores, celebraciones */
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);   /* entradas (decelera) */
+  --ease-in-quint: cubic-bezier(0.64, 0, 0.78, 0);  /* salidas (acelera) */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);    /* movimiento continuo */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* rebote sutil */
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.27, 1.55); /* rebote marcado */
+  --ease-elastic: cubic-bezier(0.5, 1.5, 0.5, 1);   /* elástico (check, éxito) */
 }
 
 :root {
@@ -565,6 +572,59 @@
   100% { top: 4%;  opacity: 0.4; }
 }
 
+/* ── MMS · Keyframes premium ─────────────────────────────────────────── */
+
+/* Shine: destello diagonal que barre una superficie (CTAs, tarjetas premium,
+   cupones). Se activa en hover o en loop lento para "elementos vivos". */
+@keyframes shine {
+  0%   { transform: translateX(-120%) skewX(-20deg); }
+  60%, 100% { transform: translateX(220%) skewX(-20deg); }
+}
+
+/* Glow pulse: halo de marca que respira. Para el CTA protagonista y avisos
+   de urgencia. Anima box-shadow (barato) sin mover layout. */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(var(--glow-color, 34 197 94) / 0.45); }
+  50%      { box-shadow: 0 0 24px 4px rgb(var(--glow-color, 34 197 94) / 0.55); }
+}
+
+/* Ripple: onda que sale desde el punto de toque (feedback de botones). */
+@keyframes ripple {
+  from { transform: scale(0); opacity: 0.5; }
+  to   { transform: scale(2.6); opacity: 0; }
+}
+
+/* Entradas direccionales para cascadas escalonadas. */
+@keyframes slide-in-right { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes slide-in-left  { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+@keyframes zoom-in        { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+/* Celebración: estallido corto para desbloqueos/premios (scale + settle). */
+@keyframes burst {
+  0%   { transform: scale(0.6); opacity: 0; }
+  55%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Check animado (validación/éxito): traza el visto con stroke-dashoffset. */
+@keyframes draw-check {
+  from { stroke-dashoffset: 24; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* Barra de tiempo (flash sale): se agota de 100% a 0%. La duración la fija
+   el componente en línea según el tiempo restante real. */
+@keyframes time-drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* Border glow: borde iluminado que rota (tarjeta premium en hover). */
+@keyframes border-glow-spin { to { transform: rotate(1turn); } }
+
+/* Flip de tarjeta (beneficio desbloqueado). */
+@keyframes card-flip-in {
+  from { opacity: 0; transform: perspective(800px) rotateY(-90deg); }
+  to   { opacity: 1; transform: perspective(800px) rotateY(0); }
+}
+
 @layer utilities {
   .animate-fade-up    { animation: fade-up 0.35s ease both; }
   .animate-fade-in    { animation: fade-in 0.25s ease both; }
@@ -589,7 +649,58 @@
   .delay-300 { animation-delay: 300ms; }
   .delay-500 { animation-delay: 500ms; }
 
-  /* Respeta la preferencia de reducir movimiento (todas las animaciones custom) */
+  /* ── MMS · Utilidades premium ──────────────────────────────────────── */
+  .animate-slide-in-right { animation: slide-in-right 0.45s var(--ease-out-expo) both; }
+  .animate-slide-in-left  { animation: slide-in-left 0.45s var(--ease-out-expo) both; }
+  .animate-zoom-in        { animation: zoom-in 0.4s var(--ease-out-expo) both; }
+  .animate-burst          { animation: burst 0.5s var(--ease-elastic) both; }
+  .animate-card-flip      { animation: card-flip-in 0.6s var(--ease-out-expo) both; }
+  .animate-glow-pulse     { animation: glow-pulse 2.2s ease-in-out infinite; }
+
+  /* Shine: envolver el elemento en `.shine` (overflow-hidden, position) y
+     colocar dentro un `.shine-sweep`. En hover del padre `.shine-hover` el
+     destello barre una sola vez; en `.shine-loop` barre en bucle lento. */
+  .shine { position: relative; overflow: hidden; }
+  .shine-sweep {
+    position: absolute; inset: 0;
+    background: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 0.35) 50%, transparent 80%);
+    transform: translateX(-120%) skewX(-20deg);
+    pointer-events: none;
+  }
+  .shine-hover:hover .shine-sweep { animation: shine 0.9s var(--ease-out-expo); }
+  .shine-loop .shine-sweep { animation: shine 3.2s var(--ease-in-out) infinite; }
+
+  /* Levantamiento premium de tarjeta: eleva + escala mínima + sombra hero. */
+  .card-lift {
+    transition: transform var(--duration-base) var(--ease-out-expo),
+                box-shadow var(--duration-base) var(--ease-out-expo);
+  }
+  .card-lift:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow:
+      0 2px 6px rgb(15 23 42 / 0.05),
+      0 16px 40px -8px rgb(15 23 42 / 0.14),
+      0 32px 80px -16px rgb(15 23 42 / 0.18);
+  }
+
+  /* Barra de tiempo que se agota (flash sale). El componente pasa la
+     duración real vía --time-left en línea. */
+  .time-drain {
+    transform-origin: left;
+    animation: time-drain var(--time-left, 60s) linear forwards;
+  }
+
+  /* Check que se traza (validación/éxito). */
+  .draw-check {
+    stroke-dasharray: 24;
+    stroke-dashoffset: 24;
+    animation: draw-check 0.45s var(--ease-out-expo) forwards;
+  }
+
+  /* Respeta la preferencia de reducir movimiento (todas las animaciones custom).
+     MMS: con reduce-motion NADA se mueve — el contenido aparece de una vez y
+     los bucles se detienen; la información (contenido, estado) nunca depende
+     del movimiento. */
   @media (prefers-reduced-motion: reduce) {
     .animate-float,
     .animate-float-slow,
@@ -601,7 +712,19 @@
     .animate-fade-in,
     .animate-slide-up,
     .animate-scale-in,
+    .animate-slide-in-right,
+    .animate-slide-in-left,
+    .animate-zoom-in,
+    .animate-burst,
+    .animate-card-flip,
+    .animate-glow-pulse,
+    .shine-hover:hover .shine-sweep,
+    .shine-loop .shine-sweep,
+    .time-drain,
+    .draw-check,
     .scanner-line,
     .skeleton-shimmer { animation: none; }
+    .card-lift:hover { transform: none; }
+    .draw-check { stroke-dashoffset: 0; }
   }
 }
