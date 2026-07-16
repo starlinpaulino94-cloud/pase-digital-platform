@@ -130,74 +130,79 @@ export default async function InicioCliente() {
     redirect('/login')
   }
 
-  // MOB: el beneficio activo más reciente protagoniza el Home (falla en null).
-  const beneficio = await getBeneficioDisponible(user.metadata.clienteId)
+  // Rendimiento (auditoría Enterprise): TODO el Home se carga en UNA sola ola
+  // paralela — antes eran 4 tandas en serie (beneficio → membresías →
+  // engagement → feed) y cada una sumaba su latencia completa al TTFB.
+  // Ninguna consulta depende de otra: solo del usuario ya resuelto.
+  const cookieStore = await cookies()
+  const onboardingSeen = cookieStore.has('membego_onboarding_seen')
+  const { clienteId, companyId, dbUserId } = user.metadata
 
-  let memberships: Awaited<ReturnType<typeof getClienteAllMemberships>> = []
-  let loadError = false
-  try {
-    memberships = await getClienteAllMemberships(user.supabaseId, user.metadata.clienteId)
-  } catch (error) {
-    loadError = true
-    console.error(
-      '[mis-membresias] Error loading memberships:',
-      error instanceof Error ? error.message : String(error)
-    )
+  const FEED_VACIO: PromoFeed = {
+    seguidas: [],
+    destacadas: [],
+    nuevas: [],
+    expiranPronto: [],
+    recomendadas: [],
+    empresasRecomendadas: [],
   }
 
-  // Engagement Engine · Fase 1: momentos vivos del Home (datos reales; falla
-  // en silencio porque es realce, no núcleo).
-  let momentos: MomentosData = { nombre: null, momentos: [] }
-  let campanas: CampanaViva[] = []
-  let pruebaSocial: PruebaSocialData | null = null
-  let gamificacion: GamificacionData | null = null
-  // Fase 7: personalización del motor por empresa (color + módulos visibles).
-  let engagement: EngagementConfig = normalizeEngagementConfig(null, null)
-  if (user.metadata.clienteId && user.metadata.companyId) {
-    ;[momentos, campanas, pruebaSocial, gamificacion, engagement] = await Promise.all([
-      getMomentosVivos(user.metadata.clienteId, user.metadata.companyId).catch(
-        () => ({ nombre: null, momentos: [] }) as MomentosData
-      ),
-      getCampanasVivas(user.metadata.companyId).catch(() => []),
-      getPruebaSocial(user.metadata.companyId).catch(() => null),
-      getGamificacion(user.metadata.clienteId, user.metadata.companyId).catch(() => null),
-      getEngagementConfig(user.metadata.companyId).catch(() =>
-        normalizeEngagementConfig(null, null)
-      ),
-    ])
-  }
+  const [
+    beneficio,
+    membershipsRes,
+    momentos,
+    campanas,
+    pruebaSocial,
+    gamificacion,
+    engagement,
+    novedades,
+    feed,
+    onboarding,
+    empresasSeguidas,
+  ] = await Promise.all([
+    getBeneficioDisponible(clienteId),
+    getClienteAllMemberships(user.supabaseId, clienteId).catch((error) => {
+      console.error(
+        '[mis-membresias] Error loading memberships:',
+        error instanceof Error ? error.message : String(error)
+      )
+      // null = señal de error de carga (loadError se deriva sin mutar).
+      return null
+    }),
+    clienteId && companyId
+      ? getMomentosVivos(clienteId, companyId).catch(
+          () => ({ nombre: null, momentos: [] }) as MomentosData
+        )
+      : Promise.resolve({ nombre: null, momentos: [] } as MomentosData),
+    companyId ? getCampanasVivas(companyId).catch(() => []) : Promise.resolve([] as CampanaViva[]),
+    companyId
+      ? getPruebaSocial(companyId).catch(() => null)
+      : Promise.resolve(null as PruebaSocialData | null),
+    clienteId && companyId
+      ? getGamificacion(clienteId, companyId).catch(() => null)
+      : Promise.resolve(null as GamificacionData | null),
+    companyId
+      ? getEngagementConfig(companyId).catch(() => normalizeEngagementConfig(null, null))
+      : Promise.resolve<EngagementConfig>(normalizeEngagementConfig(null, null)),
+    dbUserId ? getNovedadesInicio(dbUserId) : Promise.resolve([]),
+    dbUserId
+      ? getPromoFeed(dbUserId).catch((): PromoFeed => FEED_VACIO)
+      : Promise.resolve<PromoFeed | null>(null),
+    dbUserId && !onboardingSeen
+      ? getOnboardingCliente(dbUserId, user.supabaseId).catch(() => null)
+      : Promise.resolve(null),
+    dbUserId
+      ? getMisEmpresas(dbUserId).catch((): EmpresaSeguida[] => [])
+      : Promise.resolve([] as EmpresaSeguida[]),
+  ])
+
+  const loadError = membershipsRes === null
+  const memberships = membershipsRes ?? []
 
   // Prueba social: solo si hay masa suficiente (evita "1 miembro" poco creíble).
   const mostrarPruebaSocial =
     !!pruebaSocial &&
     (pruebaSocial.totalMiembros >= 3 || pruebaSocial.recientes.length >= 2)
-
-  const cookieStore = await cookies()
-  const onboardingSeen = cookieStore.has('membego_onboarding_seen')
-
-  // Feed de novedades, carruseles, empresas seguidas y onboarding
-  // (fallan en silencio: realce).
-  const [novedades, feed, onboarding, empresasSeguidas] = user.metadata.dbUserId
-    ? await Promise.all([
-        getNovedadesInicio(user.metadata.dbUserId),
-        getPromoFeed(user.metadata.dbUserId).catch(
-          (): PromoFeed => ({
-            seguidas: [],
-            destacadas: [],
-            nuevas: [],
-            expiranPronto: [],
-            recomendadas: [],
-            empresasRecomendadas: [],
-          })
-        ),
-        onboardingSeen
-          ? Promise.resolve(null)
-          : getOnboardingCliente(user.metadata.dbUserId, user.supabaseId).catch(
-              () => null
-            ),
-        getMisEmpresas(user.metadata.dbUserId).catch((): EmpresaSeguida[] => []),
-      ])
-    : [[], null, null, [] as EmpresaSeguida[]]
 
   // Resumen para la cabecera (solo presentación, derivado de lo ya cargado).
   const now = new Date()

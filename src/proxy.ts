@@ -74,13 +74,31 @@ export async function proxy(request: NextRequest) {
       }
     )
 
-    // getUser() valida el token contra el servidor de Supabase (verifica la
-    // firma). NO usamos getSession() como fallback: decodifica el JWT de la
-    // cookie SIN verificar la firma, y usarlo para autorización permitiría un
-    // rol falsificado durante un 429/outage. Si getUser falla, fail-closed.
+    // Rendimiento (auditoría Enterprise): el middleware corre en CADA request
+    // y una validación de red contra Supabase aquí añadía 100–300 ms a cada
+    // click de navegación. Camino rápido: getSession() decodifica la cookie
+    // SIN red; si el token sigue fresco (>5 min para expirar) usamos ese user
+    // solo para las REDIRECCIONES de UX. La AUTORIZACIÓN real no vive aquí:
+    // todas las páginas y server actions validan con getUser() contra el
+    // servidor (fail-closed, verificado en docs/MATURITY.md) — una cookie
+    // falsificada pasaría el redirect pero muere en la capa de datos.
+    // Cerca de expirar (o sin sesión legible) sí llamamos getUser(): valida
+    // en el servidor Y refresca/rota el token en las cookies — ese refresco
+    // solo puede persistirse desde el middleware.
+    const REFRESH_MARGIN_S = 5 * 60
     const {
-      data: { user },
-    } = await supabase.auth.getUser()
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    let user = session?.user ?? null
+    const expiraEn = session?.expires_at ?? 0
+    const tokenFresco = expiraEn * 1000 > Date.now() + REFRESH_MARGIN_S * 1000
+    if (!session || !tokenFresco) {
+      const {
+        data: { user: validado },
+      } = await supabase.auth.getUser()
+      user = validado
+    }
 
     if (matched) {
       if (!user) {
