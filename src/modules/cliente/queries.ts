@@ -267,6 +267,48 @@ export async function getMembresiaActivaPrincipalId(
   }
 }
 
+export interface BeneficioDisponible {
+  id: string
+  titulo: string
+  empresa: string
+  usosRestantes: number
+  usosIncluidos: number
+}
+
+/**
+ * MOB · El beneficio ACTIVO más reciente del cliente con usos disponibles:
+ * protagonista del Home ("🎁 disponible — Usar ahora"). null = nada que usar.
+ */
+export async function getBeneficioDisponible(
+  clienteId?: string | null
+): Promise<BeneficioDisponible | null> {
+  if (!clienteId) return null
+  try {
+    const compra = await prisma.productoCompra.findFirst({
+      where: { clienteId, estado: 'ACTIVA', usosRestantes: { gt: 0 } },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        usosRestantes: true,
+        usosIncluidos: true,
+        promocion: { select: { titulo: true } },
+        company: { select: { name: true } },
+      },
+    })
+    if (!compra?.promocion) return null
+    return {
+      id: compra.id,
+      titulo: compra.promocion.titulo,
+      empresa: compra.company.name,
+      usosRestantes: compra.usosRestantes,
+      usosIncluidos: compra.usosIncluidos,
+    }
+  } catch (e) {
+    console.error('[getBeneficioDisponible]', e)
+    return null
+  }
+}
+
 export interface PagoHistorialItem {
   id: string
   tipo: 'APROBADO' | 'RECHAZADO'
