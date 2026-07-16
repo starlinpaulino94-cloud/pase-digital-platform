@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { CompanyGrid } from '@/components/public/CompanyGrid'
 import { CategoryTabs } from '@/components/public/CategoryTabs'
-import { getCompaniesPublic, getCategoriesPublic } from '@/modules/marketplace/queries'
+import { getCompaniesPublic, getCategoriesPublic } from '@/modules/marketplace/cached'
 
 interface RegistroPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>

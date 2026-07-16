@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { requireRole } from '@/lib/auth/guards'
 import { recordPromotionView } from '@/modules/marketplace/actions'
-import { getPromotionDetail } from '@/modules/marketplace/queries'
+import { getPromotionDetail } from '@/modules/marketplace/cached'
 import { estadoLimiteCliente } from '@/modules/promociones/compra'
 import { PromotionDetail } from '@/components/marketplace/PromotionDetail'
 import { ComprarPromoButton } from '@/components/cliente/ComprarPromoButton'

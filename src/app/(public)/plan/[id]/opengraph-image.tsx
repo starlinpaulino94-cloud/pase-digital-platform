@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og'
-import { getPlanOg } from '@/modules/marketplace/queries'
+import { getPlanOg } from '@/modules/marketplace/cached'
 import { SITE_NAME } from '@/lib/site'
 
 // Fase E8 · Imagen dinámica de vista previa (Open Graph / Twitter Card) por

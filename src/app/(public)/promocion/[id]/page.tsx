@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { recordPromotionView } from '@/modules/marketplace/actions'
-import { getPromotionDetail, getPromotionOg } from '@/modules/marketplace/queries'
+import { getPromotionDetail, getPromotionOg } from '@/modules/marketplace/cached'
 import { PromotionDetail } from '@/components/marketplace/PromotionDetail'
 import { SITE_NAME } from '@/lib/site'
 import { shareMetadata } from '@/lib/share/metadata'

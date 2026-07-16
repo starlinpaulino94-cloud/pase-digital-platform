@@ -1,4 +1,4 @@
-import { getCompanyPublic } from '@/modules/marketplace/queries'
+import { getCompanyPublic } from '@/modules/marketplace/cached'
 import {
   shareCardResponse,
   genericOgResponse,

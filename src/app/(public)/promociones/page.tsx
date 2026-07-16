@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Tag } from 'lucide-react'
 import { SearchBar } from '@/components/public/SearchBar'
 import { PromotionGrid } from '@/components/public/PromotionGrid'
-import { getPromotionsPublic } from '@/modules/marketplace/queries'
+import { getPromotionsPublic } from '@/modules/marketplace/cached'
 
 interface PromotionsPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>

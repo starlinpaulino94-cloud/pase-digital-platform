@@ -13,7 +13,7 @@ import {
   getRecentCompanies,
   getCategoriesPublic,
   getPlatformStats,
-} from '@/modules/marketplace/queries'
+} from '@/modules/marketplace/cached'
 
 export const revalidate = 600
 
