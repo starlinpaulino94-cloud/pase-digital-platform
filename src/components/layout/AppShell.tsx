@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AppSidebar } from '@/components/layout/AppSidebar'
@@ -11,6 +11,18 @@ import type { AppRole } from '@/types'
 
 /** Roles con navegación inferior en móvil (experiencia principalmente táctil). */
 const BOTTOM_NAV_ROLES: readonly AppRole[] = ['CLIENTE']
+
+/** DXS · Persistencia del riel colapsado de la sidebar (desktop). */
+const RAIL_KEY = 'membego.sidebar.rail.v1'
+const emptySubscribe = () => () => {}
+
+function leerRail(): boolean {
+  try {
+    return localStorage.getItem(RAIL_KEY) === '1'
+  } catch {
+    return false
+  }
+}
 
 export function AppShell({
   role,
@@ -34,6 +46,22 @@ export function AppShell({
   const drawerRef = useRef<HTMLElement>(null)
   const hasBottomNav = BOTTOM_NAV_ROLES.includes(role)
 
+  // DXS · Riel colapsado (desktop): SSR/1er render expandido (sin mismatch de
+  // hidratación); tras montar aplica lo guardado. El toggle pisa con override.
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false)
+  const [railOverride, setRailOverride] = useState<boolean | null>(null)
+  const rail = railOverride ?? (mounted ? leerRail() : false)
+
+  function toggleRail() {
+    const next = !rail
+    setRailOverride(next)
+    try {
+      localStorage.setItem(RAIL_KEY, next ? '1' : '0')
+    } catch {
+      /* sin almacenamiento: el riel funciona sin memoria */
+    }
+  }
+
   // Lock body scroll when drawer is open
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : ''
@@ -55,9 +83,20 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Desktop sidebar — fixed */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 lg:block">
-        <AppSidebar role={role} title={title} userEmail={userEmail} />
+      {/* Desktop sidebar — fija, colapsable a riel de iconos (DXS) */}
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-30 hidden transition-[width] duration-200 ease-out lg:block',
+          rail ? 'w-[68px]' : 'w-60'
+        )}
+      >
+        <AppSidebar
+          role={role}
+          title={title}
+          userEmail={userEmail}
+          rail={rail}
+          onToggleRail={toggleRail}
+        />
       </aside>
 
       {/* Mobile drawer */}
@@ -102,7 +141,12 @@ export function AppShell({
       </div>
 
       {/* Main column */}
-      <div className="lg:pl-60">
+      <div
+        className={cn(
+          'transition-[padding] duration-200 ease-out',
+          rail ? 'lg:pl-[68px]' : 'lg:pl-60'
+        )}
+      >
         <AppHeader
           role={role}
           notifCount={notifCount}
