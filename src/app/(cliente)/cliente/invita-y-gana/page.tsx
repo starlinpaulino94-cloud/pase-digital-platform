@@ -68,9 +68,13 @@ export default async function InvitaYGanaPage() {
     getInvitaYGanaStats(clienteId, companyId),
   ])
 
-  // Enlace corto personal: membego.com/invitar/CODIGO. El mensaje, la imagen
-  // (OG) y el enlace los genera el sistema; el cliente no los modifica.
-  const inviteUrl = absoluteUrl(`/invitar/${codigoCorto}`)
+  // Enlace corto personal: membego.com/invitar/CODIGO?v=… El mensaje, la
+  // imagen (OG) y el enlace los genera el sistema; el cliente no los modifica.
+  // `v` cambia cuando el admin edita la campaña: WhatsApp/Facebook cachean la
+  // vista previa por URL exacta durante días, y sin esto seguirían mostrando
+  // la tarjeta vieja tras actualizar la imagen o los textos.
+  const version = campana.updatedAt.getTime().toString(36)
+  const inviteUrl = absoluteUrl(`/invitar/${codigoCorto}?v=${version}`)
 
   const beneficioInvitado = campana.beneficioInvitado as { descripcion?: string } | null
   const regalo = beneficioInvitado?.descripcion || 'un regalo de bienvenida'
