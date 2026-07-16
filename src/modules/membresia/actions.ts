@@ -287,6 +287,16 @@ export async function enviarComprobante(
 export interface PresencialState {
   error?: string
   success?: boolean
+  /** Referencia única para mostrar en caja (ORD-XXXXXX). */
+  referencia?: string
+}
+
+/** Referencia corta, legible y sin ambigüedades (sin 0/O ni 1/I/L). */
+function generarReferencia(): string {
+  const abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+  let out = ''
+  for (let i = 0; i < 6; i++) out += abc[Math.floor(Math.random() * abc.length)]
+  return `ORD-${out}`
 }
 
 /**
@@ -309,6 +319,7 @@ export async function avisarPagoPresencial(
 
   const membershipId = String(formData.get('membershipId') ?? '').trim()
   const metodoPagoId = String(formData.get('metodoPagoId') ?? '').trim() || null
+  const sucursalId = String(formData.get('sucursalId') ?? '').trim() || null
   if (!membershipId) return { error: 'Membresía no especificada.' }
 
   const membership = await prisma.membership.findUnique({
@@ -340,10 +351,35 @@ export async function avisarPagoPresencial(
     if (!metodo) return { error: 'Método de pago no válido.' }
   }
 
+  // Sucursal elegida por el cliente (si la empresa tiene varias).
+  if (sucursalId) {
+    const sucursal = await prisma.sucursal.findFirst({
+      where: { id: sucursalId, companyId: membership.cliente.companyId, activa: true },
+      select: { id: true },
+    })
+    if (!sucursal) return { error: 'Sucursal no válida.' }
+  }
+
+  // Referencia única para el cobro en caja (se conserva entre reintentos).
+  let referencia = membership.referencia
+  if (!referencia) {
+    for (let intento = 0; intento < 5 && !referencia; intento++) {
+      const candidata = generarReferencia()
+      const ocupada = await prisma.membership.findUnique({
+        where: { referencia: candidata },
+        select: { id: true },
+      })
+      if (!ocupada) referencia = candidata
+    }
+    if (!referencia) return { error: 'No se pudo generar la referencia. Intenta de nuevo.' }
+  }
+
   await prisma.membership.update({
     where: { id: membershipId },
     data: {
       metodoPagoId,
+      referencia,
+      sucursalPagoId: sucursalId,
       comprobanteNota: 'El cliente pagará en la sucursal (pago presencial).',
       ...(membership.estado === 'RECHAZADA'
         ? { estado: 'PENDIENTE', rechazadoReason: null }
@@ -364,5 +400,5 @@ export async function avisarPagoPresencial(
 
   revalidatePath('/mis-membresias')
   revalidatePath(`/membresia/${membershipId}`)
-  return { success: true }
+  return { success: true, referencia }
 }

@@ -27,6 +27,7 @@ import {
   Flag,
   Zap,
   Ticket,
+  Banknote,
   Sparkles,
   Trophy,
   type LucideIcon,
@@ -200,7 +201,10 @@ const EMPLEADO_NAV: NavGroup[] = [
   {
     id: 'operaciones',
     label: 'Operaciones',
-    items: [{ href: '/empleado/scanner', label: 'Escanear QR', icon: ScanLine }],
+    items: [
+      { href: '/empleado/scanner', label: 'Escanear QR', icon: ScanLine },
+      { href: '/empleado/caja', label: 'Caja', icon: Banknote },
+    ],
   },
 ]
 

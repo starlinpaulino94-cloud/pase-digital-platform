@@ -1,0 +1,197 @@
+import { requireRole } from '@/lib/auth/guards'
+import { SCANNER_ROLES } from '@/types'
+import { prisma } from '@/lib/prisma'
+import {
+  buscarOrdenesPendientes,
+  getResumenSesion,
+  getSucursalesActivas,
+} from '@/modules/caja/queries'
+import {
+  AbrirCajaForm,
+  BuscadorOrdenes,
+  CerrarCajaForm,
+  OrdenCobroCard,
+} from '@/components/caja/CajaForms'
+import { Banknote, Clock, Store, User as UserIcon } from 'lucide-react'
+
+export const dynamic = 'force-dynamic'
+
+export const metadata = { title: 'Caja' }
+
+const fmtHora = (d: Date) =>
+  new Intl.DateTimeFormat('es-DO', {
+    timeZone: 'America/Santo_Domingo',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(d)
+
+const fmtRD = (n: number) =>
+  `RD$${n.toLocaleString('es-DO', { minimumFractionDigits: 2 })}`
+
+/**
+ * Caja (POS) de la sucursal: abrir/cerrar turno, buscar órdenes pendientes y
+ * cobrarlas en pocos pasos. Sin caja abierta no se puede cobrar.
+ */
+export default async function CajaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
+  const user = await requireRole(SCANNER_ROLES)
+  const companyId = user.metadata.companyId as string | undefined
+  if (!companyId) {
+    return (
+      <main className="container max-w-2xl py-8">
+        <p className="text-muted-foreground">Tu usuario no está vinculado a una empresa.</p>
+      </main>
+    )
+  }
+
+  const { q = '' } = await searchParams
+  const sucursales = await getSucursalesActivas(companyId)
+
+  // Sesión abierta de la empresa (la primera entre sus sucursales).
+  const sesion = await prisma.cajaSesion.findFirst({
+    where: { companyId, estado: 'ABIERTA' },
+    include: {
+      sucursal: { select: { nombre: true } },
+      abiertaPor: { select: { name: true } },
+    },
+    orderBy: { abiertaAt: 'desc' },
+  })
+
+  if (!sesion) {
+    return (
+      <main className="container max-w-lg py-8">
+        <header className="mb-6">
+          <h1 className="text-h2 text-foreground">Caja</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Abre la caja de tu sucursal para empezar a cobrar.
+          </p>
+        </header>
+        {sucursales.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-border/80 bg-muted/20 p-6 text-sm text-muted-foreground">
+            Tu empresa aún no tiene sucursales activas. Pídele al administrador
+            que cree una en Admin → Sucursales.
+          </p>
+        ) : (
+          <div className="rounded-3xl border border-border/70 bg-card p-6 shadow-card">
+            <AbrirCajaForm sucursales={sucursales} />
+          </div>
+        )}
+      </main>
+    )
+  }
+
+  const [resumen, ordenes] = await Promise.all([
+    getResumenSesion(sesion.id),
+    buscarOrdenesPendientes(companyId, q),
+  ])
+  const esperado = Number(sesion.balanceInicial) + resumen.totalEfectivo
+
+  return (
+    <main className="container max-w-3xl space-y-6 py-8">
+      {/* Estado de la caja */}
+      <header className="rounded-3xl border border-success/25 bg-success/5 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="flex items-center gap-2 text-sm font-semibold text-success">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-success" /> Caja abierta
+            </p>
+            <h1 className="mt-1 flex items-center gap-2 text-h3 text-foreground">
+              <Store className="h-5 w-5 text-muted-foreground" aria-hidden />
+              {sesion.sucursal.nombre}
+            </h1>
+            <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1">
+                <UserIcon className="h-3 w-3" /> {sesion.abiertaPor.name}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Clock className="h-3 w-3" /> desde las {fmtHora(sesion.abiertaAt)}
+              </span>
+              {sesion.turno && <span>Turno: {sesion.turno}</span>}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">Efectivo en caja (esperado)</p>
+            <p className="text-2xl font-bold tabular-nums text-foreground">{fmtRD(esperado)}</p>
+          </div>
+        </div>
+
+        {/* Ventas del turno */}
+        <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { label: 'Cobros', valor: String(resumen.cobros) },
+            { label: 'Efectivo', valor: fmtRD(resumen.totalEfectivo) },
+            { label: 'Transferencia', valor: fmtRD(resumen.totalTransferencia) },
+            { label: 'Total del turno', valor: fmtRD(resumen.total) },
+          ].map((s) => (
+            <div key={s.label} className="rounded-2xl bg-card/70 p-3">
+              <dt className="text-[11px] text-muted-foreground">{s.label}</dt>
+              <dd className="mt-0.5 truncate text-sm font-bold tabular-nums text-foreground">
+                {s.valor}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </header>
+
+      {/* Cobrar */}
+      <section className="space-y-4">
+        <div>
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+            <Banknote className="h-5 w-5 text-primary" aria-hidden /> Cobrar una orden
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Busca por la referencia que muestra el cliente, o por su nombre,
+            teléfono o correo.
+          </p>
+        </div>
+
+        <BuscadorOrdenes q={q} />
+
+        {ordenes.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-border/80 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+            {q
+              ? `Sin órdenes pendientes para “${q}”.`
+              : 'No hay órdenes pendientes de pago ahora mismo.'}
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {ordenes.map((o) => (
+              <OrdenCobroCard key={`${o.tipo}-${o.id}`} orden={o} cajaSesionId={sesion.id} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Últimos cobros del turno */}
+      {resumen.ultimos.length > 0 && (
+        <section className="rounded-3xl border border-border/70 bg-card p-5">
+          <h2 className="mb-3 text-sm font-semibold text-foreground">Últimos cobros del turno</h2>
+          <div className="divide-y divide-border/50">
+            {resumen.ultimos.map((c) => (
+              <div key={c.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-foreground">{c.clienteNombre}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {c.detalle} · <code className="font-mono">{c.codigo}</code>
+                  </p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="font-semibold tabular-nums text-foreground">{fmtRD(c.monto)}</p>
+                  <p className="text-[10px] uppercase text-muted-foreground">
+                    {c.metodoCobro ?? ''} · {fmtHora(c.createdAt)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Cierre */}
+      <CerrarCajaForm cajaSesionId={sesion.id} esperado={esperado} />
+    </main>
+  )
+}

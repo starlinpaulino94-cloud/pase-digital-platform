@@ -92,6 +92,9 @@ enum AuditAccion {
   QR_GENERADO
   QR_USADO
   QR_COMPARTIDO
+  CAJA_ABIERTA
+  CAJA_CERRADA
+  COBRO_REGISTRADO
   COMPROBANTE_IMPRESO
   REFERIDO_COMPLETADO
   RECOMPENSA_OTORGADA
@@ -133,6 +136,8 @@ model User {
 
   // Listados de empleados por empresa (/admin/empleados) y conteos por empresa.
   transaccionesComoEmpleado Transaction[]              @relation("TransactionEmpleado")
+  cajasAbiertas             CajaSesion[]               @relation("CajaAbiertaPor")
+  cajasCerradas             CajaSesion[]               @relation("CajaCerradaPor")
   transicionesTransaccion   TransactionTransicion[]
   impresionesRecibo         ReceiptImpresion[]
   comprasAprobadas          ProductoCompra[]           @relation("CompraAprobadaPor")
@@ -233,6 +238,7 @@ model Company {
   clientes               Cliente[]
   memberships            Membership[]
   sucursales             Sucursal[]
+  cajaSesiones           CajaSesion[]
   metodosPago            MetodoPago[]
   auditLogs              AuditLog[]
   promociones            Promocion[]
@@ -313,8 +319,65 @@ model Sucursal {
 
   transacciones Transaction[]
 
+  cajaSesiones    CajaSesion[]
+  membershipsPago Membership[]     @relation("MembershipSucursalPago")
+  comprasPago     ProductoCompra[] @relation("CompraSucursalPago")
+
   @@index([companyId])
   @@map("sucursales")
+}
+
+// ─── Caja (POS) ──────────────────────────────────────────────────────────────
+
+enum CajaSesionEstado {
+  ABIERTA
+  CERRADA
+}
+
+/// Forma en que se recibió un cobro presencial. OTRO deja la puerta abierta a
+/// tarjetas/pasarelas futuras sin tocar el enum de nuevo.
+enum MetodoCobroTipo {
+  EFECTIVO
+  TRANSFERENCIA
+  OTRO
+}
+
+/// Sesión de caja de una sucursal (turno): apertura → cobros → cierre con
+/// arqueo. No se permite cobrar sin una sesión ABIERTA en la sucursal. El
+/// registro es permanente: nunca se elimina, solo se cierra.
+model CajaSesion {
+  id         String           @id @default(cuid())
+  companyId  String
+  company    Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sucursalId String
+  sucursal   Sucursal         @relation(fields: [sucursalId], references: [id])
+  estado     CajaSesionEstado @default(ABIERTA)
+
+  /// Responsable del turno (quien abre la caja).
+  abiertaPorId String
+  abiertaPor   User    @relation("CajaAbiertaPor", fields: [abiertaPorId], references: [id])
+  cerradaPorId String?
+  cerradaPor   User?   @relation("CajaCerradaPor", fields: [cerradaPorId], references: [id])
+  /// Turno legible ("Mañana", "Tarde", "Noche") — opcional.
+  turno        String?
+
+  balanceInicial Decimal @default(0) @db.Decimal(10, 2)
+  /// Efectivo contado al cerrar.
+  balanceFinal    Decimal? @db.Decimal(10, 2)
+  /// Congelado al cerrar: inicial + cobros en EFECTIVO de la sesión.
+  balanceEsperado Decimal? @db.Decimal(10, 2)
+  /// Congelada al cerrar: final − esperado (faltante/sobrante).
+  diferencia      Decimal? @db.Decimal(10, 2)
+  observaciones   String?
+
+  abiertaAt DateTime  @default(now())
+  cerradaAt DateTime?
+
+  cobros Transaction[]
+
+  @@index([sucursalId, estado])
+  @@index([companyId, abiertaAt])
+  @@map("caja_sesiones")
 }
 
 // Métodos de pago configurables por empresa (sin tocar código)
@@ -965,6 +1028,11 @@ model Membership {
   user                User?            @relation(fields: [userId], references: [id])
   metodoPagoId        String? // método de pago seleccionado
   metodoPago          MetodoPago?      @relation(fields: [metodoPagoId], references: [id])
+  // Pago presencial (POS): referencia única que el cliente muestra en caja y
+  // sucursal elegida para pagar. Null en pagos por transferencia.
+  referencia          String?          @unique
+  sucursalPagoId      String?
+  sucursalPago        Sucursal?        @relation("MembershipSucursalPago", fields: [sucursalPagoId], references: [id])
   estado              MembershipEstado @default(PENDIENTE)
   // Pago
   comprobanteUrl      String? // URL del comprobante subido (Supabase Storage)
@@ -1050,6 +1118,10 @@ model ProductoCompra {
   adminNota          String?
   aprobadaPorId      String?
   aprobadaPor        User?       @relation("CompraAprobadaPor", fields: [aprobadaPorId], references: [id])
+  // Pago presencial (POS): referencia única + sucursal elegida.
+  referencia         String?     @unique
+  sucursalPagoId     String?
+  sucursalPago       Sucursal?   @relation("CompraSucursalPago", fields: [sucursalPagoId], references: [id])
 
   // Beneficio activo
   usosIncluidos    Int       @default(1)
@@ -2347,8 +2419,14 @@ model Transaction {
   cliente    Cliente?  @relation(fields: [clienteId], references: [id])
   empleadoId String?
   empleado   User?     @relation("TransactionEmpleado", fields: [empleadoId], references: [id])
-  /// Caja/terminal (texto libre hasta que exista gestión de cajas).
-  caja       String?
+  /// Caja/terminal (texto libre; con gestión de cajas se usa cajaSesionId).
+  caja         String?
+  /// Sesión de caja en la que se registró el cobro (POS).
+  cajaSesionId String?
+  cajaSesion   CajaSesion?      @relation(fields: [cajaSesionId], references: [id])
+  /// Monto cobrado y forma de cobro (para arqueo y reportes de ventas).
+  monto        Decimal?         @db.Decimal(10, 2)
+  metodoCobro  MetodoCobroTipo?
 
   membershipId   String?
   membership     Membership? @relation(fields: [membershipId], references: [id])
@@ -2383,6 +2461,7 @@ model Transaction {
   @@index([companyId, createdAt])
   @@index([clienteId, createdAt])
   @@index([empleadoId])
+  @@index([cajaSesionId])
   @@map("transactions")
 }
 

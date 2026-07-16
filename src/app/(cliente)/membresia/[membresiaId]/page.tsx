@@ -138,12 +138,19 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
       : 0
   const montoAPagar = Math.max(0, Number(planAPagar?.precio ?? 0) - descuentoBienvenida)
 
-  const metodosPago = needsPayment
-    ? await prisma.metodoPago.findMany({
-        where: { companyId: membership.cliente.companyId, activo: true },
-        orderBy: { createdAt: 'asc' },
-      })
-    : []
+  const [metodosPago, sucursales] = needsPayment
+    ? await Promise.all([
+        prisma.metodoPago.findMany({
+          where: { companyId: membership.cliente.companyId, activo: true },
+          orderBy: { createdAt: 'asc' },
+        }),
+        prisma.sucursal.findMany({
+          where: { companyId: membership.cliente.companyId, activa: true },
+          select: { id: true, nombre: true, direccion: true },
+          orderBy: { nombre: 'asc' },
+        }),
+      ])
+    : [[], []]
 
   const estadoLabel = membresiaEstadoUi(membership.estado).label
   const company = membership.cliente.company
@@ -258,9 +265,11 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
                 presenciales={metodosPago
                   .filter((m) => m.tipo === 'PRESENCIAL')
                   .map((m) => ({ id: m.id, nombre: m.nombre, instrucciones: m.instrucciones }))}
+                sucursales={sucursales}
                 avisoPresencialEnviado={
                   membership.metodoPago?.tipo === 'PRESENCIAL' && !membership.comprobanteUrl
                 }
+                referencia={membership.referencia}
               />
             </div>
           </section>

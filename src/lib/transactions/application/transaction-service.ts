@@ -57,6 +57,10 @@ export interface CrearTransaccionInput {
   readonly clienteId?: string | null
   readonly empleadoId?: string | null
   readonly caja?: string | null
+  /** Caja (POS): sesión, monto y forma de cobro para arqueo y reportes. */
+  readonly cajaSesionId?: string | null
+  readonly monto?: number | null
+  readonly metodoCobro?: 'EFECTIVO' | 'TRANSFERENCIA' | 'OTRO' | null
   readonly membershipId?: string | null
   readonly visitId?: string | null
   readonly qrTokenUsadoId?: string | null
@@ -108,6 +112,9 @@ export async function crearTransaccionAplicada(
       clienteId: input.clienteId ?? null,
       empleadoId: input.empleadoId ?? null,
       caja: input.caja ?? null,
+      cajaSesionId: input.cajaSesionId ?? null,
+      monto: input.monto ?? null,
+      metodoCobro: input.metodoCobro ?? null,
       membershipId: input.membershipId ?? null,
       visitId: input.visitId ?? null,
       qrTokenUsadoId: input.qrTokenUsadoId ?? null,

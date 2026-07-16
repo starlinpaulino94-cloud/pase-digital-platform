@@ -26,13 +26,23 @@ interface MetodoPresencial {
   instrucciones: string | null
 }
 
+interface SucursalOption {
+  id: string
+  nombre: string
+  direccion: string | null
+}
+
 interface Props {
   membershipId: string
   companyName: string
   transferencias: MetodoTransferencia[]
   presenciales: MetodoPresencial[]
+  /** Sucursales activas para elegir dónde pagar. */
+  sucursales: SucursalOption[]
   /** true = el cliente ya avisó que pagará en la sucursal. */
   avisoPresencialEnviado: boolean
+  /** Referencia ya generada (persistida en la orden). */
+  referencia: string | null
 }
 
 const initial: PresencialState = {}
@@ -48,7 +58,9 @@ export function OpcionesPago({
   companyName,
   transferencias,
   presenciales,
+  sucursales,
   avisoPresencialEnviado,
+  referencia,
 }: Props) {
   const [opcion, setOpcion] = useState<'transferencia' | 'presencial'>(
     avisoPresencialEnviado ? 'presencial' : 'transferencia'
@@ -61,6 +73,7 @@ export function OpcionesPago({
   }, [state])
 
   const avisado = avisoPresencialEnviado || state.success === true
+  const referenciaActual = state.referencia ?? referencia
   const sucursal = presenciales[0] ?? null
 
   return (
@@ -136,7 +149,17 @@ export function OpcionesPago({
           <p className="flex items-center gap-2 font-semibold text-success">
             <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden /> Aviso enviado
           </p>
-          <p className="mt-2 text-sm text-foreground">
+          {referenciaActual && (
+            <div className="mt-3 rounded-xl bg-card p-4 text-center">
+              <p className="text-xs text-muted-foreground">
+                Muestra esta referencia al pagar en caja
+              </p>
+              <p className="mt-1 font-mono text-2xl font-bold tracking-[0.2em] text-foreground">
+                {referenciaActual}
+              </p>
+            </div>
+          )}
+          <p className="mt-3 text-sm text-foreground">
             Te esperamos en {sucursal?.nombre || `la sucursal de ${companyName}`}.
             Cuando la persona encargada reciba tu pago, lo confirmará y tu plan se
             activará al instante.
@@ -159,9 +182,32 @@ export function OpcionesPago({
             )}
           </div>
 
-          <form action={formAction}>
+          <form action={formAction} className="space-y-3">
             <input type="hidden" name="membershipId" value={membershipId} />
             {sucursal && <input type="hidden" name="metodoPagoId" value={sucursal.id} />}
+            {sucursales.length > 1 ? (
+              <div className="space-y-1.5">
+                <label htmlFor="sucursalId" className="text-sm font-medium text-foreground">
+                  ¿En cuál sucursal pagarás?
+                </label>
+                <select
+                  id="sucursalId"
+                  name="sucursalId"
+                  className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
+                >
+                  {sucursales.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.nombre}
+                      {s.direccion ? ` — ${s.direccion}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              sucursales[0] && (
+                <input type="hidden" name="sucursalId" value={sucursales[0].id} />
+              )
+            )}
             <Button type="submit" disabled={pending} className="w-full py-6 text-base font-semibold">
               {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Pagaré en la sucursal
