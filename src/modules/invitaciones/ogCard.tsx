@@ -34,6 +34,15 @@ export function genericOgResponse() {
 }
 
 /**
+ * Arte oficial de la campaña para la vista previa, en orden de prioridad:
+ * imagen de compartir del contenido → imagen OG → banner del landing.
+ */
+export function arteDeCampana(campana: CampanaOgData): string | null {
+  const compartir = normalizeInvitaContenido(campana.contenido)
+  return compartir.shareImagenUrl || campana.imagenUrl || campana.bannerUrl || null
+}
+
+/**
  * Tarjeta de campaña. Prioridad del arte: imagen de compartir del contenido →
  * imagen OG de la campaña → banner del landing → degradado con sus colores.
  */

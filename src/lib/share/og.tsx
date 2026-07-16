@@ -59,6 +59,38 @@ export async function fetchImageDataUrl(url: string, timeoutMs = 4000): Promise<
   }
 }
 
+/**
+ * Sirve la imagen ORIGINAL de la entidad como respuesta del endpoint
+ * opengraph-image. WhatsApp solo muestra la tarjeta GRANDE si la imagen pesa
+ * menos de ~600 KB: un JPEG subido por el negocio pasa; un PNG compuesto con
+ * foto de fondo casi nunca. Por eso, con foto oficial se entrega la foto
+ * (como hace Temu) y la tarjeta compuesta queda para entidades sin foto.
+ * Devuelve null si la imagen no es apta (formato/tamaño/timeout) para que el
+ * llamador caiga a la tarjeta compuesta.
+ */
+export async function originalImageResponse(url: string, timeoutMs = 4000): Promise<Response | null> {
+  try {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+    const res = await fetch(url, { signal: ctrl.signal })
+    clearTimeout(timer)
+    if (!res.ok) return null
+    const tipo = (res.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase()
+    if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(tipo)) return null
+    const buf = Buffer.from(await res.arrayBuffer())
+    // >600 KB: WhatsApp degrada a miniatura — mejor la tarjeta compuesta.
+    if (buf.length === 0 || buf.length > 600_000) return null
+    return new Response(new Uint8Array(buf), {
+      headers: {
+        'Content-Type': tipo,
+        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+      },
+    })
+  } catch {
+    return null
+  }
+}
+
 export function MembeGoMark() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>

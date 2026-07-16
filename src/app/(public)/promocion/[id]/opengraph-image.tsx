@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og'
 import { getPromotionOg } from '@/modules/marketplace/queries'
+import { originalImageResponse } from '@/lib/share/og'
 import { SITE_NAME } from '@/lib/site'
 
 // Fase E8 · Imagen dinámica de vista previa (Open Graph / Twitter Card) por
@@ -45,6 +46,13 @@ function MembeGoMark() {
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const og = await getPromotionOg(id).catch(() => null)
+
+  // Con imagen oficial ligera se entrega la imagen (tarjeta GRANDE en
+  // WhatsApp, como Temu); si no hay o pesa mucho, la tarjeta compuesta.
+  if (og?.imagenUrl) {
+    const original = await originalImageResponse(og.imagenUrl)
+    if (original) return original
+  }
 
   // Fallback: promoción no pública o inexistente → tarjeta de marca genérica.
   if (!og) {
