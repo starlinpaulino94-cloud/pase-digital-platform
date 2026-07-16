@@ -255,16 +255,31 @@ export function ScannerClient({
   }, [startTransition])
 
   // Lector físico HID: mismo flujo que la cámara (buscarPorToken → …).
-  const onReaderScan = useCallback((token: string, fromReader: boolean) => {
-    if (fromReader && !lectorDetectado) {
-      setLectorDetectado(true)
-      toast.success('Lector físico detectado')
-    }
-    lookup(token)
-  }, [lookup, lectorDetectado])
+  // La captura global procesa la ráfaga en CUALQUIER estado, así una sola
+  // lectura basta: en modo cámara cambia solo a lector; con un resultado en
+  // pantalla pasa directo al siguiente cliente (escaneo continuo).
+  const onReaderScan = useCallback(
+    (token: string, fromReader: boolean) => {
+      // En cámara o sobre un resultado solo actúa una ráfaga inequívoca de
+      // lector físico (cadencia), nunca tecleo humano suelto.
+      if ((modo === 'camara' || hayResultado) && !fromReader) return
+      if (modo === 'camara') cambiarModo('lector')
+      if (hayResultado) {
+        setCliente(null)
+        setPromoCompra(null)
+        setTxRecord(null)
+      }
+      if (fromReader && !lectorDetectado) {
+        setLectorDetectado(true)
+        toast.success('Lector físico detectado')
+      }
+      lookup(token)
+    },
+    [modo, hayResultado, cambiarModo, lookup, lectorDetectado]
+  )
 
   const reader = useHidScanner({
-    active: modo === 'lector' && !hayResultado,
+    focusActive: modo === 'lector' && !hayResultado,
     disabled: pending,
     onScan: onReaderScan,
   })
@@ -430,7 +445,6 @@ export function ScannerClient({
         <ReaderPanel
           status={pending ? 'validando' : reader.status}
           inputRef={reader.inputRef}
-          onKeyDown={reader.handleKeyDown}
           onBlur={reader.handleBlur}
           onFocusArea={reader.focusCapture}
           lectorDetectado={lectorDetectado}
@@ -456,14 +470,12 @@ export function ScannerClient({
 function ReaderPanel({
   status,
   inputRef,
-  onKeyDown,
   onBlur,
   onFocusArea,
   lectorDetectado,
 }: {
   status: 'ready' | 'listening' | 'received' | 'validando'
   inputRef: React.RefObject<HTMLInputElement | null>
-  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void
   onBlur: (e: React.FocusEvent<HTMLInputElement>) => void
   onFocusArea: () => void
   lectorDetectado: boolean
@@ -486,7 +498,8 @@ function ReaderPanel({
         <div className="pointer-events-none absolute inset-0 bg-grid-light opacity-40" />
         <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-64 -translate-x-1/2 rounded-full bg-primary/15 blur-3xl" />
 
-        {/* Campo OCULTO de captura: recibe las "teclas" del lector HID. */}
+        {/* Campo OCULTO: solo aparca el foco (la captura real es global, en
+            window — así una lectura funciona aunque el foco ande en otro lado). */}
         <input
           ref={inputRef}
           type="text"
@@ -495,7 +508,6 @@ function ReaderPanel({
           autoCorrect="off"
           spellCheck={false}
           aria-label="Captura del lector físico"
-          onKeyDown={onKeyDown}
           onBlur={onBlur}
           className="sr-only"
         />
