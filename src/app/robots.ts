@@ -28,10 +28,9 @@ export default function robots(): MetadataRoute.Robots {
           '/actualizar-password',
           '/confirmar',
           '/auth',
-          '/r/',
-          '/i/',
-          '/invita/',
-          '/invitacion',
+          // OJO: /r/, /i/, /invita/ e /invitar/ NO se bloquean: son las
+          // landings que la gente comparte y el crawler de Meta (WhatsApp/
+          // Facebook) respeta robots.txt — bloquearlas mata la vista previa.
           '/mis-membresias',
           '/membresia',
         ],
