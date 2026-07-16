@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { X, Gift, Clock, Flame, ArrowRight } from 'lucide-react'
 import type { Momento } from '@/modules/engagement/momentos'
@@ -136,9 +137,12 @@ export function PopupInteligente({
   if (!cand || !visible) return null
   const Icon = cand.icon
 
-  return (
-    // SIEMPRE centrado en la pantalla (también en móvil): el aviso es el
-    // protagonista del momento, nunca un banner perdido abajo.
+  // Portal al <body>: dentro del contenido, la transición de página
+  // (template.tsx) crea un containing block y el `fixed` se ancla a la
+  // página (larga) en vez de a la ventana — el aviso quedaba fuera de
+  // vista, abajo. En el body, `fixed` es SIEMPRE la ventana: centrado
+  // garantizado sin importar el scroll.
+  return createPortal(
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-5">
       <button
         className="animate-fade-in absolute inset-0 bg-slate-950/65 backdrop-blur-sm"
@@ -208,6 +212,7 @@ export function PopupInteligente({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

@@ -528,7 +528,9 @@
 /* ── Keyframes ── */
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  /* `none` (no translateY(0)): un transform residual crearía un containing
+     block y rompería position:fixed de los hijos (popups, overlays). */
+  to   { opacity: 1; transform: none; }
 }
 @keyframes fade-in {
   from { opacity: 0; }
@@ -536,7 +538,7 @@
 }
 @keyframes scale-in {
   from { opacity: 0; transform: scale(0.97); }
-  to   { opacity: 1; transform: scale(1); }
+  to   { opacity: 1; transform: none; }
 }
 @keyframes shimmer {
   from { background-position: -200% center; }
@@ -544,7 +546,7 @@
 }
 @keyframes slide-up {
   from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: none; }
 }
 @keyframes float {
   0%, 100% { transform: translateY(0); }
@@ -597,13 +599,13 @@
 /* Entradas direccionales para cascadas escalonadas. */
 @keyframes slide-in-right { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
 @keyframes slide-in-left  { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
-@keyframes zoom-in        { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+@keyframes zoom-in        { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
 
 /* Celebración: estallido corto para desbloqueos/premios (scale + settle). */
 @keyframes burst {
   0%   { transform: scale(0.6); opacity: 0; }
   55%  { transform: scale(1.08); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
+  100% { transform: none; opacity: 1; }
 }
 
 /* Check animado (validación/éxito): traza el visto con stroke-dashoffset. */
@@ -622,7 +624,7 @@
 /* Flip de tarjeta (beneficio desbloqueado). */
 @keyframes card-flip-in {
   from { opacity: 0; transform: perspective(800px) rotateY(-90deg); }
-  to   { opacity: 1; transform: perspective(800px) rotateY(0); }
+  to   { opacity: 1; transform: none; }
 }
 
 @layer utilities {
