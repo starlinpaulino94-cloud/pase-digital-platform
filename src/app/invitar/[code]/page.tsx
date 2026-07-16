@@ -4,6 +4,7 @@ import { getCampanaPorCodigoInvitacion } from '@/modules/invitaciones/queries'
 import { absoluteUrl } from '@/lib/site'
 import { shareMetadata } from '@/lib/share/metadata'
 import { normalizeInvitaContenido } from '@/lib/invitaContenido'
+import { arteDeCampana } from '@/modules/invitaciones/ogCard'
 import { CampanaLandingScreen } from '@/components/invitaciones/CampanaLandingScreen'
 
 export const dynamic = 'force-dynamic'
@@ -28,10 +29,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { campana } = res
 
   // Share Engine: la config de "Compartir" del editor tiene prioridad. La
-  // imagen la genera opengraph-image.tsx de esta misma ruta (misma tarjeta de
-  // marca que /invita/[slug]); Next inyecta og:image y twitter:image solos.
+  // og:image apunta DIRECTO al CDN cuando hay imagen oficial (respuesta
+  // instantánea para el robot de WhatsApp); sin imagen, a /og/campana.
   const compartir = normalizeInvitaContenido(campana.contenido)
   const title = compartir.ogTitulo || campana.titulo
+  const image =
+    arteDeCampana(campana) ?? absoluteUrl(`/og/campana?code=${encodeURIComponent(code)}`)
 
   return {
     ...shareMetadata({
@@ -39,6 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: compartir.ogDescripcion || campana.descripcion,
       url: absoluteUrl(`/invitar/${code}`),
       siteName: campana.company.name,
+      image,
     }),
     title: `${title} — ${campana.company.name}`,
   }

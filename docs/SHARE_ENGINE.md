@@ -30,9 +30,22 @@ Cada ruta tiene su `opengraph-image.tsx`; Next lo inyecta solo como
 
 **Regla de la tarjeta GRANDE**: WhatsApp solo muestra la tarjeta grande si la
 imagen pesa menos de ~600 KB. Por eso, cuando la entidad tiene foto oficial
-ligera se sirve la foto ORIGINAL (JPEG, como hace Temu) vía
-`originalImageResponse()`; la tarjeta compuesta (PNG) queda para entidades sin
-foto o con foto demasiado pesada.
+ligera se sirve la foto ORIGINAL (JPEG, como hace Temu); la tarjeta compuesta
+(PNG) queda para entidades sin foto o con foto demasiado pesada.
+
+**Regla de los ~5 segundos**: el robot de WhatsApp corta la vista previa si la
+página o la imagen tardan. Por eso en campañas:
+- la `og:image` apunta DIRECTO al CDN (Supabase) cuando hay imagen oficial —
+  sin pasar por ninguna función; la tarjeta compuesta vive en `/og/campana`
+  (fuera de `/api`, que robots.txt bloquea y Meta lo respeta);
+- las queries de campaña usan `React.cache` (metadata y página comparten una
+  sola resolución por request);
+- los robots (`esBotDeVistaPrevia`, src/lib/share/bots.ts) NO disparan
+  registros de eventos ni lookups de personalización — menos latencia y
+  embudo sin visitas fantasma.
+
+Consejo operativo: sube imágenes de campaña de menos de 600 KB (ideal
+1200×630) para garantizar la tarjeta grande.
 
 ## Configuración por campaña (panel admin)
 
