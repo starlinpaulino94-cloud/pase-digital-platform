@@ -57,7 +57,8 @@ export const INVITA_CONTENIDO_DEFAULT: InvitaContenido = {
   subtitulo: 'Comparte · tus amigos ganan · tú también',
   beneficioEtiqueta: 'Tus amigos reciben al registrarse',
   notaSinLimite: 'Invita a todos los que quieras — sin límite de invitaciones.',
-  mensajeCompartir: '🎉 Te regalan: {regalo}. Solo por crear tu cuenta gratis en MembeGo. ¡Aprovéchalo!',
+  mensajeCompartir:
+    '🎁 {regalo} — GRATIS, solo por crear tu cuenta. ⏳ Es por tiempo limitado y los cupos se agotan: reclámalo ahora antes de que se acabe. 👇',
   ctaCompartir: 'Compartir ahora',
   ctaCopiar: 'Copiar enlace',
   progresoTitulo: 'Mi progreso',
