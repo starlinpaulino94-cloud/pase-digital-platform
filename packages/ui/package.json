@@ -11,11 +11,15 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
-  "files": ["src", "README.md"],
+  "files": [
+    "src",
+    "README.md"
+  ],
   "exports": {
     "./cn": "./src/cn.ts",
     "./tokens": "./src/tokens.ts",
-    "./ui/*": "./src/ui/*.tsx"
+    "./ui/*": "./src/ui/*.tsx",
+    "./hooks/*": "./src/hooks/*.ts"
   },
   "peerDependencies": {
     "react": "^19",

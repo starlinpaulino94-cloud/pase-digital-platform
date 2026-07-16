@@ -346,8 +346,8 @@
   }
 
   /* ── Escala tipográfica del sistema ─────────────────────────────────
-     Usar estas clases en vez de combinar text-*/font-* a mano, para que
-     todas las pantallas compartan exactamente la misma jerarquía. */
+     Usar estas clases en vez de combinar clases text- y font- a mano, para
+     que todas las pantallas compartan exactamente la misma jerarquía. */
   .text-display {          /* Héroes / landing */
     font-family: var(--font-display);
     font-size: clamp(2.5rem, 6vw, 4.5rem);

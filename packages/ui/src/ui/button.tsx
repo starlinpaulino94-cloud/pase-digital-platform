@@ -22,6 +22,15 @@ const buttonVariants = cva(
           "text-primary underline-offset-4 hover:underline p-0 h-auto font-medium",
         success:
           "bg-success text-success-foreground shadow-sm hover:bg-success/90 active:scale-[0.98] focus-visible:ring-success/30",
+        /* MUK: gradiente de marca sin glow — CTAs de marketing en listas. */
+        gradient:
+          "bg-gradient-brand text-white shadow-sm hover:opacity-90 active:scale-[0.98]",
+        /* MUK: EL CTA protagonista — gradiente + glow. Máximo uno por pantalla. */
+        premium:
+          "bg-gradient-brand text-white shadow-glow hover:shadow-glow-strong hover:opacity-95 active:scale-[0.98]",
+        /* MUK: cristal — solo sobre imágenes o gradientes (héroes, banners). */
+        glass:
+          "glass-surface text-foreground hover:bg-card/80 active:scale-[0.98]",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
@@ -44,18 +53,42 @@ function Button({
   variant,
   size,
   asChild = false,
+  loading = false,
+  children,
+  disabled,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
+    /** MUK: muestra spinner y deshabilita mientras la acción está en curso. */
+    loading?: boolean
   }) {
   const Comp = asChild ? Slot : "button"
   return (
     <Comp
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...props}
-    />
+    >
+      {loading && !asChild ? (
+        <>
+          <svg
+            className="size-4 animate-spin"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden
+          >
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+            <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+          </svg>
+          {children}
+        </>
+      ) : (
+        children
+      )}
+    </Comp>
   )
 }
 
