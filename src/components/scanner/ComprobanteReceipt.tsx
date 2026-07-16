@@ -224,7 +224,9 @@ export function ComprobanteReceipt({
             @media print {
               body * { visibility: hidden !important; }
               .receipt-print, .receipt-print * { visibility: visible !important; }
-              .receipt-print { position: fixed; top: 0; left: 0; width: 80mm; }
+              /* absolute (no fixed): fixed recorta a una página los tickets largos. */
+              .receipt-print { position: absolute; top: 0; left: 0; width: 80mm; }
+              html, body { height: auto !important; overflow: visible !important; }
             }
           `}</style>
           <div

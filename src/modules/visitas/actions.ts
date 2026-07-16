@@ -368,6 +368,20 @@ export async function confirmarVisita(
 
     const meta = await getRequestMeta()
 
+    // Documento comercial: SIEMPRE el nombre del empleado, nunca su correo
+    // (el correo queda solo como dato interno de auditoría).
+    const empleadoNombre =
+      (user.metadata.dbUserId
+        ? (
+            await prisma.user.findUnique({
+              where: { id: user.metadata.dbUserId },
+              select: { name: true },
+            })
+          )?.name
+        : null) ??
+      user.email ??
+      null
+
     // ── Validaciones de solo lectura FUERA de la transacción ────────────────
     // En pgBouncer transaction-mode cada transacción interactiva retiene
     // ("pin") una conexión real durante todo el callback; antes eran ~10
@@ -606,7 +620,7 @@ export async function confirmarVisita(
         servicio,
         membresia: membership.plan.nombre,
         plan: membership.plan.nombre,
-        empleado: user.email ?? undefined,
+        empleado: empleadoNombre ?? undefined,
         sucursal: sucursalNombre ?? undefined,
         restantes: ilimitado ? ('ilimitado' as const) : restantes,
       }
@@ -682,6 +696,8 @@ export async function confirmarVisita(
     const empresa = membership.cliente.company
     const ticket: TicketPayload = {
       transactionId: result.transaccion.id,
+      lineas: [],
+      metodoPago: null,
       timeZone: empresa.zonaHoraria,
       empresa: {
         nombre: empresa.name,
@@ -696,7 +712,7 @@ export async function confirmarVisita(
         codigo: result.transaccion.codigo,
         ticketNumero: result.transaccion.ticketNumero,
         fecha: new Date().toISOString(),
-        empleado: user.email ?? null,
+        empleado: empleadoNombre,
         cliente: membership.cliente.nombre,
         vehiculo: vehiculoLabel,
         placa: vehiculoPlaca,

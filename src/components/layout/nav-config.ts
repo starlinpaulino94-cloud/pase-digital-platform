@@ -28,6 +28,7 @@ import {
   Zap,
   Ticket,
   Banknote,
+  ReceiptText,
   Sparkles,
   Trophy,
   type LucideIcon,
@@ -98,6 +99,7 @@ const ADMIN_NAV: NavGroup[] = [
     items: [
       { href: '/admin/scanner', label: 'Escanear QR', icon: ScanLine },
       { href: '/admin/pagos', label: 'Pagos', icon: Wallet },
+      { href: '/admin/facturas', label: 'Facturas', icon: ReceiptText },
       { href: '/admin/sucursales', label: 'Sucursales', icon: Building2 },
     ],
   },

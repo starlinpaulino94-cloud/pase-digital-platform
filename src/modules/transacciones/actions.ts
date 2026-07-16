@@ -119,12 +119,24 @@ export async function consultarTransaccionPorCodigo(
 
 // ── Ticket (impresión / reimpresión) ─────────────────────────────────────────
 
+/** Línea estructurada de una venta (factura): cantidad × precio − descuento. */
+export interface FacturaLinea {
+  descripcion: string
+  cantidad: number
+  precioUnitario: number
+  descuento: number
+  total: number
+}
+
 export interface TicketPayload {
   empresa: ReceiptEmpresaInfo
   template: ReceiptTemplateConfig
   transaccion: Omit<ReceiptTransaccionInfo, 'fecha'> & { fecha: string }
   timeZone: string
   transactionId: string
+  /** Factura: líneas estructuradas y método de pago (ventas de caja). */
+  lineas: FacturaLinea[]
+  metodoPago: string | null
 }
 
 export async function obtenerTicket(
@@ -153,10 +165,19 @@ export async function obtenerTicket(
   if (!company) return { error: 'Empresa no encontrada.' }
 
   const s = t.snapshot
+  const lineasRaw = Array.isArray(s.lineas) ? (s.lineas as Record<string, unknown>[]) : []
   return {
     ticket: {
       transactionId: t.id,
       timeZone: company.zonaHoraria,
+      lineas: lineasRaw.map((l) => ({
+        descripcion: String(l.descripcion ?? ''),
+        cantidad: Number(l.cantidad ?? 1),
+        precioUnitario: Number(l.precioUnitario ?? 0),
+        descuento: Number(l.descuento ?? 0),
+        total: Number(l.total ?? 0),
+      })),
+      metodoPago: (s.metodoCobroLabel as string) ?? null,
       empresa: {
         nombre: company.name,
         sucursal: (s.sucursal as string) ?? null,
