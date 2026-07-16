@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og'
 import { getGrowthLanding } from '@/modules/growth/links'
+import { originalImageResponse } from '@/lib/share/og'
 import { SITE_NAME } from '@/lib/site'
 
 // Growth Engine 3.0 · Vista previa enriquecida al compartir una invitación.
@@ -17,6 +18,13 @@ export default async function Image({ params }: { params: Promise<{ code: string
   const empresa = data?.empresa.name ?? SITE_NAME
   const beneficio = data?.beneficio?.titulo ?? 'un beneficio exclusivo'
   const imagen = data?.beneficio?.imagenUrl ?? null
+
+  // Con imagen oficial ligera se entrega la imagen (tarjeta GRANDE en
+  // WhatsApp); si no, la tarjeta compuesta con el beneficio y quien invita.
+  if (imagen) {
+    const original = await originalImageResponse(imagen)
+    if (original) return original
+  }
 
   return new ImageResponse(
     (

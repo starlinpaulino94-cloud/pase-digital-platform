@@ -1,5 +1,11 @@
 import { getCampanaBySlug } from '@/modules/invitaciones/queries'
-import { campanaOgResponse, genericOgResponse, OG_SIZE } from '@/modules/invitaciones/ogCard'
+import {
+  arteDeCampana,
+  campanaOgResponse,
+  genericOgResponse,
+  OG_SIZE,
+} from '@/modules/invitaciones/ogCard'
+import { originalImageResponse } from '@/lib/share/og'
 
 // Imagen dinámica de vista previa (Open Graph / Twitter) para el enlace de una
 // campaña "Invita y Gana". Next la referencia sola como <ruta>/opengraph-image,
@@ -22,5 +28,12 @@ export default async function Image({
   const campana = await getCampanaBySlug(slug).catch(() => null)
   if (!campana) return genericOgResponse()
 
+  // Con foto oficial ligera se entrega la foto (tarjeta GRANDE en WhatsApp);
+  // sin foto (o foto pesada), la tarjeta compuesta con los colores de campaña.
+  const arte = arteDeCampana(campana)
+  if (arte) {
+    const original = await originalImageResponse(arte)
+    if (original) return original
+  }
   return campanaOgResponse(campana)
 }

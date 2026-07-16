@@ -28,6 +28,12 @@ plano.
 Cada ruta tiene su `opengraph-image.tsx`; Next lo inyecta solo como
 `og:image`/`twitter:image`. No hace falta declarar la imagen en la metadata.
 
+**Regla de la tarjeta GRANDE**: WhatsApp solo muestra la tarjeta grande si la
+imagen pesa menos de ~600 KB. Por eso, cuando la entidad tiene foto oficial
+ligera se sirve la foto ORIGINAL (JPEG, como hace Temu) vía
+`originalImageResponse()`; la tarjeta compuesta (PNG) queda para entidades sin
+foto o con foto demasiado pesada.
+
 ## Configuración por campaña (panel admin)
 
 En el editor de campañas (sección **“Compartir · vista previa del enlace”**):

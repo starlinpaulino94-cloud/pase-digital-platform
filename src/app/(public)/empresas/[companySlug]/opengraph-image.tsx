@@ -1,5 +1,10 @@
 import { getCompanyPublic } from '@/modules/marketplace/queries'
-import { shareCardResponse, genericOgResponse, OG_SIZE } from '@/lib/share/og'
+import {
+  shareCardResponse,
+  genericOgResponse,
+  originalImageResponse,
+  OG_SIZE,
+} from '@/lib/share/og'
 
 // Share Engine · vista previa enriquecida al compartir el perfil público de
 // una empresa: su banner oficial es el fondo de la tarjeta; sin banner,
@@ -19,6 +24,13 @@ export default async function Image({
   const { companySlug } = await params
   const company = await getCompanyPublic(companySlug).catch(() => null)
   if (!company) return genericOgResponse('Descubre negocios con beneficios')
+
+  // Con banner oficial ligero se entrega el banner (tarjeta GRANDE en
+  // WhatsApp); el logo NO se sirve crudo (pequeño/cuadrado): se compone.
+  if (company.bannerUrl) {
+    const original = await originalImageResponse(company.bannerUrl)
+    if (original) return original
+  }
 
   const ubicacion = [company.ciudad, company.provincia].filter(Boolean).join(', ')
 

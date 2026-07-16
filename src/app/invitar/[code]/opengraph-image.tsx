@@ -1,5 +1,11 @@
 import { getCampanaPorCodigoInvitacion } from '@/modules/invitaciones/queries'
-import { campanaOgResponse, genericOgResponse, OG_SIZE } from '@/modules/invitaciones/ogCard'
+import {
+  arteDeCampana,
+  campanaOgResponse,
+  genericOgResponse,
+  OG_SIZE,
+} from '@/modules/invitaciones/ogCard'
+import { originalImageResponse } from '@/lib/share/og'
 
 // Vista previa (Open Graph) del enlace corto personal /invitar/[code]: misma
 // tarjeta grande de marca que /invita/[slug] (diseño en ogCard.tsx). Es lo que
@@ -20,5 +26,12 @@ export default async function Image({
   const res = await getCampanaPorCodigoInvitacion(code).catch(() => null)
   if (!res) return genericOgResponse()
 
+  // Con foto oficial ligera se entrega la foto (tarjeta GRANDE en WhatsApp);
+  // sin foto (o foto pesada), la tarjeta compuesta con los colores de campaña.
+  const arte = arteDeCampana(res.campana)
+  if (arte) {
+    const original = await originalImageResponse(arte)
+    if (original) return original
+  }
   return campanaOgResponse(res.campana)
 }
