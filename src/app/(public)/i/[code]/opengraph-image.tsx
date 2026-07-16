@@ -9,8 +9,9 @@ export const alt = 'Invitación exclusiva en MembeGo'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
-export default async function Image({ params }: { params: { code: string } }) {
-  const data = await getGrowthLanding(params.code)
+export default async function Image({ params }: { params: Promise<{ code: string }> }) {
+  const { code } = await params
+  const data = await getGrowthLanding(code).catch(() => null)
 
   const referente = data?.referente ?? 'Un amigo'
   const empresa = data?.empresa.name ?? SITE_NAME
@@ -34,7 +35,14 @@ export default async function Image({ params }: { params: { code: string } }) {
                 background: 'linear-gradient(135deg, #6D28D9 0%, #3B82F6 50%, #0D9488 100%)',
               }}
             >
-              <span style={{ fontSize: 140 }}>🎉</span>
+              {/* Regalo en SVG local: los emoji obligan a satori a buscar la
+                  fuente en un CDN externo (frágil y lento para el crawler). */}
+              <svg width="150" height="150" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="8" width="18" height="4" rx="1" />
+                <path d="M12 8v13" />
+                <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" />
+                <path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5" />
+              </svg>
             </div>
           )}
         </div>

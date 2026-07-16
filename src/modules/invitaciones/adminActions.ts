@@ -6,7 +6,11 @@ import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/auth/guards'
 import { resolveCompanyId } from '@/lib/auth/company-context'
 import { ADMIN_ROLES } from '@/types'
-import { INVITA_CONTENIDO_CAMPOS, INVITA_CONTENIDO_DEFAULT } from '@/lib/invitaContenido'
+import {
+  INVITA_COMPARTIR_CAMPOS,
+  INVITA_CONTENIDO_CAMPOS,
+  INVITA_CONTENIDO_DEFAULT,
+} from '@/lib/invitaContenido'
 
 export interface CampanaState {
   error?: string
@@ -45,7 +49,7 @@ async function uniqueSlug(base: string): Promise<string> {
  */
 function parseContenido(fd: FormData): Record<string, string> | null {
   const out: Record<string, string> = {}
-  for (const { key } of INVITA_CONTENIDO_CAMPOS) {
+  for (const { key } of [...INVITA_CONTENIDO_CAMPOS, ...INVITA_COMPARTIR_CAMPOS]) {
     const v = String(fd.get(`contenido_${key}`) ?? '').trim()
     if (v && v !== INVITA_CONTENIDO_DEFAULT[key]) out[key] = v
   }

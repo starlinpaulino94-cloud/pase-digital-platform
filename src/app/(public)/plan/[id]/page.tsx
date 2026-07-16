@@ -6,6 +6,7 @@ import { CheckCircle2, Infinity as InfinityIcon } from 'lucide-react'
 import { getPlanPublic, getPlanOg } from '@/modules/marketplace/queries'
 import { ShareMenu } from '@/components/public/ShareMenu'
 import { SITE_NAME } from '@/lib/site'
+import { shareMetadata } from '@/lib/share/metadata'
 
 interface PlanPageProps {
   params: Promise<{ id: string }>
@@ -33,15 +34,13 @@ export async function generateMetadata({ params }: PlanPageProps): Promise<Metad
     0,
     200
   )
-  const url = `/plan/${og.id}`
-
-  return {
+  // Share Engine: la imagen la genera opengraph-image.tsx de esta ruta
+  // (tarjeta con el plan, el precio y la marca de la empresa).
+  return shareMetadata({
     title,
     description,
-    alternates: { canonical: url },
-    openGraph: { type: 'website', title, description, url, siteName: SITE_NAME },
-    twitter: { card: 'summary_large_image', title, description },
-  }
+    url: `/plan/${og.id}`,
+  })
 }
 
 export default async function PlanPublicPage({ params }: PlanPageProps) {

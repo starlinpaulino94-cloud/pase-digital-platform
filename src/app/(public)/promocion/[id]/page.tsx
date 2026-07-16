@@ -4,6 +4,7 @@ import { recordPromotionView } from '@/modules/marketplace/actions'
 import { getPromotionDetail, getPromotionOg } from '@/modules/marketplace/queries'
 import { PromotionDetail } from '@/components/marketplace/PromotionDetail'
 import { SITE_NAME } from '@/lib/site'
+import { shareMetadata } from '@/lib/share/metadata'
 
 interface PromotionDetailPageProps {
   params: Promise<{ id: string }>
@@ -31,25 +32,13 @@ export async function generateMetadata({
     0,
     200
   )
-  const url = `/promocion/${og.id}`
-
-  return {
+  // Share Engine: la imagen la genera opengraph-image.tsx de esta ruta
+  // (tarjeta con la imagen oficial de la promo y el descuento protagonista).
+  return shareMetadata({
     title,
     description,
-    alternates: { canonical: url },
-    openGraph: {
-      type: 'website',
-      title,
-      description,
-      url,
-      siteName: SITE_NAME,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-    },
-  }
+    url: `/promocion/${og.id}`,
+  })
 }
 
 export default async function PromotionDetailPage({

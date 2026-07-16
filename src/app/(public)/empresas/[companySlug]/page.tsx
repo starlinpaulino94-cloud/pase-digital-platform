@@ -11,6 +11,7 @@ import {
 import { getRegionalPrefs } from '@/modules/empresas/regional'
 import { getCompanyResenas } from '@/modules/resenas/queries'
 import { SITE_NAME } from '@/lib/site'
+import { shareMetadata } from '@/lib/share/metadata'
 
 interface CompanyDetailPageProps {
   params: Promise<{ companySlug: string }>
@@ -32,21 +33,13 @@ export async function generateMetadata({
   const description =
     company.description ||
     `Descubre las membresías y promociones de ${company.name}${ubicacion ? ` en ${ubicacion}` : ''} en ${SITE_NAME}.`
-  const url = `/empresas/${company.slug}`
-
-  return {
+  // Share Engine: la imagen la genera opengraph-image.tsx de esta ruta
+  // (tarjeta 1200×630 con el banner de la empresa), no el logo crudo.
+  return shareMetadata({
     title,
-    description: description.slice(0, 200),
-    alternates: { canonical: url },
-    openGraph: {
-      type: 'website',
-      title: `${title} · ${SITE_NAME}`,
-      description: description.slice(0, 200),
-      url,
-      ...(company.logoUrl ? { images: [{ url: company.logoUrl }] } : {}),
-    },
-    twitter: { card: 'summary_large_image', title, description: description.slice(0, 200) },
-  }
+    description,
+    url: `/empresas/${company.slug}`,
+  })
 }
 
 export default async function CompanyDetailPage({
