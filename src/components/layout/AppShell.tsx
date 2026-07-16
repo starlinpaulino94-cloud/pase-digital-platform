@@ -18,6 +18,7 @@ export function AppShell({
   userEmail,
   notifCount = 0,
   companies,
+  qrHref,
   children,
 }: {
   role: AppRole
@@ -25,6 +26,8 @@ export function AppShell({
   userEmail: string
   notifCount?: number
   companies?: CompanyOption[]
+  /** Destino del dock central "Mi QR" en la barra inferior (cliente). */
+  qrHref?: string | null
   children: React.ReactNode
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -117,7 +120,7 @@ export function AppShell({
         </main>
       </div>
 
-      {hasBottomNav && <BottomNav role={role} />}
+      {hasBottomNav && <BottomNav role={role} qrHref={qrHref} />}
     </div>
   )
 }

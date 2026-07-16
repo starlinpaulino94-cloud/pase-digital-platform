@@ -1,7 +1,6 @@
 import { requireRole } from '@/lib/auth/guards'
 import { AppShell } from '@/components/layout/AppShell'
 import { SentryUserSync } from '@/components/SentryUserSync'
-import { QrFab } from '@/components/system/QrFab'
 import { getUnreadCount } from '@/modules/notificaciones/actions'
 import { getClienteCompanies } from '@/modules/cliente/actions'
 import { getMembresiaActivaPrincipalId } from '@/modules/cliente/queries'
@@ -30,11 +29,11 @@ export default async function ClienteLayout({
       userEmail={user.email}
       notifCount={notifCount}
       companies={companies}
+      // Dock central "Mi QR" de la barra inferior (reemplaza al FAB flotante).
+      qrHref={membresiaQrId ? `/membresia/${membresiaQrId}` : null}
     >
       <SentryUserSync userId={user.metadata.dbUserId} email={user.email} role={user.metadata.role} companyId={user.metadata.companyId} />
       {children}
-      {/* FAB "Mi QR": el código de acceso siempre a un toque (mockup premium) */}
-      {membresiaQrId && <QrFab href={`/membresia/${membresiaQrId}`} />}
     </AppShell>
   )
 }

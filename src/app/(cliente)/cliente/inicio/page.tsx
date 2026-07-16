@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { differenceInDays } from 'date-fns'
 import { getUser } from '@/lib/auth'
-import { getClienteAllMemberships } from '@/modules/cliente/queries'
+import { getClienteAllMemberships, getBeneficioDisponible } from '@/modules/cliente/queries'
 import { getNovedadesInicio, getOnboardingCliente, getPromoFeed, type PromoFeed } from '@/modules/social/queries'
 import { getMomentosVivos, type MomentosVivos as MomentosData } from '@/modules/engagement/momentos'
 import { getCampanasVivas, type CampanaViva } from '@/modules/engagement/campanas'
@@ -36,6 +36,8 @@ import { CelebracionBienvenida } from '@/components/cliente/CelebracionBienvenid
 import { FeedNovedades } from '@/components/cliente/FeedNovedades'
 import { OnboardingClienteFirstVisit } from '@/components/cliente/OnboardingClienteFirstVisit'
 import { Button } from '@/components/ui/button'
+import { PromoBanner } from '@/components/ui/promo-banner'
+import { Shine } from '@/components/ui/shine'
 
 export const metadata = {
   title: 'Inicio',
@@ -100,7 +102,7 @@ function QuickAction({
   return (
     <Link
       href={href}
-      className="group flex items-center gap-3.5 rounded-2xl border border-border/70 bg-card p-4 shadow-card transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-premium"
+      className="group card-lift flex items-center gap-3.5 rounded-2xl border border-border/70 bg-card p-4 shadow-card hover:border-primary/30 active:scale-[0.98]"
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
         <Icon className="h-5 w-5" />
@@ -119,6 +121,9 @@ export default async function InicioCliente() {
   if (!user || !user.supabaseId) {
     redirect('/login')
   }
+
+  // MOB: el beneficio activo más reciente protagoniza el Home (falla en null).
+  const beneficio = await getBeneficioDisponible(user.metadata.clienteId)
 
   let memberships: Awaited<ReturnType<typeof getClienteAllMemberships>> = []
   let loadError = false
@@ -245,10 +250,46 @@ export default async function InicioCliente() {
         </div>
       </header>
 
-      {/* ── 2 · Hero banner: la campaña viva manda (rotativo, con contador) ── */}
+      {/* ── 2 · ACCIÓN PRINCIPAL: beneficio disponible — usar ahora ───────────
+           Jerarquía Mobile First: si el cliente tiene algo que puede usar HOY,
+           es lo primero que ve, con un CTA grande en la zona del pulgar. */}
+      {beneficio && (
+        <div className="animate-scale-in mb-6">
+          <Shine modo="loop" className="block rounded-3xl">
+            <PromoBanner
+              tono="brand"
+              size="hero"
+              eyebrow="🎁 Beneficio disponible"
+              titulo={beneficio.titulo}
+              descripcion={
+                <>
+                  {beneficio.empresa} ·{' '}
+                  {beneficio.usosRestantes === beneficio.usosIncluidos
+                    ? 'listo para estrenar'
+                    : `te quedan ${beneficio.usosRestantes} uso${beneficio.usosRestantes !== 1 ? 's' : ''}`}
+                </>
+              }
+            >
+              <Button
+                asChild
+                size="xl"
+                variant="glass"
+                className="w-full font-bold text-white sm:w-auto"
+              >
+                <Link href={`/cliente/mis-promociones/${beneficio.id}`}>
+                  Usar ahora
+                  <ArrowRight className="ml-1 h-4 w-4" aria-hidden />
+                </Link>
+              </Button>
+            </PromoBanner>
+          </Shine>
+        </div>
+      )}
+
+      {/* ── 3 · Hero banner: la campaña viva manda (rotativo, con contador) ── */}
       {!loadError && engagement.campanas && <CampanasVivas campanas={campanas} />}
 
-      {/* ── 3 · Vistazo rápido: contadores animados ─────────────────────────── */}
+      {/* ── 4 · Vistazo rápido: contadores animados ─────────────────────────── */}
       {!loadError && memberships.length > 0 && (
         <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <StatPill
@@ -336,7 +377,7 @@ export default async function InicioCliente() {
           {/* ── Acceso a la wallet (la pila completa vive en Mis membresías) ── */}
           <Link
             href="/mis-membresias"
-            className="group flex items-center gap-4 rounded-3xl border border-border/70 bg-card p-5 shadow-card transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-premium"
+            className="group card-lift animate-fade-up flex items-center gap-4 rounded-3xl border border-border/70 bg-card p-5 shadow-card hover:border-primary/30"
           >
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-teal-400 text-primary-foreground shadow-glow">
               <WalletCards className="h-6 w-6" aria-hidden />
@@ -350,8 +391,26 @@ export default async function InicioCliente() {
             <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground/50 transition group-hover:translate-x-0.5 group-hover:text-primary" />
           </Link>
 
+          {/* ── Invita y gana: siempre visible en el Home (crecimiento) ────── */}
+          <div className="animate-fade-up delay-100">
+            <PromoBanner
+              tono="celebracion"
+              eyebrow="Invita y gana"
+              titulo="Regala beneficios, gana premios"
+              descripcion="Comparte tu enlace: tus amigos reciben un regalo y tú acumulas recompensas."
+              media={<span className="text-4xl" aria-hidden>🎉</span>}
+            >
+              <Button asChild variant="glass" className="font-semibold text-white">
+                <Link href="/cliente/invita-y-gana">
+                  Invitar ahora
+                  <ArrowRight className="ml-1 h-4 w-4" aria-hidden />
+                </Link>
+              </Button>
+            </PromoBanner>
+          </div>
+
           {/* ── Accesos rápidos ───────────────────────────────────────────── */}
-          <section className="space-y-4">
+          <section className="animate-fade-up delay-150 space-y-4">
             <h2 className="text-h2 text-foreground">
               Accesos rápidos
             </h2>
