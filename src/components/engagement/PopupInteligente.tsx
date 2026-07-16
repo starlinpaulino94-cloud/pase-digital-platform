@@ -137,49 +137,73 @@ export function PopupInteligente({
   const Icon = cand.icon
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-end justify-center p-4 sm:items-center">
+    // SIEMPRE centrado en la pantalla (también en móvil): el aviso es el
+    // protagonista del momento, nunca un banner perdido abajo.
+    <div className="fixed inset-0 z-[95] flex items-center justify-center p-5">
       <button
-        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+        className="animate-fade-in absolute inset-0 bg-slate-950/65 backdrop-blur-sm"
         aria-label="Cerrar"
         onClick={cerrar}
       />
-      <style>{`
-        @keyframes popup-in { 0% { transform: translateY(16px) scale(0.98); opacity: 0 } 100% { transform: translateY(0) scale(1); opacity: 1 } }
-      `}</style>
+
+      {/* Entrada con rebote elástico (MMS · burst) + halo de marca que respira */}
       <div
-        className="relative z-10 w-full max-w-sm overflow-hidden rounded-3xl bg-card shadow-2xl"
-        style={{ animation: 'popup-in 0.35s cubic-bezier(0.16,1,0.3,1)' }}
+        className="animate-burst shine shine-loop relative z-10 w-full max-w-sm overflow-hidden rounded-3xl bg-card shadow-hero"
+        style={{ ['--glow-color' as string]: '255 255 255' }}
         role="dialog"
         aria-modal="true"
       >
+        {/* Barrido de luz continuo sobre toda la tarjeta (elemento vivo) */}
+        <span aria-hidden className="shine-sweep z-20" />
+
         <button
           onClick={cerrar}
           aria-label="Cerrar"
-          className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/5 text-muted-foreground transition hover:bg-black/10 dark:bg-white/10"
+          className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition hover:bg-white/30 active:scale-95"
         >
           <X className="h-4 w-4" />
         </button>
 
-        <div className="flex flex-col items-center px-6 pb-6 pt-8 text-center">
-          <span
-            className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-md"
-            style={{ background: `linear-gradient(135deg, ${accent}, ${accent}cc)` }}
-          >
-            <Icon className="h-8 w-8" />
-          </span>
-          <h2 className="text-xl font-extrabold text-foreground">{cand.titulo}</h2>
-          <p className="mt-1.5 text-sm text-muted-foreground">{cand.mensaje}</p>
+        {/* ── Cabecera hero con gradiente de la empresa ── */}
+        <div
+          className="relative overflow-hidden px-6 pb-14 pt-10 text-center"
+          style={{ background: `linear-gradient(140deg, ${accent}, ${accent}99 60%, ${accent}66)` }}
+        >
+          {/* Halos decorativos */}
+          <span aria-hidden className="pointer-events-none absolute -left-10 -top-12 h-40 w-40 rounded-full bg-white/20 blur-3xl" />
+          <span aria-hidden className="pointer-events-none absolute -bottom-16 -right-8 h-44 w-44 rounded-full bg-black/10 blur-3xl" />
+          {/* Destellos que laten en cascada */}
+          <span aria-hidden className="animate-pulse-glow absolute left-8 top-8 text-lg text-white/90">✦</span>
+          <span aria-hidden className="animate-pulse-glow delay-300 absolute right-12 top-14 text-xs text-white/80">✦</span>
+          <span aria-hidden className="animate-pulse-glow delay-500 absolute bottom-10 left-14 text-sm text-white/70">✦</span>
 
+          {/* Icono flotando con anillo de vidrio */}
+          <span className="animate-float relative mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-white/30 bg-white/20 text-white shadow-glow backdrop-blur-md">
+            <Icon className="h-10 w-10 drop-shadow" />
+          </span>
+        </div>
+
+        {/* ── Contenido: la tarjeta blanca "muerde" el gradiente ── */}
+        <div className="relative -mt-6 rounded-t-3xl bg-card px-6 pb-6 pt-6 text-center">
+          <h2 className="text-h2 text-foreground">{cand.titulo}</h2>
+          <p className="mx-auto mt-2 max-w-[30ch] text-sm leading-relaxed text-muted-foreground">
+            {cand.mensaje}
+          </p>
+
+          {/* CTA protagonista: grande, pulsando suavemente, en zona del pulgar */}
           <Link
             href={cand.ctaHref}
             onClick={cerrar}
-            className="mt-5 inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-5 py-3.5 text-base font-bold text-white shadow-lg transition hover:scale-[1.02]"
-            style={{ backgroundColor: accent }}
+            className="animate-pulse-soft mt-6 inline-flex min-h-13 w-full items-center justify-center gap-2 rounded-2xl px-5 text-base font-bold text-white shadow-floating transition-transform active:scale-[0.97]"
+            style={{ background: `linear-gradient(135deg, ${accent}, ${accent}d9)` }}
           >
             {cand.ctaTexto}
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-5 w-5" />
           </Link>
-          <button onClick={cerrar} className="mt-2 text-xs text-muted-foreground hover:underline">
+          <button
+            onClick={cerrar}
+            className="mt-3 py-1 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+          >
             Ahora no
           </button>
         </div>
