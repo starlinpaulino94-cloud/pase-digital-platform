@@ -18,7 +18,7 @@ import {
   Gauge,
 } from 'lucide-react'
 import { QRShareCard } from '@/components/qr/QRShareCard'
-import { ComprobanteForm } from '@/components/membresia/ComprobanteForm'
+import { OpcionesPago } from '@/components/membresia/OpcionesPago'
 import { Reveal } from '@/components/ui/reveal'
 import { formatMoney } from '@/lib/format'
 
@@ -79,6 +79,7 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
         },
         plan: true,
         planSolicitado: true,
+        metodoPago: { select: { tipo: true } },
       },
     })
   } catch (error) {
@@ -240,33 +241,26 @@ export default async function MembershipDetail({ params }: { params: Promise<{ m
               </div>
             )}
 
-            {metodosPago.length > 0 && (
-              <div className="mt-5 space-y-2">
-                <h3 className="text-sm font-medium text-foreground">Datos para el pago</h3>
-                {metodosPago.map((m) => (
-                  <div key={m.id} className="rounded-xl border border-border/60 bg-muted/30 p-3 text-sm">
-                    <p className="font-medium text-foreground">{m.nombre}</p>
-                    {m.titular && (
-                      <p className="text-muted-foreground">Titular: {m.titular}</p>
-                    )}
-                    {m.numeroCuenta && (
-                      <p className="text-muted-foreground">
-                        Cuenta: {m.numeroCuenta}
-                        {m.tipoCuenta ? ` (${m.tipoCuenta})` : ''}
-                      </p>
-                    )}
-                    {m.instrucciones && (
-                      <p className="mt-1 text-xs text-muted-foreground">{m.instrucciones}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
             <div className="mt-5">
-              <ComprobanteForm
+              <OpcionesPago
                 membershipId={membership.id}
-                metodosPago={metodosPago.map((m) => ({ id: m.id, nombre: m.nombre }))}
+                companyName={company.name}
+                transferencias={metodosPago
+                  .filter((m) => m.tipo === 'TRANSFERENCIA')
+                  .map((m) => ({
+                    id: m.id,
+                    nombre: m.nombre,
+                    titular: m.titular,
+                    numeroCuenta: m.numeroCuenta,
+                    tipoCuenta: m.tipoCuenta,
+                    instrucciones: m.instrucciones,
+                  }))}
+                presenciales={metodosPago
+                  .filter((m) => m.tipo === 'PRESENCIAL')
+                  .map((m) => ({ id: m.id, nombre: m.nombre, instrucciones: m.instrucciones }))}
+                avisoPresencialEnviado={
+                  membership.metodoPago?.tipo === 'PRESENCIAL' && !membership.comprobanteUrl
+                }
               />
             </div>
           </section>
