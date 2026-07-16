@@ -128,12 +128,9 @@ export function CampanasVivas({ campanas }: { campanas: CampanaViva[] }) {
   const [i, setI] = useState(0)
   const [pausado, setPausado] = useState(false)
   const n = campanas.length
+  // `idx` se deriva SIEMPRE con módulo: aunque cambie el nº de campañas, el
+  // índice renderizado nunca queda fuera de rango (sin efectos de corrección).
   const idx = n > 0 ? i % n : 0
-
-  // Si cambia el número de campañas, evita un índice fuera de rango.
-  useEffect(() => {
-    if (i >= n && n > 0) setI(0)
-  }, [i, n])
 
   // Auto-rotación (cada 6s), salvo movimiento reducido, pausa o una sola.
   useEffect(() => {
