@@ -53,6 +53,44 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 10px);
+
+  /* ── MDS · Escala de marca (Primary 50–900, esmeralda) ──────────────
+     Genera bg-primary-500, text-primary-700, etc. `--color-primary` (sin
+     número) sigue siendo el token SEMÁNTICO que cambia con el tema; la
+     escala numérica es fija y sirve para gradientes, ilustraciones y
+     estados que necesitan un tono exacto. */
+  --color-primary-50:  oklch(0.972 0.021 150);
+  --color-primary-100: oklch(0.940 0.045 150);
+  --color-primary-200: oklch(0.885 0.090 150);
+  --color-primary-300: oklch(0.815 0.140 150);
+  --color-primary-400: oklch(0.760 0.185 150);
+  --color-primary-500: oklch(0.723 0.219 150);
+  --color-primary-600: oklch(0.627 0.194 150);
+  --color-primary-700: oklch(0.527 0.154 150);
+  --color-primary-800: oklch(0.432 0.120 150);
+  --color-primary-900: oklch(0.350 0.090 150);
+
+  /* MDS · Escala secundaria (cyan del degradado del logo) */
+  --color-cyan-brand-300: oklch(0.855 0.105 200);
+  --color-cyan-brand-500: oklch(0.715 0.140 200);
+  --color-cyan-brand-700: oklch(0.550 0.115 200);
+
+  /* MDS · Superficies auxiliares */
+  --color-overlay: var(--overlay);
+  --color-skeleton: var(--skeleton);
+}
+
+@theme {
+  /* ── MDS · Motion tokens ────────────────────────────────────────────
+     duration-instant/fast/base/slow/hero + ease-out-expo/spring. Toda
+     animación nueva DEBE usar estos valores, no números sueltos. */
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 350ms;
+  --duration-hero: 500ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 :root {
@@ -102,6 +140,13 @@
   --input: oklch(0.914 0.005 264);
   --ring: oklch(0.527 0.154 150);
 
+  /* MDS · Superficies auxiliares */
+  --overlay: oklch(0.14 0.02 264 / 45%);
+  --skeleton: oklch(0.945 0.004 264);
+  --glass-surface: oklch(1 0 0 / 65%);
+  --glass-border: oklch(1 0 0 / 45%);
+  --glow-color: 34 197 94;
+
   /* Sidebar — deep navy (matches logo background) */
   --sidebar: oklch(0.14 0.035 260);
   --sidebar-foreground: oklch(0.80 0.010 260);
@@ -140,6 +185,13 @@
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 12%);
   --ring: oklch(0.723 0.219 150);
+
+  /* MDS · Superficies auxiliares (modo oscuro) */
+  --overlay: oklch(0.05 0 0 / 60%);
+  --skeleton: oklch(0.26 0.006 260);
+  --glass-surface: oklch(0.19 0.005 260 / 70%);
+  --glass-border: oklch(1 0 0 / 10%);
+
   --sidebar: oklch(0.12 0.004 260);
   --sidebar-foreground: oklch(0.80 0.010 260);
   --sidebar-primary: oklch(0.723 0.219 150);
@@ -402,6 +454,42 @@
       0 1px 2px rgb(15 23 42 / 0.04),
       0 4px 12px -2px rgb(15 23 42 / 0.06),
       0 12px 32px -8px rgb(15 23 42 / 0.08);
+  }
+
+  /* ── MDS · Sombras adicionales ──────────────────────────────────────
+     floating: FABs y elementos que flotan sobre contenido ·
+     hero: tarjetas protagonistas (wallet, hero banner) */
+  .shadow-floating {
+    box-shadow:
+      0 4px 12px rgb(15 23 42 / 0.10),
+      0 12px 40px -8px rgb(15 23 42 / 0.22);
+  }
+  .shadow-hero {
+    box-shadow:
+      0 2px 6px rgb(15 23 42 / 0.05),
+      0 16px 40px -8px rgb(15 23 42 / 0.14),
+      0 32px 80px -16px rgb(15 23 42 / 0.18);
+  }
+
+  /* MDS · Superficie de cristal completa (fondo + borde + blur en un paso).
+     Usar solo SOBRE imágenes o gradientes; sobre fondo plano usar bg-card. */
+  .glass-surface {
+    background: var(--glass-surface);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(16px) saturate(170%);
+    -webkit-backdrop-filter: blur(16px) saturate(170%);
+  }
+
+  /* MDS · Gradiente de marca de la app (esmeralda → cyan). El de la landing
+     (azul → cyan) ya existe como .text-gradient. */
+  .bg-gradient-brand {
+    background-image: linear-gradient(135deg, var(--color-primary-600), var(--color-cyan-brand-500));
+  }
+  .text-gradient-brand {
+    background: linear-gradient(135deg, var(--color-primary-600), var(--color-cyan-brand-500));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   /* Gradient text — matches MembeGo logo gradient */
