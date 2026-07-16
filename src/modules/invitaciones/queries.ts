@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { prisma } from '@/lib/prisma'
 
 export async function getCampanaActiva(companyId: string) {
@@ -16,8 +17,11 @@ export async function getCampanaActiva(companyId: string) {
  * Enlace corto personal /invitar/[code]: resuelve el código del cliente a la
  * campaña ACTIVA de su empresa (con la empresa incluida, para la landing y la
  * tarjeta OG). Devuelve también el ref normalizado para la atribución.
+ * React.cache: generateMetadata y la página lo llaman en el mismo request —
+ * una sola resolución (importa para el presupuesto de ~5 s del robot de
+ * WhatsApp).
  */
-export async function getCampanaPorCodigoInvitacion(code: string) {
+export const getCampanaPorCodigoInvitacion = cache(async (code: string) => {
   const clean = decodeURIComponent(code).trim()
   if (!clean) return null
 
@@ -50,9 +54,10 @@ export async function getCampanaPorCodigoInvitacion(code: string) {
   if (!campana) return null
 
   return { campana, ref: cliente.codigoCorto ?? cliente.codigoReferido }
-}
+})
 
-export async function getCampanaBySlug(slug: string) {
+// React.cache por el mismo motivo que getCampanaPorCodigoInvitacion.
+export const getCampanaBySlug = cache(async (slug: string) => {
   return prisma.campanaInvitacion.findUnique({
     where: { slug },
     include: {
@@ -61,7 +66,7 @@ export async function getCampanaBySlug(slug: string) {
       },
     },
   })
-}
+})
 
 export async function getProgresoCliente(campanaId: string, clienteId: string) {
   return prisma.invitacionProgreso.findUnique({

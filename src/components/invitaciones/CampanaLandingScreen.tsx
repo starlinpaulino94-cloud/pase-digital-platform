@@ -2,6 +2,7 @@ import { headers } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import type { getCampanaBySlug } from '@/modules/invitaciones/queries'
 import { registrarEventoCampana } from '@/modules/invitaciones/clienteActions'
+import { esBotDeVistaPrevia } from '@/lib/share/bots'
 import { normalizeInvitaContenido } from '@/lib/invitaContenido'
 import { CampanaLanding } from '@/components/invitaciones/CampanaLanding'
 
@@ -23,10 +24,17 @@ export async function CampanaLandingScreen({
   const expirada = campana.estado === 'FINALIZADA' || new Date(campana.fechaFin) < new Date()
   const abierta = campana.estado === 'ACTIVA' && !expirada
 
+  // Robots de vista previa (WhatsApp/Facebook/…): tienen ~5 s para leer la
+  // tarjeta, así que se les sirve la página SIN lookups extra ni registros de
+  // eventos (que además contaminarían el embudo con visitas no humanas).
+  const hdrs = await headers()
+  const userAgent = hdrs.get('user-agent') ?? ''
+  const esBot = esBotDeVistaPrevia(userAgent)
+
   // Personalización: "Juan quiere regalarte..." — nombre del invitante a
   // partir del código de referido (corto o largo). Nunca bloquea la landing.
   let invitanteNombre: string | null = null
-  if (refCode) {
+  if (refCode && !esBot) {
     const invitante = await prisma.cliente
       .findFirst({
         where: {
@@ -40,8 +48,6 @@ export async function CampanaLandingScreen({
   }
 
   // Contexto de auditoría de eventos: origen y dispositivo (spec Growth Engine).
-  const hdrs = await headers()
-  const userAgent = hdrs.get('user-agent') ?? ''
   const contexto = {
     slug: campana.slug,
     ...(refCode ? { refCode } : {}),
@@ -51,11 +57,14 @@ export async function CampanaLandingScreen({
   }
 
   // Embudo: la llegada con ref es el clic sobre un enlace compartido;
-  // la vista de landing se registra siempre (con o sin atribución).
-  if (refCode) {
-    await registrarEventoCampana(campana.id, 'ENLACE_ABIERTO', contexto)
+  // la vista de landing se registra siempre (con o sin atribución). Los
+  // robots no cuentan y no esperan la escritura.
+  if (!esBot) {
+    if (refCode) {
+      await registrarEventoCampana(campana.id, 'ENLACE_ABIERTO', contexto)
+    }
+    await registrarEventoCampana(campana.id, 'LANDING_VISTA', contexto)
   }
-  await registrarEventoCampana(campana.id, 'LANDING_VISTA', contexto)
 
   const beneficioInvitado = campana.beneficioInvitado as {
     tipo?: string

@@ -283,3 +283,86 @@ export async function enviarComprobante(
   revalidatePath('/cliente/pagos')
   return { success: true }
 }
+
+export interface PresencialState {
+  error?: string
+  success?: boolean
+}
+
+/**
+ * Pago presencial: el cliente avisa que pagará en la sucursal. No cambia el
+ * estado a PENDIENTE_PAGO (no hay comprobante que validar): queda en
+ * PENDIENTE con el método presencial registrado y una nota, y el encargado
+ * lo activa con "Confirmar pago" al recibir el dinero en el local.
+ */
+export async function avisarPagoPresencial(
+  _prev: PresencialState,
+  formData: FormData
+): Promise<PresencialState> {
+  const user = await getUser()
+  if (!user || user.metadata.role !== 'CLIENTE' || !user.metadata.clienteId) {
+    return { error: 'No autorizado.' }
+  }
+  if (!formSubmitLimiter(user.metadata.clienteId)) {
+    return { error: 'Demasiados intentos. Intenta de nuevo en unos minutos.' }
+  }
+
+  const membershipId = String(formData.get('membershipId') ?? '').trim()
+  const metodoPagoId = String(formData.get('metodoPagoId') ?? '').trim() || null
+  if (!membershipId) return { error: 'Membresía no especificada.' }
+
+  const membership = await prisma.membership.findUnique({
+    where: { id: membershipId },
+    include: { cliente: true },
+  })
+  if (!membership) return { error: 'Membresía no encontrada.' }
+  if (membership.clienteId !== user.metadata.clienteId) {
+    return { error: 'No autorizado.' }
+  }
+
+  const esCambioDePlan =
+    membership.estado === 'ACTIVA' && membership.planIdSolicitado != null
+  if (!esCambioDePlan && !['PENDIENTE', 'RECHAZADA'].includes(membership.estado)) {
+    return { error: 'Esta membresía no tiene un pago pendiente.' }
+  }
+
+  // El método (si viene) debe ser presencial, activo y de la misma empresa.
+  if (metodoPagoId) {
+    const metodo = await prisma.metodoPago.findFirst({
+      where: {
+        id: metodoPagoId,
+        companyId: membership.cliente.companyId,
+        tipo: 'PRESENCIAL',
+        activo: true,
+      },
+      select: { id: true },
+    })
+    if (!metodo) return { error: 'Método de pago no válido.' }
+  }
+
+  await prisma.membership.update({
+    where: { id: membershipId },
+    data: {
+      metodoPagoId,
+      comprobanteNota: 'El cliente pagará en la sucursal (pago presencial).',
+      ...(membership.estado === 'RECHAZADA'
+        ? { estado: 'PENDIENTE', rechazadoReason: null }
+        : {}),
+    },
+  })
+
+  await notificarAdmins(membership.cliente.companyId, {
+    // NUEVO_COMPROBANTE: mismo canal que la cola de validación de pagos (el
+    // enum NotifTipo vive en la BD; no ameritaba una migración).
+    tipo: 'NUEVO_COMPROBANTE',
+    titulo: 'Pago presencial anunciado',
+    mensaje: esCambioDePlan
+      ? `${membership.cliente.nombre} pagará su cambio de plan en la sucursal. Al recibir el pago, confírmalo para aplicarlo.`
+      : `${membership.cliente.nombre} pagará su membresía en la sucursal. Al recibir el pago, confírmalo para activarla.`,
+    href: `/admin/pagos`,
+  })
+
+  revalidatePath('/mis-membresias')
+  revalidatePath(`/membresia/${membershipId}`)
+  return { success: true }
+}
