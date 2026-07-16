@@ -144,7 +144,7 @@ export async function aceptarInvitacion(
   formData: FormData
 ): Promise<InvitacionState> {
   const { ipAddress } = await getRequestMeta()
-  if (!registerLimiter(ipAddress ?? 'unknown')) {
+  if (!(await registerLimiter(ipAddress ?? 'unknown'))) {
     return { error: 'Demasiados intentos. Espera unos minutos.' }
   }
 

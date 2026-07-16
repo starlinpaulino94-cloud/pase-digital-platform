@@ -63,7 +63,7 @@ export async function GET(
       esDuenno = sessionUser?.metadata.clienteId === growth.clienteId
     }
 
-    if (!esBot && !esDuenno && clickLimiter(`refclick:${ip}:${growth.id}`)) {
+    if (!esBot && !esDuenno && (await clickLimiter(`refclick:${ip}:${growth.id}`))) {
       await logReferralEvent({
         clienteId: growth.clienteId,
         companyId: growth.companyId,
@@ -117,7 +117,7 @@ export async function GET(
     esDuenno = sessionUser?.metadata.clienteId === cliente.id
   }
 
-  if (!esBot && !esDuenno && clickLimiter(`refclick:${ip}:${cliente.id}`)) {
+  if (!esBot && !esDuenno && (await clickLimiter(`refclick:${ip}:${cliente.id}`))) {
     await logReferralEvent({
       clienteId: cliente.id,
       companyId: cliente.companyId,

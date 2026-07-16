@@ -45,7 +45,7 @@ export async function registrarEmpresa(
   formData: FormData
 ): Promise<RegistroEmpresaState> {
   const meta = await getRequestMeta()
-  if (!registerLimiter(meta.ipAddress ?? 'unknown')) {
+  if (!(await registerLimiter(meta.ipAddress ?? 'unknown'))) {
     return { error: 'Demasiados intentos. Espera unos minutos e intenta de nuevo.' }
   }
 

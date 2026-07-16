@@ -42,7 +42,7 @@ export async function aprobarCompra(
   try {
     const user = await requireSection('pagos')
     if (!user) return { error: 'No autorizado.' }
-    if (!paymentLimiter(user.metadata.dbUserId ?? 'admin')) {
+    if (!(await paymentLimiter(user.metadata.dbUserId ?? 'admin'))) {
       return { error: 'Demasiadas operaciones. Espera un momento.' }
     }
 

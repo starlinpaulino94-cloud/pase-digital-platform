@@ -55,7 +55,7 @@ export async function abrirCaja(
 ): Promise<CajaActionState> {
   const auth = await staffAutorizado()
   if (!auth) return { error: 'No autorizado.' }
-  if (!formSubmitLimiter(`caja:${auth.userId}`)) {
+  if (!(await formSubmitLimiter(`caja:${auth.userId}`))) {
     return { error: 'Demasiados intentos. Espera un momento.' }
   }
 
@@ -181,7 +181,7 @@ export async function cobrarOrden(
 ): Promise<CajaActionState> {
   const auth = await staffAutorizado()
   if (!auth) return { error: 'No autorizado.' }
-  if (!formSubmitLimiter(`cobro:${auth.userId}`)) {
+  if (!(await formSubmitLimiter(`cobro:${auth.userId}`))) {
     return { error: 'Demasiados intentos. Espera un momento.' }
   }
 

@@ -25,7 +25,7 @@ export async function seleccionarPlan(
 
     // Rate limit form submissions to prevent spam
     const clientId = user.metadata.clienteId
-    if (!formSubmitLimiter(clientId)) {
+    if (!(await formSubmitLimiter(clientId))) {
       return { error: 'Demasiados intentos. Intenta de nuevo en unos minutos.' }
     }
 
@@ -131,7 +131,7 @@ export async function solicitarCambioPlan(
       return { error: 'No autorizado.' }
     }
 
-    if (!formSubmitLimiter(user.metadata.clienteId)) {
+    if (!(await formSubmitLimiter(user.metadata.clienteId))) {
       return { error: 'Demasiados intentos. Intenta de nuevo en unos minutos.' }
     }
 
@@ -201,7 +201,7 @@ export async function enviarComprobante(
 
   // Rate limit form submissions to prevent spam
   const clientId = user.metadata.clienteId
-  if (!formSubmitLimiter(clientId)) {
+  if (!(await formSubmitLimiter(clientId))) {
     return { error: 'Demasiados intentos. Intenta de nuevo en unos minutos.' }
   }
 
@@ -313,7 +313,7 @@ export async function avisarPagoPresencial(
   if (!user || user.metadata.role !== 'CLIENTE' || !user.metadata.clienteId) {
     return { error: 'No autorizado.' }
   }
-  if (!formSubmitLimiter(user.metadata.clienteId)) {
+  if (!(await formSubmitLimiter(user.metadata.clienteId))) {
     return { error: 'Demasiados intentos. Intenta de nuevo en unos minutos.' }
   }
 

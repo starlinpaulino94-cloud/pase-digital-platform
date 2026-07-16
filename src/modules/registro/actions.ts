@@ -75,7 +75,7 @@ export async function registrarCliente(
   // Rate limit server-side por IP: evita creación masiva de cuentas / spam.
   // El límite del navegador no cuenta como protección (se salta recargando).
   const { ipAddress } = await getRequestMeta()
-  if (!registerLimiter(ipAddress ?? 'unknown')) {
+  if (!(await registerLimiter(ipAddress ?? 'unknown'))) {
     return { error: 'Demasiados registros desde esta conexión. Intenta de nuevo en unos minutos.' }
   }
 
@@ -381,7 +381,7 @@ export async function registrarCuentaGeneral(
 ): Promise<RegistroState> {
   try {
     const { ipAddress } = await getRequestMeta()
-    if (!registerLimiter(ipAddress ?? 'unknown')) {
+    if (!(await registerLimiter(ipAddress ?? 'unknown'))) {
       return { error: 'Demasiados registros desde esta conexión. Intenta de nuevo en unos minutos.' }
     }
 

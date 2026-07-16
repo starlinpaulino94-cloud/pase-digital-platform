@@ -180,7 +180,7 @@ export async function completeGoogleOnboarding(
 
     // Mismo freno anti-abuso por IP que el registro por contraseña: la
     // creación de cuentas no debe ser más laxa solo por entrar con Google.
-    if (!registerLimiter(ipAddress ?? 'unknown')) return { kind: 'rate-limited' }
+    if (!(await registerLimiter(ipAddress ?? 'unknown'))) return { kind: 'rate-limited' }
 
     const nombre = name || email
     const result = await prisma.$transaction(async (tx) => {

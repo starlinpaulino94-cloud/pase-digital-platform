@@ -33,7 +33,9 @@ function constantTimeEqual(a: string, b: string): boolean {
   return timingSafeEqual(ha, hb)
 }
 
-export function checkBootstrapAccess(req: NextRequest): NextResponse | null {
+export async function checkBootstrapAccess(
+  req: NextRequest
+): Promise<NextResponse | null> {
   // 1. Debe estar explícitamente habilitado.
   if (process.env.BOOTSTRAP_ENABLED !== 'true') {
     return NextResponse.json({ error: 'No encontrado.' }, { status: 404 })
@@ -50,7 +52,7 @@ export function checkBootstrapAccess(req: NextRequest): NextResponse | null {
 
   // 3. Rate limit por IP antes de comparar el secreto.
   const ip = getClientIdentifier(req)
-  if (!bootstrapLimiter(`bootstrap:${ip}`)) {
+  if (!(await bootstrapLimiter(`bootstrap:${ip}`))) {
     return NextResponse.json(
       { error: 'Demasiados intentos. Intenta de nuevo más tarde.' },
       { status: 429 }

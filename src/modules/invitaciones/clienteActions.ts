@@ -28,7 +28,7 @@ export async function registrarShareCampana(
       return { ok: false }
     }
     const clienteId = user.metadata.clienteId as string
-    if (!shareLimiter(`campshare:${clienteId}`)) {
+    if (!(await shareLimiter(`campshare:${clienteId}`))) {
       return { ok: false }
     }
 
@@ -80,7 +80,7 @@ export async function registrarEventoCampana(
   try {
     const { ipAddress } = await getRequestMeta()
     const huella = hashIp(ipAddress) ?? 'anon'
-    if (!eventoLimiter(`campevento:${huella}`)) return
+    if (!(await eventoLimiter(`campevento:${huella}`))) return
 
     const campana = await prisma.campanaInvitacion.findUnique({
       where: { id: campanaId },

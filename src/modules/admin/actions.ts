@@ -51,7 +51,7 @@ export async function confirmarPago(
     if (!user) return { error: 'No autorizado.' }
 
     const adminId = user.metadata.dbUserId || 'anonymous'
-    const isAllowed = paymentLimiter(adminId)
+    const isAllowed = await paymentLimiter(adminId)
     if (!isAllowed) {
       return { error: 'Demasiados intentos. Intenta de nuevo en unos minutos.' }
     }
