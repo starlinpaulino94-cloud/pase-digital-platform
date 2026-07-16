@@ -85,13 +85,16 @@ export const typography = {
   },
 } as const
 
-/** Motion: duraciones (ms) y curvas. */
+/** Motion (MMS): duraciones (ms) y curvas. Espejo de los tokens CSS. */
 export const motion = {
-  duration: { instant: 100, fast: 150, base: 200, slow: 350, hero: 500 },
+  duration: { instant: 100, fast: 150, base: 200, slow: 350, hero: 500, celebration: 900 },
   easing: {
     outExpo: [0.16, 1, 0.3, 1],
+    inQuint: [0.64, 0, 0.78, 0],
+    inOut: [0.65, 0, 0.35, 1],
     spring: [0.34, 1.56, 0.64, 1],
-    standard: [0.4, 0, 0.2, 1],
+    bounce: [0.68, -0.55, 0.27, 1.55],
+    elastic: [0.5, 1.5, 0.5, 1],
   },
 } as const
 
