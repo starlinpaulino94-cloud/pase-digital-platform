@@ -43,6 +43,14 @@ export interface InvitaContenido {
   sinCampanaTitulo: string
   /** Texto cuando no hay ninguna campaña activa. */
   sinCampanaTexto: string
+  /** Compartir · título Open Graph (vacío = usar el título de la campaña). */
+  ogTitulo: string
+  /** Compartir · descripción Open Graph (vacío = usar la descripción). */
+  ogDescripcion: string
+  /** Compartir · imagen de la tarjeta 1200×630 (vacío = banner/imagen de la campaña). */
+  shareImagenUrl: string
+  /** CTA de la landing promocional. */
+  landingCta: string
 }
 
 export const INVITA_CONTENIDO_DEFAULT: InvitaContenido = {
@@ -61,6 +69,10 @@ export const INVITA_CONTENIDO_DEFAULT: InvitaContenido = {
   historialVacio: 'Aún nadie se ha registrado con tu enlace. ¡Compártelo y aparecerán aquí!',
   sinCampanaTitulo: 'Sin campañas activas',
   sinCampanaTexto: 'No hay campañas de invitación activas en este momento. Vuelve pronto.',
+  ogTitulo: '',
+  ogDescripcion: '',
+  shareImagenUrl: '',
+  landingCta: 'Quiero mi regalo',
 }
 
 /** Claves editables, en el orden en que se muestran en el editor. */
@@ -93,13 +105,50 @@ export const INVITA_CONTENIDO_CAMPOS: {
 ]
 
 /**
+ * Share Engine · campos de la sección "Compartir" del editor de campañas.
+ * Controlan la tarjeta enriquecida que ven WhatsApp/Facebook/Telegram/X al
+ * compartir el enlace, y el CTA de la landing. Se guardan en el mismo JSON
+ * `contenido` (sin migración de BD).
+ */
+export const INVITA_COMPARTIR_CAMPOS: {
+  key: keyof InvitaContenido
+  label: string
+  hint?: string
+  multiline?: boolean
+}[] = [
+  {
+    key: 'ogTitulo',
+    label: 'Título de la vista previa (Open Graph)',
+    hint: 'Lo que se lee en la tarjeta al compartir el enlace. Vacío = título de la campaña.',
+  },
+  {
+    key: 'ogDescripcion',
+    label: 'Descripción de la vista previa (Open Graph)',
+    hint: 'Texto persuasivo bajo el título de la tarjeta. Vacío = descripción de la campaña.',
+    multiline: true,
+  },
+  {
+    key: 'landingCta',
+    label: 'Botón de la landing (CTA)',
+    hint: 'El botón que revela el registro en la landing promocional.',
+  },
+]
+
+/** Claves que normaliza el módulo (textos del cliente + sección Compartir). */
+const TODAS_LAS_CLAVES: (keyof InvitaContenido)[] = [
+  ...INVITA_CONTENIDO_CAMPOS.map((c) => c.key),
+  ...INVITA_COMPARTIR_CAMPOS.map((c) => c.key),
+  'shareImagenUrl',
+]
+
+/**
  * Normaliza el contenido crudo. Cada campo ausente/vacío cae al texto por
  * defecto, así el módulo nunca queda con huecos aunque solo se edite una parte.
  */
 export function normalizeInvitaContenido(raw: unknown): InvitaContenido {
   const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
   const out = { ...INVITA_CONTENIDO_DEFAULT }
-  for (const { key } of INVITA_CONTENIDO_CAMPOS) {
+  for (const key of TODAS_LAS_CLAVES) {
     const v = o[key]
     if (typeof v === 'string' && v.trim()) out[key] = v.trim()
   }

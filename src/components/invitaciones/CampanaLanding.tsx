@@ -30,6 +30,8 @@ interface CampanaData {
   colorSecundario: string | null
   /** true = mostrar página de presentación; false = registro directo. */
   usarBanner: boolean
+  /** CTA del botón que revela el registro (configurable por campaña). */
+  cta: string
   abierta: boolean
   expirada: boolean
   beneficioInvitado: {
@@ -68,9 +70,13 @@ function useCountdown(fechaFin: string) {
   // primer render del cliente coinciden y no hay error de hidratación.
   const [time, setTime] = useState({ d: 0, h: 0, m: 0, s: 0, expired: false })
   useEffect(() => {
-    setTime(calc())
+    // Primer cálculo diferido (la regla de hooks prohíbe setState síncrono).
+    const t = setTimeout(() => setTime(calc()), 0)
     const id = setInterval(() => setTime(calc()), 1000)
-    return () => clearInterval(id)
+    return () => {
+      clearTimeout(t)
+      clearInterval(id)
+    }
   }, [calc])
   return time
 }
@@ -152,11 +158,9 @@ export function CampanaLanding({ campana, refCode, invitanteNombre }: Props) {
     if (!state.success) return
     const creds = credsRef.current
     if (!creds?.password) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRegistrado(true)
       return
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEntrando(true)
     ;(async () => {
       try {
@@ -487,7 +491,7 @@ export function CampanaLanding({ campana, refCode, invitanteNombre }: Props) {
               style={{ backgroundColor: primary }}
             >
               <Gift className="mr-2 h-6 w-6" />
-              Quiero mi regalo
+              {campana.cta}
             </Button>
           </div>
         )}

@@ -11,6 +11,7 @@ import {
 } from '@/modules/invitaciones/adminActions'
 import { CampanaImagenUpload } from '@/components/invitaciones/CampanaImagenUpload'
 import {
+  INVITA_COMPARTIR_CAMPOS,
   INVITA_CONTENIDO_CAMPOS,
   INVITA_CONTENIDO_DEFAULT,
   type InvitaContenido,
@@ -238,7 +239,7 @@ export function CampanaInvitacionForm({
           <input
             type="checkbox"
             name="usarBanner"
-            defaultChecked={existing?.usarBanner ?? false}
+            defaultChecked={existing?.usarBanner ?? true}
             className="mt-0.5 h-4 w-4 accent-primary"
           />
           <span className="text-sm">
@@ -300,6 +301,8 @@ export function CampanaInvitacionForm({
         </div>
       </div>
 
+      <CompartirModulo defaults={existing?.contenido ?? null} />
+
       <ContenidoModulo defaults={existing?.contenido ?? null} />
 
       <div className="flex justify-end gap-3">
@@ -312,6 +315,52 @@ export function CampanaInvitacionForm({
         </Button>
       </div>
     </form>
+  )
+}
+
+/**
+ * Share Engine · sección "Compartir": controla la tarjeta enriquecida que
+ * muestran WhatsApp/Facebook/Telegram/X al compartir el enlace de la campaña
+ * (título y descripción Open Graph) y el CTA de la landing. La imagen de la
+ * tarjeta es la "Imagen (compartir / OG)" de Apariencia.
+ */
+function CompartirModulo({ defaults }: { defaults: Partial<InvitaContenido> | null }) {
+  return (
+    <div className="space-y-5 rounded-xl border border-border p-5">
+      <div>
+        <h3 className="font-semibold text-foreground">Compartir · vista previa del enlace</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Así se ve la tarjeta cuando alguien comparte el enlace por WhatsApp, Facebook,
+          Telegram o X. Deja un campo vacío para usar el título y la descripción de la
+          campaña. La imagen es la “Imagen (compartir / OG)” de la sección Apariencia.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        {INVITA_COMPARTIR_CAMPOS.map((campo) => {
+          const name = `contenido_${campo.key}`
+          const value = defaults?.[campo.key] ?? ''
+          const placeholder = INVITA_CONTENIDO_DEFAULT[campo.key]
+          return (
+            <div key={campo.key} className="space-y-2">
+              <Label htmlFor={name}>{campo.label}</Label>
+              {campo.multiline ? (
+                <Textarea
+                  id={name}
+                  name={name}
+                  defaultValue={value}
+                  placeholder={placeholder}
+                  rows={2}
+                />
+              ) : (
+                <Input id={name} name={name} defaultValue={value} placeholder={placeholder} />
+              )}
+              {campo.hint && <p className="text-xs text-muted-foreground">{campo.hint}</p>}
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 

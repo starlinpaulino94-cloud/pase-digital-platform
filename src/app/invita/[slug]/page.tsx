@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getCampanaBySlug } from '@/modules/invitaciones/queries'
 import { absoluteUrl } from '@/lib/site'
+import { shareMetadata } from '@/lib/share/metadata'
+import { normalizeInvitaContenido } from '@/lib/invitaContenido'
 import { CampanaLandingScreen } from '@/components/invitaciones/CampanaLandingScreen'
 
 export const dynamic = 'force-dynamic'
@@ -16,29 +18,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const campana = await getCampanaBySlug(slug)
   if (!campana) return {}
 
-  const title = campana.titulo
-  const description = campana.descripcion
-  const url = absoluteUrl(`/invita/${slug}`)
+  // Share Engine: la config de "Compartir" del editor tiene prioridad sobre
+  // los datos base de la campaña. La imagen la genera opengraph-image.tsx de
+  // esta misma ruta (tarjeta de marca dinámica): Next inyecta solo og:image y
+  // twitter:image, así que NO se declara aquí para evitar duplicados.
+  const compartir = normalizeInvitaContenido(campana.contenido)
+  const title = compartir.ogTitulo || campana.titulo
 
-  // La imagen de vista previa la genera opengraph-image.tsx de esta misma ruta
-  // (tarjeta de marca dinámica). Next inyecta solo og:image y twitter:image, así
-  // que NO se declaran aquí para evitar duplicados o una URL que el crawler no
-  // pueda abrir.
   return {
-    title: `${title} — ${campana.company.name}`,
-    description,
-    openGraph: {
+    ...shareMetadata({
       title,
-      description,
-      url,
+      description: compartir.ogDescripcion || campana.descripcion,
+      url: absoluteUrl(`/invita/${slug}`),
       siteName: campana.company.name,
-      type: 'website',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-    },
+    }),
+    title: `${title} — ${campana.company.name}`,
   }
 }
 

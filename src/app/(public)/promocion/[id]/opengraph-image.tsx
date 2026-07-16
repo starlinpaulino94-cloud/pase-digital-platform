@@ -42,8 +42,9 @@ function MembeGoMark() {
   )
 }
 
-export default async function Image({ params }: { params: { id: string } }) {
-  const og = await getPromotionOg(params.id)
+export default async function Image({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const og = await getPromotionOg(id).catch(() => null)
 
   // Fallback: promoción no pública o inexistente → tarjeta de marca genérica.
   if (!og) {

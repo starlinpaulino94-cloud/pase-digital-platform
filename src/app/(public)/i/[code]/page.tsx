@@ -8,6 +8,7 @@ import { getGrowthConfig } from '@/modules/growth/config'
 import { evaluarRecompensasGrowth } from '@/modules/growth/rewards'
 import { logReferralEvent } from '@/lib/referidos'
 import { SITE_NAME } from '@/lib/site'
+import { shareMetadata } from '@/lib/share/metadata'
 import { CountdownTimer } from '@/components/growth/CountdownTimer'
 
 export const dynamic = 'force-dynamic'
@@ -24,15 +25,13 @@ export async function generateMetadata({ params }: InvitacionPageProps): Promise
   const beneficio = data.beneficio?.titulo ?? 'un beneficio exclusivo'
   const title = `${data.referente} te invita a ${data.empresa.name}`
   const description = `Acepta esta invitación y recibe ${beneficio} en ${data.empresa.name} · ${SITE_NAME}.`
-  const url = `/i/${data.code}`
-
-  return {
+  // Share Engine: la imagen la genera opengraph-image.tsx de esta ruta
+  // (tarjeta con el beneficio y quien invita).
+  return shareMetadata({
     title,
     description,
-    alternates: { canonical: url },
-    openGraph: { type: 'website', title, description, url, siteName: SITE_NAME },
-    twitter: { card: 'summary_large_image', title, description },
-  }
+    url: `/i/${data.code}`,
+  })
 }
 
 export default async function InvitacionPage({ params }: InvitacionPageProps) {

@@ -2,6 +2,7 @@ import { headers } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import type { getCampanaBySlug } from '@/modules/invitaciones/queries'
 import { registrarEventoCampana } from '@/modules/invitaciones/clienteActions'
+import { normalizeInvitaContenido } from '@/lib/invitaContenido'
 import { CampanaLanding } from '@/components/invitaciones/CampanaLanding'
 
 export type CampanaConEmpresa = NonNullable<Awaited<ReturnType<typeof getCampanaBySlug>>>
@@ -77,6 +78,7 @@ export async function CampanaLandingScreen({
         colorPrimario: campana.colorPrimario,
         colorSecundario: campana.colorSecundario,
         usarBanner: campana.usarBanner,
+        cta: normalizeInvitaContenido(campana.contenido).landingCta,
         abierta,
         expirada,
         beneficioInvitado: beneficioInvitado ?? null,

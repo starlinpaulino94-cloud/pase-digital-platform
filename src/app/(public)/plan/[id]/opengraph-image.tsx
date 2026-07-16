@@ -46,8 +46,9 @@ function MembeGoMark() {
   )
 }
 
-export default async function Image({ params }: { params: { id: string } }) {
-  const og = await getPlanOg(params.id)
+export default async function Image({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const og = await getPlanOg(id).catch(() => null)
 
   if (!og) {
     return new ImageResponse(
