@@ -46,7 +46,7 @@ export async function solicitarCompraPromocion(
   try {
     const user = await clienteAutenticado()
     if (!user) return { error: 'Inicia sesión como cliente para adquirir promociones.' }
-    if (!formSubmitLimiter(user.metadata.clienteId!)) {
+    if (!(await formSubmitLimiter(user.metadata.clienteId!))) {
       return { error: 'Demasiados intentos. Intenta de nuevo en unos minutos.' }
     }
 
@@ -163,7 +163,7 @@ export async function enviarComprobanteCompra(
   try {
     const user = await clienteAutenticado()
     if (!user) return { error: 'No autorizado.' }
-    if (!formSubmitLimiter(user.metadata.clienteId!)) {
+    if (!(await formSubmitLimiter(user.metadata.clienteId!))) {
       return { error: 'Demasiados intentos. Intenta de nuevo en unos minutos.' }
     }
 

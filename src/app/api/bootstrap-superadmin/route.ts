@@ -21,7 +21,7 @@ export const dynamic = 'force-dynamic'
  *    la variable) en Vercel cuando termines.
  */
 export async function POST(req: NextRequest) {
-  const denied = checkBootstrapAccess(req)
+  const denied = await checkBootstrapAccess(req)
   if (denied) return denied
 
   let body: { email?: string; password?: string; nombre?: string }

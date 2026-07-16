@@ -44,7 +44,8 @@ import { FeedNovedades } from '@/components/cliente/FeedNovedades'
 import { OnboardingClienteFirstVisit } from '@/components/cliente/OnboardingClienteFirstVisit'
 import { Button } from '@/components/ui/button'
 import { PromoBanner } from '@/components/ui/promo-banner'
-import { Shine } from '@/components/ui/shine'
+import { elegirExperienciaHero } from '@/modules/experience/engine'
+import { ExperienciaHero } from '@/components/engagement/ExperienciaHero'
 
 export const metadata = {
   title: 'Inicio',
@@ -217,6 +218,21 @@ export default async function InicioCliente() {
     ? differenceInDays(proximoVencimiento, now)
     : null
 
+  // MEE · El motor de experiencias elige el protagonista de la pantalla a
+  // partir de datos YA cargados (lógica pura, cero consultas extra).
+  const membresiaPendiente = memberships.find((m) =>
+    ['PENDIENTE', 'RECHAZADA'].includes(m.estado)
+  )
+  const experienciaHero = loadError
+    ? null
+    : elegirExperienciaHero({
+        momentos: momentos.momentos,
+        beneficio,
+        pagoPendiente: membresiaPendiente
+          ? { membresiaId: membresiaPendiente.id, planNombre: membresiaPendiente.plan.nombre }
+          : null,
+      })
+
 
   return (
     <main className="container max-w-5xl py-8 xl:max-w-6xl">
@@ -259,41 +275,11 @@ export default async function InicioCliente() {
         </div>
       </header>
 
-      {/* ── 2 · ACCIÓN PRINCIPAL: beneficio disponible — usar ahora ───────────
-           Jerarquía Mobile First: si el cliente tiene algo que puede usar HOY,
-           es lo primero que ve, con un CTA grande en la zona del pulgar. */}
-      {beneficio && (
-        <div className="animate-scale-in mb-6">
-          <Shine modo="loop" className="block rounded-3xl">
-            <PromoBanner
-              tono="brand"
-              size="hero"
-              eyebrow="🎁 Beneficio disponible"
-              titulo={beneficio.titulo}
-              descripcion={
-                <>
-                  {beneficio.empresa} ·{' '}
-                  {beneficio.usosRestantes === beneficio.usosIncluidos
-                    ? 'listo para estrenar'
-                    : `te quedan ${beneficio.usosRestantes} uso${beneficio.usosRestantes !== 1 ? 's' : ''}`}
-                </>
-              }
-            >
-              <Button
-                asChild
-                size="xl"
-                variant="glass"
-                className="w-full font-bold text-white sm:w-auto"
-              >
-                <Link href={`/cliente/mis-promociones/${beneficio.id}`}>
-                  Usar ahora
-                  <ArrowRight className="ml-1 h-4 w-4" aria-hidden />
-                </Link>
-              </Button>
-            </PromoBanner>
-          </Shine>
-        </div>
-      )}
+      {/* ── 2 · ACCIÓN PRINCIPAL: el Experience Engine decide (MEE) ───────────
+           Escalera de prioridad: por vencer (FlashPromotion con countdown) >
+           beneficio listo > pago pendiente > referidos nuevos. Nunca aleatorio;
+           nunca pantalla estática si hay algo accionable. */}
+      {experienciaHero && <ExperienciaHero exp={experienciaHero} />}
 
       {/* ── 3 · Hero banner: la campaña viva manda (rotativo, con contador) ── */}
       {!loadError && engagement.campanas && <CampanasVivas campanas={campanas} />}

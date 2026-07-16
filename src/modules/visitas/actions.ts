@@ -95,7 +95,7 @@ export async function buscarPorToken(token: string): Promise<LookupResult> {
     }
 
     const clientId = user.metadata.dbUserId || 'anonymous'
-    if (!qrScanLimiter(clientId)) {
+    if (!(await qrScanLimiter(clientId))) {
       return { error: 'Demasiadas búsquedas. Espera un momento e intenta de nuevo.', errorCode: 'RATE_LIMITED' }
     }
 

@@ -1,8 +1,26 @@
 import { LRUCache } from 'lru-cache'
 
+/**
+ * Rate limiting DISTRIBUIDO (auditoría Enterprise · punto 1).
+ *
+ * Con `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` configuradas, el
+ * límite se cuenta en Upstash Redis vía REST (ventana fija: pipeline atómico
+ * INCR + PEXPIRE NX) — un límite GLOBAL real entre todas las instancias
+ * serverless, sin dependencias nuevas (solo fetch).
+ *
+ * Sin esas variables (dev/preview) se usa el limitador local LRU de siempre.
+ * Si Redis falla en runtime: FAIL-OPEN al limitador local con un warn —
+ * preferimos disponibilidad a exactitud del límite; el freno por instancia
+ * sigue activo.
+ *
+ * La API es asíncrona: `const ok = await limiter(id)`.
+ */
+
 interface RateLimitConfig {
-  interval: number // Time window in milliseconds
-  maxRequests: number // Max requests per interval
+  interval: number // Ventana en milisegundos
+  maxRequests: number // Máximo de peticiones por ventana
+  /** Prefijo legible de la clave en Redis (debug/observabilidad). */
+  name?: string
 }
 
 interface RateLimitEntry {
@@ -11,68 +29,119 @@ interface RateLimitEntry {
 }
 
 const DEFAULT_CONFIG: RateLimitConfig = {
-  interval: 60 * 1000, // 1 minute
+  interval: 60 * 1000, // 1 minuto
   maxRequests: 10,
 }
 
-// Global rate limit store using LRU cache.
-//
-// LIMITACIÓN CONOCIDA (auditoría P2-6): este store vive en la memoria de CADA
-// instancia serverless. En Vercel con varias lambdas calientes, el límite real
-// es maxRequests × nº de instancias, y se reinicia en cada cold start. Sirve
-// como freno de ráfagas por instancia, NO como límite global exacto. Si se
-// necesita un límite estricto (anti-abuso), migrar a un store compartido
-// (Postgres/Upstash Redis).
+// ── Fallback local (por instancia) ───────────────────────────────────────────
 const rateLimitCache = new LRUCache<string, RateLimitEntry>({
-  max: 10000, // Max 10k unique identifiers in memory
-  ttl: 1000 * 60 * 60, // 1 hour TTL to prevent memory bloat
+  max: 10000,
+  ttl: 1000 * 60 * 60,
 })
 
+function checkLocal(key: string, config: RateLimitConfig): boolean {
+  const now = Date.now()
+  const entry = rateLimitCache.get(key)
+  if (!entry || now > entry.resetAt) {
+    rateLimitCache.set(key, { count: 1, resetAt: now + config.interval })
+    return true
+  }
+  if (entry.count < config.maxRequests) {
+    entry.count++
+    return true
+  }
+  return false
+}
+
+// ── Upstash Redis por REST (sin SDK) ─────────────────────────────────────────
+
+function upstashEnv(): { url: string; token: string } | null {
+  const url = process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  return url && token ? { url, token } : null
+}
+
+/**
+ * Ventana fija en Redis: la clave incluye el nº de ventana, INCR cuenta y
+ * PEXPIRE NX fija el TTL solo la primera vez. Un solo round-trip (pipeline).
+ */
+async function checkUpstash(
+  key: string,
+  config: RateLimitConfig,
+  env: { url: string; token: string }
+): Promise<boolean> {
+  const window = Math.floor(Date.now() / config.interval)
+  const redisKey = `rl:${key}:${window}`
+  const res = await fetch(`${env.url}/pipeline`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify([
+      ['INCR', redisKey],
+      // Doble TTL: cubre relojes desalineados entre ventana y expiración.
+      ['PEXPIRE', redisKey, String(config.interval * 2), 'NX'],
+    ]),
+    // El límite nunca debe colgar una acción: presupuesto corto.
+    signal: AbortSignal.timeout(1500),
+  })
+  if (!res.ok) throw new Error(`upstash ${res.status}`)
+  const data = (await res.json()) as Array<{ result?: number | string; error?: string }>
+  const primero = data[0]
+  if (!primero || primero.error !== undefined || primero.result === undefined) {
+    throw new Error(`upstash pipeline: ${primero?.error ?? 'sin resultado'}`)
+  }
+  return Number(primero.result) <= config.maxRequests
+}
+
+// ── API pública ───────────────────────────────────────────────────────────────
+
 export function createRateLimiter(config: RateLimitConfig = DEFAULT_CONFIG) {
-  return (identifier: string): boolean => {
-    const now = Date.now()
-    const entry = rateLimitCache.get(identifier)
-
-    if (!entry || now > entry.resetAt) {
-      // New or expired window
-      rateLimitCache.set(identifier, { count: 1, resetAt: now + config.interval })
-      return true
+  const prefix = config.name ?? 'rl'
+  return async (identifier: string): Promise<boolean> => {
+    const key = `${prefix}:${identifier}`
+    const env = upstashEnv()
+    if (!env) return checkLocal(key, config)
+    try {
+      return await checkUpstash(key, config, env)
+    } catch (e) {
+      // Fail-open al freno local: disponibilidad > exactitud del límite.
+      console.warn('[rate-limit] Redis no disponible; usando límite local:', e)
+      return checkLocal(key, config)
     }
-
-    // Within existing window
-    if (entry.count < config.maxRequests) {
-      entry.count++
-      return true
-    }
-
-    return false
   }
 }
 
-// Pre-configured rate limiters for common endpoints
+// Limitadores preconfigurados (misma semántica de siempre, ahora async)
 export const loginLimiter = createRateLimiter({
-  interval: 15 * 60 * 1000, // 15 minutes
-  maxRequests: 5, // 5 attempts per 15 minutes
+  interval: 15 * 60 * 1000,
+  maxRequests: 5,
+  name: 'login',
 })
 
 export const registerLimiter = createRateLimiter({
-  interval: 60 * 60 * 1000, // 1 hora
-  maxRequests: 10, // 10 registros por IP por hora
+  interval: 60 * 60 * 1000,
+  maxRequests: 10,
+  name: 'register',
 })
 
 export const qrScanLimiter = createRateLimiter({
-  interval: 1 * 60 * 1000, // 1 minute
-  maxRequests: 30, // 30 scans per minute (reasonable for busy location)
+  interval: 1 * 60 * 1000,
+  maxRequests: 30,
+  name: 'scan',
 })
 
 export const paymentLimiter = createRateLimiter({
-  interval: 60 * 1000, // 1 minute
-  maxRequests: 10, // 10 payment attempts per minute
+  interval: 60 * 1000,
+  maxRequests: 10,
+  name: 'payment',
 })
 
 export const formSubmitLimiter = createRateLimiter({
-  interval: 60 * 1000, // 1 minute
-  maxRequests: 20, // 20 form submissions per minute
+  interval: 60 * 1000,
+  maxRequests: 20,
+  name: 'form',
 })
 
 // Utility to get client identifier from request

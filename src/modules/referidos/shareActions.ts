@@ -22,7 +22,7 @@ export async function registrarShare(canal: string): Promise<{ ok: boolean }> {
     if (!user || user.metadata.role !== 'CLIENTE' || !user.metadata.clienteId) {
       return { ok: false }
     }
-    if (!shareLimiter(`share:${user.metadata.clienteId}`)) {
+    if (!(await shareLimiter(`share:${user.metadata.clienteId}`))) {
       return { ok: false }
     }
 
