@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { requireAdminUser, requireSection } from '@/lib/auth/guards'
 import { resolveCompanyId } from '@/lib/auth/company-context'
@@ -192,6 +192,8 @@ function revalidatePromos() {
   revalidatePath('/cliente/promociones')
   revalidatePath('/promociones')
   revalidatePath('/')
+  // Invalida la caché del marketplace público al instante (punto 2 Enterprise).
+  revalidateTag('marketplace', 'max')
 }
 
 /** Devuelve la promo solo si pertenece a la empresa del usuario (o superadmin). */

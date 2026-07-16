@@ -7,7 +7,7 @@ import {
   getCompanyPlanesPublic,
   getCompanyPostsPublic,
   getPromotionsPublic,
-} from '@/modules/marketplace/queries'
+} from '@/modules/marketplace/cached'
 import { getRegionalPrefs } from '@/modules/empresas/regional'
 import { getCompanyResenas } from '@/modules/resenas/queries'
 import { SITE_NAME } from '@/lib/site'

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight, QrCode, ShieldCheck, Sparkles } from 'lucide-react'
-import type { PlatformStats } from '@/modules/marketplace/queries'
+import type { PlatformStats } from '@/modules/marketplace/cached'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('es-DO').format(n)

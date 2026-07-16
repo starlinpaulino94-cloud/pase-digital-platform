@@ -7,7 +7,7 @@ import { CompanyGrid } from '@/components/public/CompanyGrid'
 import {
   getCompaniesPublic,
   getCategoriesPublic,
-} from '@/modules/marketplace/queries'
+} from '@/modules/marketplace/cached'
 
 interface EmpresasPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>

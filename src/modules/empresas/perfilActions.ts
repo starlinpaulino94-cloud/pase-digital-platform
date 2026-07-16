@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { requireAdminUser } from '@/lib/auth/guards'
 import { resolveCompanyId } from '@/lib/auth/company-context'
@@ -101,6 +101,7 @@ export async function actualizarPerfilPublico(
     revalidatePath('/admin/perfil')
     revalidatePath('/empresas', 'layout')
     revalidatePath('/')
+    revalidateTag('marketplace', 'max')
     return { success: true }
   } catch (e) {
     console.error('[perfil-empresa]', e)
@@ -139,6 +140,7 @@ export async function publicarMiEmpresa(
 
     revalidatePath('/admin/dashboard')
     revalidatePath('/empresas', 'layout')
+    revalidateTag('marketplace', 'max')
     revalidatePath('/')
     return { success: true }
   } catch (e) {

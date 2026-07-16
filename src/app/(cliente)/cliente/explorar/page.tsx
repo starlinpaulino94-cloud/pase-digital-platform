@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Search, Store } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
-import { getCompaniesPublic, getCategoriesPublic } from '@/modules/marketplace/queries'
+import { getCompaniesPublic, getCategoriesPublic } from '@/modules/marketplace/cached'
 import { getSeguidasIds } from '@/modules/social/queries'
 import { ExplorarEmpresasList } from '@/components/cliente/ExplorarEmpresasList'
 import { EmptyState } from '@/components/system/EmptyState'

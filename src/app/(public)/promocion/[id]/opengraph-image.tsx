@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og'
-import { getPromotionOg } from '@/modules/marketplace/queries'
+import { getPromotionOg } from '@/modules/marketplace/cached'
 import { originalImageResponse } from '@/lib/share/og'
 import { SITE_NAME } from '@/lib/site'
 
