@@ -219,7 +219,7 @@ export default async function InicioCliente() {
 
 
   return (
-    <main className="container max-w-5xl py-8">
+    <main className="container max-w-5xl py-8 xl:max-w-6xl">
       {/* Felicitación por encima de la app tras registrarse con auto-login */}
       <CelebracionBienvenida />
 
@@ -383,6 +383,9 @@ export default async function InicioCliente() {
         </div>
       ) : (
         <div className="space-y-10">
+          {/* ── Wallet + Invita y gana: lado a lado en desktop (DXS: más
+               contexto en el mismo alto de pantalla; apilados en móvil) ── */}
+          <div className="grid gap-4 lg:grid-cols-2 lg:items-stretch">
           {/* ── Acceso a la wallet (la pila completa vive en Mis membresías) ── */}
           <Link
             href="/mis-membresias"
@@ -399,6 +402,26 @@ export default async function InicioCliente() {
             </span>
             <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground/50 transition group-hover:translate-x-0.5 group-hover:text-primary" />
           </Link>
+
+          {/* ── Invita y gana: siempre visible en el Home (crecimiento) ────── */}
+          <div className="animate-fade-up delay-100">
+            <PromoBanner
+              tono="celebracion"
+              eyebrow="Invita y gana"
+              titulo="Regala beneficios, gana premios"
+              descripcion="Comparte tu enlace: tus amigos reciben un regalo y tú acumulas recompensas."
+              media={<span className="text-4xl" aria-hidden>🎉</span>}
+              className="h-full"
+            >
+              <Button asChild variant="glass" className="font-semibold text-white">
+                <Link href="/cliente/invita-y-gana">
+                  Invitar ahora
+                  <ArrowRight className="ml-1 h-4 w-4" aria-hidden />
+                </Link>
+              </Button>
+            </PromoBanner>
+          </div>
+          </div>
 
           {/* ── Empresas que sigo: carrusel horizontal (zona del pulgar) ───── */}
           {empresasSeguidas.length > 0 && (
@@ -444,24 +467,6 @@ export default async function InicioCliente() {
               </div>
             </section>
           )}
-
-          {/* ── Invita y gana: siempre visible en el Home (crecimiento) ────── */}
-          <div className="animate-fade-up delay-100">
-            <PromoBanner
-              tono="celebracion"
-              eyebrow="Invita y gana"
-              titulo="Regala beneficios, gana premios"
-              descripcion="Comparte tu enlace: tus amigos reciben un regalo y tú acumulas recompensas."
-              media={<span className="text-4xl" aria-hidden>🎉</span>}
-            >
-              <Button asChild variant="glass" className="font-semibold text-white">
-                <Link href="/cliente/invita-y-gana">
-                  Invitar ahora
-                  <ArrowRight className="ml-1 h-4 w-4" aria-hidden />
-                </Link>
-              </Button>
-            </PromoBanner>
-          </div>
 
           {/* ── Accesos rápidos ───────────────────────────────────────────── */}
           <section className="animate-fade-up delay-150 space-y-4">
