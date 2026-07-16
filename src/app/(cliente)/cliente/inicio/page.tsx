@@ -17,7 +17,14 @@ import {
 import { differenceInDays } from 'date-fns'
 import { getUser } from '@/lib/auth'
 import { getClienteAllMemberships, getBeneficioDisponible } from '@/modules/cliente/queries'
-import { getNovedadesInicio, getOnboardingCliente, getPromoFeed, type PromoFeed } from '@/modules/social/queries'
+import {
+  getMisEmpresas,
+  getNovedadesInicio,
+  getOnboardingCliente,
+  getPromoFeed,
+  type EmpresaSeguida,
+  type PromoFeed,
+} from '@/modules/social/queries'
 import { getMomentosVivos, type MomentosVivos as MomentosData } from '@/modules/engagement/momentos'
 import { getCampanasVivas, type CampanaViva } from '@/modules/engagement/campanas'
 import { getPruebaSocial, type PruebaSocial as PruebaSocialData } from '@/modules/engagement/pruebaSocial'
@@ -167,8 +174,9 @@ export default async function InicioCliente() {
   const cookieStore = await cookies()
   const onboardingSeen = cookieStore.has('membego_onboarding_seen')
 
-  // Feed de novedades, carruseles y onboarding (fallan en silencio: realce).
-  const [novedades, feed, onboarding] = user.metadata.dbUserId
+  // Feed de novedades, carruseles, empresas seguidas y onboarding
+  // (fallan en silencio: realce).
+  const [novedades, feed, onboarding, empresasSeguidas] = user.metadata.dbUserId
     ? await Promise.all([
         getNovedadesInicio(user.metadata.dbUserId),
         getPromoFeed(user.metadata.dbUserId).catch(
@@ -186,8 +194,9 @@ export default async function InicioCliente() {
           : getOnboardingCliente(user.metadata.dbUserId, user.supabaseId).catch(
               () => null
             ),
+        getMisEmpresas(user.metadata.dbUserId).catch((): EmpresaSeguida[] => []),
       ])
-    : [[], null, null]
+    : [[], null, null, [] as EmpresaSeguida[]]
 
   // Resumen para la cabecera (solo presentación, derivado de lo ya cargado).
   const now = new Date()
@@ -390,6 +399,51 @@ export default async function InicioCliente() {
             </span>
             <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground/50 transition group-hover:translate-x-0.5 group-hover:text-primary" />
           </Link>
+
+          {/* ── Empresas que sigo: carrusel horizontal (zona del pulgar) ───── */}
+          {empresasSeguidas.length > 0 && (
+            <section className="animate-fade-up delay-75 space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-h2 text-foreground">Empresas que sigo</h2>
+                <Link
+                  href="/cliente/empresas"
+                  className="text-xs font-semibold text-primary underline-offset-2 hover:underline"
+                >
+                  Ver todas
+                </Link>
+              </div>
+              <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
+                {empresasSeguidas.slice(0, 12).map((e) => (
+                  <Link
+                    key={e.followId}
+                    href={`/cliente/empresas/${e.company.slug}`}
+                    className="card-lift flex w-24 shrink-0 flex-col items-center gap-2 rounded-2xl border border-border/70 bg-card p-3 text-center shadow-card active:scale-[0.97]"
+                  >
+                    {e.company.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={e.company.logoUrl}
+                        alt=""
+                        className="h-12 w-12 rounded-xl object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary">
+                        {e.company.name.slice(0, 2).toUpperCase()}
+                      </span>
+                    )}
+                    <span className="line-clamp-2 text-[11px] font-medium leading-tight text-foreground">
+                      {e.company.name}
+                    </span>
+                    {e.company.activePromotionsCount > 0 && (
+                      <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary">
+                        {e.company.activePromotionsCount} promo{e.company.activePromotionsCount !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* ── Invita y gana: siempre visible en el Home (crecimiento) ────── */}
           <div className="animate-fade-up delay-100">
