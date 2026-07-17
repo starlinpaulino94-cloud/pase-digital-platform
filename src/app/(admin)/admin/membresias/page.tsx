@@ -4,6 +4,8 @@ import { requireRole } from '@/lib/auth/guards'
 import { companyFilter } from '@/modules/admin/queries'
 import { prisma } from '@/lib/prisma'
 import { MembresíasTable, type MembershipRow } from '@/components/admin/MembresíasTable'
+import type { PlanOption } from '@/components/admin/CambiarPlanDialog'
+import { formatMoney } from '@/lib/format'
 import type { MembershipEstado } from '@/types'
 
 export const dynamic = 'force-dynamic'
@@ -57,17 +59,32 @@ export default async function MembresiasPage({
       : undefined
 
   let memberships: MembershipRow[] = []
+  let planes: PlanOption[] = []
   try {
-    const data = await prisma.membership.findMany({
-      where: {
-        ...(companyId ? { cliente: { companyId } } : {}),
-        ...(estadoFilter ? { estado: estadoFilter } : {}),
-      },
-      include: { plan: true, cliente: true },
-      orderBy: { createdAt: 'desc' },
-      take: 200,
-    })
+    const [data, planesData] = await Promise.all([
+      prisma.membership.findMany({
+        where: {
+          ...(companyId ? { cliente: { companyId } } : {}),
+          ...(estadoFilter ? { estado: estadoFilter } : {}),
+        },
+        include: { plan: true, cliente: true },
+        orderBy: { createdAt: 'desc' },
+        take: 200,
+      }),
+      // Planes activos de la empresa para el cambio de plan directo por el
+      // admin (política: el cliente no puede cambiar su plan desde la app).
+      prisma.plan.findMany({
+        where: { ...(companyId ? { companyId } : {}), activo: true },
+        orderBy: [{ orden: 'asc' }, { precio: 'asc' }],
+        select: { id: true, nombre: true, precio: true },
+      }),
+    ])
     memberships = data as unknown as MembershipRow[]
+    planes = planesData.map((p) => ({
+      id: p.id,
+      nombre: p.nombre,
+      precioLabel: formatMoney(Number(p.precio)),
+    }))
   } catch (e) {
     console.error('[admin-membresias]', e)
   }
@@ -91,7 +108,7 @@ export default async function MembresiasPage({
         ))}
       </div>
 
-      <MembresíasTable data={memberships} />
+      <MembresíasTable data={memberships} planes={planes} />
     </div>
   )
 }

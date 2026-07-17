@@ -15,11 +15,7 @@ import {
   Zap,
   Calendar,
 } from 'lucide-react'
-import {
-  seleccionarPlan,
-  solicitarCambioPlan,
-  type SeleccionState,
-} from '@/modules/membresia/actions'
+import { seleccionarPlan, type SeleccionState } from '@/modules/membresia/actions'
 import { cn } from '@/lib/utils'
 import { formatMoney, type RegionalPrefs } from '@/lib/format'
 import { calcularDescuentoBienvenida } from '@/lib/bienvenida'
@@ -32,17 +28,6 @@ import { VehicleSelector } from '@/components/cliente/VehicleSelector'
 import { MobilePlanTabs } from '@/components/cliente/MobilePlanTabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
 
 export interface PlanItem {
   id: string
@@ -140,7 +125,6 @@ export function PlanesGrid({
   const router = useRouter()
   const init: SeleccionState = {}
   const [selectState, selectAction] = useActionState(seleccionarPlan, init)
-  const [changeState, changeAction] = useActionState(solicitarCambioPlan, init)
 
   // Vehículo activo → plan recomendado (null si ningún plan lo menciona).
   const [vehiculoId, setVehiculoId] = useState(vehiculos[0]?.id ?? '')
@@ -163,16 +147,12 @@ export function PlanesGrid({
   }
 
   useEffect(() => {
-    const st = selectState.success ? selectState : changeState.success ? changeState : null
-    if (st?.success && st.membershipId) {
-      toast.success(
-        hasActive ? 'Cambio solicitado. Sube tu comprobante.' : 'Plan seleccionado. Sube tu comprobante.'
-      )
-      router.push(`/membresia/${st.membershipId}`)
+    if (selectState.success && selectState.membershipId) {
+      toast.success('Plan seleccionado. Sube tu comprobante.')
+      router.push(`/membresia/${selectState.membershipId}`)
     }
     if (selectState.error) toast.error(selectState.error)
-    if (changeState.error) toast.error(changeState.error)
-  }, [selectState, changeState, hasActive, router])
+  }, [selectState, router])
 
   const tabs = planes.map((p) => {
     const { base, variante } = parseNombre(p.nombre)
@@ -380,45 +360,19 @@ export function PlanesGrid({
                       Cambio solicitado
                     </Button>
                   ) : hasActive ? (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          className={cn(
-                            'min-h-12 w-full font-bold text-white shadow-md transition hover:opacity-95',
-                            isUpgrade
-                              ? 'bg-amber-500 hover:bg-amber-500'
-                              : isDowngrade
-                                ? 'bg-sky-600 hover:bg-sky-600'
-                                : 'bg-foreground text-background hover:bg-foreground'
-                          )}
-                        >
-                          {isUpgrade && <ArrowUpCircle className="mr-2 h-4 w-4" />}
-                          {isDowngrade && <ArrowDownCircle className="mr-2 h-4 w-4" />}
-                          {isUpgrade ? 'Subir a este plan' : isDowngrade ? 'Bajar a este plan' : 'Cambiar de plan'}
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            Cambiar al plan {plan.nombre}
-                          </AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Tu plan actual seguirá activo. Para aplicar el cambio deberás
-                            subir el comprobante del nuevo plan ({formatMoney(plan.precio, prefs)}) y
-                            el equipo lo aprobará. ¿Continuar?
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <form action={changeAction}>
-                            <input type="hidden" name="planId" value={plan.id} />
-                            <AlertDialogAction type="submit">
-                              Sí, solicitar cambio
-                            </AlertDialogAction>
-                          </form>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    /* Política: con una membresía activa, el cambio de plan lo
+                       realiza ÚNICAMENTE el negocio desde su panel. Aquí el
+                       plan se muestra informativo, sin acción de cambio. */
+                    <div className="space-y-1.5">
+                      <Button disabled variant="outline" className="min-h-12 w-full">
+                        {isUpgrade && <ArrowUpCircle className="mr-2 h-4 w-4" />}
+                        {isDowngrade && <ArrowDownCircle className="mr-2 h-4 w-4" />}
+                        Disponible en el negocio
+                      </Button>
+                      <p className="text-center text-[11px] text-muted-foreground">
+                        Para cambiar a este plan, solicítalo en el local: el equipo lo aplica por ti.
+                      </p>
+                    </div>
                   ) : (
                     <form action={selectAction}>
                       <input type="hidden" name="planId" value={plan.id} />

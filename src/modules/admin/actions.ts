@@ -175,6 +175,97 @@ export async function aprobarCambioPlan(
   }
 }
 
+/**
+ * Cambio de plan DIRECTO por el negocio (política: el cliente no puede
+ * cambiar su plan desde la app; lo hace el administrador aquí). Aplica el
+ * nuevo plan de inmediato reiniciando período y usos, audita y notifica.
+ */
+export async function cambiarPlanDeMembresia(
+  _prev: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const user = await requireSection('membresias')
+    if (!user) return { error: 'No autorizado.' }
+
+    const membershipId = String(formData.get('membershipId') ?? '')
+    const planId = String(formData.get('planId') ?? '')
+    if (!planId) return { error: 'Selecciona el nuevo plan.' }
+
+    const membership = await assertOwnership(membershipId, user)
+    if (!membership) return { error: 'Membresía no encontrada.' }
+    if (membership.planId === planId) {
+      return { error: 'Ese ya es el plan actual de esta membresía.' }
+    }
+
+    const nuevoPlan = await prisma.plan.findUnique({ where: { id: planId } })
+    if (
+      !nuevoPlan ||
+      nuevoPlan.companyId !== membership.cliente.companyId ||
+      !nuevoPlan.activo
+    ) {
+      return { error: 'El plan seleccionado no es válido para esta empresa.' }
+    }
+
+    const now = new Date()
+    await prisma.membership.update({
+      where: { id: membership.id },
+      data: {
+        planId: nuevoPlan.id,
+        planIdSolicitado: null,
+        estado: 'ACTIVA',
+        pagoConfirmado: true,
+        montoPagado: nuevoPlan.precio,
+        fechaInicio: now,
+        fechaVencimiento: periodEnd(now, nuevoPlan.vigenciaDias),
+        lavadosRestantes: nuevoPlan.esIlimitado ? 0 : nuevoPlan.lavadosIncluidos,
+        rechazadoReason: null,
+      },
+    })
+
+    await prisma.auditLog.create({
+      data: {
+        companyId: membership.cliente.companyId,
+        userId: user.metadata.dbUserId ?? null,
+        accion: 'PAGO_APROBADO',
+        entidadTipo: 'Membership',
+        entidadId: membership.id,
+        payload: {
+          cambioDePlan: true,
+          cambioDirectoPorAdmin: true,
+          planAnterior: membership.planId,
+          planNuevo: nuevoPlan.id,
+          monto: Number(nuevoPlan.precio),
+        },
+      },
+    })
+
+    const clienteUser = await prisma.user.findUnique({
+      where: { supabaseId: membership.cliente.supabaseId },
+      select: { id: true },
+    })
+    if (clienteUser) {
+      await crearNotificacion({
+        userId: clienteUser.id,
+        tipo: 'PAGO_APROBADO',
+        titulo: 'Tu plan fue actualizado',
+        mensaje: `El negocio actualizó tu membresía al plan "${nuevoPlan.nombre}". Ya está activo.`,
+        href: '/mis-membresias',
+      })
+    }
+
+    revalidatePath('/admin/membresias')
+    revalidatePath('/admin/pagos')
+    revalidatePath('/admin/clientes')
+    revalidatePath('/mis-membresias')
+    revalidatePath('/cliente/planes')
+    return { success: true }
+  } catch (e) {
+    console.error('[admin] cambiarPlanDeMembresia error:', e)
+    return { error: 'Ocurrió un error inesperado. Intenta de nuevo.' }
+  }
+}
+
 /** Rechazar un cambio de plan: limpia la solicitud; el plan vigente no cambia. */
 export async function rechazarCambioPlan(
   _prev: AdminActionState,

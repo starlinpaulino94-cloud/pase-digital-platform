@@ -122,63 +122,20 @@ export async function seleccionarPlan(
  * cuando el admin aprueba el comprobante del nuevo plan. Así el cliente no pierde
  * acceso mientras se procesa el cambio.
  */
+/**
+ * POLÍTICA (deshabilitada por decisión de negocio): una vez adquirido el plan,
+ * el cliente NO puede cambiarlo desde la app. El cambio de plan lo realiza
+ * únicamente el negocio desde su panel (cambiarPlanDeMembresia en
+ * modules/admin/actions.ts). Se conserva la acción devolviendo un error claro
+ * como defensa en profundidad ante clientes/formularios antiguos.
+ */
 export async function solicitarCambioPlan(
   _prev: SeleccionState,
-  formData: FormData
+  _formData: FormData
 ): Promise<SeleccionState> {
-  try {
-    const user = await getUser()
-    if (!user || user.metadata.role !== 'CLIENTE' || !user.metadata.clienteId) {
-      return { error: 'No autorizado.' }
-    }
-
-    if (!(await formSubmitLimiter(user.metadata.clienteId))) {
-      return { error: 'Demasiados intentos. Intenta de nuevo en unos minutos.' }
-    }
-
-    const planId = String(formData.get('planId') ?? '')
-    if (!planId) return { error: 'Selecciona un plan.' }
-
-    const cliente = await prisma.cliente.findUnique({
-      where: { id: user.metadata.clienteId },
-    })
-    if (!cliente) return { error: 'Cliente no encontrado.' }
-
-    const plan = await prisma.plan.findUnique({ where: { id: planId } })
-    if (!plan || plan.companyId !== cliente.companyId || !plan.activo) {
-      return { error: 'Plan no válido para tu empresa.' }
-    }
-
-    const membership = await prisma.membership.findUnique({
-      where: {
-        clienteId_companyId: { clienteId: cliente.id, companyId: cliente.companyId },
-      },
-    })
-    if (!membership || membership.estado !== 'ACTIVA') {
-      return { error: 'No tienes una membresía activa para cambiar.' }
-    }
-    if (membership.planId === plan.id) {
-      return { error: 'Ese ya es tu plan actual.' }
-    }
-
-    await prisma.membership.update({
-      where: { id: membership.id },
-      data: { planIdSolicitado: plan.id },
-    })
-
-    await notificarAdmins(cliente.companyId, {
-      tipo: 'NUEVO_COMPROBANTE',
-      titulo: 'Solicitud de cambio de plan',
-      mensaje: `${cliente.nombre} solicitó cambiar al plan ${plan.nombre}. Falta su comprobante para aprobarlo.`,
-      href: '/admin/pagos',
-    })
-
-    revalidatePath('/mis-membresias')
-    revalidatePath('/cliente/planes')
-    return { success: true, membershipId: membership.id }
-  } catch (e) {
-    console.error('[membresia] solicitarCambioPlan error:', e)
-    return { error: 'Ocurrió un error inesperado. Intenta de nuevo.' }
+  return {
+    error:
+      'El cambio de plan lo gestiona el negocio. Solicítalo en el local y el equipo lo aplicará por ti.',
   }
 }
 
