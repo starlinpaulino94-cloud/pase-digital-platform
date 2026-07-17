@@ -9,14 +9,8 @@ import { prisma } from '@/lib/prisma'
  * beneficios activos + atribución de invitaciones).
  */
 
-export type MomentoTipo = 'REGALO' | 'VENCE' | 'INVITA'
+export type MomentoTipo = 'VENCE' | 'INVITA'
 
-export interface MomentoRegalo {
-  tipo: 'REGALO'
-  compraId: string
-  titulo: string
-  usosRestantes: number
-}
 export interface MomentoVence {
   tipo: 'VENCE'
   compraId: string
@@ -28,7 +22,7 @@ export interface MomentoInvita {
   tipo: 'INVITA'
   registrados: number
 }
-export type Momento = MomentoRegalo | MomentoVence | MomentoInvita
+export type Momento = MomentoVence | MomentoInvita
 
 export interface MomentosVivos {
   nombre: string | null
@@ -68,16 +62,10 @@ export async function getMomentosVivos(
 
     const momentos: Momento[] = []
 
-    // 🎁 Beneficio listo para usar (el más reciente con usos disponibles).
+    // El beneficio "listo para usar" lo resuelve `getBeneficioDisponible`
+    // (motor de experiencias); aquí solo se excluye esa misma compra de
+    // "por vencer" para no repetir la misma tarjeta dos veces.
     const regalo = activas.find((c) => c.usosRestantes > 0)
-    if (regalo) {
-      momentos.push({
-        tipo: 'REGALO',
-        compraId: regalo.id,
-        titulo: regalo.promocion?.titulo ?? 'Tu beneficio',
-        usosRestantes: regalo.usosRestantes,
-      })
-    }
 
     // ⏰ Beneficio que vence pronto (≤ 3 días), distinto del ya mostrado.
     const vence = activas
