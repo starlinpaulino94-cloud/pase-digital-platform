@@ -86,6 +86,7 @@ export default async function PlanesPage() {
       select: {
         id: true, nombre: true, precio: true, esIlimitado: true,
         descripcion: true, lavadosIncluidos: true, beneficios: true, vigenciaDias: true,
+        condiciones: true,
       },
       orderBy: { precio: 'asc' },
     })
@@ -103,6 +104,7 @@ export default async function PlanesPage() {
     lavadosIncluidos: p.lavadosIncluidos,
     beneficios: p.beneficios,
     vigenciaDias: p.vigenciaDias,
+    condiciones: p.condiciones,
   }))
 
   const membership = cliente.memberships[0] ?? null
@@ -142,7 +144,8 @@ export default async function PlanesPage() {
             : 'Elige tu plan ideal'}
         </h1>
         <p className="mt-2 max-w-xl text-muted-foreground">
-          Paga menos por lo que ya haces. Entra con tu QR y cambia de plan cuando quieras.
+          Paga menos por lo que ya haces. Aquí tienes cada plan con todos sus
+          detalles para decidir con calma.
         </p>
       </header>
 
@@ -238,7 +241,7 @@ export default async function PlanesPage() {
             </span>
             <span className="inline-flex items-center gap-1.5">
               <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-              Cambia de plan cuando quieras
+              Sin contratos ni permanencia
             </span>
           </div>
         </>
