@@ -166,14 +166,9 @@ export default async function InicioCliente() {
             >
               {(momentos.nombre ?? 'M').trim().slice(0, 2).toUpperCase()}
             </span>
-            <div className="min-w-0">
-              <h1 className="text-h1 truncate text-foreground">
-                {momentos.nombre ? `¡Hola, ${momentos.nombre.split(' ')[0]}!` : '¡Hola! 👋'}
-              </h1>
-              <p className="truncate text-xs text-muted-foreground">
-                Tus beneficios, siempre contigo
-              </p>
-            </div>
+            <h1 className="text-h1 min-w-0 truncate text-foreground">
+              {momentos.nombre ? `¡Hola, ${momentos.nombre.split(' ')[0]}!` : '¡Hola! 👋'}
+            </h1>
           </div>
           <div className="flex items-center gap-2">
             {gamificacion && (
@@ -252,7 +247,10 @@ export default async function InicioCliente() {
       {/* ── Descubre más: invita y gana + novedades, al final ── */}
       {!loadError && (
         <div className="mt-10">
-          <DescubreMas novedades={novedades} />
+          <DescubreMas
+            novedades={novedades}
+            mostrarInvitaYGana={heroExp?.tipo !== 'REFERIDOS'}
+          />
         </div>
       )}
     </main>

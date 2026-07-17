@@ -153,7 +153,7 @@ function candidatoReferidos(momentos: Momento[]): ExperienciaHero | null {
     urgencia: 'baja',
     eyebrow: '🎉 ¡Está funcionando!',
     titulo: `${invita.registrados} amigo${invita.registrados !== 1 ? 's' : ''} ya se registró con tu enlace`,
-    descripcion: 'Sigue compartiendo y acumula más recompensas.',
+    descripcion: '',
     ctaTexto: 'Ver mis recompensas',
     ctaHref: '/cliente/invita-y-gana',
     tono: 'celebracion',
