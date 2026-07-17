@@ -8,12 +8,18 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DeleteSucursalButton } from '@/components/admin/DeleteSucursalButton'
+import { ensureSucursalPrincipal } from '@/modules/empresas/sucursalPrincipal'
 
 export const dynamic = 'force-dynamic'
 
 export default async function SucursalesPage() {
   const user = await requireRole(ADMIN_ROLES)
   const companyId = companyFilter(user)
+
+  // Self-heal para empresas creadas antes de la sucursal automática: al
+  // entrar aquí, si no hay ninguna, se crea la principal con los datos de
+  // la empresa (sin sucursal la Caja no puede cobrar).
+  if (companyId) await ensureSucursalPrincipal(companyId)
 
   let sucursales: {
     id: string; nombre: string; direccion: string | null; telefono: string | null;

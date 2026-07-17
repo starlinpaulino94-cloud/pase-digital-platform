@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ensureEmailIdentity } from '@/lib/supabase/identity'
+import { ensureSucursalPrincipal } from '@/modules/empresas/sucursalPrincipal'
 
 export interface ActionState {
   error?: string
@@ -100,6 +101,11 @@ export async function crearEmpresa(
       },
     })
     companyId = company.id
+
+    // Sucursal principal automática con los datos recién capturados: la
+    // mayoría de las empresas tiene un solo local y sin sucursal la Caja
+    // no puede cobrar.
+    await ensureSucursalPrincipal(company.id)
 
     // Categorías de marketplace (relación many-to-many).
     const categoryIds = formData

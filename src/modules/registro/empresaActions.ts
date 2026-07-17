@@ -7,6 +7,7 @@ import { registerLimiter } from '@/lib/rate-limit'
 import { getRequestMeta } from '@/lib/server-utils'
 import { TERMS_VERSION } from '@/lib/legal'
 import { isEmailVerificationEnabled, sendVerificationEmail } from '@/lib/auth/emailVerification'
+import { ensureSucursalPrincipal } from '@/modules/empresas/sucursalPrincipal'
 
 // F5.1: registro self-service de empresas (B2B). La empresa se crea
 // DESPUBLICADA (isPublished: false): no aparece en el marketplace hasta
@@ -93,6 +94,11 @@ export async function registrarEmpresa(
       },
     })
     companyId = company.id
+
+    // Toda empresa nace con su sucursal principal: la mayoría tiene un solo
+    // local y sin sucursal la Caja no puede cobrar. La dirección/teléfono se
+    // completan solos cuando el dueño los registre en el onboarding.
+    await ensureSucursalPrincipal(company.id)
 
     const verificarCorreo = isEmailVerificationEnabled()
     const { data: created, error: createError } =

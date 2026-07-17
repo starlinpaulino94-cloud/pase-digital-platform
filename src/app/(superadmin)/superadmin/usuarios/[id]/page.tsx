@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
 import { prisma } from '@/lib/prisma'
 import { UsuarioStaffForm } from '@/components/superadmin/UsuarioStaffForm'
+import { EliminarCuentaButton } from '@/components/superadmin/EliminarCuentaButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -66,6 +67,22 @@ export default async function EditarUsuarioStaffPage({
         }}
         companies={companies}
       />
+
+      {/* Zona de peligro: eliminación definitiva (solo superadmin) */}
+      <div className="rounded-2xl border border-destructive/25 bg-destructive/5 p-5">
+        <h2 className="text-sm font-semibold text-foreground">Zona de peligro</h2>
+        <p className="mt-1 mb-4 text-sm text-muted-foreground">
+          Elimina la cuenta y su acceso a la plataforma. Si el usuario abrió
+          sesiones de caja, la eliminación se bloquea para proteger los
+          registros contables.
+        </p>
+        <EliminarCuentaButton
+          tipo="usuario"
+          id={usuario.id}
+          nombre={usuario.name}
+          redirectTo="/superadmin/usuarios"
+        />
+      </div>
     </div>
   )
 }

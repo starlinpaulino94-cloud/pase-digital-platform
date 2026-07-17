@@ -39,6 +39,8 @@ export interface ResumenSesion {
     monto: number
     metodoCobro: string | null
     createdAt: Date
+    /** true = ya tiene impresión original (la siguiente sale como COPIA). */
+    impresa: boolean
   }[]
 }
 
@@ -55,6 +57,7 @@ export async function getResumenSesion(cajaSesionId: string): Promise<ResumenSes
       snapshot: true,
       createdAt: true,
       cliente: { select: { nombre: true } },
+      _count: { select: { impresiones: true } },
     },
   })
 
@@ -79,6 +82,7 @@ export async function getResumenSesion(cajaSesionId: string): Promise<ResumenSes
         monto: Number(c.monto ?? 0),
         metodoCobro: c.metodoCobro,
         createdAt: c.createdAt,
+        impresa: c._count.impresiones > 0,
       }
     }),
   }

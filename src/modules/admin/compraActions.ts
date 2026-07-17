@@ -13,6 +13,7 @@ import { getRequestMeta } from '@/lib/server-utils'
 import { paymentLimiter } from '@/lib/rate-limit'
 import { crearNotificacion } from '@/modules/notificaciones/service'
 import { activarCompraPromocion } from '@/modules/pagos/activacionCompra'
+import { registrarVentaConfirmada } from '@/modules/pagos/venta'
 import { registrarTransicionCompra } from '@/modules/promociones/compra'
 
 export interface CompraAdminState {
@@ -26,7 +27,11 @@ async function assertCompraOwnership(
 ) {
   const compra = await prisma.productoCompra.findUnique({
     where: { id: compraId },
-    include: { cliente: true, promocion: { select: { titulo: true } } },
+    include: {
+      cliente: true,
+      promocion: { select: { titulo: true, precio: true } },
+      sucursalPago: { select: { id: true, nombre: true } },
+    },
   })
   if (!compra) return null
   if (user.metadata.role !== 'SUPERADMIN' && compra.companyId !== user.metadata.companyId) {
@@ -53,6 +58,23 @@ export async function aprobarCompra(
     const meta = await getRequestMeta()
     const res = await activarCompraPromocion(compra.id, user.metadata.dbUserId ?? null, meta)
     if (!res.ok) return { error: res.error }
+
+    // Venta oficial de la compra aprobada: ticket + factura imprimible
+    // (mismo cierre de hueco que confirmarPago de membresías).
+    await registrarVentaConfirmada({
+      companyId: compra.companyId,
+      clienteId: compra.clienteId,
+      clienteNombre: compra.cliente.nombre,
+      empleadoId: user.metadata.dbUserId ?? null,
+      detalle: `Promoción ${compra.promocion?.titulo ?? ''}`.trim(),
+      monto: Number(compra.precioCongelado ?? compra.promocion?.precio ?? 0),
+      metodoCobro: compra.comprobanteUrl != null ? 'TRANSFERENCIA' : 'OTRO',
+      metodoCobroLabel:
+        compra.comprobanteUrl != null ? 'Transferencia' : 'Confirmado por el negocio',
+      sucursalId: compra.sucursalPago?.id ?? null,
+      sucursalNombre: compra.sucursalPago?.nombre ?? null,
+      auditoria: meta,
+    })
 
     revalidatePath('/admin/pagos')
     revalidatePath('/admin/promociones')
