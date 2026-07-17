@@ -8,18 +8,24 @@ import { FlashPromotion } from '@/components/ui/flash-promotion'
 import { PromoBanner } from '@/components/ui/promo-banner'
 import { Shine } from '@/components/ui/shine'
 import { Button } from '@/components/ui/button'
+import { CampanaBanner } from '@/components/engagement/CampanaBanner'
 
 /**
- * MEE · Renderer del motor de experiencias: traduce la urgencia decidida por
- * `elegirExperienciaHero` a la pieza visual correspondiente (MMS):
+ * MEE · Renderer del motor de experiencias: traduce la decisión de
+ * `elegirExperiencias` a la pieza visual correspondiente (MMS):
  *
- *  - ALTA  → FlashPromotion: countdown, barra de tiempo que se agota, glow
- *            que respira, shine y CTA pulsante (estilo Temu).
- *  - MEDIA → PromoBanner hero con barrido de Shine y CTA glass.
- *  - BAJA  → PromoBanner estándar (celebración sin estridencia).
+ *  - CAMPANA → banner con el branding propio de la campaña (CampanaBanner).
+ *  - ALTA    → FlashPromotion: countdown, barra de tiempo que se agota, glow
+ *              que respira, shine y CTA pulsante (estilo Temu).
+ *  - MEDIA   → PromoBanner hero con barrido de Shine y CTA glass.
+ *  - BAJA    → PromoBanner estándar (celebración sin estridencia).
  */
 export function ExperienciaHero({ exp }: { exp: Experiencia }) {
   const router = useRouter()
+
+  if (exp.tipo === 'CAMPANA') {
+    return <CampanaBanner exp={exp} />
+  }
 
   if (exp.urgencia === 'alta' && exp.hasta) {
     return (
@@ -31,7 +37,7 @@ export function ExperienciaHero({ exp }: { exp: Experiencia }) {
           hasta={exp.hasta}
           ctaLabel={exp.ctaTexto}
           onCta={() => router.push(exp.ctaHref)}
-          tono={exp.tono === 'brand' ? 'brand' : 'hot'}
+          tono={exp.tono}
         />
       </div>
     )
