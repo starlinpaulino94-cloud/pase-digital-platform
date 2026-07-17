@@ -8,6 +8,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getRequestMeta, periodEnd } from '@/lib/server-utils'
 import { crearNotificacion } from '@/modules/notificaciones/service'
 import { activarMembresia } from '@/modules/pagos/activacion'
+import { registrarVentaConfirmada } from '@/modules/pagos/venta'
 import { paymentLimiter } from '@/lib/rate-limit'
 import { ensureEmailIdentity } from '@/lib/supabase/identity'
 import { INVITABLE_ROLES, type AppRole } from '@/types'
@@ -62,8 +63,48 @@ export async function confirmarPago(
     const membership = await assertOwnership(membershipId, user)
     if (!membership) return { error: 'Membresía no encontrada.' }
 
+    // Datos del cobro ANTES de activar (la activación aplica el cambio de
+    // plan y limpia planIdSolicitado): plan efectivo, descuento y método.
+    const extras = await prisma.membership.findUnique({
+      where: { id: membershipId },
+      select: {
+        planSolicitado: { select: { nombre: true, precio: true } },
+        metodoPago: { select: { tipo: true, nombre: true } },
+        sucursalPago: { select: { id: true, nombre: true } },
+      },
+    })
+    const esCambio = membership.estado === 'ACTIVA' && membership.planIdSolicitado != null
+    const planCobrado = esCambio ? extras?.planSolicitado : membership.plan
+    const descuento = membership.fechaInicio == null ? Number(membership.descuentoBienvenida ?? 0) : 0
+    const monto = Math.max(0, Number(planCobrado?.precio ?? 0) - descuento)
+    const esTransferencia =
+      extras?.metodoPago?.tipo === 'TRANSFERENCIA' ||
+      (!extras?.metodoPago && membership.comprobanteUrl != null)
+
     const result = await activarMembresia(membershipId, user.metadata.dbUserId ?? null, meta)
     if (!result.ok) return { error: result.error }
+
+    // Venta oficial del cobro confirmado: ticket + factura imprimible.
+    // Antes este camino activaba sin dejar Transaction y el pago quedaba
+    // fuera de la facturación (solo la caja generaba ticket).
+    await registrarVentaConfirmada({
+      companyId: membership.cliente.companyId,
+      clienteId: membership.cliente.id,
+      clienteNombre: membership.cliente.nombre,
+      empleadoId: user.metadata.dbUserId ?? null,
+      detalle: `${esCambio ? 'Cambio a ' : 'Plan '}${planCobrado?.nombre ?? ''}`.trim(),
+      monto,
+      metodoCobro: esTransferencia ? 'TRANSFERENCIA' : 'OTRO',
+      metodoCobroLabel: esTransferencia
+        ? 'Transferencia'
+        : extras?.metodoPago?.tipo === 'PRESENCIAL'
+          ? 'Pago en el local'
+          : 'Confirmado por el negocio',
+      sucursalId: extras?.sucursalPago?.id ?? null,
+      sucursalNombre: extras?.sucursalPago?.nombre ?? null,
+      membershipId: membership.id,
+      auditoria: meta,
+    })
 
     const clienteUser = await prisma.user.findUnique({
       where: { supabaseId: result.supabaseId },
@@ -149,6 +190,28 @@ export async function aprobarCambioPlan(
           monto: Number(nuevoPlan.precio),
         },
       },
+    })
+
+    // Venta oficial del cambio cobrado: ticket + factura imprimible.
+    const sucursalPago = membership.sucursalPagoId
+      ? await prisma.sucursal.findUnique({
+          where: { id: membership.sucursalPagoId },
+          select: { id: true, nombre: true },
+        })
+      : null
+    await registrarVentaConfirmada({
+      companyId: membership.cliente.companyId,
+      clienteId: membership.cliente.id,
+      clienteNombre: membership.cliente.nombre,
+      empleadoId: user.metadata.dbUserId ?? null,
+      detalle: `Cambio a ${nuevoPlan.nombre}`,
+      monto: Number(nuevoPlan.precio),
+      metodoCobro: membership.comprobanteUrl != null ? 'TRANSFERENCIA' : 'OTRO',
+      metodoCobroLabel:
+        membership.comprobanteUrl != null ? 'Transferencia' : 'Confirmado por el negocio',
+      sucursalId: sucursalPago?.id ?? null,
+      sucursalNombre: sucursalPago?.nombre ?? null,
+      membershipId: membership.id,
     })
 
     const clienteUser = await prisma.user.findUnique({
@@ -238,6 +301,19 @@ export async function cambiarPlanDeMembresia(
           monto: Number(nuevoPlan.precio),
         },
       },
+    })
+
+    // Venta oficial del cambio aplicado: ticket + factura imprimible.
+    await registrarVentaConfirmada({
+      companyId: membership.cliente.companyId,
+      clienteId: membership.cliente.id,
+      clienteNombre: membership.cliente.nombre,
+      empleadoId: user.metadata.dbUserId ?? null,
+      detalle: `Cambio a ${nuevoPlan.nombre}`,
+      monto: Number(nuevoPlan.precio),
+      metodoCobro: 'OTRO',
+      metodoCobroLabel: 'Aplicado por el negocio',
+      membershipId: membership.id,
     })
 
     const clienteUser = await prisma.user.findUnique({

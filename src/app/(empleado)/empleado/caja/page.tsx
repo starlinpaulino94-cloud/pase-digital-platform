@@ -12,6 +12,8 @@ import {
   CerrarCajaForm,
   OrdenCobroCard,
 } from '@/components/caja/CajaForms'
+import { FacturaPrintDialog } from '@/components/facturas/FacturaPrintDialog'
+import { ensureSucursalPrincipal } from '@/modules/empresas/sucursalPrincipal'
 import { Banknote, Clock, Store, User as UserIcon } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -48,7 +50,15 @@ export default async function CajaPage({
   }
 
   const { q = '' } = await searchParams
-  const sucursales = await getSucursalesActivas(companyId)
+  let sucursales = await getSucursalesActivas(companyId)
+
+  // Self-heal para empresas creadas antes de la sucursal automática: sin
+  // sucursal la caja no puede abrir, así que se crea la principal con los
+  // datos de la empresa la primera vez que el staff entra aquí.
+  if (sucursales.length === 0) {
+    await ensureSucursalPrincipal(companyId)
+    sucursales = await getSucursalesActivas(companyId)
+  }
 
   // Sesión abierta de la empresa (la primera entre sus sucursales).
   const sesion = await prisma.cajaSesion.findFirst({
@@ -165,7 +175,8 @@ export default async function CajaPage({
         )}
       </section>
 
-      {/* Últimos cobros del turno */}
+      {/* Últimos cobros del turno · cada cobro imprime su comprobante aquí
+          mismo (58/80 mm, Carta o A4), sin pasar por el panel admin. */}
       {resumen.ultimos.length > 0 && (
         <section className="rounded-3xl border border-border/70 bg-card p-5">
           <h2 className="mb-3 text-sm font-semibold text-foreground">Últimos cobros del turno</h2>
@@ -178,11 +189,18 @@ export default async function CajaPage({
                     {c.detalle} · <code className="font-mono">{c.codigo}</code>
                   </p>
                 </div>
-                <div className="shrink-0 text-right">
-                  <p className="font-semibold tabular-nums text-foreground">{fmtRD(c.monto)}</p>
-                  <p className="text-[10px] uppercase text-muted-foreground">
-                    {c.metodoCobro ?? ''} · {fmtHora(c.createdAt)}
-                  </p>
+                <div className="flex shrink-0 items-center gap-3">
+                  <div className="text-right">
+                    <p className="font-semibold tabular-nums text-foreground">{fmtRD(c.monto)}</p>
+                    <p className="text-[10px] uppercase text-muted-foreground">
+                      {c.metodoCobro ?? ''} · {fmtHora(c.createdAt)}
+                    </p>
+                  </div>
+                  <FacturaPrintDialog
+                    transactionId={c.id}
+                    yaImpresa={c.impresa}
+                    triggerLabel={c.impresa ? 'Reimprimir' : 'Imprimir'}
+                  />
                 </div>
               </div>
             ))}

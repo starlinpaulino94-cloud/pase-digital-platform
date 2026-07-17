@@ -4,6 +4,7 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { requireAdminUser } from '@/lib/auth/guards'
 import { resolveCompanyId } from '@/lib/auth/company-context'
+import { ensureSucursalPrincipal } from '@/modules/empresas/sucursalPrincipal'
 
 // F4.1: la empresa administra su propio perfil público del marketplace.
 // Solo puede tocar campos de presentación — nunca isActive/isPublished/
@@ -97,6 +98,10 @@ export async function actualizarPerfilPublico(
           ]
         : []),
     ])
+
+    // La dirección/teléfono recién guardados completan la sucursal principal
+    // auto-creada (solo campos vacíos; nunca pisa ediciones del admin).
+    await ensureSucursalPrincipal(companyId)
 
     revalidatePath('/admin/perfil')
     revalidatePath('/empresas', 'layout')
