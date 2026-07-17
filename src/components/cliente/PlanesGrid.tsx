@@ -38,6 +38,7 @@ export interface PlanItem {
   lavadosIncluidos: number
   beneficios: string[]
   vigenciaDias: number
+  condiciones: string | null
 }
 
 interface Props {
@@ -88,27 +89,24 @@ function SubmitButton({
   )
 }
 
-/**
- * Destello premium MUY lento (8s) que recorre la tarjeta recomendada para
- * captar la atención con elegancia, sin molestar.
- */
-function ShineCard() {
+/** Micro-etiqueta de sección: estructura editorial, sin color. */
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span
-      aria-hidden
-      className="animate-shimmer pointer-events-none absolute inset-0 z-10 rounded-3xl bg-[linear-gradient(110deg,transparent_38%,rgba(255,255,255,0.16)_50%,transparent_62%)] bg-[length:200%_100%] [animation-duration:8s]"
-    />
+    <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/70">
+      {children}
+    </p>
   )
 }
 
 /**
- * Grid de planes rediseñado (Stripe/Apple):
- * - Cabecera contextual: recomendación automática según el vehículo del
- *   cliente (VehicleSelector si tiene varios).
- * - Smart dimming: el plan recomendado destaca; el resto baja a opacity-65
- *   con transición suave (siguen 100% comprables y accesibles).
- * - Precios en tipografía sobria (text-foreground), sin degradados llamativos:
- *   el gradiente de marca queda solo para el badge recomendado y el CTA.
+ * Grid de planes — rediseño premium sobrio (Apple/Stripe):
+ * - UNA sola paleta: neutros de la tarjeta + el foreground como único acento.
+ *   Nada de degradados, verdes ni amarillos compitiendo por atención.
+ * - Ficha COMPLETA del plan: precio, usos y vigencia, beneficios íntegros,
+ *   descripción sin recortar y condiciones/restricciones. Las tarjetas crecen
+ *   lo que haga falta (items-stretch iguala alturas por fila en desktop).
+ * - Recomendación por vehículo: se señala con un anillo y una pastilla
+ *   monocroma; el resto baja sutilmente de opacidad (siguen comprables).
  * - Tabs móviles: en teléfono se ve una tarjeta a la vez.
  */
 export function PlanesGrid({
@@ -226,26 +224,24 @@ export function PlanesGrid({
                 // Tabs móviles: solo la tarjeta activa es visible en teléfono.
                 tabId === plan.id ? 'flex' : 'hidden md:flex',
                 isCurrent
-                  ? 'border-success/40 ring-2 ring-success/20'
+                  ? 'border-foreground/25 ring-1 ring-foreground/10'
                   : isRecommended
-                    ? 'z-10 border-transparent shadow-premium ring-2 ring-primary/35 lg:-translate-y-2'
+                    ? 'z-10 border-foreground/20 shadow-premium ring-1 ring-foreground/15 lg:-translate-y-1.5'
                     : 'border-border/70 hover:-translate-y-1 hover:shadow-premium',
-                isDimmed && 'opacity-65 hover:opacity-100'
+                isDimmed && 'opacity-70 hover:opacity-100'
               )}
             >
-              {isRecommended && <ShineCard />}
-
-              {/* Badges de estado */}
+              {/* Badges de estado — monocromos, sin gritar */}
               {isCurrent && (
                 <div className="absolute right-4 top-4 z-20">
-                  <Badge className="gap-1 bg-success/15 text-success hover:bg-success/15">
+                  <Badge variant="outline" className="gap-1 border-foreground/20 bg-card text-foreground">
                     <Check className="h-3 w-3" /> Tu plan
                   </Badge>
                 </div>
               )}
               {isRecommended && (
                 <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2">
-                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-b-xl bg-gradient-to-r from-primary to-teal-400 px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-primary-foreground shadow-glow">
+                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-b-xl bg-foreground px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-background">
                     <Sparkles className="h-3 w-3" />
                     {vehiculo && recomendadoId
                       ? `Para tu ${titleCase(vehiculo.modelo)}`
@@ -254,9 +250,9 @@ export function PlanesGrid({
                 </div>
               )}
 
-              <div className={cn('relative flex flex-1 flex-col p-6', isRecommended && 'pt-10')}>
-                {/* 1 · Cabecera: nombre + variante + precio sobrio */}
-                <div className="mb-5">
+              <div className={cn('relative flex flex-1 flex-col p-6 sm:p-7', isRecommended && 'pt-10')}>
+                {/* 1 · Cabecera: nombre + variante + precio */}
+                <div className="mb-6">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-lg font-extrabold leading-tight tracking-tight text-foreground">
                       {base}
@@ -267,7 +263,7 @@ export function PlanesGrid({
                       </span>
                     )}
                     {plan.esIlimitado && (
-                      <span className="inline-flex rounded-md bg-warning/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-warning-foreground">
+                      <span className="inline-flex rounded-md bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                         Ilimitado
                       </span>
                     )}
@@ -286,52 +282,80 @@ export function PlanesGrid({
                       <span className="text-sm font-medium text-muted-foreground">/mes</span>
                     </div>
                     {precioPorUso != null && (
-                      <p className="mt-1.5 inline-flex items-center gap-1 text-xs font-bold text-success">
-                        <Zap className="h-3.5 w-3.5 fill-current" />
-                        Sale a {formatMoney(precioPorUso, prefs)} por uso
+                      <p className="mt-1.5 text-xs font-medium text-muted-foreground">
+                        Equivale a {formatMoney(precioPorUso, prefs)} por uso
                       </p>
                     )}
                     {descuento > 0 && (
-                      <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
+                      <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1 text-xs font-semibold text-foreground">
                         <Gift className="h-3.5 w-3.5" />
-                        −{formatMoney(descuento, prefs)} bienvenida
+                        −{formatMoney(descuento, prefs)} de bienvenida
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* 2 · Métricas de vigencia: pastillas ultra-limpias */}
-                <div className="mb-5 flex gap-2 border-y border-border/50 py-3.5">
-                  <span className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-muted/60 px-3 py-1.5 text-xs font-semibold text-muted-foreground">
-                    <Zap className="h-3.5 w-3.5" />
-                    {plan.esIlimitado ? 'Usos ilimitados' : `${plan.lavadosIncluidos} usos`}
-                  </span>
-                  <span className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-muted/60 px-3 py-1.5 text-xs font-semibold text-muted-foreground">
-                    <Calendar className="h-3.5 w-3.5" />
-                    {plan.vigenciaDias} días
-                  </span>
+                {/* 2 · Incluye: usos y vigencia, en limpio */}
+                <div className="mb-6 grid grid-cols-2 gap-2 border-y border-border/50 py-4">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted/70">
+                      <Zap className="h-4 w-4 text-foreground/70" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold leading-tight text-foreground">
+                        {plan.esIlimitado ? 'Ilimitados' : plan.lavadosIncluidos}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">usos incluidos</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted/70">
+                      <Calendar className="h-4 w-4 text-foreground/70" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold leading-tight text-foreground">
+                        {plan.vigenciaDias} días
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">de vigencia</p>
+                    </div>
+                  </div>
                 </div>
 
-                {/* 3 · Lo que incluye el servicio (sin repetir usos/ahorro) */}
-                {beneficios.length > 0 && (
-                  <ul className="mb-4 space-y-2.5">
-                    {beneficios.map((b) => (
-                      <li key={b} className="flex items-start gap-2.5 text-sm text-foreground/80">
-                        <span className="mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full bg-success/12">
-                          <Check className="h-3 w-3 text-success" />
-                        </span>
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
+                {/* 3 · Descripción COMPLETA (antes se cortaba a 2 líneas) */}
+                {plan.descripcion && (
+                  <div className="mb-6">
+                    <SectionLabel>Descripción</SectionLabel>
+                    <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/75">
+                      {plan.descripcion}
+                    </p>
+                  </div>
                 )}
 
-                {/* Modelos compatibles: referencia secundaria, ya no es la única
-                    forma de saber si el auto cabe (la recomendación es automática). */}
-                {plan.descripcion && (
-                  <p className="mb-4 line-clamp-2 text-xs leading-relaxed text-muted-foreground/80">
-                    {plan.descripcion}
-                  </p>
+                {/* 4 · Beneficios íntegros */}
+                {beneficios.length > 0 && (
+                  <div className="mb-6">
+                    <SectionLabel>Beneficios</SectionLabel>
+                    <ul className="space-y-2.5">
+                      {beneficios.map((b) => (
+                        <li key={b} className="flex items-start gap-2.5 text-sm leading-relaxed text-foreground/80">
+                          <span className="mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full border border-foreground/15">
+                            <Check className="h-2.5 w-2.5 text-foreground/70" />
+                          </span>
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* 5 · Condiciones y restricciones del plan, sin esconder nada */}
+                {plan.condiciones && (
+                  <div className="mb-6">
+                    <SectionLabel>Condiciones</SectionLabel>
+                    <p className="whitespace-pre-line text-xs leading-relaxed text-muted-foreground">
+                      {plan.condiciones}
+                    </p>
+                  </div>
                 )}
 
                 {/* Aviso explícito de compatibilidad (a11y: visible y legible,
@@ -377,11 +401,12 @@ export function PlanesGrid({
                     <form action={selectAction}>
                       <input type="hidden" name="planId" value={plan.id} />
                       <SubmitButton
+                        variant={isRecommended ? 'default' : 'outline'}
                         className={cn(
-                          'min-h-12 w-full font-bold shadow-md transition hover:opacity-95',
+                          'min-h-12 w-full font-bold transition hover:opacity-95',
                           isRecommended
-                            ? 'bg-gradient-to-r from-primary to-teal-400 text-primary-foreground shadow-glow'
-                            : 'bg-foreground text-background hover:bg-foreground'
+                            ? 'bg-foreground text-background shadow-md hover:bg-foreground'
+                            : 'border-foreground/25 text-foreground'
                         )}
                       >
                         Seleccionar este plan
