@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { differenceInDays } from 'date-fns'
 import { QrCode, ChevronRight, Infinity as InfinityIcon, Clock, Shield } from 'lucide-react'
+import { membresiaEstadoUi } from '@/lib/estados'
 
 interface MembershipCardProps {
   membership: {
@@ -25,15 +26,6 @@ interface MembershipCardProps {
     lavadosRestantes: number
     qrToken: { id: string; token: string } | null
   }
-}
-
-const ESTADO_LABEL: Record<string, string> = {
-  ACTIVA: 'Activa',
-  PENDIENTE: 'Pendiente',
-  PENDIENTE_PAGO: 'Esperando pago',
-  VENCIDA: 'Vencida',
-  CANCELADA: 'Cancelada',
-  RECHAZADA: 'Rechazada',
 }
 
 export function MembershipCard({ membership }: MembershipCardProps) {
@@ -61,7 +53,7 @@ export function MembershipCard({ membership }: MembershipCardProps) {
     }
   }
 
-  const estadoLabel = ESTADO_LABEL[membership.estado] ?? membership.estado
+  const estadoLabel = membresiaEstadoUi(membership.estado).labelCliente
 
   return (
     <Link href={`/membresia/${membership.id}`} className="group block">

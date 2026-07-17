@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
 import { getClienteVisitas, type HistorialVisitas } from '@/modules/cliente/queries'
+import { formatDate } from '@/lib/format'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -20,10 +21,7 @@ export const dynamic = 'force-dynamic'
 const PAGE_SIZE = 20
 
 function fmtDateTime(d: Date) {
-  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo',
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(d)
+  return formatDate(d, undefined, { dateStyle: 'medium', timeStyle: 'short' })
 }
 
 export default async function HistorialPage({

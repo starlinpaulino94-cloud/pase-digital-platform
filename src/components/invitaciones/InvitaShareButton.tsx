@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useTransition } from 'react'
 import { Share2, Copy, Check } from 'lucide-react'
-import { toast } from 'sonner'
 import { registrarShareCampana } from '@/modules/invitaciones/clienteActions'
 import { Button } from '@/components/ui/button'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 
 interface Props {
   campanaId: string
@@ -25,7 +25,7 @@ export function InvitaShareButton({
   ctaCompartir = 'Compartir ahora',
   ctaCopiar = 'Copiar enlace',
 }: Props) {
-  const [copied, setCopied] = useState(false)
+  const { copied, copy } = useCopyToClipboard()
   const [, startTransition] = useTransition()
 
   const track = (canal: string) => {
@@ -48,15 +48,8 @@ export function InvitaShareButton({
   }
 
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(url)
-      setCopied(true)
-      toast.success('Enlace copiado')
-      track('copy')
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      toast.error('No se pudo copiar')
-    }
+    const ok = await copy(url, { successMessage: 'Enlace copiado', errorMessage: 'No se pudo copiar' })
+    if (ok) track('copy')
   }
 
   return (

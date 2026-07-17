@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { prisma } from '@/lib/prisma'
+import { generarCodigo } from '@/lib/codes'
 import type { ReferralEventTipo } from '@prisma/client'
 
 /**
@@ -121,17 +122,6 @@ export function calcularLogros(stats: {
   ]
 }
 
-// Alfabeto sin caracteres confundibles (0/O, 1/I/L).
-const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
-
-function randomCode(len = 6): string {
-  let out = ''
-  for (let i = 0; i < len; i++) {
-    out += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)]
-  }
-  return out
-}
-
 /**
  * Devuelve el código corto del cliente para /r/XXXXXX, generándolo la primera
  * vez (con reintentos ante colisión).
@@ -144,7 +134,7 @@ export async function ensureCodigoCorto(clienteId: string): Promise<string> {
   if (cliente?.codigoCorto) return cliente.codigoCorto
 
   for (let intento = 0; intento < 5; intento++) {
-    const code = randomCode(6)
+    const code = generarCodigo(6)
     try {
       await prisma.cliente.update({
         where: { id: clienteId },

@@ -13,8 +13,8 @@ import {
   Facebook,
   Twitter,
 } from 'lucide-react'
-import { toast } from 'sonner'
 import { registrarShare } from '@/modules/referidos/shareActions'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { QRDisplay } from '@/components/qr/QRDisplay'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,7 +32,7 @@ interface Props {
 }
 
 export function ReferralShareCard({ url, companyName }: Props) {
-  const [copied, setCopied] = useState(false)
+  const { copied, copy } = useCopyToClipboard()
   const [qrOpen, setQrOpen] = useState(false)
 
   // El texto SIN el enlace se usa en el share nativo (la URL va aparte en
@@ -47,10 +47,7 @@ export function ReferralShareCard({ url, companyName }: Props) {
   }
 
   async function copiar() {
-    await navigator.clipboard.writeText(url)
-    setCopied(true)
-    toast.success('Enlace copiado.')
-    setTimeout(() => setCopied(false), 2000)
+    await copy(url, { successMessage: 'Enlace copiado.' })
   }
 
   async function compartirNativo() {

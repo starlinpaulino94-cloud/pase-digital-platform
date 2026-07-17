@@ -122,3 +122,14 @@ export const ROUTE_PROTECTION: { prefix: string; roles: AppRole[] }[] = [
   { prefix: '/mis-membresias', roles: ['CLIENTE'] },
   { prefix: '/membresia', roles: ['CLIENTE'] },
 ]
+
+/** Etiqueta corta de cada rol de staff, para selects/badges administrativos. */
+export const ROL_STAFF_LABEL: Record<string, string> = {
+  ADMINISTRADOR: 'Administrador',
+  GERENTE: 'Gerente',
+  CAJERO: 'Cajero',
+  RECEPCION: 'Recepción',
+  MARKETING: 'Marketing',
+  SUPERVISOR: 'Supervisor',
+  EMPLEADO: 'Empleado',
+}

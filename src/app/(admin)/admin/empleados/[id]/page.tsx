@@ -4,13 +4,14 @@ import { notFound } from 'next/navigation'
 import { requireRole } from '@/lib/auth/guards'
 import { companyFilter } from '@/modules/admin/queries'
 import { prisma } from '@/lib/prisma'
+import { formatDate } from '@/lib/format'
 import { EliminarEmpleadoForm } from '@/components/admin/EmpleadoForms'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export const dynamic = 'force-dynamic'
 
 function fmtDate(d: Date) {
-  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', dateStyle: 'medium' }).format(d)
+  return formatDate(d)
 }
 
 export default async function EmpleadoDetailPage({

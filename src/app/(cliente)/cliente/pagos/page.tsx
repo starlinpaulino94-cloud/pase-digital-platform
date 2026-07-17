@@ -12,7 +12,7 @@ import {
 import { requireRole } from '@/lib/auth/guards'
 import { getClientePagos } from '@/modules/cliente/queries'
 import { getRegionalPrefs } from '@/modules/empresas/regional'
-import { formatMoney } from '@/lib/format'
+import { formatMoney, formatDate } from '@/lib/format'
 import { membresiaEstadoUi, type BadgeVariant } from '@/lib/estados'
 import { Button } from '@/components/ui/button'
 import { BillingCycleHeader } from '@/components/cliente/pagos/BillingCycleHeader'
@@ -28,10 +28,7 @@ export const metadata = {
 
 function fmtDate(d: Date | null) {
   if (!d) return '—'
-  return new Intl.DateTimeFormat('es-DO', {
-    timeZone: 'America/Santo_Domingo',
-    dateStyle: 'medium',
-  }).format(d)
+  return formatDate(d)
 }
 
 const NECESITA_PAGO = ['PENDIENTE', 'RECHAZADA']

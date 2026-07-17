@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { CreditCard, AlertCircle, WalletCards, Gauge, CalendarClock } from 'lucide-react'
 import { differenceInDays } from 'date-fns'
 import { getUser } from '@/lib/auth'
+import { membresiaEstadoUi } from '@/lib/estados'
 import { getClienteAllMemberships } from '@/modules/cliente/queries'
 import { WalletStack, type WalletStackItem } from '@/components/wallet/WalletStack'
 import { AnimatedCounter } from '@/components/system/AnimatedCounter'
@@ -12,15 +13,6 @@ import { Button } from '@/components/ui/button'
 export const metadata = {
   title: 'Mis membresías',
   description: 'Tus tarjetas de membresía y sus códigos QR',
-}
-
-const ESTADO_LABEL: Record<string, string> = {
-  ACTIVA: 'Activa',
-  PENDIENTE: 'Pendiente',
-  PENDIENTE_PAGO: 'Esperando pago',
-  VENCIDA: 'Vencida',
-  CANCELADA: 'Cancelada',
-  RECHAZADA: 'Rechazada',
 }
 
 /** Métrica compacta de la wallet (activas, usos, vencimiento). */
@@ -123,7 +115,7 @@ export default async function MisMembresias() {
           colorPrimario: m.company.colorPrimario,
         },
         planNombre: m.plan.nombre,
-        estadoLabel: ESTADO_LABEL[m.estado] ?? m.estado,
+        estadoLabel: membresiaEstadoUi(m.estado).labelCliente,
         tone: activa ? ('active' as const) : vencida ? ('expired' as const) : ('pending' as const),
         expiryText,
         esIlimitado: m.plan.esIlimitado,

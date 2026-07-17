@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Share2, Copy, Check, MessageCircle, TriangleAlert } from 'lucide-react'
 import { toast } from 'sonner'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 
 interface CompartirOfertaButtonProps {
   /** Ruta pública relativa (se resuelve contra el dominio actual). */
@@ -35,7 +36,7 @@ export function CompartirOfertaButton({
   label = 'Compartir',
 }: CompartirOfertaButtonProps) {
   const [open, setOpen] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const { copied, copy } = useCopyToClipboard()
 
   const url = () => `${window.location.origin}${path}`
   const mensaje = () => `${texto} ${url()}`
@@ -56,14 +57,7 @@ export function CompartirOfertaButton({
 
   async function copiar() {
     setOpen(false)
-    try {
-      await navigator.clipboard.writeText(url())
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-      toast.success('Enlace copiado.')
-    } catch {
-      toast.error('No se pudo copiar el enlace.')
-    }
+    await copy(url(), { successMessage: 'Enlace copiado.' })
   }
 
   function whatsapp() {

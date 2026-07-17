@@ -11,6 +11,7 @@ import { resolveCompanyId } from '@/lib/auth/company-context'
 import { getCampanasEmpresa } from '@/modules/invitaciones/queries'
 import { absoluteUrl } from '@/lib/site'
 import { campanaEstadoUi } from '@/lib/estados'
+import { formatDate } from '@/lib/format'
 import { PageHeader } from '@/components/ui/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -21,10 +22,7 @@ export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Campañas de Invitación' }
 
 function fmtDate(d: Date) {
-  return new Intl.DateTimeFormat('es-DO', {
-    timeZone: 'America/Santo_Domingo',
-    dateStyle: 'medium',
-  }).format(d)
+  return formatDate(d)
 }
 
 export default async function AdminInvitacionesPage() {

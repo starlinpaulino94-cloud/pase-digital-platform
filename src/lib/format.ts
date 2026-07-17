@@ -65,6 +65,15 @@ export function formatDate(
   }
 }
 
+/**
+ * Monto en pesos dominicanos SIN redondear a entero (a diferencia de
+ * `formatMoney`, conserva decimales si el número los trae). Usado por los
+ * paneles de superadmin que agregan montos de varias empresas.
+ */
+export function formatMoneyRD(n: number): string {
+  return `RD$${n.toLocaleString('es-DO', { minimumFractionDigits: 0 })}`
+}
+
 /** Monedas ofrecidas en el selector de configuración. */
 export const MONEDAS = [
   { code: 'DOP', label: 'Peso dominicano (RD$)' },

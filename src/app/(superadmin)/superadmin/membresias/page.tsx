@@ -4,12 +4,13 @@ import { requireRole } from '@/lib/auth/guards'
 import { prisma } from '@/lib/prisma'
 import { EstadoBadge } from '@/components/EstadoBadge'
 import { membresiaEstadoUi } from '@/lib/estados'
+import { formatDate } from '@/lib/format'
 import { MembershipAdminActions } from '@/components/admin/MembershipAdminActions'
 import type { MembershipEstado } from '@/types'
 
 function fmtDate(d: Date | null) {
   if (!d) return '—'
-  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', dateStyle: 'medium' }).format(d)
+  return formatDate(d)
 }
 
 const ESTADOS = ['PENDIENTE', 'PENDIENTE_PAGO', 'RECHAZADA', 'ACTIVA', 'VENCIDA', 'CANCELADA'] as const

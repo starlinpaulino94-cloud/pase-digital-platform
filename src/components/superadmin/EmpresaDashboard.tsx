@@ -13,6 +13,7 @@ import {
   Activity,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { formatMoneyRD } from '@/lib/format'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { StatCard } from '@/components/ui/stat-card'
@@ -73,7 +74,7 @@ const ESTADO_COLORS: Record<string, string> = {
 }
 
 function fmtMoney(n: number) {
-  return `RD$${n.toLocaleString('es-DO', { minimumFractionDigits: 0 })}`
+  return formatMoneyRD(n)
 }
 
 function fmtDate(d: string) {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import QRCode from 'qrcode'
+import { toQrDataUrl } from '@/lib/qr'
 
 /**
  * QR del sistema: protagonista, con marco de gradiente de marca.
@@ -19,11 +19,7 @@ export function QRDisplay({
 
   useEffect(() => {
     let active = true
-    QRCode.toDataURL(token, {
-      width: size * 2, // 2x para nitidez en pantallas retina
-      margin: 1,
-      color: { dark: '#0f172a', light: '#ffffff' },
-    })
+    toQrDataUrl(token, size)
       .then((url) => {
         if (active) setDataUrl(url)
       })

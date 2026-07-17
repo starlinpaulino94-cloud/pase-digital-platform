@@ -19,17 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { INVITABLE_ROLES } from '@/types'
-
-const ROL_LABEL: Record<string, string> = {
-  ADMINISTRADOR: 'Administrador',
-  GERENTE: 'Gerente',
-  CAJERO: 'Cajero',
-  RECEPCION: 'Recepción',
-  MARKETING: 'Marketing',
-  SUPERVISOR: 'Supervisor',
-  EMPLEADO: 'Empleado',
-}
+import { INVITABLE_ROLES, ROL_STAFF_LABEL as ROL_LABEL } from '@/types'
 
 interface Company {
   id: string

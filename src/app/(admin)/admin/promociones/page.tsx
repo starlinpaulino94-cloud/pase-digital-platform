@@ -5,6 +5,7 @@ import { requireRole } from '@/lib/auth/guards'
 import { companyFilter } from '@/modules/admin/queries'
 import { prisma } from '@/lib/prisma'
 import { PROMO_TIPO_LABEL } from '@/lib/promociones'
+import { formatDate, formatMoney } from '@/lib/format'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -17,10 +18,7 @@ export const dynamic = 'force-dynamic'
 
 function fmtDate(d: Date | null) {
   if (!d) return null
-  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo',
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(d))
+  return formatDate(d, undefined, { dateStyle: 'medium', timeStyle: 'short' })
 }
 
 type PromoRow = Awaited<ReturnType<typeof fetchPromos>>[number]
@@ -254,7 +252,7 @@ export default async function PromocionesPage() {
             <CardContent className="p-5">
               <p className="text-sm font-medium text-muted-foreground">Ingresos por promociones</p>
               <p className="mt-1 text-2xl font-bold text-foreground">
-                {new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP', maximumFractionDigits: 0 }).format(ventas.ingresos)}
+                {formatMoney(ventas.ingresos)}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">pagos confirmados</p>
             </CardContent>

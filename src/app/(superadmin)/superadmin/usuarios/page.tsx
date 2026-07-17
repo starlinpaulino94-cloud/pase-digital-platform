@@ -5,17 +5,12 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { UserCog, Users, Pencil } from 'lucide-react'
+import { ROL_STAFF_LABEL } from '@/types'
 
 export const dynamic = 'force-dynamic'
 
 const ROL_LABEL: Record<string, string> = {
-  ADMINISTRADOR: 'Administrador',
-  GERENTE: 'Gerente',
-  CAJERO: 'Cajero',
-  RECEPCION: 'Recepción',
-  MARKETING: 'Marketing',
-  SUPERVISOR: 'Supervisor',
-  EMPLEADO: 'Empleado',
+  ...ROL_STAFF_LABEL,
   ADMIN_EMPRESA: 'Administrador (legacy)',
 }
 
