@@ -17,6 +17,7 @@ import {
 import { ConfirmarPagoButton, RechazarPagoButton } from '@/components/admin/ValidarPagoActions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { NotasCliente } from '@/components/admin/NotasCliente'
+import { EliminarCuentaButton } from '@/components/superadmin/EliminarCuentaButton'
 import { FileText, MessageCircle, Mail, StickyNote } from 'lucide-react'
 import type { MembershipEstado } from '@/types'
 
@@ -354,6 +355,26 @@ export default async function ClienteDetailPage({
           )}
         </CardContent>
       </Card>
+
+      {/* Zona de peligro: eliminación definitiva, SOLO superadmin. Los admins
+          de empresa no pueden borrar clientes (protección de datos/historial). */}
+      {user.metadata.role === 'SUPERADMIN' && (
+        <div className="rounded-2xl border border-destructive/25 bg-destructive/5 p-5">
+          <h2 className="text-sm font-semibold text-foreground">Zona de peligro</h2>
+          <p className="mt-1 mb-4 text-sm text-muted-foreground">
+            Elimina al cliente con sus membresías, QR, visitas y datos
+            personales. Las facturas y transacciones de la empresa se
+            conservan. Si no es cliente de otra empresa, también se elimina su
+            cuenta de acceso.
+          </p>
+          <EliminarCuentaButton
+            tipo="cliente"
+            id={cliente.id}
+            nombre={cliente.nombre}
+            redirectTo="/admin/clientes"
+          />
+        </div>
+      )}
     </div>
   )
 }
