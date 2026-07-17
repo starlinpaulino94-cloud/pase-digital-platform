@@ -55,7 +55,7 @@ export default async function RuletaPage() {
       </div>
 
       {game && (
-        <Gamificacion data={game} color={engagement.color} esWidget={false} />
+        <Gamificacion data={game} color={engagement.color} />
       )}
 
       {premios.length === 0 ? (
