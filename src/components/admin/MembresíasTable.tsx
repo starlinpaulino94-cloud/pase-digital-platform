@@ -1,15 +1,18 @@
 'use client'
 
+import { useMemo } from 'react'
 import Link from 'next/link'
 import { type ColumnDef } from '@tanstack/react-table'
 import { ExternalLink } from 'lucide-react'
 import { DataTable } from '@/components/ui/data-table'
 import { EstadoBadge } from '@/components/EstadoBadge'
+import { CambiarPlanDialog, type PlanOption } from '@/components/admin/CambiarPlanDialog'
 import type { MembershipEstado } from '@/types'
 
 export interface MembershipRow {
   id: string
   estado: MembershipEstado
+  planId: string
   createdAt: Date
   fechaInicio: Date | null
   fechaVencimiento: Date | null
@@ -18,7 +21,7 @@ export interface MembershipRow {
   plan: { nombre: string; esIlimitado: boolean }
 }
 
-const columns: ColumnDef<MembershipRow>[] = [
+const baseColumns: ColumnDef<MembershipRow>[] = [
   {
     accessorKey: 'cliente.nombre',
     header: 'Cliente',
@@ -64,25 +67,48 @@ const columns: ColumnDef<MembershipRow>[] = [
     cell: ({ row }) =>
       row.original.plan.esIlimitado ? '∞' : row.original.lavadosRestantes,
   },
-  {
-    id: 'actions',
-    header: 'Acciones',
-    // La ficha del cliente contiene la membresía (QR, notas, visitas): no existe
-    // ruta /admin/membresias/[id]. Antes enlazaba ahí y daba 404.
-    cell: ({ row }) => (
-      <Link
-        href={`/admin/clientes/${row.original.cliente.id}`}
-        title="Ver ficha del cliente"
-        aria-label={`Ver ficha de ${row.original.cliente.nombre}`}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-      >
-        <ExternalLink className="h-4 w-4" />
-      </Link>
-    ),
-  },
 ]
 
-export function MembresíasTable({ data }: { data: MembershipRow[] }) {
+export function MembresíasTable({
+  data,
+  planes,
+}: {
+  data: MembershipRow[]
+  planes: PlanOption[]
+}) {
+  const columns = useMemo<ColumnDef<MembershipRow>[]>(
+    () => [
+      ...baseColumns,
+      {
+        id: 'actions',
+        header: 'Acciones',
+        // La ficha del cliente contiene la membresía (QR, notas, visitas): no
+        // existe ruta /admin/membresias/[id]. El cambio de plan es exclusivo
+        // del negocio: el cliente no puede cambiarlo desde la app.
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1">
+            <CambiarPlanDialog
+              membershipId={row.original.id}
+              clienteNombre={row.original.cliente.nombre}
+              planActualId={row.original.planId}
+              planActualNombre={row.original.plan.nombre}
+              planes={planes}
+            />
+            <Link
+              href={`/admin/clientes/${row.original.cliente.id}`}
+              title="Ver ficha del cliente"
+              aria-label={`Ver ficha de ${row.original.cliente.nombre}`}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Link>
+          </div>
+        ),
+      },
+    ],
+    [planes]
+  )
+
   return (
     <DataTable
       columns={columns as unknown as ColumnDef<Record<string, unknown>, unknown>[]}
