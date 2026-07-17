@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import { requireRole } from '@/lib/auth/guards'
 import { companyFilter } from '@/modules/admin/queries'
 import { getRegionalPrefs } from '@/modules/empresas/regional'
-import { formatMoney } from '@/lib/format'
+import { formatMoney, formatDate } from '@/lib/format'
 import { prisma } from '@/lib/prisma'
 import { QRDisplay } from '@/components/qr/QRDisplay'
 import { EstadoBadge } from '@/components/EstadoBadge'
@@ -24,7 +24,7 @@ export const dynamic = 'force-dynamic'
 
 function fmtDate(d: Date | null) {
   if (!d) return '—'
-  return new Intl.DateTimeFormat('es-DO', { timeZone: 'America/Santo_Domingo', dateStyle: 'medium' }).format(d)
+  return formatDate(d)
 }
 
 export default async function ClienteDetailPage({

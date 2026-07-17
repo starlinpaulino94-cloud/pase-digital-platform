@@ -11,6 +11,7 @@ import { useRef, useState } from 'react'
 import { ImageIcon, Loader2, Trash2, UploadCloud } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { uniqueFileName } from '@/lib/storage'
 import { Button } from '@/components/ui/button'
 
 const ALLOWED = ['image/jpeg', 'image/png', 'image/webp']
@@ -42,7 +43,7 @@ export function PromoImagenUpload({
     try {
       const supabase = createClient()
       const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-      const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+      const path = `${folder}/${uniqueFileName(ext)}`
       const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true })
       if (error) throw error
       const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)

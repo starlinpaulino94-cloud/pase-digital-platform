@@ -1,12 +1,13 @@
 'use client'
 
-import { useActionState, useEffect, useState } from 'react'
+import { useActionState, useEffect } from 'react'
 import { Loader2, Link2, Check, Share2, MessageCircle, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   generarGrowthLinkAction,
   type GenerarLinkState,
 } from '@/modules/growth/actions'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 
 interface GenerarInvitacionCardProps {
   promos: { id: string; titulo: string }[]
@@ -26,7 +27,7 @@ export function GenerarInvitacionCard({
   duracionDefault,
 }: GenerarInvitacionCardProps) {
   const [state, formAction, pending] = useActionState(generarGrowthLinkAction, init)
-  const [copied, setCopied] = useState(false)
+  const { copied, copy } = useCopyToClipboard()
 
   useEffect(() => {
     if (state.error) toast.error(state.error)
@@ -34,14 +35,7 @@ export function GenerarInvitacionCard({
 
   async function copiar() {
     if (!state.url) return
-    try {
-      await navigator.clipboard.writeText(state.url)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-      toast.success('Enlace copiado.')
-    } catch {
-      toast.error('No se pudo copiar.')
-    }
+    await copy(state.url, { successMessage: 'Enlace copiado.', errorMessage: 'No se pudo copiar.' })
   }
 
   async function compartir() {

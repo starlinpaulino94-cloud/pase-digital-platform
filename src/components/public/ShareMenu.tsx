@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Share2, Check, Link2, Mail, MessageCircle, Send } from 'lucide-react'
-import { toast } from 'sonner'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 
 export interface ShareMenuProps {
   /** Título del contenido a compartir. */
@@ -28,7 +28,7 @@ export interface ShareMenuProps {
  */
 export function ShareMenu({ title, text, path, onShared, label = 'Compartir' }: ShareMenuProps) {
   const [open, setOpen] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const { copied, copy } = useCopyToClipboard()
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -69,16 +69,10 @@ export function ShareMenu({ title, text, path, onShared, label = 'Compartir' }: 
   }
 
   async function copiar() {
-    try {
-      await navigator.clipboard.writeText(fullUrl())
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-      toast.success('Enlace copiado al portapapeles.')
+    const ok = await copy(fullUrl())
+    if (ok) {
       onShared?.()
       setOpen(false)
-    } catch (e) {
-      console.error('[share:copy]', e)
-      toast.error('No se pudo copiar el enlace.')
     }
   }
 

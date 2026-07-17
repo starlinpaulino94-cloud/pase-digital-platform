@@ -7,20 +7,8 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import { generarCodigo } from '@/lib/codes'
 import { getGrowthConfig } from './config'
-
-// Alfabeto sin caracteres ambiguos (0/O, 1/I/L) para códigos legibles.
-const ALFABETO = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
-
-/** Código corto aleatorio para /r/[code]. */
-function generarCodigo(len = 7): string {
-  let out = ''
-  // No usamos Math.random en workflows, pero aquí es código de app normal.
-  for (let i = 0; i < len; i++) {
-    out += ALFABETO[Math.floor(Math.random() * ALFABETO.length)]
-  }
-  return out
-}
 
 export interface CrearGrowthLinkInput {
   clienteId: string
@@ -53,7 +41,7 @@ export async function crearGrowthLink(
 
   // Reintenta ante colisión del código único.
   for (let intento = 0; intento < 6; intento++) {
-    const code = generarCodigo()
+    const code = generarCodigo(7)
     try {
       const link = await prisma.growthLink.create({
         data: {

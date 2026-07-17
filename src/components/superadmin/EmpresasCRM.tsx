@@ -26,6 +26,7 @@ import {
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { toggleEmpresa, duplicarEmpresa, eliminarEmpresa } from '@/modules/empresas/actions'
+import { formatMoneyRD } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -86,7 +87,7 @@ type SortField = 'name' | 'createdAt' | 'clientes' | 'ingresos'
 type SortDir = 'asc' | 'desc'
 
 function fmtMoney(n: number) {
-  return `RD$${n.toLocaleString('es-DO', { minimumFractionDigits: 0 })}`
+  return formatMoneyRD(n)
 }
 
 function fmtDate(d: string) {

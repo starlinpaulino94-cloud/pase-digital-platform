@@ -6,6 +6,7 @@ import { getUser } from '@/lib/auth'
 import { notificarAdmins } from '@/modules/notificaciones/service'
 import { formSubmitLimiter } from '@/lib/rate-limit'
 import { calcularDescuentoBienvenida } from '@/lib/bienvenida'
+import { generarCodigo } from '@/lib/codes'
 
 export interface SeleccionState {
   error?: string
@@ -293,10 +294,7 @@ export interface PresencialState {
 
 /** Referencia corta, legible y sin ambigüedades (sin 0/O ni 1/I/L). */
 function generarReferencia(): string {
-  const abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
-  let out = ''
-  for (let i = 0; i < 6; i++) out += abc[Math.floor(Math.random() * abc.length)]
-  return `ORD-${out}`
+  return `ORD-${generarCodigo(6)}`
 }
 
 /**

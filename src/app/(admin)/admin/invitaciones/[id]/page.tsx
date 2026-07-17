@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
 import { campanaEstadoUi } from '@/lib/estados'
+import { formatDate } from '@/lib/format'
 import { ADMIN_ROLES } from '@/types'
 import { getCampanaDashboard } from '@/modules/invitaciones/queries'
 import { absoluteUrl } from '@/lib/site'
@@ -34,10 +35,7 @@ export const metadata = { title: 'Detalle de campaña' }
 
 
 function fmtDate(d: Date) {
-  return new Intl.DateTimeFormat('es-DO', {
-    timeZone: 'America/Santo_Domingo',
-    dateStyle: 'medium',
-  }).format(d)
+  return formatDate(d)
 }
 
 function pct(n: number, d: number) {

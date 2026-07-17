@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import QRCode from 'qrcode'
+import { toQrDataUrl } from '@/lib/qr'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Download, ShieldCheck, Clock, Check } from 'lucide-react'
@@ -61,11 +61,7 @@ export function QRShareCard({
   // QR simple para mostrar en pantalla.
   useEffect(() => {
     let active = true
-    QRCode.toDataURL(token, {
-      width: size * 2,
-      margin: 1,
-      color: { dark: '#0f172a', light: '#ffffff' },
-    })
+    toQrDataUrl(token, size)
       .then((url) => {
         if (active) setDataUrl(url)
       })
@@ -101,11 +97,7 @@ export function QRShareCard({
 
       // QR
       const qrSize = 420
-      const qrUrl = await QRCode.toDataURL(token, {
-        width: qrSize * 2,
-        margin: 1,
-        color: { dark: '#0f172a', light: '#ffffff' },
-      })
+      const qrUrl = await toQrDataUrl(token, qrSize)
       const img = new Image()
       await new Promise<void>((resolve, reject) => {
         img.onload = () => resolve()

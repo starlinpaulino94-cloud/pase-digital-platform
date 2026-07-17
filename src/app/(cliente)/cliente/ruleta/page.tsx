@@ -5,18 +5,18 @@ import { getUser } from '@/lib/auth'
 import { COSTO_RULETA } from '@/lib/gamificacion'
 import { getGamificacion } from '@/modules/engagement/gamificacion'
 import { getRuletaPremiosActivos, getUltimasJugadas } from '@/modules/engagement/ruleta'
+import { formatDate } from '@/lib/format'
 import { RuletaWheel } from '@/components/engagement/RuletaWheel'
 import { Button } from '@/components/ui/button'
+import { Gamificacion } from '@/components/engagement/Gamificacion'
+import { getEngagementConfig } from '@/modules/engagement/config'
+import { normalizeEngagementConfig } from '@/lib/engagementConfig'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Ruleta de premios' }
 
 function fmt(d: Date) {
-  return new Intl.DateTimeFormat('es-DO', {
-    timeZone: 'America/Santo_Domingo',
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(d)
+  return formatDate(d, undefined, { dateStyle: 'medium', timeStyle: 'short' })
 }
 
 export default async function RuletaPage() {
@@ -25,10 +25,13 @@ export default async function RuletaPage() {
   const { clienteId, companyId } = user.metadata
   if (!clienteId || !companyId) redirect('/mis-membresias')
 
-  const [game, premios, jugadas] = await Promise.all([
+  const [game, premios, jugadas, engagement] = await Promise.all([
     getGamificacion(clienteId, companyId),
     getRuletaPremiosActivos(companyId),
     getUltimasJugadas(clienteId, companyId, 8),
+    getEngagementConfig(companyId)
+      .then((cfg) => normalizeEngagementConfig(cfg, null))
+      .catch(() => normalizeEngagementConfig(null, null)),
   ])
 
   const saldo = game?.saldo ?? 0
@@ -50,6 +53,10 @@ export default async function RuletaPage() {
           Gana puntos usando tus beneficios e invitando amigos, y cámbialos por premios reales.
         </p>
       </div>
+
+      {game && (
+        <Gamificacion data={game} color={engagement.color} esWidget={false} />
+      )}
 
       {premios.length === 0 ? (
         <div className="rounded-3xl border border-border/70 bg-card p-10 text-center shadow-card">

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import { Share2, Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 
 interface ShareButtonProps {
   title: string
@@ -32,7 +32,7 @@ export function ShareButton({
   className,
   label = 'Compartir',
 }: ShareButtonProps) {
-  const [copied, setCopied] = useState(false)
+  const { copied, copy } = useCopyToClipboard()
 
   async function handleShare() {
     const url = path.startsWith('http') ? path : `${window.location.origin}${path}`
@@ -42,11 +42,12 @@ export function ShareButton({
         onShared?.()
         return
       }
-      await navigator.clipboard.writeText(url)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-      toast.success('Enlace copiado al portapapeles.')
-      onShared?.()
+      const ok = await copy(url, {
+        successMessage: 'Enlace copiado al portapapeles.',
+        errorMessage: null,
+      })
+      if (ok) onShared?.()
+      else toast.error('No se pudo compartir.')
     } catch (e) {
       // El usuario canceló el share nativo: no es un error.
       if (e instanceof DOMException && e.name === 'AbortError') return

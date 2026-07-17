@@ -6,6 +6,7 @@ import { useFormStatus } from 'react-dom'
 import { Loader2, Send, Upload, X, FileText, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { uniqueFileName } from '@/lib/storage'
 import { crearTicket, type ActionState } from '@/modules/soporte/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -107,7 +108,7 @@ export function ReportarProblemaForm() {
       const supabase = createClient()
       const ext = file.name.split('.').pop() ?? 'jpg'
       // Mismo prefijo que los comprobantes (política de bucket ya probada).
-      const path = `comprobantes/soporte-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+      const path = `comprobantes/soporte-${uniqueFileName(ext)}`
       const { error } = await supabase.storage
         .from('comprobantes')
         .upload(path, file, { upsert: true })

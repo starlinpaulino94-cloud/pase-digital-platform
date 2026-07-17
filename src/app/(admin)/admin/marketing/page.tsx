@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Sparkles, Plus, Pencil, Clock, Users } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
 import { campanaEstadoUi } from '@/lib/estados'
+import { formatDate } from '@/lib/format'
 import { ADMIN_ROLES } from '@/types'
 import { resolveCompanyId } from '@/lib/auth/company-context'
 import { getCampanasMarketingAdmin } from '@/modules/engagement/campanas'
@@ -20,11 +21,7 @@ export const metadata = { title: 'Campañas de Marketing' }
 
 
 function fmt(d: Date) {
-  return new Intl.DateTimeFormat('es-DO', {
-    timeZone: 'America/Santo_Domingo',
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(d)
+  return formatDate(d, undefined, { dateStyle: 'medium', timeStyle: 'short' })
 }
 
 export default async function AdminMarketingPage() {

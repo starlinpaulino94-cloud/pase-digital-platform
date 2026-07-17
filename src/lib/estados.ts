@@ -25,19 +25,25 @@ export interface EstadoUi {
 // ── Membresías (MembershipEstado) ───────────────────────────────────────────
 // "Activa" (nunca "Activo"/"Activas"); "En validación" para pago en revisión;
 // "Vencida" en gris (no es error); "Rechazada" en rojo (sí es rechazo).
-export const MEMBRESIA_ESTADO: Record<MembershipEstado, EstadoUi> = {
-  PENDIENTE: { label: 'Pendiente de pago', variant: 'warning' },
-  PENDIENTE_PAGO: { label: 'En validación', variant: 'info' },
-  ACTIVA: { label: 'Activa', variant: 'success' },
-  VENCIDA: { label: 'Vencida', variant: 'secondary' },
-  RECHAZADA: { label: 'Rechazada', variant: 'destructive' },
-  CANCELADA: { label: 'Cancelada', variant: 'secondary' },
+export interface MembresiaEstadoUi extends EstadoUi {
+  /** Texto más corto/informal para tarjetas del cliente (vs. `label` de admin). */
+  labelCliente: string
 }
 
-export function membresiaEstadoUi(estado: string): EstadoUi {
+export const MEMBRESIA_ESTADO: Record<MembershipEstado, MembresiaEstadoUi> = {
+  PENDIENTE: { label: 'Pendiente de pago', labelCliente: 'Pendiente', variant: 'warning' },
+  PENDIENTE_PAGO: { label: 'En validación', labelCliente: 'Esperando pago', variant: 'info' },
+  ACTIVA: { label: 'Activa', labelCliente: 'Activa', variant: 'success' },
+  VENCIDA: { label: 'Vencida', labelCliente: 'Vencida', variant: 'secondary' },
+  RECHAZADA: { label: 'Rechazada', labelCliente: 'Rechazada', variant: 'destructive' },
+  CANCELADA: { label: 'Cancelada', labelCliente: 'Cancelada', variant: 'secondary' },
+}
+
+export function membresiaEstadoUi(estado: string): MembresiaEstadoUi {
   return (
     MEMBRESIA_ESTADO[estado as MembershipEstado] ?? {
       label: estado,
+      labelCliente: estado,
       variant: 'secondary',
     }
   )
