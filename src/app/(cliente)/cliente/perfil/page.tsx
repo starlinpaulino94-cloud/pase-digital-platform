@@ -45,10 +45,10 @@ export default async function PerfilPage() {
   try {
     cliente = await getClientePerfil(user.metadata.clienteId)
   } catch (e) {
-    console.error('[cliente-perfil] Error loading cliente:', {
-      clienteId: user.metadata.clienteId,
-      error: e instanceof Error ? e.message : String(e),
-    })
+    // El log clasifica la causa (schema drift / conexión / otro) con remedio;
+    // getClientePerfil ya degradó lo degradable, así que llegar aquí es real.
+    const { logErrorBd } = await import('@/lib/prisma-errors')
+    logErrorBd('cliente-perfil', e, { clienteId: user.metadata.clienteId })
     loadError = true
   }
 
