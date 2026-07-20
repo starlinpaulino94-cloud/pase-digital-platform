@@ -31,6 +31,8 @@ import {
   Sparkles,
   Trophy,
   CalendarDays,
+  Palette,
+  Share2,
   type LucideIcon,
 } from 'lucide-react'
 import type { AppRole } from '@/types'
@@ -50,11 +52,20 @@ export interface NavGroup {
 }
 
 /**
- * Navegación del panel de empresa (Fase 2 UX): agrupada por ÁREA DE TRABAJO,
- * no por relaciones técnicas entre módulos. Cada grupo responde a una tarea:
- * ¿quién es mi cliente? (Clientes) · ¿qué ofrezco para retener? (Fidelización)
- * · ¿qué comunico? (Marketing) · el mostrador (Operaciones) · ¿qué dicen los
- * números? (Análisis) · atender (Soporte) · configurar (Empresa).
+ * Navegación del panel de empresa — reagrupada por ÁREA DE TRABAJO en 7 zonas
+ * claras (Auditoría del panel · Fase A). Cada grupo responde a una intención:
+ * ¿quién es mi cliente? (Clientes) · ¿cuánto entra? (Ingresos) · ¿qué comunico
+ * y ofrezco? (Marketing) · el mostrador (Operación) · ¿qué dicen los números?
+ * (Análisis) · configurar el negocio (Configuración).
+ *
+ * Decisiones de la Fase A:
+ * - "Referidos" e "Invitaciones" eran el MISMO concepto ("Invita y Gana"): se
+ *   fusionan en una sola entrada que abre las campañas (/admin/invitaciones);
+ *   el panel de rendimiento (/admin/referidos) queda enlazado desde ahí.
+ * - Cada ítem tiene un ícono único (antes Regalos VIP/Referidos compartían Gift
+ *   y Banners/Personalización compartían Sparkles).
+ * - La fusión de la CREACIÓN de ofertas (Promociones/Banners/Regalos VIP) es la
+ *   Fase D; aquí solo se reagrupan bajo "Marketing".
  */
 const ADMIN_NAV: NavGroup[] = [
   {
@@ -68,40 +79,38 @@ const ADMIN_NAV: NavGroup[] = [
     items: [
       { href: '/admin/clientes', label: 'Clientes', icon: Users },
       { href: '/admin/membresias', label: 'Membresías', icon: CreditCard },
+      { href: '/admin/citas', label: 'Citas', icon: CalendarDays },
     ],
   },
   {
-    id: 'fidelizacion',
-    label: 'Fidelización',
+    id: 'ingresos',
+    label: 'Ingresos',
     items: [
-      { href: '/admin/planes', label: 'Planes', icon: Package },
-      { href: '/admin/promociones', label: 'Promociones', icon: Megaphone },
-      { href: '/admin/ofertas', label: 'Regalos VIP', icon: Gift },
-      { href: '/admin/referidos', label: 'Referidos', icon: Gift },
-      { href: '/admin/invitaciones', label: 'Invitaciones', icon: Ticket },
-      { href: '/admin/gamificacion', label: 'Ruleta de premios', icon: Trophy },
-      { href: '/admin/crecimiento', label: 'Crecimiento', icon: Rocket },
+      { href: '/admin/pagos', label: 'Pagos', icon: Wallet },
+      { href: '/admin/facturas', label: 'Facturas', icon: ReceiptText },
+      { href: '/admin/metodos-pago', label: 'Métodos de pago', icon: Landmark },
     ],
   },
   {
     id: 'marketing',
     label: 'Marketing',
     items: [
+      { href: '/admin/promociones', label: 'Promociones', icon: Megaphone },
       { href: '/admin/marketing', label: 'Banners', icon: Sparkles },
-      { href: '/admin/campanas', label: 'Campañas', icon: Flag },
+      { href: '/admin/ofertas', label: 'Regalos VIP', icon: Gift },
       { href: '/admin/publicaciones', label: 'Publicaciones', icon: Newspaper },
+      { href: '/admin/invitaciones', label: 'Invita y Gana', icon: Share2 },
+      { href: '/admin/gamificacion', label: 'Ruleta de premios', icon: Trophy },
       { href: '/admin/notificaciones', label: 'Notificaciones', icon: Bell },
       { href: '/admin/automatizaciones', label: 'Automatizaciones', icon: Zap },
+      { href: '/admin/campanas', label: 'Campañas', icon: Flag },
     ],
   },
   {
-    id: 'operaciones',
-    label: 'Operaciones',
+    id: 'operacion',
+    label: 'Operación',
     items: [
       { href: '/admin/scanner', label: 'Escanear QR', icon: ScanLine },
-      { href: '/admin/citas', label: 'Citas', icon: CalendarDays },
-      { href: '/admin/pagos', label: 'Pagos', icon: Wallet },
-      { href: '/admin/facturas', label: 'Facturas', icon: ReceiptText },
       { href: '/admin/sucursales', label: 'Sucursales', icon: Building2 },
     ],
   },
@@ -111,24 +120,19 @@ const ADMIN_NAV: NavGroup[] = [
     items: [
       { href: '/admin/reportes', label: 'Reportes', icon: BarChart3 },
       { href: '/admin/audiencia', label: 'Audiencia', icon: TrendingUp },
+      { href: '/admin/crecimiento', label: 'Crecimiento', icon: Rocket },
     ],
   },
   {
-    id: 'soporte',
-    label: 'Soporte',
-    items: [
-      { href: '/admin/comunicacion', label: 'Comunicación', icon: MessageCircle },
-      { href: '/admin/tickets', label: 'Tickets', icon: LifeBuoy },
-    ],
-  },
-  {
-    id: 'empresa',
-    label: 'Empresa',
+    id: 'configuracion',
+    label: 'Configuración',
     items: [
       { href: '/admin/perfil', label: 'Perfil público', icon: Store },
-      { href: '/admin/personalizacion', label: 'Personalización', icon: Sparkles },
-      { href: '/admin/metodos-pago', label: 'Métodos de pago', icon: Landmark },
+      { href: '/admin/personalizacion', label: 'Personalización', icon: Palette },
+      { href: '/admin/planes', label: 'Planes', icon: Package },
       { href: '/admin/empleados', label: 'Empleados', icon: UserCog },
+      { href: '/admin/comunicacion', label: 'Comunicación', icon: MessageCircle },
+      { href: '/admin/tickets', label: 'Tickets', icon: LifeBuoy },
     ],
   },
 ]

@@ -31,7 +31,6 @@ export const ADMIN_SECTIONS = [
   'notificaciones',
   'automatizaciones',
   'comunicacion',
-  'whatsapp',
   'tickets',
   'empleados',
   'reportes',

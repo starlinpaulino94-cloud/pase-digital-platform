@@ -4,6 +4,7 @@ import {
   Plus,
   Eye,
   Clock,
+  BarChart3,
 } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
 import { ADMIN_ROLES } from '@/types'
@@ -44,15 +45,26 @@ export default async function AdminInvitacionesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Campañas de Invitación"
+        title="Invita y Gana"
         description="Crea y gestiona campañas 'Invita y Gana' para que tus clientes traigan amigos."
         action={
-          <Link href="/admin/invitaciones/nueva">
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Nueva campaña
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            {/* El rendimiento del programa (referidos y reglas) vive en su
+                propia vista; se enlaza aquí porque en el menú ambos se
+                unificaron en "Invita y Gana" (Auditoría · Fase A). */}
+            <Link href="/admin/referidos">
+              <Button variant="outline" className="gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Rendimiento
+              </Button>
+            </Link>
+            <Link href="/admin/invitaciones/nueva">
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Nueva campaña
+              </Button>
+            </Link>
+          </div>
         }
       />
 
