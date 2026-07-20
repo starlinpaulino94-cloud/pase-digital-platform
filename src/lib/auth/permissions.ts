@@ -22,6 +22,7 @@ export const ADMIN_SECTIONS = [
   'crecimiento',
   'scanner',
   'pagos',
+  'citas',
   'perfil',
   'sucursales',
   'metodos-pago',
@@ -48,7 +49,7 @@ export type AdminSection = (typeof ADMIN_SECTIONS)[number]
 // como aterrizaje. Todo lo no listado queda denegado (fail-closed).
 const RESTRICTED_ACCESS: Partial<Record<AppRole, AdminSection[]>> = {
   MARKETING: ['dashboard', 'promociones', 'publicaciones', 'campanas', 'marketing', 'audiencia', 'notificaciones', 'automatizaciones'],
-  SUPERVISOR: ['dashboard', 'reportes', 'clientes', 'membresias', 'pagos', 'scanner'],
+  SUPERVISOR: ['dashboard', 'reportes', 'clientes', 'membresias', 'pagos', 'scanner', 'citas'],
 }
 
 /** ¿Puede este rol abrir esta sección del panel? */
