@@ -110,6 +110,9 @@ export interface ReceiptTransaccionInfo {
   restantes?: number | 'ilimitado' | null
   observaciones?: string | null
   promosActivas?: string[]
+  /** Recibo de pago (G6): forma de pago legible y su referencia/banco. */
+  metodoPago?: string | null
+  referenciaPago?: string | null
 }
 
 export interface BuildReceiptInput {
@@ -119,5 +122,7 @@ export interface BuildReceiptInput {
   /** true = reimpresión: banner COPIA + número de copia. */
   esCopia?: boolean
   copiaNumero?: number
+  /** true = comprobante de entrega (regalo/beneficio sin valor comercial). */
+  esEntrega?: boolean
   timeZone?: string
 }

@@ -100,6 +100,7 @@ export function FacturaSheet({
           ['Atendido por', t.empleado],
           ['Caja', t.caja],
           ['Método de pago', ticket.metodoPago],
+          ['Referencia', t.referenciaPago],
         ]
           .filter(([, v]) => v)
           .map(([k, v]) => (

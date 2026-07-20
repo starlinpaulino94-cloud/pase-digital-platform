@@ -10,6 +10,7 @@ import {
   type OfertaActionState,
 } from '@/modules/ofertas/actions'
 import { Button } from '@/components/ui/button'
+import { FacturaPrintDialog } from '@/components/facturas/FacturaPrintDialog'
 
 const init: OfertaActionState = {}
 
@@ -88,14 +89,26 @@ export function RegistrarUsoButton({
     if (state.success) toast.success(state.mensaje ?? 'Uso registrado.')
     if (state.error) toast.error(state.error)
   }, [state])
+  // Comprobante de entrega (Control de comprobantes · Fase 1): tras registrar
+  // el uso, el staff puede imprimirlo/reimprimirlo con la misma maquinaria.
+  const transactionId = state.success ? (state.transactionId ?? null) : null
   return (
-    <form action={formAction}>
-      <input type="hidden" name="invitadoId" value={invitadoId} />
-      <Button type="submit" size="sm" disabled={disabled || pending} className="gap-1.5">
-        {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ticket className="h-3.5 w-3.5" />}
-        Registrar uso
-      </Button>
-    </form>
+    <div className="flex flex-wrap items-center gap-2">
+      <form action={formAction}>
+        <input type="hidden" name="invitadoId" value={invitadoId} />
+        <Button type="submit" size="sm" disabled={disabled || pending} className="gap-1.5">
+          {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ticket className="h-3.5 w-3.5" />}
+          Registrar uso
+        </Button>
+      </form>
+      {transactionId && (
+        <FacturaPrintDialog
+          transactionId={transactionId}
+          yaImpresa={false}
+          triggerLabel="Imprimir comprobante"
+        />
+      )}
+    </div>
   )
 }
 

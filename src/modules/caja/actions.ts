@@ -10,6 +10,13 @@ import { activarMembresia } from '@/modules/pagos/activacion'
 import { activarCompraPromocion } from '@/modules/pagos/activacionCompra'
 import { crearTransaccionAplicada } from '@/lib/transactions/application/transaction-service'
 import { crearNotificacion } from '@/modules/notificaciones/service'
+import {
+  getCierreReporte,
+  getReporteEmpleadoDia,
+  hoyLocal,
+  type CierreReporte,
+  type ReporteEmpleadoDia,
+} from '@/modules/caja/queries'
 
 /**
  * Caja (POS) · acciones del turno: abrir, cerrar (con arqueo) y cobrar.
@@ -40,6 +47,50 @@ async function staffAutorizado() {
       null)
     : (user.email ?? null)
   return { user, companyId, userId, nombre }
+}
+
+/**
+ * Reporte de cierre de una sesión (para imprimir/reimprimir desde la UI).
+ * Solo staff de la misma empresa. No muta nada.
+ */
+export async function obtenerCierre(
+  cajaSesionId: string
+): Promise<{ error?: string; cierre?: CierreReporte }> {
+  const auth = await staffAutorizado()
+  if (!auth) return { error: 'No autorizado.' }
+  const cierre = await getCierreReporte(cajaSesionId, auth.companyId)
+  if (!cierre) return { error: 'Cierre no encontrado.' }
+  return { cierre }
+}
+
+/**
+ * Cuadre del día del empleado autenticado (G5): TODOS sus cobros del día, con o
+ * sin caja abierta, incluidas las transferencias confirmadas desde el panel.
+ * `fecha` opcional en formato YYYY-MM-DD (por defecto, hoy en la zona de la
+ * empresa). Solo staff de la misma empresa; no muta nada.
+ */
+export async function obtenerReporteDia(
+  fecha?: string
+): Promise<{ error?: string; reporte?: ReporteEmpleadoDia }> {
+  const auth = await staffAutorizado()
+  if (!auth) return { error: 'No autorizado.' }
+  if (!auth.userId) return { error: 'Tu usuario no está vinculado a un empleado.' }
+
+  const empresa = await prisma.company.findUnique({
+    where: { id: auth.companyId },
+    select: { zonaHoraria: true },
+  })
+  const timeZone = empresa?.zonaHoraria || 'America/Santo_Domingo'
+  const dia = /^\d{4}-\d{2}-\d{2}$/.test(fecha ?? '') ? (fecha as string) : hoyLocal(timeZone)
+
+  const reporte = await getReporteEmpleadoDia(
+    auth.companyId,
+    auth.userId,
+    auth.nombre ?? 'Empleado',
+    dia,
+    timeZone
+  )
+  return { reporte }
 }
 
 function num(v: FormDataEntryValue | null): number | null {
@@ -127,12 +178,26 @@ export async function cerrarCaja(
   })
   if (!sesion) return { error: 'La caja ya está cerrada o no existe.' }
 
-  // Arqueo: esperado = inicial + cobros en efectivo de la sesión.
-  const efectivo = await prisma.transaction.aggregate({
-    where: { cajaSesionId, estado: 'APPLIED', metodoCobro: 'EFECTIVO' },
-    _sum: { monto: true },
-  })
-  const balanceEsperado = Number(sesion.balanceInicial) + Number(efectivo._sum.monto ?? 0)
+  // Arqueo: esperado = inicial + cobros en efectivo + entradas − salidas.
+  const [efectivo, entradas, salidas] = await Promise.all([
+    prisma.transaction.aggregate({
+      where: { cajaSesionId, estado: 'APPLIED', metodoCobro: 'EFECTIVO' },
+      _sum: { monto: true },
+    }),
+    prisma.movimientoCaja.aggregate({
+      where: { cajaSesionId, tipo: 'ENTRADA' },
+      _sum: { monto: true },
+    }),
+    prisma.movimientoCaja.aggregate({
+      where: { cajaSesionId, tipo: 'SALIDA' },
+      _sum: { monto: true },
+    }),
+  ])
+  const balanceEsperado =
+    Number(sesion.balanceInicial) +
+    Number(efectivo._sum.monto ?? 0) +
+    Number(entradas._sum.monto ?? 0) -
+    Number(salidas._sum.monto ?? 0)
   const diferencia = balanceFinal - balanceEsperado
 
   const meta = await getRequestMeta()
@@ -173,6 +238,71 @@ export async function cerrarCaja(
   revalidatePath('/empleado/caja')
   const signo = diferencia === 0 ? 'cuadrada' : diferencia > 0 ? `sobrante RD$${diferencia.toFixed(2)}` : `faltante RD$${Math.abs(diferencia).toFixed(2)}`
   return { success: true, detalle: `Caja cerrada (${signo}).` }
+}
+
+/**
+ * Movimiento de efectivo intra-turno (G9): entrada (aporte de fondo) o salida
+ * (retiro, gasto, pago a proveedor). Requiere caja ABIERTA de la empresa.
+ * Afecta el arqueo al cerrar. Nada se elimina; queda auditado.
+ */
+export async function registrarMovimientoCaja(
+  _prev: CajaActionState,
+  formData: FormData
+): Promise<CajaActionState> {
+  const auth = await staffAutorizado()
+  if (!auth) return { error: 'No autorizado.' }
+  if (!(await formSubmitLimiter(`movcaja:${auth.userId}`))) {
+    return { error: 'Demasiados intentos. Espera un momento.' }
+  }
+
+  const cajaSesionId = String(formData.get('cajaSesionId') ?? '').trim()
+  const tipo = String(formData.get('tipo') ?? '').trim()
+  const monto = num(formData.get('monto'))
+  const concepto = String(formData.get('concepto') ?? '').trim()
+
+  if (!cajaSesionId) return { error: 'Sesión no especificada.' }
+  if (!['ENTRADA', 'SALIDA'].includes(tipo)) return { error: 'Tipo de movimiento no válido.' }
+  if (monto == null || monto <= 0) return { error: 'Indica un monto mayor que cero.' }
+  if (!concepto) return { error: 'Describe el concepto del movimiento.' }
+
+  const sesion = await prisma.cajaSesion.findFirst({
+    where: { id: cajaSesionId, companyId: auth.companyId, estado: 'ABIERTA' },
+    select: { id: true },
+  })
+  if (!sesion) return { error: 'La caja está cerrada: ábrela para registrar movimientos.' }
+
+  const mov = await prisma.movimientoCaja.create({
+    data: {
+      companyId: auth.companyId,
+      cajaSesionId,
+      tipo: tipo as 'ENTRADA' | 'SALIDA',
+      monto,
+      concepto: concepto.slice(0, 200),
+      registradoPorId: auth.userId,
+      registradoPor: auth.nombre,
+    },
+    select: { id: true },
+  })
+
+  const meta = await getRequestMeta()
+  await prisma.auditLog
+    .create({
+      data: {
+        companyId: auth.companyId,
+        userId: auth.userId,
+        accion: 'CAJA_MOVIMIENTO',
+        entidadTipo: 'MovimientoCaja',
+        entidadId: mov.id,
+        payload: { cajaSesionId, tipo, monto, concepto },
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+      },
+    })
+    .catch(() => {})
+
+  revalidatePath('/empleado/caja')
+  const etiqueta = tipo === 'ENTRADA' ? 'Entrada' : 'Salida'
+  return { success: true, detalle: `${etiqueta} registrada: RD$${monto.toFixed(2)}.` }
 }
 
 export async function cobrarOrden(

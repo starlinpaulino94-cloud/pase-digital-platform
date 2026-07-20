@@ -88,6 +88,378 @@ export async function getResumenSesion(cajaSesionId: string): Promise<ResumenSes
   }
 }
 
+export interface MovimientosSesion {
+  entrada: number
+  salida: number
+  neto: number
+  items: { id: string; tipo: 'ENTRADA' | 'SALIDA'; concepto: string; monto: number; createdAt: Date; registradoPor: string | null }[]
+}
+
+/** Movimientos de efectivo (G9) de una sesión: entradas, salidas y neto. */
+export async function getMovimientosSesion(cajaSesionId: string): Promise<MovimientosSesion> {
+  const movs = await prisma.movimientoCaja.findMany({
+    where: { cajaSesionId },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, tipo: true, concepto: true, monto: true, createdAt: true, registradoPor: true },
+  })
+  let entrada = 0
+  let salida = 0
+  for (const m of movs) {
+    if (m.tipo === 'ENTRADA') entrada += Number(m.monto)
+    else salida += Number(m.monto)
+  }
+  return {
+    entrada,
+    salida,
+    neto: entrada - salida,
+    items: movs.map((m) => ({
+      id: m.id,
+      tipo: m.tipo,
+      concepto: m.concepto,
+      monto: Number(m.monto),
+      createdAt: m.createdAt,
+      registradoPor: m.registradoPor,
+    })),
+  }
+}
+
+// ── Cierre de caja (Z-report) ────────────────────────────────────────────────
+
+/** Etiquetas legibles de los tipos de transacción en el cierre. */
+const TIPO_LABEL: Record<string, string> = {
+  SALE: 'Ventas',
+  MEMBERSHIP_REDEMPTION: 'Uso de membresía',
+  PROMOTION_USE: 'Uso de promoción',
+  BENEFIT_USE: 'Entrega de beneficio',
+  REWARD_REDEMPTION: 'Canje de premio',
+  COUPON_USE: 'Cupón',
+  POINTS_SPEND: 'Puntos',
+  REFERRAL: 'Referido',
+  PURCHASE: 'Compra',
+  OTHER: 'Otro',
+}
+
+export interface CierreReporte {
+  id: string
+  sucursal: string
+  turno: string | null
+  estado: string
+  abiertaPor: string
+  cerradaPor: string | null
+  abiertaAt: Date
+  cerradaAt: Date | null
+  balanceInicial: number
+  balanceFinal: number | null
+  balanceEsperado: number | null
+  diferencia: number | null
+  observaciones: string | null
+  cobros: number
+  total: number
+  porMetodo: { efectivo: number; transferencia: number; otro: number }
+  porTipo: { tipo: string; label: string; cantidad: number; total: number }[]
+  porEmpleado: { empleado: string; cantidad: number; total: number }[]
+  /** Movimientos de efectivo intra-turno (G9): entradas y salidas. */
+  movimientos: { tipo: 'ENTRADA' | 'SALIDA'; concepto: string; monto: number; fecha: Date }[]
+  movimientosEntrada: number
+  movimientosSalida: number
+  empresa: {
+    nombre: string
+    logoUrl: string | null
+    direccion: string | null
+    telefono: string | null
+  }
+  timeZone: string
+}
+
+/**
+ * Reporte de cierre de una sesión de caja (arqueo "Z"): datos del turno +
+ * cobros desglosados por método, por tipo de operación y por empleado. Sirve
+ * para imprimir y reimprimir. Filtra por companyId (multi-tenant).
+ */
+export async function getCierreReporte(
+  cajaSesionId: string,
+  companyId: string
+): Promise<CierreReporte | null> {
+  const sesion = await prisma.cajaSesion.findFirst({
+    where: { id: cajaSesionId, companyId },
+    include: {
+      sucursal: { select: { nombre: true } },
+      abiertaPor: { select: { name: true } },
+      cerradaPor: { select: { name: true } },
+      company: {
+        select: {
+          name: true,
+          logoUrl: true,
+          direccion: true,
+          telefono: true,
+          zonaHoraria: true,
+        },
+      },
+    },
+  })
+  if (!sesion) return null
+
+  const [cobros, movimientos] = await Promise.all([
+    prisma.transaction.findMany({
+      where: { cajaSesionId, estado: 'APPLIED' },
+      select: {
+        monto: true,
+        metodoCobro: true,
+        tipo: true,
+        empleado: { select: { name: true } },
+      },
+    }),
+    prisma.movimientoCaja.findMany({
+      where: { cajaSesionId },
+      select: { tipo: true, concepto: true, monto: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    }),
+  ])
+
+  let movimientosEntrada = 0
+  let movimientosSalida = 0
+  for (const m of movimientos) {
+    const monto = Number(m.monto)
+    if (m.tipo === 'ENTRADA') movimientosEntrada += monto
+    else movimientosSalida += monto
+  }
+
+  const porMetodo = { efectivo: 0, transferencia: 0, otro: 0 }
+  const tipoMap = new Map<string, { cantidad: number; total: number }>()
+  const empMap = new Map<string, { cantidad: number; total: number }>()
+  let total = 0
+
+  for (const c of cobros) {
+    const monto = Number(c.monto ?? 0)
+    total += monto
+    if (c.metodoCobro === 'EFECTIVO') porMetodo.efectivo += monto
+    else if (c.metodoCobro === 'TRANSFERENCIA') porMetodo.transferencia += monto
+    else porMetodo.otro += monto
+
+    const t = tipoMap.get(c.tipo) ?? { cantidad: 0, total: 0 }
+    t.cantidad += 1
+    t.total += monto
+    tipoMap.set(c.tipo, t)
+
+    const nombre = c.empleado?.name ?? 'Sin asignar'
+    const e = empMap.get(nombre) ?? { cantidad: 0, total: 0 }
+    e.cantidad += 1
+    e.total += monto
+    empMap.set(nombre, e)
+  }
+
+  return {
+    id: sesion.id,
+    sucursal: sesion.sucursal.nombre,
+    turno: sesion.turno,
+    estado: sesion.estado,
+    abiertaPor: sesion.abiertaPor.name ?? '—',
+    cerradaPor: sesion.cerradaPor?.name ?? null,
+    abiertaAt: sesion.abiertaAt,
+    cerradaAt: sesion.cerradaAt,
+    balanceInicial: Number(sesion.balanceInicial),
+    balanceFinal: sesion.balanceFinal == null ? null : Number(sesion.balanceFinal),
+    balanceEsperado: sesion.balanceEsperado == null ? null : Number(sesion.balanceEsperado),
+    diferencia: sesion.diferencia == null ? null : Number(sesion.diferencia),
+    observaciones: sesion.observaciones,
+    cobros: cobros.length,
+    total,
+    porMetodo,
+    porTipo: [...tipoMap.entries()]
+      .map(([tipo, v]) => ({ tipo, label: TIPO_LABEL[tipo] ?? tipo, ...v }))
+      .sort((a, b) => b.total - a.total),
+    porEmpleado: [...empMap.entries()]
+      .map(([empleado, v]) => ({ empleado, ...v }))
+      .sort((a, b) => b.total - a.total),
+    movimientos: movimientos.map((m) => ({
+      tipo: m.tipo,
+      concepto: m.concepto,
+      monto: Number(m.monto),
+      fecha: m.createdAt,
+    })),
+    movimientosEntrada,
+    movimientosSalida,
+    empresa: {
+      nombre: sesion.company.name,
+      logoUrl: sesion.company.logoUrl,
+      direccion: sesion.company.direccion,
+      telefono: sesion.company.telefono,
+    },
+    timeZone: sesion.company.zonaHoraria,
+  }
+}
+
+export interface CierreListItem {
+  id: string
+  sucursal: string
+  turno: string | null
+  cerradaAt: Date | null
+  cerradaPor: string | null
+  balanceFinal: number | null
+  diferencia: number | null
+}
+
+/** Últimos cierres de caja de la empresa, para imprimir/reimprimir. */
+export async function getCierresRecientes(
+  companyId: string,
+  limit = 8
+): Promise<CierreListItem[]> {
+  const sesiones = await prisma.cajaSesion.findMany({
+    where: { companyId, estado: 'CERRADA' },
+    orderBy: { cerradaAt: 'desc' },
+    take: limit,
+    include: {
+      sucursal: { select: { nombre: true } },
+      cerradaPor: { select: { name: true } },
+    },
+  })
+  return sesiones.map((s) => ({
+    id: s.id,
+    sucursal: s.sucursal.nombre,
+    turno: s.turno,
+    cerradaAt: s.cerradaAt,
+    cerradaPor: s.cerradaPor?.name ?? null,
+    balanceFinal: s.balanceFinal == null ? null : Number(s.balanceFinal),
+    diferencia: s.diferencia == null ? null : Number(s.diferencia),
+  }))
+}
+
+// ── Reporte por empleado / día (incluye transferencias del panel) ────────────
+
+/** Minutos que la zona horaria va por delante de UTC en un instante dado. */
+function tzOffsetMin(date: Date, timeZone: string): number {
+  const dtf = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+  const map: Record<string, number> = {}
+  for (const p of dtf.formatToParts(date)) {
+    if (p.type !== 'literal') map[p.type] = Number(p.value)
+  }
+  const asUTC = Date.UTC(map.year, map.month - 1, map.day, map.hour, map.minute, map.second)
+  return (asUTC - date.getTime()) / 60000
+}
+
+/** Rango [gte, lt) en UTC del día calendario `YYYY-MM-DD` en una zona horaria. */
+function rangoDiaLocal(fecha: string, timeZone: string): { gte: Date; lt: Date } {
+  const baseUtc = new Date(`${fecha}T00:00:00Z`).getTime()
+  const offset = tzOffsetMin(new Date(`${fecha}T12:00:00Z`), timeZone)
+  const startUtc = baseUtc - offset * 60000
+  return { gte: new Date(startUtc), lt: new Date(startUtc + 86_400_000) }
+}
+
+/** "YYYY-MM-DD" de hoy en la zona horaria dada. */
+export function hoyLocal(timeZone: string): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date())
+}
+
+export interface ReporteEmpleadoDia {
+  empleado: string
+  fecha: string
+  estado: 'CON_DATOS' | 'VACIO'
+  cobros: number
+  total: number
+  porMetodo: { efectivo: number; transferencia: number; otro: number }
+  porTipo: { tipo: string; label: string; cantidad: number; total: number }[]
+  /** Desglose por origen: caja (turno) vs panel (transferencias/confirmaciones). */
+  porOrigen: { caja: number; cajaTotal: number; panel: number; panelTotal: number }
+  empresa: {
+    nombre: string
+    logoUrl: string | null
+    direccion: string | null
+    telefono: string | null
+  }
+  timeZone: string
+}
+
+/**
+ * Cuadre del día de UN empleado: TODOS los cobros que aplicó ese día, con o sin
+ * caja abierta. A diferencia del cierre de caja (atado a la sesión), este suma
+ * también las **transferencias/pagos confirmados desde el panel** (G5), que no
+ * pasan por una `CajaSesion`. Filtra por companyId (multi-tenant).
+ */
+export async function getReporteEmpleadoDia(
+  companyId: string,
+  empleadoId: string,
+  empleadoNombre: string,
+  fecha: string,
+  timeZone: string
+): Promise<ReporteEmpleadoDia> {
+  const empresa = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: { name: true, logoUrl: true, direccion: true, telefono: true },
+  })
+
+  const { gte, lt } = rangoDiaLocal(fecha, timeZone)
+  const cobros = await prisma.transaction.findMany({
+    where: {
+      companyId,
+      empleadoId,
+      estado: 'APPLIED',
+      metodoCobro: { not: null },
+      createdAt: { gte, lt },
+    },
+    select: { monto: true, metodoCobro: true, tipo: true, cajaSesionId: true },
+  })
+
+  const porMetodo = { efectivo: 0, transferencia: 0, otro: 0 }
+  const porOrigen = { caja: 0, cajaTotal: 0, panel: 0, panelTotal: 0 }
+  const tipoMap = new Map<string, { cantidad: number; total: number }>()
+  let total = 0
+
+  for (const c of cobros) {
+    const monto = Number(c.monto ?? 0)
+    total += monto
+    if (c.metodoCobro === 'EFECTIVO') porMetodo.efectivo += monto
+    else if (c.metodoCobro === 'TRANSFERENCIA') porMetodo.transferencia += monto
+    else porMetodo.otro += monto
+
+    if (c.cajaSesionId) {
+      porOrigen.caja += 1
+      porOrigen.cajaTotal += monto
+    } else {
+      porOrigen.panel += 1
+      porOrigen.panelTotal += monto
+    }
+
+    const t = tipoMap.get(c.tipo) ?? { cantidad: 0, total: 0 }
+    t.cantidad += 1
+    t.total += monto
+    tipoMap.set(c.tipo, t)
+  }
+
+  return {
+    empleado: empleadoNombre,
+    fecha,
+    estado: cobros.length === 0 ? 'VACIO' : 'CON_DATOS',
+    cobros: cobros.length,
+    total,
+    porMetodo,
+    porOrigen,
+    porTipo: [...tipoMap.entries()]
+      .map(([tipo, v]) => ({ tipo, label: TIPO_LABEL[tipo] ?? tipo, ...v }))
+      .sort((a, b) => b.total - a.total),
+    empresa: {
+      nombre: empresa?.name ?? 'MembeGo',
+      logoUrl: empresa?.logoUrl ?? null,
+      direccion: empresa?.direccion ?? null,
+      telefono: empresa?.telefono ?? null,
+    },
+    timeZone,
+  }
+}
+
 export interface OrdenPendiente {
   /** MEMBRESIA = pago de plan (o cambio de plan); PROMOCION = compra. */
   tipo: 'MEMBRESIA' | 'PROMOCION'

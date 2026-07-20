@@ -137,6 +137,8 @@ export interface TicketPayload {
   /** Factura: líneas estructuradas y método de pago (ventas de caja). */
   lineas: FacturaLinea[]
   metodoPago: string | null
+  /** true = comprobante de entrega (regalo/beneficio sin valor comercial). */
+  esEntrega: boolean
 }
 
 export async function obtenerTicket(
@@ -170,6 +172,7 @@ export async function obtenerTicket(
     ticket: {
       transactionId: t.id,
       timeZone: company.zonaHoraria,
+      esEntrega: s.esEntrega === true,
       lineas: lineasRaw.map((l) => ({
         descripcion: String(l.descripcion ?? ''),
         cantidad: Number(l.cantidad ?? 1),
@@ -209,6 +212,8 @@ export async function obtenerTicket(
         restantes: (s.restantes as number | 'ilimitado') ?? null,
         observaciones: t.resultado,
         promosActivas: (s.promosActivas as string[]) ?? [],
+        metodoPago: (s.metodoCobroLabel as string) ?? null,
+        referenciaPago: (s.referenciaPago as string) ?? null,
       },
     },
   }
@@ -253,6 +258,78 @@ export async function registrarImpresionTx(
     return { numero, esCopia }
   } catch {
     return { error: 'No se pudo registrar la impresión.' }
+  }
+}
+
+// ── Anulación / devolución de una transacción (Fase 4) ───────────────────────
+
+/**
+ * Anula (contablemente) una transacción APLICADA: la pasa a CANCELLED con un
+ * motivo obligatorio, registra la transición y deja auditoría. Al quedar fuera
+ * de APPLIED, deja de sumar en cierres, cuadres y reportes. Solo admin de la
+ * misma empresa. NO revierte automáticamente efectos de negocio (p. ej. la
+ * activación de una membresía): esa corrección es una acción aparte.
+ */
+export async function anularTransaccion(
+  transactionId: string,
+  motivo: string
+): Promise<{ error?: string; success?: boolean }> {
+  try {
+    const user = await getUser()
+    if (!user || !ADMIN_ROLES.includes(user.metadata.role)) {
+      return { error: 'No autorizado.' }
+    }
+    const motivoLimpio = motivo.trim()
+    if (motivoLimpio.length < 3) return { error: 'Indica el motivo de la anulación.' }
+
+    const t = await prisma.transaction.findUnique({
+      where: { id: transactionId },
+      select: { companyId: true, estado: true },
+    })
+    if (!t) return { error: 'Transacción no encontrada.' }
+    if (!autorizado(user, t.companyId)) return { error: 'No autorizado.' }
+    if (t.estado !== 'APPLIED') {
+      return { error: 'Solo se pueden anular transacciones aplicadas.' }
+    }
+
+    // Guard atómico: solo anula si sigue APPLIED (evita doble anulación).
+    const res = await prisma.transaction.updateMany({
+      where: { id: transactionId, estado: 'APPLIED' },
+      data: { estado: 'CANCELLED', cancelledAt: new Date() },
+    })
+    if (res.count === 0) return { error: 'La transacción ya no está aplicada.' }
+
+    await prisma.transactionTransicion.create({
+      data: {
+        transactionId,
+        desde: 'APPLIED',
+        hacia: 'CANCELLED',
+        motivo: motivoLimpio.slice(0, 300),
+        userId: user.metadata.dbUserId ?? null,
+      },
+    })
+
+    const meta = await getRequestMeta()
+    await prisma.auditLog
+      .create({
+        data: {
+          companyId: t.companyId,
+          userId: user.metadata.dbUserId ?? null,
+          accion: 'TRANSACCION_ANULADA',
+          entidadTipo: 'Transaction',
+          entidadId: transactionId,
+          payload: { motivo: motivoLimpio },
+          ...meta,
+        },
+      })
+      .catch(() => {})
+
+    revalidatePath('/admin/registros')
+    revalidatePath('/admin/facturas')
+    return { success: true }
+  } catch (e) {
+    console.error('[transacciones] anularTransaccion:', e)
+    return { error: 'No se pudo anular la transacción.' }
   }
 }
 

@@ -5,7 +5,12 @@ import {
   buscarOrdenesPendientes,
   getResumenSesion,
   getSucursalesActivas,
+  getCierresRecientes,
+  getMovimientosSesion,
 } from '@/modules/caja/queries'
+import { CierreCajaDialog } from '@/components/caja/CierreCajaDialog'
+import { ReporteDiaDialog } from '@/components/caja/ReporteDiaDialog'
+import { MovimientosCaja } from '@/components/caja/MovimientosCaja'
 import {
   AbrirCajaForm,
   BuscadorOrdenes,
@@ -29,6 +34,15 @@ const fmtHora = (d: Date) =>
 
 const fmtRD = (n: number) =>
   `RD$${n.toLocaleString('es-DO', { minimumFractionDigits: 2 })}`
+
+const fmtFechaCorta = (d: Date) =>
+  new Intl.DateTimeFormat('es-DO', {
+    timeZone: 'America/Santo_Domingo',
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(d)
 
 /**
  * Caja (POS) de la sucursal: abrir/cerrar turno, buscar órdenes pendientes y
@@ -60,6 +74,44 @@ export default async function CajaPage({
     sucursales = await getSucursalesActivas(companyId)
   }
 
+  // Cierres recientes para imprimir/reimprimir (Control de comprobantes · F2).
+  const cierres = await getCierresRecientes(companyId).catch(() => [])
+  const cierresRecientes =
+    cierres.length === 0 ? null : (
+      <section className="rounded-3xl border border-border/70 bg-card p-5">
+        <h2 className="mb-3 text-sm font-semibold text-foreground">Cierres recientes</h2>
+        <ul className="divide-y divide-border/60">
+          {cierres.map((c) => {
+            const dif = c.diferencia ?? 0
+            const difLabel =
+              c.diferencia == null
+                ? ''
+                : dif === 0
+                  ? 'Cuadrada'
+                  : dif > 0
+                    ? `Sobrante ${fmtRD(dif)}`
+                    : `Faltante ${fmtRD(Math.abs(dif))}`
+            return (
+              <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground">
+                    {c.sucursal}
+                    {c.turno ? ` · ${c.turno}` : ''}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {c.cerradaAt ? fmtFechaCorta(c.cerradaAt) : '—'}
+                    {c.cerradaPor ? ` · ${c.cerradaPor}` : ''}
+                    {difLabel ? ` · ${difLabel}` : ''}
+                  </p>
+                </div>
+                <CierreCajaDialog cajaSesionId={c.id} />
+              </li>
+            )
+          })}
+        </ul>
+      </section>
+    )
+
   // Sesión abierta de la empresa (la primera entre sus sucursales).
   const sesion = await prisma.cajaSesion.findFirst({
     where: { companyId, estado: 'ABIERTA' },
@@ -89,15 +141,20 @@ export default async function CajaPage({
             <AbrirCajaForm sucursales={sucursales} />
           </div>
         )}
+        <div className="mt-6 flex flex-wrap justify-end gap-2">
+          <ReporteDiaDialog />
+        </div>
+        {cierresRecientes && <div className="mt-6">{cierresRecientes}</div>}
       </main>
     )
   }
 
-  const [resumen, ordenes] = await Promise.all([
+  const [resumen, ordenes, movimientos] = await Promise.all([
     getResumenSesion(sesion.id),
     buscarOrdenesPendientes(companyId, q),
+    getMovimientosSesion(sesion.id),
   ])
-  const esperado = Number(sesion.balanceInicial) + resumen.totalEfectivo
+  const esperado = Number(sesion.balanceInicial) + resumen.totalEfectivo + movimientos.neto
 
   return (
     <main className="container max-w-3xl space-y-6 py-8">
@@ -145,6 +202,15 @@ export default async function CajaPage({
           ))}
         </dl>
       </header>
+
+      {/* Herramientas del turno: cuadre del día del empleado (incluye
+          transferencias confirmadas en el panel, fuera de la caja). */}
+      <div className="flex flex-wrap justify-end gap-2">
+        <ReporteDiaDialog />
+      </div>
+
+      {/* Movimientos de efectivo intra-turno (fondo, retiros, gastos). */}
+      <MovimientosCaja cajaSesionId={sesion.id} movimientos={movimientos} />
 
       {/* Cobrar */}
       <section className="space-y-4">
@@ -210,6 +276,8 @@ export default async function CajaPage({
 
       {/* Cierre */}
       <CerrarCajaForm cajaSesionId={sesion.id} esperado={esperado} />
+
+      {cierresRecientes}
     </main>
   )
 }

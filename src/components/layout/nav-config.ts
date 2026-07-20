@@ -28,6 +28,7 @@ import {
   Ticket,
   Banknote,
   ReceiptText,
+  FileText,
   Trophy,
   CalendarDays,
   Palette,
@@ -88,6 +89,7 @@ const ADMIN_NAV: NavGroup[] = [
     items: [
       { href: '/admin/pagos', label: 'Pagos', icon: Wallet },
       { href: '/admin/facturas', label: 'Facturas', icon: ReceiptText },
+      { href: '/admin/registros', label: 'Registros', icon: FileText },
       { href: '/admin/metodos-pago', label: 'Métodos de pago', icon: Landmark },
     ],
   },

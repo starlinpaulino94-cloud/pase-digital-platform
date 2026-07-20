@@ -71,6 +71,7 @@ export async function confirmarPago(
         planSolicitado: { select: { nombre: true, precio: true } },
         metodoPago: { select: { tipo: true, nombre: true } },
         sucursalPago: { select: { id: true, nombre: true } },
+        comprobanteNota: true,
       },
     })
     const esCambio = membership.estado === 'ACTIVA' && membership.planIdSolicitado != null
@@ -100,6 +101,11 @@ export async function confirmarPago(
         : extras?.metodoPago?.tipo === 'PRESENCIAL'
           ? 'Pago en el local'
           : 'Confirmado por el negocio',
+      // Recibo de pago (G6): banco/método + nota de referencia del cliente.
+      referenciaPago:
+        [extras?.metodoPago?.nombre, extras?.comprobanteNota?.trim()]
+          .filter(Boolean)
+          .join(' · ') || null,
       sucursalId: extras?.sucursalPago?.id ?? null,
       sucursalNombre: extras?.sucursalPago?.nombre ?? null,
       membershipId: membership.id,

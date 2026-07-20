@@ -26,6 +26,7 @@ export function buildDocFromPayload(
     transaccion: { ...ticket.transaccion, fecha: new Date(ticket.transaccion.fecha) },
     esCopia: opts?.esCopia,
     copiaNumero: opts?.copiaNumero,
+    esEntrega: ticket.esEntrega,
     timeZone: ticket.timeZone,
   })
 }

@@ -698,6 +698,7 @@ export async function confirmarVisita(
       transactionId: result.transaccion.id,
       lineas: [],
       metodoPago: null,
+      esEntrega: false,
       timeZone: empresa.zonaHoraria,
       empresa: {
         nombre: empresa.name,
