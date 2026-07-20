@@ -69,6 +69,13 @@ export function buildReceiptDoc(input: BuildReceiptInput): ReceiptDoc {
         push({ kind: 'text', text: `COPIA${input.copiaNumero ? ` #${input.copiaNumero}` : ''}`, align: 'center', bold: true, size: 'double' })
         push({ kind: 'separator', char: '*' })
       }
+      // Comprobante de entrega: regalo/beneficio sin valor comercial.
+      if (input.esEntrega) {
+        push({ kind: 'separator', char: '*' })
+        push({ kind: 'text', text: 'COMPROBANTE DE ENTREGA', align: 'center', bold: true })
+        push({ kind: 'text', text: 'Sin valor comercial', align: 'center' })
+        push({ kind: 'separator', char: '*' })
+      }
       if (t.mostrarLogo && empresa.logoUrl) push({ kind: 'logo' })
       push({ kind: 'text', text: empresa.nombre, align: 'center', bold: true, size: 'double' })
       if (empresa.sucursal) push({ kind: 'text', text: empresa.sucursal, align: 'center' })

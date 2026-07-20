@@ -9,6 +9,7 @@ import { formSubmitLimiter } from '@/lib/rate-limit'
 import { generarCodigo } from '@/lib/codes'
 import { inicioPeriodo } from '@/modules/ofertas/periodo'
 import { ofertaVigente } from '@/modules/ofertas/queries'
+import { registrarEntregaBeneficio } from '@/modules/transacciones/entrega'
 
 /**
  * Ofertas VIP · acciones. La elegibilidad SIEMPRE se decide por cuenta
@@ -21,6 +22,8 @@ export interface OfertaActionState {
   mensaje?: string
   /** id de la oferta creada (para redirigir al detalle). */
   ofertaId?: string
+  /** id de la transacción de entrega (para imprimir el comprobante). */
+  transactionId?: string
 }
 
 /** Notifica "tienes un regalo" a una lista de clientes (mejor esfuerzo). */
@@ -238,10 +241,25 @@ export async function registrarUsoOferta(
     })
     if ('error' in resultado) return { error: resultado.error }
 
+    // Registro oficial + comprobante de entrega (Control de comprobantes ·
+    // Fase 1). No bloquea el uso si la facturación falla: el regalo ya se
+    // entregó (registrarEntregaBeneficio nunca lanza).
+    const tx = await registrarEntregaBeneficio({
+      tipo: 'BENEFIT_USE',
+      companyId: oferta.companyId,
+      clienteId: invitado.clienteId,
+      clienteNombre: invitado.cliente.nombre,
+      empleadoId: user.metadata.dbUserId ?? null,
+      beneficio: oferta.titulo,
+      detalle: `Regalo VIP: ${oferta.titulo}`,
+      restantes: resultado.restantes,
+    })
+
     revalidatePath(`/admin/ofertas/${oferta.id}`)
     return {
       success: true,
       mensaje: `Uso registrado a ${invitado.cliente.nombre}. Le quedan ${resultado.restantes} en el período.`,
+      transactionId: tx?.id,
     }
   } catch (e) {
     console.error('[ofertas] uso:', e)

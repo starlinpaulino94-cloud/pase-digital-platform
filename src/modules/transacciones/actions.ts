@@ -137,6 +137,8 @@ export interface TicketPayload {
   /** Factura: líneas estructuradas y método de pago (ventas de caja). */
   lineas: FacturaLinea[]
   metodoPago: string | null
+  /** true = comprobante de entrega (regalo/beneficio sin valor comercial). */
+  esEntrega: boolean
 }
 
 export async function obtenerTicket(
@@ -170,6 +172,7 @@ export async function obtenerTicket(
     ticket: {
       transactionId: t.id,
       timeZone: company.zonaHoraria,
+      esEntrega: s.esEntrega === true,
       lineas: lineasRaw.map((l) => ({
         descripcion: String(l.descripcion ?? ''),
         cantidad: Number(l.cantidad ?? 1),

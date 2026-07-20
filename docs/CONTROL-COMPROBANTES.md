@@ -223,11 +223,38 @@ histórico de **cierres de caja**, entregas de regalos.
 
 ## 6. Propuesta de implementación por fases (para cuando aprons)
 
-**Fase 1 — "Todo deja comprobante" (P0)**
+**Fase 1 — "Todo deja comprobante" (P0)** ✅ aplicada
 - Emitir `Transaction` + comprobante de entrega en **Regalos VIP** (G1),
   **Ruleta** (G2) y regalos/promos gratis (G3).
 - Plantilla **"Comprobante de entrega / beneficio"** (sin precio) reutilizando
   `ReceiptImpresion`.
+
+> **✅ Fase 1 aplicada — con una precisión de la investigación:** al implementar
+> se confirmó que los premios de **Ruleta** y los **regalos de bienvenida** van
+> al *wallet* del cliente y su **entrega real se canjea en el mostrador vía
+> `confirmarCanjePromocion`, que YA crea una `Transaction` con recibo**
+> (`PROMOTION_USE`). Es decir, G2 y G3 ya estaban cubiertos *en el momento de la
+> entrega* — emitir otro comprobante al ganar/otorgar habría duplicado. El único
+> hueco real de "entrega sin comprobante" era **G1: el uso de un Regalo VIP**
+> (`registrarUsoOferta`, que usa `OfertaUso` y no pasa por ese camino).
+>
+> Lo implementado:
+> - Helper reutilizable `registrarEntregaBeneficio`
+>   (`src/modules/transacciones/entrega.ts`): registra la entrega gratuita en el
+>   libro mayor (`Transaction`, tipo `BENEFIT_USE`/`REWARD_REDEMPTION`, monto 0,
+>   sin método de cobro) y nunca bloquea la operación si falla.
+> - **Regalo VIP** (`registrarUsoOferta`): al registrar el uso, emite la
+>   transacción y devuelve su id.
+> - **Comprobante de entrega**: nuevo modo `esEntrega` en el motor de recibos
+>   (banner "COMPROBANTE DE ENTREGA · Sin valor comercial", sin importes),
+>   propagado por `TicketPayload`/`obtenerTicket`/`ReceiptTicket`.
+> - **Impresión al entregar**: botón "Imprimir comprobante" en el canje VIP,
+>   reimprimible con la misma maquinaria (`ReceiptImpresion` marca original vs
+>   copia). Verificado con tsc, eslint y `next build`.
+>
+> Queda como mejora opcional (decisión de producto) una **"constancia de premio
+> ganado/regalo otorgado"** en el momento del *otorgamiento* (no de la entrega),
+> si el negocio quiere un papel también al ganar la ruleta.
 
 **Fase 2 — Caja completa (P0/P1)**
 - **Reporte de cierre imprimible y reimprimible** (Z-report) con desglose por

@@ -222,6 +222,7 @@ export async function confirmarCanjePromocion(
       transactionId: result.transaccion.id,
       lineas: [],
       metodoPago: null,
+      esEntrega: false,
       timeZone: empresa.zonaHoraria,
       empresa: {
         nombre: empresa.name,

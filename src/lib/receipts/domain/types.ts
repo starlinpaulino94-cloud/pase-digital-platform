@@ -119,5 +119,7 @@ export interface BuildReceiptInput {
   /** true = reimpresión: banner COPIA + número de copia. */
   esCopia?: boolean
   copiaNumero?: number
+  /** true = comprobante de entrega (regalo/beneficio sin valor comercial). */
+  esEntrega?: boolean
   timeZone?: string
 }
