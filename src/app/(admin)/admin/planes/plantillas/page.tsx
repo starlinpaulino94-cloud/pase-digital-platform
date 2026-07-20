@@ -9,6 +9,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/ui/page-header'
 import { ArrowLeft, Check, Users, Target } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -117,22 +118,18 @@ export default async function PlanPlantillasPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Plantillas de plan</h1>
-          <p className="text-muted-foreground">
-            Modelos de membresía listos para usar. Al elegir uno se crea una copia
-            editable: ajusta precio y beneficios y guárdalo. La plantilla original
-            no cambia.
-          </p>
-        </div>
-        <Link href="/admin/planes">
-          <Button variant="outline">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Mis planes
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Plantillas de plan"
+        description="Modelos de membresía listos para usar. Al elegir uno se crea una copia editable: ajusta precio y beneficios y guárdalo. La plantilla original no cambia."
+        action={
+          <Link href="/admin/planes">
+            <Button variant="outline">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Mis planes
+            </Button>
+          </Link>
+        }
+      />
 
       {/* Filtro por modelo comercial */}
       <div className="flex flex-wrap gap-2">

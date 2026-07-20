@@ -101,7 +101,7 @@ export async function crearOfertaPrivada(
 
     await notificarInvitados(clienteIds, titulo, oferta.codigo)
 
-    revalidatePath('/admin/ofertas')
+    revalidatePath('/admin/ofertas/vip')
     return { success: true, ofertaId: oferta.id, mensaje: 'Oferta creada. Comparte el link con tus clientes.' }
   } catch (e) {
     console.error('[ofertas] crear:', e)
@@ -133,7 +133,7 @@ export async function cambiarEstadoOferta(
       where: { id: oferta.id },
       data: { estado: estado as 'ACTIVA' | 'PAUSADA' | 'FINALIZADA' },
     })
-    revalidatePath('/admin/ofertas')
+    revalidatePath('/admin/ofertas/vip')
     revalidatePath(`/admin/ofertas/${oferta.id}`)
     return { success: true }
   } catch (e) {

@@ -3,6 +3,7 @@ import { ADMIN_ROLES } from '@/types'
 import { resolveCompanyId } from '@/lib/auth/company-context'
 import { getEngagementConfig } from '@/modules/engagement/config'
 import { PageHeader } from '@/components/ui/page-header'
+import { SinEmpresaActiva } from '@/components/admin/SinEmpresaActiva'
 import { PersonalizacionForm } from '@/components/admin/PersonalizacionForm'
 
 export const dynamic = 'force-dynamic'
@@ -12,11 +13,7 @@ export default async function AdminPersonalizacionPage() {
   const user = await requireRole(ADMIN_ROLES)
   const companyId = await resolveCompanyId(user)
   if (!companyId) {
-    return (
-      <div className="py-20 text-center text-muted-foreground">
-        Selecciona una empresa para personalizar su experiencia.
-      </div>
-    )
+    return <SinEmpresaActiva seccion="la personalización de tu experiencia" />
   }
 
   const config = await getEngagementConfig(companyId)

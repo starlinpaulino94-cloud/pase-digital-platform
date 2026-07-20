@@ -58,7 +58,7 @@ export default async function OfertaDetallePage({
   return (
     <div className="max-w-4xl space-y-6">
       <Link
-        href="/admin/ofertas"
+        href="/admin/ofertas/vip"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" /> Regalos VIP

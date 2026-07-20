@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import {
   Users,
   Gift,
@@ -22,6 +23,7 @@ import {
 } from '@/modules/referidos/actions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PageHeader } from '@/components/ui/page-header'
+import { Button } from '@/components/ui/button'
 import { StatCard } from '@/components/ui/stat-card'
 import { Badge } from '@/components/ui/badge'
 import { ReglaRecompensaForm } from '@/components/admin/ReglaRecompensaForm'
@@ -145,8 +147,16 @@ export default async function ReferidosPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Referidos"
+        title="Invita y Gana — Rendimiento"
         description="Rendimiento del programa de referidos y reglas de recompensa."
+        action={
+          <Link href="/admin/invitaciones">
+            <Button variant="outline" className="gap-2">
+              <Megaphone className="h-4 w-4" />
+              Campañas
+            </Button>
+          </Link>
+        }
       />
 
       {/* KPIs */}

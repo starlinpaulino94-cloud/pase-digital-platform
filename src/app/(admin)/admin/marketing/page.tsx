@@ -8,6 +8,7 @@ import { resolveCompanyId } from '@/lib/auth/company-context'
 import { getCampanasMarketingAdmin } from '@/modules/engagement/campanas'
 import { MARKETING_TIPO_LABEL } from '@/lib/marketing'
 import { PageHeader } from '@/components/ui/page-header'
+import { SinEmpresaActiva } from '@/components/admin/SinEmpresaActiva'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -28,11 +29,7 @@ export default async function AdminMarketingPage() {
   const user = await requireRole(ADMIN_ROLES)
   const companyId = await resolveCompanyId(user)
   if (!companyId) {
-    return (
-      <div className="py-20 text-center text-muted-foreground">
-        Selecciona una empresa para ver sus campañas de marketing.
-      </div>
-    )
+    return <SinEmpresaActiva seccion="tus banners de marketing" />
   }
 
   const campanas = await getCampanasMarketingAdmin(companyId)

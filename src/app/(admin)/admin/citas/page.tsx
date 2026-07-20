@@ -15,6 +15,8 @@ import { etiquetaDia, hmEnTz, sumarDias, ymdEnTz } from '@/modules/citas/disponi
 import { CitaAdminActions } from '@/components/citas/CitaAdminActions'
 import { CitaEstadoBadge } from '@/components/citas/CitaEstadoBadge'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/ui/page-header'
+import { SinEmpresaActiva } from '@/components/admin/SinEmpresaActiva'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Citas' }
@@ -32,14 +34,7 @@ export default async function CitasAdminPage({
   const companyId = companyFilter(user) ?? user.metadata.companyId ?? null
 
   if (!companyId) {
-    return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-foreground">Citas</h1>
-        <p className="text-muted-foreground">
-          Selecciona una empresa activa para ver su agenda.
-        </p>
-      </div>
-    )
+    return <SinEmpresaActiva seccion="tu agenda de citas" />
   }
 
   const company = await prisma.company.findUnique({
@@ -63,22 +58,22 @@ export default async function CitasAdminPage({
   return (
     <div className="space-y-6">
       {/* Cabecera + configuración */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Citas</h1>
-          <p className="text-muted-foreground">
-            {cfg?.activa
-              ? `Turnos de ${cfg.duracionMin} min · máx. ${cfg.maxPorSlot} por turno${cfg.maxPorDia > 0 ? ` · máx. ${cfg.maxPorDia} por día` : ''}`
-              : 'La agenda está apagada: los clientes no pueden reservar.'}
-          </p>
-        </div>
-        <Button asChild variant={cfg?.activa ? 'outline' : 'default'} size="sm" className="gap-1.5">
-          <Link href="/admin/citas/configuracion">
-            <Settings2 className="h-4 w-4" />
-            {cfg?.activa ? 'Configuración' : 'Activar agenda'}
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="Citas"
+        description={
+          cfg?.activa
+            ? `Turnos de ${cfg.duracionMin} min · máx. ${cfg.maxPorSlot} por turno${cfg.maxPorDia > 0 ? ` · máx. ${cfg.maxPorDia} por día` : ''}`
+            : 'La agenda está apagada: los clientes no pueden reservar.'
+        }
+        action={
+          <Button asChild variant={cfg?.activa ? 'outline' : 'default'} size="sm" className="gap-1.5">
+            <Link href="/admin/citas/configuracion">
+              <Settings2 className="h-4 w-4" />
+              {cfg?.activa ? 'Configuración' : 'Activar agenda'}
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Navegación por día */}
       <div className="flex flex-wrap items-center gap-2">

@@ -4,16 +4,17 @@ import {
   Plus,
   Eye,
   Clock,
+  BarChart3,
 } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
 import { ADMIN_ROLES } from '@/types'
 import { resolveCompanyId } from '@/lib/auth/company-context'
 import { getCampanasEmpresa } from '@/modules/invitaciones/queries'
-import { absoluteUrl } from '@/lib/site'
 import { campanaEstadoUi } from '@/lib/estados'
 import { formatDate } from '@/lib/format'
 import { PageHeader } from '@/components/ui/page-header'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { SinEmpresaActiva } from '@/components/admin/SinEmpresaActiva'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { CampanaEstadoButton } from '@/components/invitaciones/CampanaEstadoButton'
@@ -32,11 +33,7 @@ export default async function AdminInvitacionesPage() {
   // (app_metadata.companyId) y verifica que exista.
   const companyId = await resolveCompanyId(user)
   if (!companyId) {
-    return (
-      <div className="py-20 text-center text-muted-foreground">
-        Selecciona una empresa para ver sus campañas.
-      </div>
-    )
+    return <SinEmpresaActiva seccion="tus campañas de Invita y Gana" />
   }
 
   const campanas = await getCampanasEmpresa(companyId)
@@ -44,15 +41,26 @@ export default async function AdminInvitacionesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Campañas de Invitación"
+        title="Invita y Gana"
         description="Crea y gestiona campañas 'Invita y Gana' para que tus clientes traigan amigos."
         action={
-          <Link href="/admin/invitaciones/nueva">
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Nueva campaña
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            {/* El rendimiento del programa (referidos y reglas) vive en su
+                propia vista; se enlaza aquí porque en el menú ambos se
+                unificaron en "Invita y Gana" (Auditoría · Fase A). */}
+            <Link href="/admin/referidos">
+              <Button variant="outline" className="gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Rendimiento
+              </Button>
+            </Link>
+            <Link href="/admin/invitaciones/nueva">
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Nueva campaña
+              </Button>
+            </Link>
+          </div>
         }
       />
 
@@ -70,7 +78,6 @@ export default async function AdminInvitacionesPage() {
         <div className="grid gap-4">
           {campanas.map((c) => {
             const badge = campanaEstadoUi(c.estado)
-            const url = absoluteUrl(`/invita/${c.slug}`)
             return (
               <Card key={c.id}>
                 <CardContent className="py-4">

@@ -5,6 +5,7 @@ import { companyFilter } from '@/modules/admin/queries'
 import { prisma } from '@/lib/prisma'
 import { MembresíasTable, type MembershipRow } from '@/components/admin/MembresíasTable'
 import type { PlanOption } from '@/components/admin/CambiarPlanDialog'
+import { PageHeader } from '@/components/ui/page-header'
 import { formatMoney } from '@/lib/format'
 import type { MembershipEstado } from '@/types'
 
@@ -91,10 +92,7 @@ export default async function MembresiasPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Membresías</h1>
-        <p className="text-muted-foreground">{memberships.length} registros</p>
-      </div>
+      <PageHeader title="Membresías" description={`${memberships.length} registros`} />
 
       <div className="flex flex-wrap gap-2">
         <FilterLink label="Todas" href="/admin/membresias" active={!estadoFilter} />

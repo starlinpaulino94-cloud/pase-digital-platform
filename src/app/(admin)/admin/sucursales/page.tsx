@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/ui/page-header'
 import { DeleteSucursalButton } from '@/components/admin/DeleteSucursalButton'
 import { ensureSucursalPrincipal } from '@/modules/empresas/sucursalPrincipal'
 
@@ -41,20 +42,18 @@ export default async function SucursalesPage() {
 
   return (
     <div className="space-y-6 animate-fade-up">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Sucursales</h1>
-          <p className="text-sm text-muted-foreground">
-            Las sucursales activas aparecen en el escáner para que el empleado indique desde dónde registra la visita.
-          </p>
-        </div>
-        <Link href="/admin/sucursales/nueva">
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Nueva sucursal
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Sucursales"
+        description="Las sucursales activas aparecen en el escáner para que el empleado indique desde dónde registra la visita."
+        action={
+          <Link href="/admin/sucursales/nueva">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nueva sucursal
+            </Button>
+          </Link>
+        }
+      />
 
       {sucursales.length === 0 ? (
         <Card className="border-dashed">

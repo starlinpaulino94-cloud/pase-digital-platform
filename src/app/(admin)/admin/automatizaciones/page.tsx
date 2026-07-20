@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { AlertCircle, Cake, Clock, UserX, ShieldCheck, LayoutTemplate } from 'lucide-react'
+import { Cake, Clock, UserX, ShieldCheck, LayoutTemplate } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { ADMIN_ROLES } from '@/types'
 import { requireRole } from '@/lib/auth/guards'
@@ -7,7 +7,7 @@ import { EjecutarAutomatizaciones } from '@/components/admin/EjecutarAutomatizac
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/ui/page-header'
-import { EmptyState } from '@/components/ui/empty-state'
+import { SinEmpresaActiva } from '@/components/admin/SinEmpresaActiva'
 import { StatusBanner } from '@/components/ui/status-banner'
 
 export const dynamic = 'force-dynamic'
@@ -47,16 +47,7 @@ export default async function AutomatizacionesPage() {
   const companyId = user.metadata.companyId
 
   if (!companyId) {
-    return (
-      <div className="space-y-6">
-        <PageHeader title="Automatizaciones" />
-        <EmptyState
-          icon={<AlertCircle className="h-6 w-6" />}
-          title="Esta vista es por empresa"
-          description="Inicia sesión con una cuenta de empresa para gestionar las automatizaciones."
-        />
-      </div>
-    )
+    return <SinEmpresaActiva seccion="tus automatizaciones" />
   }
 
   return (

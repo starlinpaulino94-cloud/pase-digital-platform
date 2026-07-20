@@ -1,4 +1,3 @@
-import { MessagesSquare } from 'lucide-react'
 import { ADMIN_ROLES } from '@/types'
 import { requireRole } from '@/lib/auth/guards'
 import {
@@ -11,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CompanySelector } from '@/components/admin/CompanySelector'
 import { ComunicacionConfigForm } from '@/components/admin/ComunicacionConfigForm'
 import { FaqManager } from '@/components/admin/FaqManager'
-import { EmptyState } from '@/components/ui/empty-state'
+import { SinEmpresaActiva } from '@/components/admin/SinEmpresaActiva'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,11 +41,7 @@ export default async function ComunicacionPage({
       />
 
       {!ctx.companyId ? (
-        <EmptyState
-          icon={<MessagesSquare className="h-6 w-6" />}
-          title="No hay empresa seleccionada"
-          description="Crea o selecciona una empresa para configurar su comunicación y soporte."
-        />
+        <SinEmpresaActiva seccion="tu comunicación y soporte" />
       ) : (
         <Tabs defaultValue="config" className="space-y-4">
           <TabsList>

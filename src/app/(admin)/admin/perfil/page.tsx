@@ -14,6 +14,7 @@ import { ReceiptTemplateEditor } from '@/components/admin/ReceiptTemplateEditor'
 import type { ReceiptTemplateConfig } from '@/lib/receipts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/ui/page-header'
 import { getAppUrl } from '@/lib/site'
 
 export const dynamic = 'force-dynamic'
@@ -46,12 +47,10 @@ export default async function PerfilEmpresaPage({
         .catch(() => [])
       return (
         <div className="space-y-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Perfil público</h1>
-            <p className="text-muted-foreground">
-              Elige la empresa cuyo perfil quieres editar.
-            </p>
-          </div>
+          <PageHeader
+            title="Perfil público"
+            description="Elige la empresa cuyo perfil quieres editar."
+          />
           {companies.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center text-muted-foreground">
@@ -83,7 +82,7 @@ export default async function PerfilEmpresaPage({
     }
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">Perfil público</h1>
+        <PageHeader title="Perfil público" />
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <AlertCircle className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" />
@@ -114,7 +113,7 @@ export default async function PerfilEmpresaPage({
     console.error('[admin-perfil]', e)
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">Perfil público</h1>
+        <PageHeader title="Perfil público" />
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <AlertCircle className="mx-auto mb-3 h-8 w-8 text-destructive" />
@@ -128,7 +127,7 @@ export default async function PerfilEmpresaPage({
   if (!company) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">Perfil público</h1>
+        <PageHeader title="Perfil público" />
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <AlertCircle className="mx-auto mb-3 h-8 w-8 text-destructive" />
@@ -141,29 +140,26 @@ export default async function PerfilEmpresaPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Perfil público</h1>
-          <p className="text-muted-foreground">
-            Así te ven los visitantes en el marketplace. Todo lo que edites
-            aquí se refleja en tu página pública.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <CompartirOfertaButton
-            variant="full"
-            label="Compartir página"
-            path={`/empresas/${company.slug}`}
-            titulo={company.name}
-            texto={`Conoce ${company.name} en MembeGo: membresías, promociones y beneficios.`}
-          />
-          <Button asChild variant="outline">
-            <Link href={`/empresas/${company.slug}`} target="_blank">
-              Ver mi página pública <ExternalLink className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Perfil público"
+        description="Así te ven los visitantes en el marketplace. Todo lo que edites aquí se refleja en tu página pública."
+        action={
+          <div className="flex items-center gap-2">
+            <CompartirOfertaButton
+              variant="full"
+              label="Compartir página"
+              path={`/empresas/${company.slug}`}
+              titulo={company.name}
+              texto={`Conoce ${company.name} en MembeGo: membresías, promociones y beneficios.`}
+            />
+            <Button asChild variant="outline">
+              <Link href={`/empresas/${company.slug}`} target="_blank">
+                Ver mi página pública <ExternalLink className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        }
+      />
 
       <PerfilPublicoForm
         company={{

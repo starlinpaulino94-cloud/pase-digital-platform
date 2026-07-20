@@ -1,94 +1,140 @@
 import Link from 'next/link'
-import { Gift, Plus, Users } from 'lucide-react'
+import {
+  Megaphone,
+  Sparkles,
+  Gift,
+  Plus,
+  ArrowRight,
+  type LucideIcon,
+} from 'lucide-react'
 import { ADMIN_ROLES } from '@/types'
 import { requireRole } from '@/lib/auth/guards'
 import { companyFilter } from '@/modules/admin/queries'
-import { getOfertasAdmin } from '@/modules/ofertas/queries'
-import { PERIODO_LABEL } from '@/modules/ofertas/periodo'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { prisma } from '@/lib/prisma'
+import { PageHeader } from '@/components/ui/page-header'
+import { SinEmpresaActiva } from '@/components/admin/SinEmpresaActiva'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'Regalos VIP' }
+export const metadata = { title: 'Ofertas' }
 
-const ESTADO_CLASE: Record<string, string> = {
-  ACTIVA: 'bg-success/15 text-success',
-  PAUSADA: 'bg-warning/15 text-warning-foreground',
-  FINALIZADA: 'bg-muted text-muted-foreground',
+/**
+ * Hub de Ofertas (Auditoría · Fase D).
+ *
+ * Punto de entrada ÚNICO para todo lo que un negocio "ofrece". Antes había
+ * tres módulos sueltos en el menú (Promociones, Banners, Regalos VIP) y el
+ * dueño no sabía dónde crear cada cosa. Este hub unifica el punto de partida
+ * y el lenguaje: se elige el TIPO de oferta y se enruta al flujo real. Los
+ * modelos de datos siguen siendo independientes (no se fusionan tablas); lo
+ * que se unifica es la puerta de entrada.
+ */
+type TipoOferta = {
+  key: 'publica' | 'relampago' | 'vip'
+  titulo: string
+  descripcion: string
+  icon: LucideIcon
+  crearHref: string
+  crearLabel: string
+  gestionarHref: string
 }
 
-export default async function OfertasAdminPage() {
+const TIPOS: TipoOferta[] = [
+  {
+    key: 'publica',
+    titulo: 'Promoción pública',
+    descripcion:
+      'Descuento o beneficio visible para todos tus clientes y seguidores. Se publica en tu perfil y en el inicio de la app.',
+    icon: Megaphone,
+    crearHref: '/admin/promociones/nuevo',
+    crearLabel: 'Nueva promoción',
+    gestionarHref: '/admin/promociones',
+  },
+  {
+    key: 'relampago',
+    titulo: 'Oferta relámpago',
+    descripcion:
+      'Happy Hour u oferta con tiempo límite que aparece viva en el inicio de tus clientes para generar urgencia.',
+    icon: Sparkles,
+    crearHref: '/admin/marketing/nueva',
+    crearLabel: 'Nuevo banner',
+    gestionarHref: '/admin/marketing',
+  },
+  {
+    key: 'vip',
+    titulo: 'Regalo VIP',
+    descripcion:
+      'Beneficio privado para una lista cerrada de clientes. No se publica: solo tu lista puede reclamarlo por enlace.',
+    icon: Gift,
+    crearHref: '/admin/ofertas/nueva',
+    crearLabel: 'Nuevo regalo VIP',
+    gestionarHref: '/admin/ofertas/vip',
+  },
+]
+
+export default async function OfertasHubPage() {
   const user = await requireRole(ADMIN_ROLES)
   const companyId = companyFilter(user) ?? user.metadata.companyId ?? null
 
   if (!companyId) {
-    return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-foreground">Regalos VIP</h1>
-        <p className="text-muted-foreground">Selecciona una empresa activa.</p>
-      </div>
-    )
+    return <SinEmpresaActiva seccion="tus ofertas" />
   }
 
-  const ofertas = await getOfertasAdmin(companyId)
+  // Conteos por tipo (total por empresa). Fail-open: si una query falla, se
+  // muestra 0 y el hub sigue siendo navegable.
+  const [publicas, relampago, vip] = await Promise.all([
+    prisma.promocion.count({ where: { companyId, archivada: false } }).catch(() => 0),
+    prisma.marketingCampaign.count({ where: { companyId } }).catch(() => 0),
+    prisma.ofertaPrivada.count({ where: { companyId } }).catch(() => 0),
+  ])
+  const conteo: Record<TipoOferta['key'], number> = { publica: publicas, relampago, vip }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Regalos VIP</h1>
-          <p className="text-muted-foreground">
-            Ofertas privadas para clientes seleccionados: no se publican, solo
-            se comparten por link y únicamente tu lista puede reclamarlas.
-          </p>
-        </div>
-        <Button asChild className="gap-1.5">
-          <Link href="/admin/ofertas/nueva">
-            <Plus className="h-4 w-4" /> Crear regalo
-          </Link>
-        </Button>
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        title="Ofertas"
+        description="Todo lo que ofreces a tus clientes en un solo lugar. Elige el tipo y créalo; cada tipo tiene su propio panel de gestión."
+      />
 
-      {ofertas.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border/80 bg-muted/20 p-10 text-center">
-          <Gift className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
-          <p className="font-semibold text-foreground">Aún no tienes regalos VIP</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Crea el primero: por ejemplo, &quot;12 lavados gratis al mes por un
-            año&quot; para tus mejores clientes.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {ofertas.map((o) => (
-            <Link
-              key={o.id}
-              href={`/admin/ofertas/${o.id}`}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-card p-4 shadow-card transition hover:-translate-y-0.5 hover:shadow-premium"
+      <div className="grid gap-4 lg:grid-cols-3">
+        {TIPOS.map((t) => {
+          const Icon = t.icon
+          const n = conteo[t.key]
+          return (
+            <div
+              key={t.key}
+              className="flex flex-col rounded-2xl border border-border/70 bg-card p-5 shadow-card"
             >
-              <div className="min-w-0">
-                <p className="font-semibold text-foreground">{o.titulo}</p>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  {o.usosPorPeriodo} usos {PERIODO_LABEL[o.periodo]}
-                  {o.vigenciaHasta
-                    ? ` · hasta ${new Intl.DateTimeFormat('es-DO', { dateStyle: 'medium' }).format(o.vigenciaHasta)}`
-                    : ''}
-                </p>
-              </div>
               <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Users className="h-4 w-4" />
-                  {o.invitados.length}/{o._count.invitados} reclamaron
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
+                  <Icon className="h-5 w-5" />
                 </span>
-                <Badge className={cn('hover:bg-inherit', ESTADO_CLASE[o.estado] ?? '')}>
-                  {o.estado === 'ACTIVA' ? 'Activa' : o.estado === 'PAUSADA' ? 'Pausada' : 'Finalizada'}
-                </Badge>
+                <div className="min-w-0">
+                  <h2 className="font-semibold text-foreground">{t.titulo}</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {n === 0 ? 'Ninguna creada' : `${n} en total`}
+                  </p>
+                </div>
               </div>
-            </Link>
-          ))}
-        </div>
-      )}
+
+              <p className="mt-3 flex-1 text-sm text-muted-foreground">{t.descripcion}</p>
+
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                <Link
+                  href={t.crearHref}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+                >
+                  <Plus className="h-4 w-4" /> {t.crearLabel}
+                </Link>
+                <Link
+                  href={t.gestionarHref}
+                  className="inline-flex items-center gap-1 rounded-xl border border-border/70 px-3.5 py-2 text-sm font-medium text-foreground transition hover:bg-muted"
+                >
+                  Ver todas <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

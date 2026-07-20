@@ -2,6 +2,7 @@ import { requireRole } from '@/lib/auth/guards'
 import { ADMIN_ROLES } from '@/types'
 import { companyFilter } from '@/modules/admin/queries'
 import { prisma } from '@/lib/prisma'
+import { PageHeader } from '@/components/ui/page-header'
 import { ClientesTable, type ClienteRow } from '@/components/admin/ClientesTable'
 
 export const dynamic = 'force-dynamic'
@@ -31,10 +32,7 @@ export default async function ClientesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Clientes</h1>
-        <p className="text-muted-foreground">{clientes.length} registros</p>
-      </div>
+      <PageHeader title="Clientes" description={`${clientes.length} registros`} />
 
       <ClientesTable data={clientes} />
     </div>
