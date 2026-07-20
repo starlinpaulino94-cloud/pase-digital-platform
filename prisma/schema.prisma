@@ -108,8 +108,10 @@ enum AuditAccion {
   QR_COMPARTIDO
   CAJA_ABIERTA
   CAJA_CERRADA
+  CAJA_MOVIMIENTO
   COBRO_REGISTRADO
   COMPROBANTE_IMPRESO
+  TRANSACCION_ANULADA
   REFERIDO_COMPLETADO
   RECOMPENSA_OTORGADA
   NOTA_INTERNA
@@ -358,6 +360,13 @@ enum CajaSesionEstado {
   CERRADA
 }
 
+/// Movimiento de efectivo dentro de un turno (fuera de cobros): entradas
+/// (aporte de fondo) y salidas (retiro, gasto, pago a proveedor).
+enum MovimientoCajaTipo {
+  ENTRADA
+  SALIDA
+}
+
 /// Forma en que se recibió un cobro presencial. OTRO deja la puerta abierta a
 /// tarjetas/pasarelas futuras sin tocar el enum de nuevo.
 enum MetodoCobroTipo {
@@ -397,11 +406,32 @@ model CajaSesion {
   abiertaAt DateTime  @default(now())
   cerradaAt DateTime?
 
-  cobros Transaction[]
+  cobros      Transaction[]
+  movimientos MovimientoCaja[]
 
   @@index([sucursalId, estado])
   @@index([companyId, abiertaAt])
   @@map("caja_sesiones")
+}
+
+/// Movimiento de efectivo intra-turno (G9): entrada/salida que no es un cobro.
+/// Afecta el arqueo (esperado = inicial + cobros efectivo + entradas − salidas).
+/// `registradoPor` guarda el nombre del empleado (documento), no su correo.
+model MovimientoCaja {
+  id           String             @id @default(cuid())
+  companyId    String
+  cajaSesionId String
+  cajaSesion   CajaSesion         @relation(fields: [cajaSesionId], references: [id], onDelete: Cascade)
+  tipo         MovimientoCajaTipo
+  monto        Decimal            @db.Decimal(10, 2)
+  concepto     String
+  registradoPorId String?
+  registradoPor   String?
+  createdAt    DateTime           @default(now())
+
+  @@index([cajaSesionId])
+  @@index([companyId, createdAt])
+  @@map("movimientos_caja")
 }
 
 // Métodos de pago configurables por empresa (sin tocar código)

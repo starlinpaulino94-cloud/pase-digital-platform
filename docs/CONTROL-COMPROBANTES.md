@@ -332,10 +332,41 @@ histórico de **cierres de caja**, entregas de regalos.
 > ventas/pagos; nadie pierde información y el que quiere el cuadre financiero
 > filtra. Verificado con tsc, eslint y `next build`.
 
-**Fase 4 — Precisión contable (P2)**
-- Numeración por tipo / NCF si aplica (G8).
-- **Movimientos de caja** intra-turno (G9).
-- Anulaciones/devoluciones/pago mixto según decisión (§4).
+**Fase 4 — Precisión contable (P2)** — ✅ *Completa (sin NCF).*
+- ✅ Numeración por folios internos (G8) — **sin NCF fiscales** (decisión del
+  negocio): se mantiene TCK-###### (ticket) + TX-YYYYMMDD-###### (transacción),
+  secuenciales y únicos por empresa/día.
+- ✅ **Movimientos de caja** intra-turno (G9).
+- ✅ **Anulaciones/devoluciones** (§4). *Pago mixto: pendiente opcional.*
+
+> **✅ G8 (folios internos).** El negocio **no emite NCF fiscales**, así que la
+> numeración interna existente es la definitiva: cada comprobante lleva
+> `TCK-######` y su transacción `TX-YYYYMMDD-######` (contadores atómicos, nunca
+> se reutilizan). No hizo falta cambio de esquema.
+>
+> **✅ G9 (movimientos de caja intra-turno).** Entradas (aporte de fondo) y
+> salidas (retiro, gasto, pago a proveedor) dentro del turno, que **no son
+> cobros** pero afectan el efectivo:
+> - Esquema: modelo `MovimientoCaja` + enum `MovimientoCajaTipo (ENTRADA/SALIDA)`
+>   ligado a `CajaSesion` (migración `20260751_movimientos_caja`, idempotente).
+> - Acción `registrarMovimientoCaja` (caja abierta, monto/concepto, auditado).
+> - **Arqueo corregido:** `cerrarCaja` ahora calcula
+>   `esperado = inicial + cobros efectivo + entradas − salidas`; el efectivo
+>   esperado en pantalla también incluye el neto de movimientos.
+> - UI `MovimientosCaja` en `/empleado/caja` (form + lista con neto) y el bloque
+>   **MOVIMIENTOS DE EFECTIVO** en el reporte de cierre imprimible.
+>
+> **✅ Anulaciones/devoluciones.** `anularTransaccion(id, motivo)` (admin, motivo
+> obligatorio) pasa una transacción APLICADA a **CANCELLED** con transición y
+> auditoría; al salir de APPLIED deja de sumar en cierres, cuadres y reportes.
+> Botón **Anular** en cada registro aplicado de `/admin/registros`. No revierte
+> automáticamente efectos de negocio (p. ej. activación de membresía) — esa
+> corrección es una acción aparte, a propósito.
+>
+> **Pago mixto** (parte efectivo + parte transferencia en un mismo cobro) queda
+> como mejora **opcional**: es invasiva a `cobrarOrden` y de baja frecuencia; se
+> hará si el negocio lo pide. Con lo demás, **las 4 fases del Control de
+> comprobantes quedan completas.**
 
 Recomendación: **empezar por la Fase 1** — es la que cumple literalmente el
 pedido ("todo lo que se le dé a un cliente debe generar un comprobante") y se

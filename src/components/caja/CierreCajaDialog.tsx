@@ -113,8 +113,27 @@ function CierrePreview({ c }: { c: CierreReporte }) {
         </>
       )}
 
+      {c.movimientos.length > 0 && (
+        <>
+          <div className="font-bold">MOVIMIENTOS DE EFECTIVO</div>
+          {c.movimientos.map((m, i) => (
+            <Row
+              key={i}
+              label={`${m.tipo === 'ENTRADA' ? '(+)' : '(−)'} ${m.concepto}`}
+              value={fmtRD(m.monto)}
+            />
+          ))}
+          <Row label="Entradas" value={fmtRD(c.movimientosEntrada)} />
+          <Row label="Salidas" value={fmtRD(c.movimientosSalida)} />
+          <Sep />
+        </>
+      )}
+
       <div className="font-bold">ARQUEO DE EFECTIVO</div>
       <Row label="Fondo inicial" value={fmtRD(c.balanceInicial)} />
+      {(c.movimientosEntrada > 0 || c.movimientosSalida > 0) && (
+        <Row label="Movim. netos" value={fmtRD(c.movimientosEntrada - c.movimientosSalida)} />
+      )}
       <Row label="Efectivo esperado" value={c.balanceEsperado == null ? '—' : fmtRD(c.balanceEsperado)} />
       <Row label="Efectivo contado" value={c.balanceFinal == null ? '—' : fmtRD(c.balanceFinal)} />
       <Row label="Diferencia" value={difLabel} bold />

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { FacturaPrintDialog } from '@/components/facturas/FacturaPrintDialog'
 import { ImprimirReporteButton } from '@/components/registros/ImprimirReporteButton'
+import { AnularTransaccionButton } from '@/components/registros/AnularTransaccionButton'
 import {
   getRegistros,
   TIPO_LABEL,
@@ -230,8 +231,13 @@ export default async function RegistrosPage({
                   <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
                     {fmtFecha(r.fecha)}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <FacturaPrintDialog transactionId={r.id} yaImpresa={r.impresiones > 0} />
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-1">
+                      <FacturaPrintDialog transactionId={r.id} yaImpresa={r.impresiones > 0} />
+                      {r.estado === 'APPLIED' && (
+                        <AnularTransaccionButton transactionId={r.id} referencia={r.ticketNumero} />
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

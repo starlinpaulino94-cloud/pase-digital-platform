@@ -88,6 +88,41 @@ export async function getResumenSesion(cajaSesionId: string): Promise<ResumenSes
   }
 }
 
+export interface MovimientosSesion {
+  entrada: number
+  salida: number
+  neto: number
+  items: { id: string; tipo: 'ENTRADA' | 'SALIDA'; concepto: string; monto: number; createdAt: Date; registradoPor: string | null }[]
+}
+
+/** Movimientos de efectivo (G9) de una sesión: entradas, salidas y neto. */
+export async function getMovimientosSesion(cajaSesionId: string): Promise<MovimientosSesion> {
+  const movs = await prisma.movimientoCaja.findMany({
+    where: { cajaSesionId },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, tipo: true, concepto: true, monto: true, createdAt: true, registradoPor: true },
+  })
+  let entrada = 0
+  let salida = 0
+  for (const m of movs) {
+    if (m.tipo === 'ENTRADA') entrada += Number(m.monto)
+    else salida += Number(m.monto)
+  }
+  return {
+    entrada,
+    salida,
+    neto: entrada - salida,
+    items: movs.map((m) => ({
+      id: m.id,
+      tipo: m.tipo,
+      concepto: m.concepto,
+      monto: Number(m.monto),
+      createdAt: m.createdAt,
+      registradoPor: m.registradoPor,
+    })),
+  }
+}
+
 // ── Cierre de caja (Z-report) ────────────────────────────────────────────────
 
 /** Etiquetas legibles de los tipos de transacción en el cierre. */
@@ -123,6 +158,10 @@ export interface CierreReporte {
   porMetodo: { efectivo: number; transferencia: number; otro: number }
   porTipo: { tipo: string; label: string; cantidad: number; total: number }[]
   porEmpleado: { empleado: string; cantidad: number; total: number }[]
+  /** Movimientos de efectivo intra-turno (G9): entradas y salidas. */
+  movimientos: { tipo: 'ENTRADA' | 'SALIDA'; concepto: string; monto: number; fecha: Date }[]
+  movimientosEntrada: number
+  movimientosSalida: number
   empresa: {
     nombre: string
     logoUrl: string | null
@@ -160,15 +199,30 @@ export async function getCierreReporte(
   })
   if (!sesion) return null
 
-  const cobros = await prisma.transaction.findMany({
-    where: { cajaSesionId, estado: 'APPLIED' },
-    select: {
-      monto: true,
-      metodoCobro: true,
-      tipo: true,
-      empleado: { select: { name: true } },
-    },
-  })
+  const [cobros, movimientos] = await Promise.all([
+    prisma.transaction.findMany({
+      where: { cajaSesionId, estado: 'APPLIED' },
+      select: {
+        monto: true,
+        metodoCobro: true,
+        tipo: true,
+        empleado: { select: { name: true } },
+      },
+    }),
+    prisma.movimientoCaja.findMany({
+      where: { cajaSesionId },
+      select: { tipo: true, concepto: true, monto: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    }),
+  ])
+
+  let movimientosEntrada = 0
+  let movimientosSalida = 0
+  for (const m of movimientos) {
+    const monto = Number(m.monto)
+    if (m.tipo === 'ENTRADA') movimientosEntrada += monto
+    else movimientosSalida += monto
+  }
 
   const porMetodo = { efectivo: 0, transferencia: 0, otro: 0 }
   const tipoMap = new Map<string, { cantidad: number; total: number }>()
@@ -217,6 +271,14 @@ export async function getCierreReporte(
     porEmpleado: [...empMap.entries()]
       .map(([empleado, v]) => ({ empleado, ...v }))
       .sort((a, b) => b.total - a.total),
+    movimientos: movimientos.map((m) => ({
+      tipo: m.tipo,
+      concepto: m.concepto,
+      monto: Number(m.monto),
+      fecha: m.createdAt,
+    })),
+    movimientosEntrada,
+    movimientosSalida,
     empresa: {
       nombre: sesion.company.name,
       logoUrl: sesion.company.logoUrl,

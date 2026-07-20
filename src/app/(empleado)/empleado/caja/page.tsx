@@ -6,9 +6,11 @@ import {
   getResumenSesion,
   getSucursalesActivas,
   getCierresRecientes,
+  getMovimientosSesion,
 } from '@/modules/caja/queries'
 import { CierreCajaDialog } from '@/components/caja/CierreCajaDialog'
 import { ReporteDiaDialog } from '@/components/caja/ReporteDiaDialog'
+import { MovimientosCaja } from '@/components/caja/MovimientosCaja'
 import {
   AbrirCajaForm,
   BuscadorOrdenes,
@@ -147,11 +149,12 @@ export default async function CajaPage({
     )
   }
 
-  const [resumen, ordenes] = await Promise.all([
+  const [resumen, ordenes, movimientos] = await Promise.all([
     getResumenSesion(sesion.id),
     buscarOrdenesPendientes(companyId, q),
+    getMovimientosSesion(sesion.id),
   ])
-  const esperado = Number(sesion.balanceInicial) + resumen.totalEfectivo
+  const esperado = Number(sesion.balanceInicial) + resumen.totalEfectivo + movimientos.neto
 
   return (
     <main className="container max-w-3xl space-y-6 py-8">
@@ -205,6 +208,9 @@ export default async function CajaPage({
       <div className="flex flex-wrap justify-end gap-2">
         <ReporteDiaDialog />
       </div>
+
+      {/* Movimientos de efectivo intra-turno (fondo, retiros, gastos). */}
+      <MovimientosCaja cajaSesionId={sesion.id} movimientos={movimientos} />
 
       {/* Cobrar */}
       <section className="space-y-4">
