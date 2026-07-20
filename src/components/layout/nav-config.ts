@@ -31,6 +31,7 @@ import {
   ReceiptText,
   Sparkles,
   Trophy,
+  CalendarDays,
   type LucideIcon,
 } from 'lucide-react'
 import type { AppRole } from '@/types'
@@ -98,6 +99,7 @@ const ADMIN_NAV: NavGroup[] = [
     label: 'Operaciones',
     items: [
       { href: '/admin/scanner', label: 'Escanear QR', icon: ScanLine },
+      { href: '/admin/citas', label: 'Citas', icon: CalendarDays },
       { href: '/admin/pagos', label: 'Pagos', icon: Wallet },
       { href: '/admin/facturas', label: 'Facturas', icon: ReceiptText },
       { href: '/admin/sucursales', label: 'Sucursales', icon: Building2 },
@@ -140,6 +142,7 @@ const CLIENTE_NAV: NavGroup[] = [
     items: [
       { href: '/cliente/inicio', label: 'Inicio', icon: LayoutDashboard },
       { href: '/mis-membresias', label: 'Mis membresías', icon: WalletCards },
+      { href: '/cliente/citas', label: 'Mis citas', icon: CalendarDays },
     ],
   },
   {
