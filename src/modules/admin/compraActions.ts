@@ -71,6 +71,8 @@ export async function aprobarCompra(
       metodoCobro: compra.comprobanteUrl != null ? 'TRANSFERENCIA' : 'OTRO',
       metodoCobroLabel:
         compra.comprobanteUrl != null ? 'Transferencia' : 'Confirmado por el negocio',
+      // Recibo de pago (G6): nota de referencia declarada por el cliente.
+      referenciaPago: compra.comprobanteNota?.trim() || null,
       sucursalId: compra.sucursalPago?.id ?? null,
       sucursalNombre: compra.sucursalPago?.nombre ?? null,
       auditoria: meta,

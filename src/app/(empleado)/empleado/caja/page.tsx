@@ -8,6 +8,7 @@ import {
   getCierresRecientes,
 } from '@/modules/caja/queries'
 import { CierreCajaDialog } from '@/components/caja/CierreCajaDialog'
+import { ReporteDiaDialog } from '@/components/caja/ReporteDiaDialog'
 import {
   AbrirCajaForm,
   BuscadorOrdenes,
@@ -138,6 +139,9 @@ export default async function CajaPage({
             <AbrirCajaForm sucursales={sucursales} />
           </div>
         )}
+        <div className="mt-6 flex flex-wrap justify-end gap-2">
+          <ReporteDiaDialog />
+        </div>
         {cierresRecientes && <div className="mt-6">{cierresRecientes}</div>}
       </main>
     )
@@ -195,6 +199,12 @@ export default async function CajaPage({
           ))}
         </dl>
       </header>
+
+      {/* Herramientas del turno: cuadre del día del empleado (incluye
+          transferencias confirmadas en el panel, fuera de la caja). */}
+      <div className="flex flex-wrap justify-end gap-2">
+        <ReporteDiaDialog />
+      </div>
 
       {/* Cobrar */}
       <section className="space-y-4">

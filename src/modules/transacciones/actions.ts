@@ -212,6 +212,8 @@ export async function obtenerTicket(
         restantes: (s.restantes as number | 'ilimitado') ?? null,
         observaciones: t.resultado,
         promosActivas: (s.promosActivas as string[]) ?? [],
+        metodoPago: (s.metodoCobroLabel as string) ?? null,
+        referenciaPago: (s.referenciaPago as string) ?? null,
       },
     },
   }

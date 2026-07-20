@@ -256,11 +256,11 @@ histórico de **cierres de caja**, entregas de regalos.
 > ganado/regalo otorgado"** en el momento del *otorgamiento* (no de la entrega),
 > si el negocio quiere un papel también al ganar la ruleta.
 
-**Fase 2 — Caja completa (P0/P1)**
+**Fase 2 — Caja completa (P0/P1)** — ✅ *Completa.*
 - ✅ **Reporte de cierre imprimible y reimprimible** (Z-report) con desglose por
-  método/tipo/empleado (G4). — *Hecho.*
-- **Reporte por empleado/día** que incluya transferencias del panel (G5).
-- **Recibo de pago** para transferencias y pagos en sucursal (G6).
+  método/tipo/empleado (G4).
+- ✅ **Reporte por empleado/día** que incluye transferencias del panel (G5).
+- ✅ **Recibo de pago** para transferencias y pagos en sucursal (G6).
 
 > **✅ G4 implementado.** El cierre de caja ahora es un reporte imprimible y
 > reimprimible (arqueo "Z"):
@@ -276,10 +276,32 @@ histórico de **cierres de caja**, entregas de regalos.
 >   que sobrevive a la revalidación tras cerrar el turno (imprimir al cerrar y
 >   reimprimir cuando se necesite). Verificado con tsc, eslint y `next build`.
 >
-> Pendiente de Fase 2: **G5** (reporte por empleado/día que sume las
-> transferencias confirmadas en el panel, independientes de la sesión de caja) y
-> **G6** (recibo de pago dedicado). Ambos tocan campos de captura del pago y se
-> abordarán tras confirmar alcance con el negocio.
+> **✅ G5 implementado.** Cuadre del día **por empleado**, imprimible y
+> reimprimible, que suma TODOS los cobros que aplicó ese día —con o sin caja
+> abierta—, **incluidas las transferencias/pagos confirmados desde el panel**
+> (que no pasan por una `CajaSesion`):
+> - `getReporteEmpleadoDia()` (`src/modules/caja/queries.ts`) agrega los cobros
+>   del empleado en el día (rango calculado en la zona horaria de la empresa) por
+>   método, por tipo y **por origen** (caja vs panel/transferencia). Helpers
+>   `hoyLocal()` y cálculo de rango con offset de zona horaria (sin dependencias).
+> - `obtenerReporteDia()` (`src/modules/caja/actions.ts`, `staffAutorizado`)
+>   devuelve el cuadre del empleado autenticado para hoy (o una fecha dada).
+> - `ReporteDiaDialog` (`src/components/caja/ReporteDiaDialog.tsx`): botón
+>   **"Mi cuadre del día"** en `/empleado/caja` (con y sin caja abierta), vista
+>   previa 80 mm e impresión aislada (`.reporte-dia-print`).
+>
+> **✅ G6 implementado.** El comprobante ahora funciona como **recibo de pago**:
+> muestra la forma de pago y su **referencia/banco** además de quién validó.
+> - El builder (`src/lib/receipts/domain/builder.ts`) imprime un bloque de pago
+>   (`Pago` + `Referencia`) cuando hay datos; `ReceiptTransaccionInfo` gana los
+>   campos `metodoPago`/`referenciaPago`, propagados por `obtenerTicket`.
+> - `registrarVentaConfirmada` acepta `referenciaPago` y lo guarda en el snapshot;
+>   `confirmarPago` (membresías) lo arma con el nombre del método/banco + la nota
+>   del comprobante del cliente, y `aprobarCompra` (promociones) con la nota de
+>   referencia. La factura Carta/A4 (`FacturaSheet`) añade la fila "Referencia".
+>
+> Con esto la **Fase 2 queda completa** (G4 + G5 + G6). Sigue la Fase 3
+> (registros/comprobantes unificados y reportes exportables).
 
 **Fase 3 — Registros y reportes (P1/P2)**
 - Módulo **"Registros/Comprobantes"** unificado con reimpresión (G7).

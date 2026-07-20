@@ -23,6 +23,8 @@ export async function registrarVentaConfirmada(input: {
   monto: number
   metodoCobro: 'EFECTIVO' | 'TRANSFERENCIA' | 'OTRO'
   metodoCobroLabel: string
+  /** Recibo de pago (G6): banco/referencia del pago para el comprobante. */
+  referenciaPago?: string | null
   sucursalId?: string | null
   sucursalNombre?: string | null
   membershipId?: string | null
@@ -70,6 +72,7 @@ export async function registrarVentaConfirmada(input: {
         subtotal: input.monto.toFixed(2),
         total: input.monto.toFixed(2),
         metodoCobroLabel: input.metodoCobroLabel,
+        referenciaPago: input.referenciaPago ?? undefined,
       },
       auditoria: {
         ipAddress: input.auditoria?.ipAddress ?? null,

@@ -10,7 +10,13 @@ import { activarMembresia } from '@/modules/pagos/activacion'
 import { activarCompraPromocion } from '@/modules/pagos/activacionCompra'
 import { crearTransaccionAplicada } from '@/lib/transactions/application/transaction-service'
 import { crearNotificacion } from '@/modules/notificaciones/service'
-import { getCierreReporte, type CierreReporte } from '@/modules/caja/queries'
+import {
+  getCierreReporte,
+  getReporteEmpleadoDia,
+  hoyLocal,
+  type CierreReporte,
+  type ReporteEmpleadoDia,
+} from '@/modules/caja/queries'
 
 /**
  * Caja (POS) · acciones del turno: abrir, cerrar (con arqueo) y cobrar.
@@ -55,6 +61,36 @@ export async function obtenerCierre(
   const cierre = await getCierreReporte(cajaSesionId, auth.companyId)
   if (!cierre) return { error: 'Cierre no encontrado.' }
   return { cierre }
+}
+
+/**
+ * Cuadre del día del empleado autenticado (G5): TODOS sus cobros del día, con o
+ * sin caja abierta, incluidas las transferencias confirmadas desde el panel.
+ * `fecha` opcional en formato YYYY-MM-DD (por defecto, hoy en la zona de la
+ * empresa). Solo staff de la misma empresa; no muta nada.
+ */
+export async function obtenerReporteDia(
+  fecha?: string
+): Promise<{ error?: string; reporte?: ReporteEmpleadoDia }> {
+  const auth = await staffAutorizado()
+  if (!auth) return { error: 'No autorizado.' }
+  if (!auth.userId) return { error: 'Tu usuario no está vinculado a un empleado.' }
+
+  const empresa = await prisma.company.findUnique({
+    where: { id: auth.companyId },
+    select: { zonaHoraria: true },
+  })
+  const timeZone = empresa?.zonaHoraria || 'America/Santo_Domingo'
+  const dia = /^\d{4}-\d{2}-\d{2}$/.test(fecha ?? '') ? (fecha as string) : hoyLocal(timeZone)
+
+  const reporte = await getReporteEmpleadoDia(
+    auth.companyId,
+    auth.userId,
+    auth.nombre ?? 'Empleado',
+    dia,
+    timeZone
+  )
+  return { reporte }
 }
 
 function num(v: FormDataEntryValue | null): number | null {

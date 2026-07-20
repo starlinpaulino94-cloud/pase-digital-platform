@@ -121,6 +121,12 @@ export function buildReceiptDoc(input: BuildReceiptInput): ReceiptDoc {
         pair('Subtotal', tx.subtotal)
         pair('TOTAL', tx.total, true)
       }
+      // Recibo de pago (G6): forma de pago y referencia/banco de quien validó.
+      if (tx.metodoPago || tx.referenciaPago) {
+        push({ kind: 'separator' })
+        pair('Pago', tx.metodoPago)
+        pair('Referencia', tx.referenciaPago)
+      }
       if (tx.observaciones) pair('Obs.', tx.observaciones)
       push({ kind: 'separator' })
     },

@@ -110,6 +110,9 @@ export interface ReceiptTransaccionInfo {
   restantes?: number | 'ilimitado' | null
   observaciones?: string | null
   promosActivas?: string[]
+  /** Recibo de pago (G6): forma de pago legible y su referencia/banco. */
+  metodoPago?: string | null
+  referenciaPago?: string | null
 }
 
 export interface BuildReceiptInput {
