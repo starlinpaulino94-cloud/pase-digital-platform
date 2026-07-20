@@ -28,11 +28,11 @@ import {
   Ticket,
   Banknote,
   ReceiptText,
-  Sparkles,
   Trophy,
   CalendarDays,
   Palette,
   Share2,
+  Tag,
   type LucideIcon,
 } from 'lucide-react'
 import type { AppRole } from '@/types'
@@ -95,9 +95,11 @@ const ADMIN_NAV: NavGroup[] = [
     id: 'marketing',
     label: 'Marketing',
     items: [
-      { href: '/admin/promociones', label: 'Promociones', icon: Megaphone },
-      { href: '/admin/marketing', label: 'Banners', icon: Sparkles },
-      { href: '/admin/ofertas', label: 'Regalos VIP', icon: Gift },
+      // "Ofertas" es el punto de entrada ÚNICO (Auditoría · Fase D): el hub
+      // /admin/ofertas agrupa Promociones (pública), Banners (relámpago) y
+      // Regalos VIP. Los tres siguen siendo módulos/tablas independientes,
+      // accesibles desde el hub y por URL directa.
+      { href: '/admin/ofertas', label: 'Ofertas', icon: Tag },
       { href: '/admin/publicaciones', label: 'Publicaciones', icon: Newspaper },
       { href: '/admin/invitaciones', label: 'Invita y Gana', icon: Share2 },
       { href: '/admin/gamificacion', label: 'Ruleta de premios', icon: Trophy },

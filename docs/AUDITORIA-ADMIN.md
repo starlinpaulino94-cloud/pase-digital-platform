@@ -263,9 +263,19 @@ de reconstrucción.
 6. Aplicar `hiddenNav`/priorización progresiva al layout del admin.
 7. Centralizar el estado "superadmin sin empresa" en un guard único.
 
-**Fase D — Fusión de ofertas (P0 de producto, más esfuerzo)**
+**Fase D — Fusión de ofertas (P0 de producto, más esfuerzo)** ✅ aplicada
 8. Unificar la creación de ofertas (pública/relámpago/VIP) bajo un solo
    módulo con selector de tipo.
+
+> **✅ Fase D aplicada:** `/admin/ofertas` es ahora un **hub** con selector de
+> tipo (Promoción pública · Oferta relámpago · Regalo VIP), cada uno con su
+> conteo, un botón "Crear" que enruta al flujo real y un enlace "Ver todas".
+> La lista de Regalos VIP se movió a `/admin/ofertas/vip` (sus rutas hijas
+> `nueva` y `[id]` se conservan). En el menú, las 3 entradas sueltas
+> (Promociones, Banners, Regalos VIP) se colapsaron en una sola: **"Ofertas"**.
+> Se añadió la sección `ofertas` al rol MARKETING para que conserve el acceso.
+> **No se fusionaron los modelos de datos** (siguen siendo tablas separadas):
+> lo unificado es el punto de entrada y el lenguaje, como recomendaba el plan.
 
 Recomendación: **empezar por la Fase A**. Es la que más aclara el panel, no
 toca base de datos y es reversible.
