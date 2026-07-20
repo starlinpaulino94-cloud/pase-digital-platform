@@ -7,6 +7,7 @@ import { getOfertasAdmin } from '@/modules/ofertas/queries'
 import { PERIODO_LABEL } from '@/modules/ofertas/periodo'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/ui/page-header'
 import { cn } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
@@ -24,10 +25,7 @@ export default async function OfertasAdminPage() {
 
   if (!companyId) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-foreground">Regalos VIP</h1>
-        <p className="text-muted-foreground">Selecciona una empresa activa.</p>
-      </div>
+      <PageHeader title="Regalos VIP" description="Selecciona una empresa activa." />
     )
   }
 
@@ -35,20 +33,17 @@ export default async function OfertasAdminPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Regalos VIP</h1>
-          <p className="text-muted-foreground">
-            Ofertas privadas para clientes seleccionados: no se publican, solo
-            se comparten por link y únicamente tu lista puede reclamarlas.
-          </p>
-        </div>
-        <Button asChild className="gap-1.5">
-          <Link href="/admin/ofertas/nueva">
-            <Plus className="h-4 w-4" /> Crear regalo
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="Regalos VIP"
+        description="Ofertas privadas para clientes seleccionados: no se publican, solo se comparten por link y únicamente tu lista puede reclamarlas."
+        action={
+          <Button asChild className="gap-1.5">
+            <Link href="/admin/ofertas/nueva">
+              <Plus className="h-4 w-4" /> Crear regalo
+            </Link>
+          </Button>
+        }
+      />
 
       {ofertas.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border/80 bg-muted/20 p-10 text-center">

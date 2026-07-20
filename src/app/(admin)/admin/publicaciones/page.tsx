@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/ui/page-header'
 import { DeletePostButton } from '@/components/admin/DeletePostButton'
 import { CompartirOfertaButton } from '@/components/admin/CompartirOfertaButton'
 import {
@@ -61,21 +62,18 @@ export default async function PublicacionesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Publicaciones</h1>
-          <p className="text-muted-foreground">
-            Eventos, noticias y beneficios de tu empresa. Tus seguidores se
-            notifican automáticamente al publicar.
-          </p>
-        </div>
-        <Link href="/admin/publicaciones/nuevo">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Nueva publicación
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Publicaciones"
+        description="Eventos, noticias y beneficios de tu empresa. Tus seguidores se notifican automáticamente al publicar."
+        action={
+          <Link href="/admin/publicaciones/nuevo">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva publicación
+            </Button>
+          </Link>
+        }
+      />
 
       {posts.length === 0 ? (
         <Card>

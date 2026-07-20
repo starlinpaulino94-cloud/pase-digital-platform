@@ -9,6 +9,7 @@ import { prisma } from '@/lib/prisma'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeader } from '@/components/ui/page-header'
 import { DeletePlanButton } from '@/components/admin/DeletePlanButton'
 import { BienvenidaConfigForm } from '@/components/admin/BienvenidaConfigForm'
 import { CompartirOfertaButton } from '@/components/admin/CompartirOfertaButton'
@@ -75,37 +76,35 @@ export default async function PlanesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Planes</h1>
-          <p className="text-muted-foreground">
-            Crea y administra los planes de membresía de tu empresa.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {empresa && (
-            <CompartirOfertaButton
-              variant="full"
-              label="Compartir planes"
-              path={`/empresas/${empresa.slug}#membresias`}
-              titulo={`Planes de ${empresa.name}`}
-              texto={`Conoce los planes de membresía de ${empresa.name} en MembeGo.`}
-            />
-          )}
-          <Link href="/admin/planes/plantillas">
-            <Button variant="outline">
-              <LayoutTemplate className="mr-2 h-4 w-4" />
-              Plantillas
-            </Button>
-          </Link>
-          <Link href="/admin/planes/nuevo">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Nuevo plan
-            </Button>
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="Planes"
+        description="Crea y administra los planes de membresía de tu empresa."
+        action={
+          <div className="flex items-center gap-2">
+            {empresa && (
+              <CompartirOfertaButton
+                variant="full"
+                label="Compartir planes"
+                path={`/empresas/${empresa.slug}#membresias`}
+                titulo={`Planes de ${empresa.name}`}
+                texto={`Conoce los planes de membresía de ${empresa.name} en MembeGo.`}
+              />
+            )}
+            <Link href="/admin/planes/plantillas">
+              <Button variant="outline">
+                <LayoutTemplate className="mr-2 h-4 w-4" />
+                Plantillas
+              </Button>
+            </Link>
+            <Link href="/admin/planes/nuevo">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Nuevo plan
+              </Button>
+            </Link>
+          </div>
+        }
+      />
 
       {bienvenida && <BienvenidaConfigForm bienvenida={bienvenida} />}
 

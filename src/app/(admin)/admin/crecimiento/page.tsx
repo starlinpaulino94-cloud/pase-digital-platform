@@ -11,8 +11,9 @@ import {
 } from '@/modules/growth/actions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/ui/page-header'
 import { Badge } from '@/components/ui/badge'
-import { Rocket, Trash2 } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -58,12 +59,10 @@ export default async function CrecimientoPage() {
 
   if (!companyId) {
     return (
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold text-foreground">Crecimiento</h1>
-        <p className="text-muted-foreground">
-          Selecciona una empresa (vista de empresa) para configurar su programa de crecimiento.
-        </p>
-      </div>
+      <PageHeader
+        title="Crecimiento"
+        description="Selecciona una empresa (vista de empresa) para configurar su programa de crecimiento."
+      />
     )
   }
 
@@ -71,15 +70,10 @@ export default async function CrecimientoPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Rocket className="h-6 w-6 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Growth Engine</h1>
-          <p className="text-muted-foreground">
-            Configura qué premia tu programa de referidos y con qué recompensa.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Crecimiento"
+        description="Configura qué premia tu programa de referidos y con qué recompensa."
+      />
 
       {/* Configuración general */}
       <Card>

@@ -9,6 +9,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/ui/page-header'
 import { ArrowLeft, Sparkles, Target, Gauge, Users } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -104,21 +105,18 @@ export default async function PromoPlantillasPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Plantillas de promoción</h1>
-          <p className="text-muted-foreground">
-            Estrategias listas para usar. Al elegir una se crea una copia editable:
-            ajústala y publícala. La plantilla original no cambia.
-          </p>
-        </div>
-        <Link href="/admin/promociones">
-          <Button variant="outline">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Mis promociones
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Plantillas de promoción"
+        description="Estrategias listas para usar. Al elegir una se crea una copia editable: ajústala y publícala. La plantilla original no cambia."
+        action={
+          <Link href="/admin/promociones">
+            <Button variant="outline">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Mis promociones
+            </Button>
+          </Link>
+        }
+      />
 
       {/* Filtro por categoría (objetivo comercial) */}
       <div className="flex flex-wrap gap-2">

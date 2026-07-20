@@ -8,6 +8,7 @@ import { PROMO_TIPO_LABEL } from '@/lib/promociones'
 import { formatDate, formatMoney } from '@/lib/format'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/ui/page-header'
 import { Badge } from '@/components/ui/badge'
 import { DeletePromocionButton } from '@/components/admin/DeletePromocionButton'
 import { PromoControls } from '@/components/admin/PromoControls'
@@ -221,29 +222,26 @@ export default async function PromocionesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Promociones</h1>
-          <p className="text-muted-foreground">
-            Crea, programa y controla tus ofertas. Tus seguidores se notifican
-            automáticamente.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/admin/promociones/plantillas">
-            <Button variant="outline">
-              <LayoutTemplate className="mr-2 h-4 w-4" />
-              Plantillas
-            </Button>
-          </Link>
-          <Link href="/admin/promociones/nuevo">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Nueva promoción
-            </Button>
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="Promociones"
+        description="Crea, programa y controla tus ofertas. Tus seguidores se notifican automáticamente."
+        action={
+          <div className="flex gap-2">
+            <Link href="/admin/promociones/plantillas">
+              <Button variant="outline">
+                <LayoutTemplate className="mr-2 h-4 w-4" />
+                Plantillas
+              </Button>
+            </Link>
+            <Link href="/admin/promociones/nuevo">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Nueva promoción
+              </Button>
+            </Link>
+          </div>
+        }
+      />
 
       {/* Fase E5: panel de ventas del motor de compras */}
       {ventas && ventas.total > 0 && (

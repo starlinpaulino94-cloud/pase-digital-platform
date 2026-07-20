@@ -4,6 +4,7 @@ import { ADMIN_ROLES } from '@/types'
 import { requireRole } from '@/lib/auth/guards'
 import { companyFilter } from '@/modules/admin/queries'
 import { getAgendaConfig } from '@/modules/citas/queries'
+import { PageHeader } from '@/components/ui/page-header'
 import { AgendaConfigForm } from '@/components/citas/AgendaConfigForm'
 
 export const dynamic = 'force-dynamic'
@@ -15,10 +16,10 @@ export default async function ConfiguracionCitasPage() {
 
   if (!companyId) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-foreground">Configuración de citas</h1>
-        <p className="text-muted-foreground">Selecciona una empresa activa.</p>
-      </div>
+      <PageHeader
+        title="Configuración de citas"
+        description="Selecciona una empresa activa."
+      />
     )
   }
 
@@ -33,13 +34,10 @@ export default async function ConfiguracionCitasPage() {
         <ArrowLeft className="h-4 w-4" /> Citas
       </Link>
 
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Configuración de la agenda</h1>
-        <p className="text-muted-foreground">
-          Define cuántas citas aceptas por turno y por día, tu horario semanal y
-          las reglas de reserva. Los cambios aplican de inmediato.
-        </p>
-      </div>
+      <PageHeader
+        title="Configuración de la agenda"
+        description="Define cuántas citas aceptas por turno y por día, tu horario semanal y las reglas de reserva. Los cambios aplican de inmediato."
+      />
 
       <AgendaConfigForm config={config} />
     </div>

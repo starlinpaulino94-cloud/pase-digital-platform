@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/ui/page-header'
 import { DeleteMetodoPagoButton } from '@/components/admin/DeleteMetodoPagoButton'
 import { CreditCard, Building2, Plus, Pencil } from 'lucide-react'
 
@@ -33,20 +34,18 @@ export default async function MetodosPagoPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Métodos de pago</h1>
-          <p className="text-muted-foreground">
-            Los clientes verán estas instrucciones al enviar su comprobante.
-          </p>
-        </div>
-        <Link href="/admin/metodos-pago/nuevo">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Agregar método
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Métodos de pago"
+        description="Los clientes verán estas instrucciones al enviar su comprobante."
+        action={
+          <Link href="/admin/metodos-pago/nuevo">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Agregar método
+            </Button>
+          </Link>
+        }
+      />
 
       {metodos.length === 0 ? (
         <Card>

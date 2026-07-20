@@ -127,12 +127,20 @@ impacto visual.
 
 - **`loading.tsx`: solo 3 de ~40 rutas** (clientes, membresias, pagos). El
   resto muestra pantalla en blanco mientras cargan las queries `force-dynamic`.
-- **`error.tsx`: 0 rutas.** Si una query falla, cae la pantalla de error
-  genérica de Next en vez de un estado amable con botón "reintentar".
+- **`error.tsx`:** ya existe uno a nivel del grupo `(admin)/error.tsx`
+  (`PanelError` con `reset()`), que cubre todo el subárbol del panel. (El
+  reporte inicial lo dio por ausente porque se buscó solo dentro de
+  `admin/`, no en la raíz del grupo.)
 
-**Recomendación:** un `loading.tsx` con skeleton y un `error.tsx` con reintento
-por grupo de módulos (o compartidos vía un layout intermedio). El cliente ya
-tiene este patrón; replicarlo en admin.
+**Recomendación:** añadir un `loading.tsx` con skeleton genérico a nivel del
+panel para las rutas sin uno propio; el `error.tsx` de grupo ya cubre el
+reintento.
+
+> **✅ Fase B aplicada:** todos los encabezados de las pantallas alcanzables
+> desde el menú (listas, config y plantillas) migrados a `<PageHeader>`;
+> añadido `src/app/(admin)/admin/loading.tsx` como skeleton por defecto.
+> Pendiente menor: los formularios internos `nuevo`/`editar` y las fichas de
+> detalle (`clientes/[id]`, `ofertas/[id]`) siguen con encabezado propio.
 
 ---
 

@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/ui/page-header'
 import { DeleteCampanaButton } from '@/components/admin/DeleteCampanaButton'
 import {
   Flag,
@@ -33,7 +34,7 @@ export default async function CampanasPage() {
   if (!companyId) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">Campañas</h1>
+        <PageHeader title="Campañas" />
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <AlertCircle className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" />
@@ -69,21 +70,18 @@ export default async function CampanasPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Campañas</h1>
-          <p className="text-muted-foreground">
-            Agrupa promociones y publicaciones bajo una misma campaña y mide su
-            rendimiento en conjunto.
-          </p>
-        </div>
-        <Link href="/admin/campanas/nueva">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Nueva campaña
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Campañas"
+        description="Agrupa promociones y publicaciones bajo una misma campaña y mide su rendimiento en conjunto."
+        action={
+          <Link href="/admin/campanas/nueva">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Nueva campaña
+            </Button>
+          </Link>
+        }
+      />
 
       {campanas.length === 0 ? (
         <Card>
