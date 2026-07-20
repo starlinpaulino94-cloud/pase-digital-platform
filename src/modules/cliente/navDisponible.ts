@@ -1,0 +1,65 @@
+import { prisma } from '@/lib/prisma'
+import { getGrowthConfig } from '@/modules/growth/config'
+
+/**
+ * Navegación consciente del contenido (cliente).
+ *
+ * Un módulo del menú se OCULTA mientras no tenga nada que mostrar, para que la
+ * app no se sienta "a medio terminar". En cuanto el negocio agrega contenido
+ * (o el cliente obtiene un beneficio), el módulo aparece solo. Las rutas
+ * siguen accesibles por URL (con su estado vacío), esto solo controla el menú.
+ *
+ * Devuelve la lista de `href` que deben ocultarse en sidebar, barra inferior,
+ * buscador (Ctrl+K) y breadcrumb.
+ */
+export async function getNavOcultoCliente(
+  clienteId: string | null | undefined,
+  companyId: string | null | undefined
+): Promise<string[]> {
+  if (!clienteId || !companyId) return []
+  const now = new Date()
+
+  try {
+    const [promos, beneficios, regalos, ruletaPremios, growth] = await Promise.all([
+      // Promociones: activas y vigentes de la empresa (públicas o privadas).
+      prisma.promocion.count({
+        where: {
+          companyId,
+          activo: true,
+          archivada: false,
+          vigenciaDesde: { lte: now },
+          OR: [{ vigenciaHasta: null }, { vigenciaHasta: { gte: now } }],
+          company: { isPublished: true, isActive: true },
+        },
+      }),
+      // Mis beneficios: compras de promociones del cliente (cualquier estado).
+      prisma.productoCompra.count({ where: { clienteId } }),
+      // Mis beneficios: también cuentan los regalos VIP recibidos.
+      prisma.ofertaInvitado.count({ where: { clienteId } }),
+      // Ruleta: premios activos configurados por la empresa.
+      prisma.ruletaPremio.count({ where: { companyId, activo: true } }),
+      // Invita y Gana: el programa de referidos de la empresa.
+      getGrowthConfig(companyId),
+    ])
+
+    const ocultos: string[] = []
+    if (promos === 0) ocultos.push('/cliente/promociones')
+    if (beneficios + regalos === 0) ocultos.push('/cliente/mis-promociones')
+    if (ruletaPremios === 0) ocultos.push('/cliente/ruleta')
+    // Referidos: se oculta solo si el negocio apagó TODAS las recompensas
+    // (por defecto el programa premia registro/membresía/compra → visible).
+    const programaActivo =
+      growth.premiaClic ||
+      growth.premiaRegistro ||
+      growth.premiaMembresia ||
+      growth.premiaCompra ||
+      growth.premiaRenovacion
+    if (!programaActivo) ocultos.push('/cliente/invita-y-gana')
+
+    return ocultos
+  } catch (e) {
+    console.error('[navDisponible]', e)
+    // Ante un fallo, no ocultamos nada (mejor mostrar de más que romper el menú).
+    return []
+  }
+}

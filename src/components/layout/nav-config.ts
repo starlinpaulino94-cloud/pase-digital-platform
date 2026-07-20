@@ -227,6 +227,19 @@ function filterNavBySection(groups: NavGroup[], role: AppRole): NavGroup[] {
     .filter((g) => g.items.length > 0)
 }
 
+/**
+ * Oculta del menú los enlaces cuya ruta esté en `hidden` (módulos sin
+ * contenido todavía) y descarta los grupos que queden vacíos. Ver
+ * `getNavOcultoCliente`.
+ */
+export function filtrarNavOculto(groups: NavGroup[], hidden: string[]): NavGroup[] {
+  if (hidden.length === 0) return groups
+  const set = new Set(hidden)
+  return groups
+    .map((g) => ({ ...g, items: g.items.filter((it) => !set.has(it.href)) }))
+    .filter((g) => g.items.length > 0)
+}
+
 /** Resolve the sidebar navigation for any role. */
 export function navForRole(role: AppRole): NavGroup[] {
   switch (role) {
