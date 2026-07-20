@@ -303,9 +303,34 @@ histórico de **cierres de caja**, entregas de regalos.
 > Con esto la **Fase 2 queda completa** (G4 + G5 + G6). Sigue la Fase 3
 > (registros/comprobantes unificados y reportes exportables).
 
-**Fase 3 — Registros y reportes (P1/P2)**
-- Módulo **"Registros/Comprobantes"** unificado con reimpresión (G7).
-- **Reportes imprimibles/exportables** (G10).
+**Fase 3 — Registros y reportes (P1/P2)** — ✅ *Completa.*
+- ✅ Módulo **"Registros/Comprobantes"** unificado con reimpresión (G7).
+- ✅ **Reportes imprimibles/exportables** (G10).
+
+> **✅ G7 + G10 implementados.** Nueva sección **Registros y comprobantes**
+> (`/admin/registros`, nav en *Ingresos* → "Registros"; sección `registros` en
+> `permissions.ts`, accesible a admin pleno y SUPERVISOR):
+> - **Vista unificada** de TODAS las transacciones del ledger (ventas, usos de
+>   membresía, promociones, beneficios, canjes, referidos…), no solo ventas como
+>   `/admin/facturas`. `getRegistros()` (`src/modules/registros/queries.ts`)
+>   aplica filtros por **texto** (nº/código/cliente), **tipo**, **estado**,
+>   **método** y **rango de fechas** (calculado en la zona horaria de la empresa)
+>   y devuelve además un **resumen** agregado (ingresos aplicados, conteo, por
+>   método y por tipo).
+> - **Reimpresión** de cualquier comprobante desde la tabla con la misma
+>   maquinaria (`FacturaPrintDialog` → `obtenerTicket`, marca original/COPIA).
+> - **Exportar CSV (G10):** ruta `/admin/registros/export` (route handler con
+>   auth admin + aislamiento por companyId) que respeta los mismos filtros y
+>   descarga `registros-YYYY-MM-DD.csv` (BOM para Excel es-DO), vía
+>   `registrosToCsv()`.
+> - **Imprimir reporte (G10):** bloque imprimible con resumen + listado, aislado
+>   por `@media print` (`ImprimirReporteButton`).
+>
+> Sobre la **Decisión §4 (¿incluir visitas normales por QR?)**: se resolvió
+> mostrándolo TODO por defecto pero **filtrable por tipo** — las visitas
+> (`MEMBERSHIP_REDEMPTION`) aparecen y se pueden ocultar filtrando a
+> ventas/pagos; nadie pierde información y el que quiere el cuadre financiero
+> filtra. Verificado con tsc, eslint y `next build`.
 
 **Fase 4 — Precisión contable (P2)**
 - Numeración por tipo / NCF si aplica (G8).
