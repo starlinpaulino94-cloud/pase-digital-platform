@@ -23,6 +23,7 @@ export const ADMIN_SECTIONS = [
   'scanner',
   'pagos',
   'citas',
+  'ofertas',
   'perfil',
   'sucursales',
   'metodos-pago',

@@ -156,6 +156,8 @@ model User {
   transicionesTransaccion   TransactionTransicion[]
   impresionesRecibo         ReceiptImpresion[]
   citasAtendidas            Cita[]                     @relation("CitaAtendidaPor")
+  ofertasCreadas            OfertaPrivada[]            @relation("OfertaCreadaPor")
+  ofertaUsosRegistrados     OfertaUso[]                @relation("OfertaUsoRegistradoPor")
   comprasAprobadas          ProductoCompra[]           @relation("CompraAprobadaPor")
   transicionesCompra        ProductoCompraTransicion[]
 
@@ -296,9 +298,9 @@ model Company {
   benefitTransformations BenefitTransformation[]
   transformationPolicies TransformationPolicy[]
 
-  transacciones   Transaction[]
-  receiptTemplate ReceiptTemplate?
-  compras         ProductoCompra[]
+  transacciones      Transaction[]
+  receiptTemplate    ReceiptTemplate?
+  compras            ProductoCompra[]
   // Growth Engine: Campañas de Invitación ("Invita y Gana").
   campanasInvitacion CampanaInvitacion[]
 
@@ -314,8 +316,9 @@ model Company {
   ruletaJugadas      RuletaJugada[]
 
   // Módulo de Citas.
-  agendaConfig AgendaConfig?
-  citas        Cita[]
+  agendaConfig   AgendaConfig?
+  citas          Cita[]
+  ofertaPrivadas OfertaPrivada[]
 
   @@index([isPublished, isFeatured])
   @@index([ciudad, provincia])
@@ -382,7 +385,7 @@ model CajaSesion {
   /// Turno legible ("Mañana", "Tarde", "Noche") — opcional.
   turno        String?
 
-  balanceInicial Decimal @default(0) @db.Decimal(10, 2)
+  balanceInicial  Decimal  @default(0) @db.Decimal(10, 2)
   /// Efectivo contado al cerrar.
   balanceFinal    Decimal? @db.Decimal(10, 2)
   /// Congelado al cerrar: inicial + cobros en EFECTIVO de la sesión.
@@ -597,8 +600,8 @@ model Cliente {
   ratings         CompanyRating[]
   notas           ClienteNota[]
 
-  transacciones Transaction[]
-  compras       ProductoCompra[]
+  transacciones       Transaction[]
+  compras             ProductoCompra[]
   // Growth Engine: progreso y eventos de campañas de invitación.
   invitacionProgresos InvitacionProgreso[]
   invitacionEventos   InvitacionEvento[]
@@ -612,7 +615,8 @@ model Cliente {
   ruletaJugadas RuletaJugada[]
 
   // Módulo de Citas.
-  citas Cita[]
+  citas           Cita[]
+  ofertaInvitados OfertaInvitado[]
 
   @@unique([supabaseId, companyId])
   // Filtros frecuentes solo por empresa (adminMetrics, reportes, /admin/clientes).
@@ -696,23 +700,23 @@ model ReferralEvent {
 
 // Referido: vínculo entre quien invita y quien se registró con su código.
 model Referido {
-  id                 String         @id @default(cuid())
-  companyId          String
-  company            Company        @relation(fields: [companyId], references: [id])
-  referenteClienteId String
-  referenteCliente   Cliente        @relation("Referente", fields: [referenteClienteId], references: [id])
-  referidoClienteId  String         @unique
-  referidoCliente    Cliente        @relation("Referido", fields: [referidoClienteId], references: [id])
-  estado             ReferidoEstado @default(PENDIENTE)
-  recompensaAplicada Boolean        @default(false)
+  id                  String             @id @default(cuid())
+  companyId           String
+  company             Company            @relation(fields: [companyId], references: [id])
+  referenteClienteId  String
+  referenteCliente    Cliente            @relation("Referente", fields: [referenteClienteId], references: [id])
+  referidoClienteId   String             @unique
+  referidoCliente     Cliente            @relation("Referido", fields: [referidoClienteId], references: [id])
+  estado              ReferidoEstado     @default(PENDIENTE)
+  recompensaAplicada  Boolean            @default(false)
   // Anti-fraude: registro atribuido pero con huella repetida (misma red/
   // dispositivo del referente o de otro referido reciente). Se conserva el
   // vínculo para auditoría, pero NO cuenta en el embudo ni otorga puntos.
-  sospechoso         Boolean        @default(false)
+  sospechoso          Boolean            @default(false)
   campanaInvitacionId String?
   campanaInvitacion   CampanaInvitacion? @relation(fields: [campanaInvitacionId], references: [id])
-  createdAt          DateTime       @default(now())
-  completadoEn       DateTime?
+  createdAt           DateTime           @default(now())
+  completadoEn        DateTime?
 
   @@index([companyId, referenteClienteId])
   @@index([companyId, sospechoso])
@@ -2436,14 +2440,14 @@ model Transaction {
   tipo         TransactionTipo
   estado       TransactionEstado @default(PENDING)
 
-  companyId  String
-  company    Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  sucursalId String?
-  sucursal   Sucursal? @relation(fields: [sucursalId], references: [id])
-  clienteId  String?
-  cliente    Cliente?  @relation(fields: [clienteId], references: [id])
-  empleadoId String?
-  empleado   User?     @relation("TransactionEmpleado", fields: [empleadoId], references: [id])
+  companyId    String
+  company      Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sucursalId   String?
+  sucursal     Sucursal?        @relation(fields: [sucursalId], references: [id])
+  clienteId    String?
+  cliente      Cliente?         @relation(fields: [clienteId], references: [id])
+  empleadoId   String?
+  empleado     User?            @relation("TransactionEmpleado", fields: [empleadoId], references: [id])
   /// Caja/terminal (texto libre; con gestión de cajas se usa cajaSesionId).
   caja         String?
   /// Sesión de caja en la que se registró el cobro (POS).
@@ -2573,40 +2577,40 @@ enum InvitacionEventoTipo {
 
 // Campaña "Invita y Gana" (uno de los 3 modelos "campaña"; ver Campana arriba).
 model CampanaInvitacion {
-  id             String                   @id @default(cuid())
-  companyId      String
-  company        Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  slug           String                   @unique
-  nombre         String
-  titulo         String
-  descripcion    String                   @db.Text
-  textoLanding   String?                  @db.Text
-  imagenUrl      String?
-  bannerUrl      String?
-  metaRegistros  Int
+  id                 String                  @id @default(cuid())
+  companyId          String
+  company            Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  slug               String                  @unique
+  nombre             String
+  titulo             String
+  descripcion        String                  @db.Text
+  textoLanding       String?                 @db.Text
+  imagenUrl          String?
+  bannerUrl          String?
+  metaRegistros      Int
   beneficioInvitante Json
   beneficioInvitado  Json
-  fechaInicio    DateTime
-  fechaFin       DateTime
-  maxPremios     Int?
-  premiosOtorgados Int                    @default(0)
-  estado         CampanaInvitacionEstado  @default(BORRADOR)
-  colorPrimario  String?
-  colorSecundario String?
-  orden          Int                      @default(0)
+  fechaInicio        DateTime
+  fechaFin           DateTime
+  maxPremios         Int?
+  premiosOtorgados   Int                     @default(0)
+  estado             CampanaInvitacionEstado @default(BORRADOR)
+  colorPrimario      String?
+  colorSecundario    String?
+  orden              Int                     @default(0)
   // Si es true, el enlace muestra la página de presentación (banner/hero) antes
   // del formulario. Si es false (por defecto), lleva directo al registro.
-  usarBanner     Boolean                  @default(false)
+  usarBanner         Boolean                 @default(false)
   // Textos editables del módulo "Invita y Gana" del cliente (subtítulo,
   // etiquetas, mensaje de compartir, títulos, nombres de estadísticas, etc.).
   // Ausente = se usan los textos por defecto (ver src/lib/invitaContenido.ts).
-  contenido      Json?
-  createdAt      DateTime                 @default(now())
-  updatedAt      DateTime                 @updatedAt
+  contenido          Json?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
 
-  progresos      InvitacionProgreso[]
-  eventos        InvitacionEvento[]
-  referidos      Referido[]
+  progresos InvitacionProgreso[]
+  eventos   InvitacionEvento[]
+  referidos Referido[]
 
   @@index([companyId, estado])
   @@index([estado, fechaFin])
@@ -2614,18 +2618,18 @@ model CampanaInvitacion {
 }
 
 model InvitacionProgreso {
-  id                    String             @id @default(cuid())
-  campanaId             String
-  campana               CampanaInvitacion  @relation(fields: [campanaId], references: [id], onDelete: Cascade)
-  clienteId             String
-  cliente               Cliente            @relation(fields: [clienteId], references: [id], onDelete: Cascade)
-  companyId             String
-  registrosCompletados  Int                @default(0)
-  metaAlcanzada         Boolean            @default(false)
-  premioReclamado       Boolean            @default(false)
-  benefitGrantId        String?
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
+  id                   String            @id @default(cuid())
+  campanaId            String
+  campana              CampanaInvitacion @relation(fields: [campanaId], references: [id], onDelete: Cascade)
+  clienteId            String
+  cliente              Cliente           @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  companyId            String
+  registrosCompletados Int               @default(0)
+  metaAlcanzada        Boolean           @default(false)
+  premioReclamado      Boolean           @default(false)
+  benefitGrantId       String?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
 
   @@unique([campanaId, clienteId])
   @@index([clienteId])
@@ -2633,18 +2637,18 @@ model InvitacionProgreso {
 }
 
 model InvitacionEvento {
-  id          String                  @id @default(cuid())
+  id          String               @id @default(cuid())
   campanaId   String
-  campana     CampanaInvitacion       @relation(fields: [campanaId], references: [id], onDelete: Cascade)
+  campana     CampanaInvitacion    @relation(fields: [campanaId], references: [id], onDelete: Cascade)
   clienteId   String?
-  cliente     Cliente?                @relation(fields: [clienteId], references: [id])
+  cliente     Cliente?             @relation(fields: [clienteId], references: [id])
   companyId   String
   tipo        InvitacionEventoTipo
   canal       String?
   dispositivo String?
   ipHash      String?
-  meta        Json                    @default("{}")
-  createdAt   DateTime                @default(now())
+  meta        Json                 @default("{}")
+  createdAt   DateTime             @default(now())
 
   @@index([campanaId, tipo])
   @@index([campanaId, clienteId])
@@ -2659,16 +2663,16 @@ model InvitacionEvento {
 // ─────────────────────────────────────────────────────────────────────────
 
 enum MarketingCampaignTipo {
-  FLASH_SALE      // oferta relámpago con contador
-  OFERTA_DIA      // cambia cada día
-  FIN_DE_SEMANA   // solo viernes a domingo
-  HAPPY_HOUR      // ventana horaria diaria (p. ej. 2pm–4pm)
-  PRIMERA_COMPRA  // solo quien aún no ha comprado
-  BIENVENIDA      // al registrarse
-  REGRESO         // sin visitar hace +30 días
-  CUMPLEANOS      // cupón de cumpleaños
-  POR_VENCER      // recordatorio de beneficio por vencer
-  PERSONALIZADA   // genérica
+  FLASH_SALE // oferta relámpago con contador
+  OFERTA_DIA // cambia cada día
+  FIN_DE_SEMANA // solo viernes a domingo
+  HAPPY_HOUR // ventana horaria diaria (p. ej. 2pm–4pm)
+  PRIMERA_COMPRA // solo quien aún no ha comprado
+  BIENVENIDA // al registrarse
+  REGRESO // sin visitar hace +30 días
+  CUMPLEANOS // cupón de cumpleaños
+  POR_VENCER // recordatorio de beneficio por vencer
+  PERSONALIZADA // genérica
 }
 
 enum MarketingCampaignEstado {
@@ -2680,11 +2684,11 @@ enum MarketingCampaignEstado {
 
 // Banner vivo del Home (uno de los 3 modelos "campaña"; ver Campana arriba).
 model MarketingCampaign {
-  id          String                  @id @default(cuid())
-  companyId   String
-  company     Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  tipo        MarketingCampaignTipo   @default(FLASH_SALE)
-  estado      MarketingCampaignEstado @default(BORRADOR)
+  id        String                  @id @default(cuid())
+  companyId String
+  company   Company                 @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tipo      MarketingCampaignTipo   @default(FLASH_SALE)
+  estado    MarketingCampaignEstado @default(BORRADOR)
 
   titulo          String
   descripcion     String  @db.Text
@@ -2724,7 +2728,7 @@ model MarketingCampaign {
 
 enum RuletaPremioTipo {
   PROMOCION // entrega una promoción como beneficio (ProductoCompra + QR)
-  NADA      // segmento "sigue participando" (no otorga premio)
+  NADA // segmento "sigue participando" (no otorga premio)
 }
 
 model RuletaPremio {
@@ -2749,18 +2753,18 @@ model RuletaPremio {
 }
 
 model RuletaJugada {
-  id               String   @id @default(cuid())
+  id               String        @id @default(cuid())
   companyId        String
-  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company          Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   clienteId        String
-  cliente          Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  cliente          Cliente       @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   costoPuntos      Int
   premioId         String?
   premio           RuletaPremio? @relation(fields: [premioId], references: [id])
   premioNombre     String
-  gano             Boolean  @default(false)
+  gano             Boolean       @default(false)
   productoCompraId String?
-  createdAt        DateTime @default(now())
+  createdAt        DateTime      @default(now())
 
   @@index([companyId, clienteId])
   @@index([clienteId, createdAt])
@@ -2772,31 +2776,31 @@ model RuletaJugada {
 /// Configuración de la agenda de citas por empresa: límites por turno (hora) y
 /// por día, duración del turno, horario semanal y reglas de reserva.
 model AgendaConfig {
-  id        String  @id @default(cuid())
-  companyId String  @unique
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  id                String   @id @default(cuid())
+  companyId         String   @unique
+  company           Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   /// El módulo se enciende explícitamente desde el panel.
-  activa    Boolean @default(false)
+  activa            Boolean  @default(false)
   /// Duración de cada turno en minutos (los horarios se dividen en turnos).
-  duracionMin Int @default(30)
+  duracionMin       Int      @default(30)
   /// LÍMITE POR HORA/TURNO: citas simultáneas máximas en un mismo turno.
-  maxPorSlot Int @default(1)
+  maxPorSlot        Int      @default(1)
   /// LÍMITE POR DÍA: citas máximas del día (0 = sin límite diario).
-  maxPorDia Int @default(0)
+  maxPorDia         Int      @default(0)
   /// Horas mínimas de anticipación para reservar.
-  anticipacionHoras Int @default(1)
+  anticipacionHoras Int      @default(1)
   /// Hasta cuántos días hacia adelante se puede reservar.
-  ventanaDias Int @default(14)
+  ventanaDias       Int      @default(14)
   /// true = la cita nace CONFIRMADA; false = nace PENDIENTE y el panel aprueba.
-  autoConfirmar Boolean @default(true)
+  autoConfirmar     Boolean  @default(true)
   /// Instrucciones que ve el cliente al reservar (opcional).
-  notas String?
+  notas             String?
   /// Horario semanal: { "1": [{"desde":"08:00","hasta":"18:00"}], ... }
   /// Clave = día de semana (0=domingo … 6=sábado) en la zona horaria de la
   /// empresa; días ausentes = cerrado. Validado en código (src/modules/citas).
-  horarios Json @default("{}")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  horarios          Json     @default("{}")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@map("agenda_configs")
 }
@@ -2804,32 +2808,108 @@ model AgendaConfig {
 /// Cita reservada por un cliente. `inicio` se guarda en UTC; el turno se
 /// calcula y se muestra en la zona horaria de la empresa.
 model Cita {
-  id          String     @id @default(cuid())
-  companyId   String
-  company     Company    @relation(fields: [companyId], references: [id])
-  clienteId   String
-  cliente     Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
-  sucursalId  String?
-  sucursal    Sucursal?  @relation(fields: [sucursalId], references: [id], onDelete: SetNull)
-  vehiculoId  String?
-  vehiculo    Vehiculo?  @relation(fields: [vehiculoId], references: [id], onDelete: SetNull)
-  inicio      DateTime
-  duracionMin Int
+  id                String     @id @default(cuid())
+  companyId         String
+  company           Company    @relation(fields: [companyId], references: [id])
+  clienteId         String
+  cliente           Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  sucursalId        String?
+  sucursal          Sucursal?  @relation(fields: [sucursalId], references: [id], onDelete: SetNull)
+  vehiculoId        String?
+  vehiculo          Vehiculo?  @relation(fields: [vehiculoId], references: [id], onDelete: SetNull)
+  inicio            DateTime
+  duracionMin       Int
   /// Qué viene a hacer (texto libre del cliente o del negocio).
-  servicio    String?
-  notaCliente String?
-  notaInterna String?
-  estado      CitaEstado @default(CONFIRMADA)
+  servicio          String?
+  notaCliente       String?
+  notaInterna       String?
+  estado            CitaEstado @default(CONFIRMADA)
   /// 'CLIENTE' | 'NEGOCIO' cuando estado = CANCELADA.
   canceladaPor      String?
   motivoCancelacion String?
   atendidaPorId     String?
-  atendidaPor       User?   @relation("CitaAtendidaPor", fields: [atendidaPorId], references: [id], onDelete: SetNull)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  atendidaPor       User?      @relation("CitaAtendidaPor", fields: [atendidaPorId], references: [id], onDelete: SetNull)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 
   // Agenda del día por empresa y "mis citas" del cliente.
   @@index([companyId, inicio])
   @@index([clienteId, inicio])
   @@map("citas")
+}
+
+// ─── Ofertas VIP (regalos privados por lista cerrada) ────────────────────────
+
+enum OfertaPeriodo {
+  SEMANAL // el cupo de usos se reinicia cada semana
+  MENSUAL // el cupo se reinicia cada mes calendario
+  TOTAL // cupo único para toda la vigencia
+}
+
+enum OfertaPrivadaEstado {
+  ACTIVA
+  PAUSADA
+  FINALIZADA
+}
+
+/// Oferta/regalo PRIVADO: no se publica en el marketplace ni en promociones;
+/// existe solo para los clientes invitados (lista cerrada). Se comparte por
+/// link con código; quien no está en la lista ve "tu cuenta no aplica".
+model OfertaPrivada {
+  id             String              @id @default(cuid())
+  companyId      String
+  company        Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  /// Código corto del link /oferta/[codigo] (no adivinable).
+  codigo         String              @unique
+  titulo         String
+  descripcion    String?
+  /// Usos permitidos por período (ej. 12 lavados al mes).
+  usosPorPeriodo Int                 @default(1)
+  periodo        OfertaPeriodo       @default(MENSUAL)
+  /// Fin de la vigencia (ej. un año); null = sin fecha de fin.
+  vigenciaHasta  DateTime?
+  estado         OfertaPrivadaEstado @default(ACTIVA)
+  creadaPorId    String?
+  creadaPor      User?               @relation("OfertaCreadaPor", fields: [creadaPorId], references: [id], onDelete: SetNull)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  invitados OfertaInvitado[]
+
+  @@index([companyId, estado])
+  @@map("ofertas_privadas")
+}
+
+/// Cliente invitado a una oferta privada. `reclamadaAt` = cuándo la aceptó.
+model OfertaInvitado {
+  id          String        @id @default(cuid())
+  ofertaId    String
+  oferta      OfertaPrivada @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
+  clienteId   String
+  cliente     Cliente       @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  reclamadaAt DateTime?
+  createdAt   DateTime      @default(now())
+
+  usos OfertaUso[]
+
+  @@unique([ofertaId, clienteId])
+  @@index([clienteId])
+  @@map("oferta_invitados")
+}
+
+/// Uso canjeado de la oferta (cuenta contra el cupo del período). Lo registra
+/// el staff del negocio; historial permanente.
+model OfertaUso {
+  id              String         @id @default(cuid())
+  invitadoId      String
+  invitado        OfertaInvitado @relation(fields: [invitadoId], references: [id], onDelete: Cascade)
+  companyId       String
+  registradoPorId String?
+  registradoPor   User?          @relation("OfertaUsoRegistradoPor", fields: [registradoPorId], references: [id], onDelete: SetNull)
+  nota            String?
+  createdAt       DateTime       @default(now())
+
+  @@index([invitadoId, createdAt])
+  @@index([companyId, createdAt])
+  @@map("oferta_usos")
 }

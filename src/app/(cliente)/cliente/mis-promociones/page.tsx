@@ -1,7 +1,9 @@
 import Link from 'next/link'
-import { ChevronRight, Ticket, Clock, History, Sparkles } from 'lucide-react'
+import { ChevronRight, Ticket, Clock, History, Sparkles, Gift } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
 import { prisma } from '@/lib/prisma'
+import { getRegalosCliente } from '@/modules/ofertas/queries'
+import { PERIODO_LABEL } from '@/modules/ofertas/periodo'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -101,6 +103,7 @@ export default async function MisPromocionesPage() {
   const clienteId = user.metadata.clienteId
   if (!clienteId) return <p className="text-muted-foreground">No autorizado.</p>
 
+  const regalos = await getRegalosCliente(clienteId).catch(() => [])
   const compras = await prisma.productoCompra
     .findMany({
       where: { clienteId },
@@ -137,7 +140,33 @@ export default async function MisPromocionesPage() {
         </p>
       </div>
 
-      {compras.length === 0 ? (
+      {/* Regalos VIP reclamados (ofertas privadas) */}
+      {regalos.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
+            <Gift className="h-5 w-5 text-primary" /> Mis regalos
+          </h2>
+          {regalos.map((r) => (
+            <Link
+              key={r.invitadoId}
+              href={`/oferta/${r.codigo}`}
+              className="flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-4 transition hover:-translate-y-0.5 hover:shadow-premium"
+            >
+              <div className="min-w-0">
+                <p className="font-semibold text-foreground">{r.titulo}</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  {Math.max(0, r.usosPorPeriodo - r.usosPeriodo)} de {r.usosPorPeriodo} usos{' '}
+                  {PERIODO_LABEL[r.periodo]} disponibles
+                  {r.vigenciaHasta ? ` · hasta ${fmtFecha(r.vigenciaHasta)}` : ''}
+                </p>
+              </div>
+              <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+            </Link>
+          ))}
+        </section>
+      )}
+
+      {compras.length === 0 && regalos.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground">
             <Sparkles className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />

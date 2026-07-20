@@ -74,7 +74,7 @@ export function FeedNovedades({ novedades }: { novedades: NovedadInicio[] }) {
             Novedades de tus empresas
           </h2>
           <p className="text-sm text-muted-foreground">
-            Lo último de las empresas que sigues.
+            Lo último para ti: eventos, noticias y beneficios.
           </p>
         </div>
         <Link

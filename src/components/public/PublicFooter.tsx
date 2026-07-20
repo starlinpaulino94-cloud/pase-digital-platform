@@ -6,16 +6,14 @@ const COLUMNAS = [
     titulo: 'Producto',
     links: [
       { href: '/caracteristicas', label: 'Características' },
-      { href: '/empresas', label: 'Empresas' },
       { href: '/promociones', label: 'Promociones' },
       { href: '/descargar', label: 'Descargar la app' },
     ],
   },
   {
-    titulo: 'Para empresas',
+    titulo: 'Tu cuenta',
     links: [
-      { href: '/registro-empresa', label: 'Registrar mi empresa' },
-      { href: '/empresas', label: 'Ver empresas' },
+      { href: '/registro', label: 'Crear cuenta' },
       { href: '/login', label: 'Ingresar' },
     ],
   },
@@ -56,8 +54,8 @@ export function PublicFooter() {
               </span>
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              La plataforma de membresías digitales y beneficios para empresas y
-              sus clientes.
+              Tu membresía digital: beneficios, promociones y tu QR siempre
+              contigo.
             </p>
           </div>
 

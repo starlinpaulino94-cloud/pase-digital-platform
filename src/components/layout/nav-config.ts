@@ -22,7 +22,6 @@ import {
   Newspaper,
   TrendingUp,
   Store,
-  Compass,
   Bell,
   Flag,
   Zap,
@@ -77,6 +76,7 @@ const ADMIN_NAV: NavGroup[] = [
     items: [
       { href: '/admin/planes', label: 'Planes', icon: Package },
       { href: '/admin/promociones', label: 'Promociones', icon: Megaphone },
+      { href: '/admin/ofertas', label: 'Regalos VIP', icon: Gift },
       { href: '/admin/referidos', label: 'Referidos', icon: Gift },
       { href: '/admin/invitaciones', label: 'Invitaciones', icon: Ticket },
       { href: '/admin/gamificacion', label: 'Ruleta de premios', icon: Trophy },
@@ -156,9 +156,10 @@ const CLIENTE_NAV: NavGroup[] = [
   {
     id: 'beneficios',
     label: 'Beneficios',
+    // Marca única: sin "Explorar empresas" ni "Mis empresas" en el menú (el
+    // cliente vive dentro de SU negocio). Las rutas siguen activas por URL
+    // para cuando el marketplace se abra con más empresas.
     items: [
-      { href: '/cliente/explorar', label: 'Explorar empresas', icon: Compass },
-      { href: '/cliente/empresas', label: 'Mis empresas', icon: Building2 },
       { href: '/cliente/promociones', label: 'Promociones', icon: Megaphone },
       { href: '/cliente/mis-promociones', label: 'Mis beneficios', icon: Ticket },
       // Unificación: el antiguo módulo "Referidos" vive dentro de Invita y Gana.
