@@ -2,9 +2,11 @@ import { requireRole } from '@/lib/auth/guards'
 import { AppShell } from '@/components/layout/AppShell'
 import { SentryUserSync } from '@/components/SentryUserSync'
 import { getUnreadCount } from '@/modules/notificaciones/actions'
-import { getClienteCompanies } from '@/modules/cliente/actions'
-import { getMembresiaActivaPrincipalId } from '@/modules/cliente/queries'
-import { getNavOcultoCliente } from '@/modules/cliente/navDisponible'
+import {
+  getClienteCompaniesCached,
+  getMembresiaActivaPrincipalId,
+} from '@/modules/cliente/queries'
+import { getNavOcultoClienteCached } from '@/modules/cliente/navDisponible'
 
 export default async function ClienteLayout({
   children,
@@ -12,11 +14,14 @@ export default async function ClienteLayout({
   children: React.ReactNode
 }) {
   const user = await requireRole('CLIENTE')
+  // Rendimiento: este layout corre en CADA clic. Lo cosmético (switcher de
+  // empresas, módulos ocultos del menú) va cacheado 5 min por usuario; solo
+  // el badge de notificaciones y el QR activo se consultan en vivo.
   const [notifCount, clienteCompanies, membresiaQrId, hiddenNav] = await Promise.all([
     getUnreadCount().catch(() => 0),
-    getClienteCompanies().catch(() => []),
+    getClienteCompaniesCached(user.supabaseId).catch(() => []),
     getMembresiaActivaPrincipalId(user.supabaseId, user.metadata.clienteId),
-    getNavOcultoCliente(user.metadata.clienteId, user.metadata.companyId),
+    getNavOcultoClienteCached(user.metadata.clienteId, user.metadata.companyId),
   ])
   const companies = clienteCompanies.map((c) => ({
     companyId: c.companyId,

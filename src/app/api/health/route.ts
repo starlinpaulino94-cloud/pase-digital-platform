@@ -22,8 +22,11 @@ export async function GET(req: NextRequest) {
 
   let dbOk = false
   let dbError: string | null = null
+  let dbLatencyMs: number | null = null
   try {
+    const t0 = Date.now()
     await prisma.$queryRaw`SELECT 1`
+    dbLatencyMs = Date.now() - t0
     dbOk = true
   } catch (e) {
     dbError = e instanceof Error ? e.message : String(e)
@@ -61,6 +64,18 @@ export async function GET(req: NextRequest) {
     }
   }
   if (dbError) diagnostics.raw_query_error = dbError
+  // Latencia BD: >150 ms sostenido = región lejana o pool saturado (P2024).
+  // Segunda medición ya con conexión caliente (la primera paga el handshake).
+  if (dbLatencyMs != null) {
+    diagnostics.db_latency_first_ms = dbLatencyMs
+    try {
+      const t0 = Date.now()
+      await prisma.$queryRaw`SELECT 1`
+      diagnostics.db_latency_warm_ms = Date.now() - t0
+    } catch {
+      /* ya reportado arriba */
+    }
+  }
 
   try {
     diagnostics.companies = await prisma.company.count()

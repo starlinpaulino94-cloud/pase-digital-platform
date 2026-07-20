@@ -110,6 +110,29 @@ export async function getClienteAllMemberships(
   }
 }
 
+import { unstable_cache } from 'next/cache'
+
+/**
+ * Empresas donde el usuario tiene cuenta de cliente — para el switcher del
+ * layout, que corre en CADA navegación. Cacheada 5 min por usuario y con
+ * select explícito (un include completo de `company` convierte cualquier
+ * columna sin migrar en un fallo por clic).
+ */
+export const getClienteCompaniesCached = unstable_cache(
+  async (supabaseId: string) =>
+    prisma.cliente.findMany({
+      where: { supabaseId },
+      select: {
+        id: true,
+        companyId: true,
+        company: { select: { id: true, name: true, logoUrl: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    }),
+  ['cliente-companies'],
+  { revalidate: 300 }
+)
+
 export interface ClientePerfil {
   id: string
   nombre: string
