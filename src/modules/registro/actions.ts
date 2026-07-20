@@ -33,6 +33,16 @@ export interface RegistroState {
   qrBienvenida?: string
 }
 
+/**
+ * Teléfono válido para el registro nuevo: validación laxa y multi-país —
+ * basta con que contenga al menos 7 dígitos. La columna `Cliente.telefono`
+ * sigue siendo opcional en la BD, así que esta exigencia solo aplica a los
+ * registros nuevos y no afecta a los clientes ya registrados sin teléfono.
+ */
+function telefonoValido(raw: string): boolean {
+  return (raw.match(/\d/g)?.length ?? 0) >= 7
+}
+
 /** Código de invitación del cliente; nunca bloquea el registro si falla. */
 async function codigoInvitacionDe(clienteId: string): Promise<string | undefined> {
   try {
@@ -106,13 +116,17 @@ export async function registrarCliente(
   const color = String(formData.get('color') ?? '').trim()
   const placa = String(formData.get('placa') ?? '').trim()
 
-  // Solo lo esencial es obligatorio; el teléfono se puede completar luego
-  // desde el perfil (se sugiere, no se exige).
   if (!nombre || !email || !password) {
     return { error: 'Completa todos los campos obligatorios.' }
   }
   if (password.length < 6) {
     return { error: 'La contraseña debe tener al menos 6 caracteres.' }
+  }
+  // El teléfono es obligatorio en el registro nuevo (la columna sigue siendo
+  // opcional en la BD, así que los clientes ya registrados sin teléfono no se
+  // ven afectados). Validación laxa: al menos 7 dígitos.
+  if (!telefonoValido(telefono)) {
+    return { error: 'Ingresa un número de teléfono válido.' }
   }
   if (!aceptaTerminos) {
     return { error: 'Debes aceptar los términos y la política de privacidad.' }
@@ -392,13 +406,16 @@ export async function registrarCuentaGeneral(
     const aceptaTerminos = formData.get('terminos') === 'on'
     const marketingConsent = formData.getAll('marketingConsent').at(-1) === 'on'
 
-    // Solo lo esencial es obligatorio; el teléfono se puede completar luego
-    // desde el perfil (se sugiere, no se exige).
     if (!nombre || !email || !password) {
       return { error: 'Completa todos los campos obligatorios.' }
     }
     if (password.length < 6) {
       return { error: 'La contraseña debe tener al menos 6 caracteres.' }
+    }
+    // Teléfono obligatorio en el registro nuevo (la columna sigue opcional en
+    // la BD → los clientes ya registrados sin teléfono no se ven afectados).
+    if (!telefonoValido(telefono)) {
+      return { error: 'Ingresa un número de teléfono válido.' }
     }
     if (!aceptaTerminos) {
       return { error: 'Debes aceptar los términos y la política de privacidad.' }
