@@ -76,6 +76,7 @@ const ADMIN_NAV: NavGroup[] = [
     items: [
       { href: '/admin/planes', label: 'Planes', icon: Package },
       { href: '/admin/promociones', label: 'Promociones', icon: Megaphone },
+      { href: '/admin/ofertas', label: 'Regalos VIP', icon: Gift },
       { href: '/admin/referidos', label: 'Referidos', icon: Gift },
       { href: '/admin/invitaciones', label: 'Invitaciones', icon: Ticket },
       { href: '/admin/gamificacion', label: 'Ruleta de premios', icon: Trophy },
