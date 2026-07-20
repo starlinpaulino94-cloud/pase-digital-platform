@@ -28,14 +28,25 @@ function stripTrailing(raw: string): string {
 
 /**
  * Devuelve la URL base de la app sin barra final.
- * Prioriza NEXT_PUBLIC_APP_URL; si no está, usa el dominio oficial.
  *
- * NOTA: se conserva sin cambios por retrocompatibilidad. Es el "dominio único"
- * de hoy y la base de la que derivan `landingUrl()` y `appUrl()` mientras no se
- * separen los proyectos.
+ * Cadena de resolución (crítica para las vistas previas de WhatsApp/redes:
+ * de aquí sale `metadataBase`, y con él la URL ABSOLUTA de og:image; si el
+ * dominio no coincide con el desplegado, el robot no puede bajar la imagen y
+ * la tarjeta llega "sin foto"):
+ *  1. NEXT_PUBLIC_APP_URL — configuración explícita (manda siempre).
+ *  2. VERCEL_PROJECT_PRODUCTION_URL — dominio real de producción que Vercel
+ *     inyecta solo (custom domain o *.vercel.app): correcto sin configurar nada.
+ *  3. VERCEL_URL — dominio del deployment (cubre previews).
+ *  4. Dominio oficial por defecto.
  */
 export function getAppUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_APP_URL || DEFAULT_APP_URL
+  const vercelProd = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  const vercelDeploy = process.env.VERCEL_URL
+  const raw =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (vercelProd ? `https://${vercelProd}` : '') ||
+    (vercelDeploy ? `https://${vercelDeploy}` : '') ||
+    DEFAULT_APP_URL
   return stripTrailing(raw)
 }
 
