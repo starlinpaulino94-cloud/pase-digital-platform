@@ -158,6 +158,14 @@ sucursal o cita.
 (Clientes, Escanear, Promociones, Perfil) y revelar el resto a medida que se
 usan. Esto conecta con el `OnboardingChecklist` que ya existe en el dashboard.
 
+> **⚠️ Fase C — decisión sobre H3:** el ocultamiento literal de módulos
+> vacíos (como en el cliente) **NO se aplica al admin a propósito**: en el
+> panel, un módulo vacío es justo donde el dueño entra a **crear** el primer
+> elemento (ocultar "Promociones" cuando aún no hay ninguna impediría crear
+> la primera). La vía correcta es la priorización progresiva descrita arriba,
+> apoyada en el `OnboardingChecklist`; queda como mejora de producto futura,
+> no como un simple `hiddenNav`.
+
 ---
 
 ## 6. H4 · Fuga del estado "superadmin sin empresa" (P2)
@@ -170,6 +178,14 @@ duplicada 15 veces con copy ligeramente distinto.
 **Recomendación:** centralizar en un solo guard/estado (p. ej. un
 `<RequiereEmpresa>` en el layout o un helper que devuelva un `EmptyState`
 uniforme). Así el mensaje es consistente y no se re-escribe en cada módulo.
+
+> **✅ Fase C aplicada:** creado `<SinEmpresaActiva>`
+> (`src/components/admin/SinEmpresaActiva.tsx`), un `EmptyState` único con copy
+> consistente. Reemplaza los mensajes ad-hoc en 15 módulos (ofertas, citas,
+> crecimiento, gamificación, personalización, invitaciones, marketing,
+> campañas, notificaciones, automatizaciones, audiencia, comunicación y sus
+> vistas nueva/plantillas). De paso se limpiaron los imports que quedaron
+> huérfanos.
 
 ---
 

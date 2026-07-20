@@ -12,6 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/ui/page-header'
+import { SinEmpresaActiva } from '@/components/admin/SinEmpresaActiva'
 import { Badge } from '@/components/ui/badge'
 import { Trash2 } from 'lucide-react'
 
@@ -58,12 +59,7 @@ export default async function CrecimientoPage() {
   const companyId = await resolveCompanyId(user)
 
   if (!companyId) {
-    return (
-      <PageHeader
-        title="Crecimiento"
-        description="Selecciona una empresa (vista de empresa) para configurar su programa de crecimiento."
-      />
-    )
+    return <SinEmpresaActiva seccion="tu programa de crecimiento" />
   }
 
   const { config, rules, promos, plans } = await getGrowthAdminData(companyId)

@@ -8,6 +8,7 @@ import { PERIODO_LABEL } from '@/modules/ofertas/periodo'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/ui/page-header'
+import { SinEmpresaActiva } from '@/components/admin/SinEmpresaActiva'
 import { cn } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
@@ -24,9 +25,7 @@ export default async function OfertasAdminPage() {
   const companyId = companyFilter(user) ?? user.metadata.companyId ?? null
 
   if (!companyId) {
-    return (
-      <PageHeader title="Regalos VIP" description="Selecciona una empresa activa." />
-    )
+    return <SinEmpresaActiva seccion="tus regalos VIP" />
   }
 
   const ofertas = await getOfertasAdmin(companyId)

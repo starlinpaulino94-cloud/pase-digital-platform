@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PageHeader } from '@/components/ui/page-header'
+import { SinEmpresaActiva } from '@/components/admin/SinEmpresaActiva'
 import { DeleteCampanaButton } from '@/components/admin/DeleteCampanaButton'
 import {
   Flag,
@@ -16,7 +17,6 @@ import {
   Eye,
   Share2,
   Heart,
-  AlertCircle,
   CalendarDays,
 } from 'lucide-react'
 
@@ -32,17 +32,7 @@ export default async function CampanasPage() {
   const companyId = user.metadata.companyId
 
   if (!companyId) {
-    return (
-      <div className="space-y-6">
-        <PageHeader title="Campañas" />
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <AlertCircle className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" />
-            Esta vista es por empresa. Inicia sesión con una cuenta de empresa.
-          </CardContent>
-        </Card>
-      </div>
-    )
+    return <SinEmpresaActiva seccion="tus campañas" />
   }
 
   let campanas: Awaited<ReturnType<typeof query>> = []

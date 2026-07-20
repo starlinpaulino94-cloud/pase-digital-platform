@@ -5,6 +5,7 @@ import { requireRole } from '@/lib/auth/guards'
 import { companyFilter } from '@/modules/admin/queries'
 import { getAgendaConfig } from '@/modules/citas/queries'
 import { PageHeader } from '@/components/ui/page-header'
+import { SinEmpresaActiva } from '@/components/admin/SinEmpresaActiva'
 import { AgendaConfigForm } from '@/components/citas/AgendaConfigForm'
 
 export const dynamic = 'force-dynamic'
@@ -15,12 +16,7 @@ export default async function ConfiguracionCitasPage() {
   const companyId = companyFilter(user) ?? user.metadata.companyId ?? null
 
   if (!companyId) {
-    return (
-      <PageHeader
-        title="Configuración de citas"
-        description="Selecciona una empresa activa."
-      />
-    )
+    return <SinEmpresaActiva seccion="la agenda de citas" />
   }
 
   const config = await getAgendaConfig(companyId)

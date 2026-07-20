@@ -16,6 +16,7 @@ import { CitaAdminActions } from '@/components/citas/CitaAdminActions'
 import { CitaEstadoBadge } from '@/components/citas/CitaEstadoBadge'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/ui/page-header'
+import { SinEmpresaActiva } from '@/components/admin/SinEmpresaActiva'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Citas' }
@@ -33,12 +34,7 @@ export default async function CitasAdminPage({
   const companyId = companyFilter(user) ?? user.metadata.companyId ?? null
 
   if (!companyId) {
-    return (
-      <PageHeader
-        title="Citas"
-        description="Selecciona una empresa activa para ver su agenda."
-      />
-    )
+    return <SinEmpresaActiva seccion="tu agenda de citas" />
   }
 
   const company = await prisma.company.findUnique({

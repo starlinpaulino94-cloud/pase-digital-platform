@@ -5,6 +5,7 @@ import { requireRole } from '@/lib/auth/guards'
 import { companyFilter } from '@/modules/admin/queries'
 import { prisma } from '@/lib/prisma'
 import { CrearOfertaForm } from '@/components/ofertas/CrearOfertaForm'
+import { SinEmpresaActiva } from '@/components/admin/SinEmpresaActiva'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Crear regalo VIP' }
@@ -14,12 +15,7 @@ export default async function NuevaOfertaPage() {
   const companyId = companyFilter(user) ?? user.metadata.companyId ?? null
 
   if (!companyId) {
-    return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-foreground">Crear regalo VIP</h1>
-        <p className="text-muted-foreground">Selecciona una empresa activa.</p>
-      </div>
-    )
+    return <SinEmpresaActiva seccion="tus regalos VIP" />
   }
 
   const clientes = await prisma.cliente.findMany({

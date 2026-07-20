@@ -5,6 +5,7 @@ import { resolveCompanyId } from '@/lib/auth/company-context'
 import { getRuletaPremiosAdmin } from '@/modules/engagement/ruleta'
 import { COSTO_RULETA } from '@/lib/gamificacion'
 import { PageHeader } from '@/components/ui/page-header'
+import { SinEmpresaActiva } from '@/components/admin/SinEmpresaActiva'
 import { RuletaAdmin, type PremioRow } from '@/components/gamificacion/RuletaAdmin'
 
 export const dynamic = 'force-dynamic'
@@ -14,11 +15,7 @@ export default async function AdminGamificacionPage() {
   const user = await requireRole(ADMIN_ROLES)
   const companyId = await resolveCompanyId(user)
   if (!companyId) {
-    return (
-      <div className="py-20 text-center text-muted-foreground">
-        Selecciona una empresa para configurar su ruleta.
-      </div>
-    )
+    return <SinEmpresaActiva seccion="la ruleta de premios" />
   }
 
   const [premiosRaw, promociones] = await Promise.all([

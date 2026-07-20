@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/ui/page-header'
 import { EmptyState } from '@/components/ui/empty-state'
+import { SinEmpresaActiva } from '@/components/admin/SinEmpresaActiva'
 import { StatusBanner } from '@/components/ui/status-banner'
 import { StatCard } from '@/components/ui/stat-card'
 import {
@@ -18,7 +19,6 @@ import {
   Heart,
   Percent,
   Handshake,
-  AlertCircle,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -30,16 +30,7 @@ export default async function AudienciaPage() {
   const companyId = user.metadata.companyId
 
   if (!companyId) {
-    return (
-      <div className="space-y-6">
-        <PageHeader title="Audiencia" />
-        <EmptyState
-          icon={<AlertCircle className="h-6 w-6" />}
-          title="Esta vista es por empresa"
-          description="Inicia sesión con una cuenta de empresa para ver tu audiencia."
-        />
-      </div>
-    )
+    return <SinEmpresaActiva seccion="tus métricas de audiencia" />
   }
 
   let stats: AudienciaStats | null = null

@@ -22,10 +22,10 @@ import {
   Sparkles,
   CheckCircle2,
   ChevronRight,
-  AlertCircle,
   Zap,
   Target,
 } from 'lucide-react'
+import { SinEmpresaActiva } from '@/components/admin/SinEmpresaActiva'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,18 +45,7 @@ export default async function PlantillasAutomatizacionPage({
   const { categoria, vista } = await searchParams
 
   if (!companyId) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-h1 text-foreground">Plantillas de automatización</h1>
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <AlertCircle className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" />
-            Esta vista es por empresa. Selecciona una empresa activa para usar el
-            catálogo de plantillas.
-          </CardContent>
-        </Card>
-      </div>
-    )
+    return <SinEmpresaActiva seccion="el catálogo de plantillas de automatización" />
   }
 
   // Instalaciones vivas de esta empresa (las archivadas no cuentan).
