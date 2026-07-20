@@ -88,6 +88,180 @@ export async function getResumenSesion(cajaSesionId: string): Promise<ResumenSes
   }
 }
 
+// ── Cierre de caja (Z-report) ────────────────────────────────────────────────
+
+/** Etiquetas legibles de los tipos de transacción en el cierre. */
+const TIPO_LABEL: Record<string, string> = {
+  SALE: 'Ventas',
+  MEMBERSHIP_REDEMPTION: 'Uso de membresía',
+  PROMOTION_USE: 'Uso de promoción',
+  BENEFIT_USE: 'Entrega de beneficio',
+  REWARD_REDEMPTION: 'Canje de premio',
+  COUPON_USE: 'Cupón',
+  POINTS_SPEND: 'Puntos',
+  REFERRAL: 'Referido',
+  PURCHASE: 'Compra',
+  OTHER: 'Otro',
+}
+
+export interface CierreReporte {
+  id: string
+  sucursal: string
+  turno: string | null
+  estado: string
+  abiertaPor: string
+  cerradaPor: string | null
+  abiertaAt: Date
+  cerradaAt: Date | null
+  balanceInicial: number
+  balanceFinal: number | null
+  balanceEsperado: number | null
+  diferencia: number | null
+  observaciones: string | null
+  cobros: number
+  total: number
+  porMetodo: { efectivo: number; transferencia: number; otro: number }
+  porTipo: { tipo: string; label: string; cantidad: number; total: number }[]
+  porEmpleado: { empleado: string; cantidad: number; total: number }[]
+  empresa: {
+    nombre: string
+    logoUrl: string | null
+    direccion: string | null
+    telefono: string | null
+  }
+  timeZone: string
+}
+
+/**
+ * Reporte de cierre de una sesión de caja (arqueo "Z"): datos del turno +
+ * cobros desglosados por método, por tipo de operación y por empleado. Sirve
+ * para imprimir y reimprimir. Filtra por companyId (multi-tenant).
+ */
+export async function getCierreReporte(
+  cajaSesionId: string,
+  companyId: string
+): Promise<CierreReporte | null> {
+  const sesion = await prisma.cajaSesion.findFirst({
+    where: { id: cajaSesionId, companyId },
+    include: {
+      sucursal: { select: { nombre: true } },
+      abiertaPor: { select: { name: true } },
+      cerradaPor: { select: { name: true } },
+      company: {
+        select: {
+          name: true,
+          logoUrl: true,
+          direccion: true,
+          telefono: true,
+          zonaHoraria: true,
+        },
+      },
+    },
+  })
+  if (!sesion) return null
+
+  const cobros = await prisma.transaction.findMany({
+    where: { cajaSesionId, estado: 'APPLIED' },
+    select: {
+      monto: true,
+      metodoCobro: true,
+      tipo: true,
+      empleado: { select: { name: true } },
+    },
+  })
+
+  const porMetodo = { efectivo: 0, transferencia: 0, otro: 0 }
+  const tipoMap = new Map<string, { cantidad: number; total: number }>()
+  const empMap = new Map<string, { cantidad: number; total: number }>()
+  let total = 0
+
+  for (const c of cobros) {
+    const monto = Number(c.monto ?? 0)
+    total += monto
+    if (c.metodoCobro === 'EFECTIVO') porMetodo.efectivo += monto
+    else if (c.metodoCobro === 'TRANSFERENCIA') porMetodo.transferencia += monto
+    else porMetodo.otro += monto
+
+    const t = tipoMap.get(c.tipo) ?? { cantidad: 0, total: 0 }
+    t.cantidad += 1
+    t.total += monto
+    tipoMap.set(c.tipo, t)
+
+    const nombre = c.empleado?.name ?? 'Sin asignar'
+    const e = empMap.get(nombre) ?? { cantidad: 0, total: 0 }
+    e.cantidad += 1
+    e.total += monto
+    empMap.set(nombre, e)
+  }
+
+  return {
+    id: sesion.id,
+    sucursal: sesion.sucursal.nombre,
+    turno: sesion.turno,
+    estado: sesion.estado,
+    abiertaPor: sesion.abiertaPor.name ?? '—',
+    cerradaPor: sesion.cerradaPor?.name ?? null,
+    abiertaAt: sesion.abiertaAt,
+    cerradaAt: sesion.cerradaAt,
+    balanceInicial: Number(sesion.balanceInicial),
+    balanceFinal: sesion.balanceFinal == null ? null : Number(sesion.balanceFinal),
+    balanceEsperado: sesion.balanceEsperado == null ? null : Number(sesion.balanceEsperado),
+    diferencia: sesion.diferencia == null ? null : Number(sesion.diferencia),
+    observaciones: sesion.observaciones,
+    cobros: cobros.length,
+    total,
+    porMetodo,
+    porTipo: [...tipoMap.entries()]
+      .map(([tipo, v]) => ({ tipo, label: TIPO_LABEL[tipo] ?? tipo, ...v }))
+      .sort((a, b) => b.total - a.total),
+    porEmpleado: [...empMap.entries()]
+      .map(([empleado, v]) => ({ empleado, ...v }))
+      .sort((a, b) => b.total - a.total),
+    empresa: {
+      nombre: sesion.company.name,
+      logoUrl: sesion.company.logoUrl,
+      direccion: sesion.company.direccion,
+      telefono: sesion.company.telefono,
+    },
+    timeZone: sesion.company.zonaHoraria,
+  }
+}
+
+export interface CierreListItem {
+  id: string
+  sucursal: string
+  turno: string | null
+  cerradaAt: Date | null
+  cerradaPor: string | null
+  balanceFinal: number | null
+  diferencia: number | null
+}
+
+/** Últimos cierres de caja de la empresa, para imprimir/reimprimir. */
+export async function getCierresRecientes(
+  companyId: string,
+  limit = 8
+): Promise<CierreListItem[]> {
+  const sesiones = await prisma.cajaSesion.findMany({
+    where: { companyId, estado: 'CERRADA' },
+    orderBy: { cerradaAt: 'desc' },
+    take: limit,
+    include: {
+      sucursal: { select: { nombre: true } },
+      cerradaPor: { select: { name: true } },
+    },
+  })
+  return sesiones.map((s) => ({
+    id: s.id,
+    sucursal: s.sucursal.nombre,
+    turno: s.turno,
+    cerradaAt: s.cerradaAt,
+    cerradaPor: s.cerradaPor?.name ?? null,
+    balanceFinal: s.balanceFinal == null ? null : Number(s.balanceFinal),
+    diferencia: s.diferencia == null ? null : Number(s.diferencia),
+  }))
+}
+
 export interface OrdenPendiente {
   /** MEMBRESIA = pago de plan (o cambio de plan); PROMOCION = compra. */
   tipo: 'MEMBRESIA' | 'PROMOCION'

@@ -257,10 +257,29 @@ histórico de **cierres de caja**, entregas de regalos.
 > si el negocio quiere un papel también al ganar la ruleta.
 
 **Fase 2 — Caja completa (P0/P1)**
-- **Reporte de cierre imprimible y reimprimible** (Z-report) con desglose por
-  método/tipo/empleado (G4).
+- ✅ **Reporte de cierre imprimible y reimprimible** (Z-report) con desglose por
+  método/tipo/empleado (G4). — *Hecho.*
 - **Reporte por empleado/día** que incluya transferencias del panel (G5).
 - **Recibo de pago** para transferencias y pagos en sucursal (G6).
+
+> **✅ G4 implementado.** El cierre de caja ahora es un reporte imprimible y
+> reimprimible (arqueo "Z"):
+> - **Consultas** (`src/modules/caja/queries.ts`): `getCierreReporte()` arma el
+>   reporte de una sesión (datos del turno + cobros de la sesión desglosados por
+>   método, por tipo de operación y por empleado, más el arqueo de efectivo);
+>   `getCierresRecientes()` lista los últimos cierres para reimprimir.
+> - **Acción** (`src/modules/caja/actions.ts`): `obtenerCierre()` (protegida con
+>   `staffAutorizado`) devuelve el reporte serializado.
+> - **UI** (`src/components/caja/CierreCajaDialog.tsx`): vista previa 80 mm
+>   (idéntica a la impresión) con `.cierre-print` aislado por `@media print`.
+>   Se ofrece en **Caja** (`/empleado/caja`) como lista **"Cierres recientes"**,
+>   que sobrevive a la revalidación tras cerrar el turno (imprimir al cerrar y
+>   reimprimir cuando se necesite). Verificado con tsc, eslint y `next build`.
+>
+> Pendiente de Fase 2: **G5** (reporte por empleado/día que sume las
+> transferencias confirmadas en el panel, independientes de la sesión de caja) y
+> **G6** (recibo de pago dedicado). Ambos tocan campos de captura del pago y se
+> abordarán tras confirmar alcance con el negocio.
 
 **Fase 3 — Registros y reportes (P1/P2)**
 - Módulo **"Registros/Comprobantes"** unificado con reimpresión (G7).

@@ -10,6 +10,7 @@ import { activarMembresia } from '@/modules/pagos/activacion'
 import { activarCompraPromocion } from '@/modules/pagos/activacionCompra'
 import { crearTransaccionAplicada } from '@/lib/transactions/application/transaction-service'
 import { crearNotificacion } from '@/modules/notificaciones/service'
+import { getCierreReporte, type CierreReporte } from '@/modules/caja/queries'
 
 /**
  * Caja (POS) · acciones del turno: abrir, cerrar (con arqueo) y cobrar.
@@ -40,6 +41,20 @@ async function staffAutorizado() {
       null)
     : (user.email ?? null)
   return { user, companyId, userId, nombre }
+}
+
+/**
+ * Reporte de cierre de una sesión (para imprimir/reimprimir desde la UI).
+ * Solo staff de la misma empresa. No muta nada.
+ */
+export async function obtenerCierre(
+  cajaSesionId: string
+): Promise<{ error?: string; cierre?: CierreReporte }> {
+  const auth = await staffAutorizado()
+  if (!auth) return { error: 'No autorizado.' }
+  const cierre = await getCierreReporte(cajaSesionId, auth.companyId)
+  if (!cierre) return { error: 'Cierre no encontrado.' }
+  return { cierre }
 }
 
 function num(v: FormDataEntryValue | null): number | null {
