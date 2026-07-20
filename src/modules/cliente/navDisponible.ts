@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { getGrowthConfig } from '@/modules/growth/config'
 
@@ -63,3 +64,18 @@ export async function getNavOcultoCliente(
     return []
   }
 }
+
+/**
+ * Versión cacheada para el LAYOUT del cliente (corre en cada navegación).
+ *
+ * Estas 5 consultas son pura cosmética del menú: cachearlas 5 minutos por
+ * cliente elimina ~5 queries de CADA clic sin cambiar nada funcional (si el
+ * negocio publica una promo, el módulo aparece en el menú a los pocos minutos;
+ * las rutas siguen accesibles por URL desde el instante cero).
+ */
+export const getNavOcultoClienteCached = unstable_cache(
+  async (clienteId: string | null | undefined, companyId: string | null | undefined) =>
+    getNavOcultoCliente(clienteId, companyId),
+  ['nav-oculto-cliente'],
+  { revalidate: 300 }
+)

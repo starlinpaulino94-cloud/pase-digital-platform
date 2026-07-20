@@ -110,43 +110,116 @@ export async function getClienteAllMemberships(
   }
 }
 
+import { unstable_cache } from 'next/cache'
+
+/**
+ * Empresas donde el usuario tiene cuenta de cliente — para el switcher del
+ * layout, que corre en CADA navegación. Cacheada 5 min por usuario y con
+ * select explícito (un include completo de `company` convierte cualquier
+ * columna sin migrar en un fallo por clic).
+ */
+export const getClienteCompaniesCached = unstable_cache(
+  async (supabaseId: string) =>
+    prisma.cliente.findMany({
+      where: { supabaseId },
+      select: {
+        id: true,
+        companyId: true,
+        company: { select: { id: true, name: true, logoUrl: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    }),
+  ['cliente-companies'],
+  { revalidate: 300 }
+)
+
+export interface ClientePerfil {
+  id: string
+  nombre: string
+  email: string
+  telefono: string | null
+  avatarUrl: string | null
+  fechaNacimiento: Date | null
+  ciudad: string | null
+  genero: string | null
+  notifPromos: boolean
+  notifRecordatorios: boolean
+  companyId: string
+  company: { id: string; name: string; slug: string; type: string; logoUrl: string | null }
+  vehiculos: {
+    id: string
+    marca: string
+    modelo: string
+    anio: number
+    color: string
+    placa: string | null
+  }[]
+}
+
 /**
  * Datos del cliente para la página de perfil: básicos + empresa + vehículos.
- * Una sola query (antes hacía 3 consultas redundantes cargando membresías y
- * visitas que el perfil ni siquiera usa).
+ *
+ * DEGRADACIÓN CONTROLADA: si la BD no tiene alguna columna nueva del select
+ * (deploy adelantado a las migraciones — schema drift), NO se rompe la página:
+ * se reintenta con el núcleo estable de columnas y se rellenan las nuevas con
+ * defaults. El log deja el remedio exacto (`npm run db:doctor`).
  */
-export async function getClientePerfil(clienteId: string) {
+export async function getClientePerfil(clienteId: string): Promise<ClientePerfil | null> {
   if (!clienteId) {
     console.warn('[getClientePerfil] Missing clienteId')
     return null
+  }
+
+  // Núcleo estable: columnas originales del modelo, presentes desde el inicio.
+  const selectBase = {
+    id: true,
+    nombre: true,
+    email: true,
+    telefono: true,
+    companyId: true,
+    company: {
+      select: { id: true, name: true, slug: true, type: true, logoUrl: true },
+    },
+    vehiculos: {
+      orderBy: { createdAt: 'desc' as const },
+      select: { id: true, marca: true, modelo: true, anio: true, color: true, placa: true },
+    },
   }
 
   try {
     return await prisma.cliente.findUnique({
       where: { id: clienteId },
       select: {
-        id: true,
-        nombre: true,
-        email: true,
-        telefono: true,
+        ...selectBase,
         avatarUrl: true,
         fechaNacimiento: true,
         ciudad: true,
         genero: true,
         notifPromos: true,
         notifRecordatorios: true,
-        companyId: true,
-        company: {
-          select: { id: true, name: true, slug: true, type: true, logoUrl: true },
-        },
-        vehiculos: {
-          orderBy: { createdAt: 'desc' },
-        },
       },
     })
   } catch (error) {
-    console.error('[getClientePerfil] Error loading cliente:', error)
-    throw error
+    const { logErrorBd } = await import('@/lib/prisma-errors')
+    const info = logErrorBd('getClientePerfil', error, { clienteId })
+    // Solo tiene sentido reintentar si el problema es una columna faltante:
+    // el select reducido evita las columnas nuevas y la página sigue viva.
+    if (info.tipo !== 'SCHEMA_DRIFT') throw error
+
+    const base = await prisma.cliente.findUnique({
+      where: { id: clienteId },
+      select: selectBase,
+    })
+    if (!base) return null
+    return {
+      ...base,
+      avatarUrl: null,
+      fechaNacimiento: null,
+      ciudad: null,
+      genero: null,
+      notifPromos: true,
+      notifRecordatorios: true,
+    }
   }
 }
 

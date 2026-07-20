@@ -22,8 +22,11 @@ export async function GET(req: NextRequest) {
 
   let dbOk = false
   let dbError: string | null = null
+  let dbLatencyMs: number | null = null
   try {
+    const t0 = Date.now()
     await prisma.$queryRaw`SELECT 1`
+    dbLatencyMs = Date.now() - t0
     dbOk = true
   } catch (e) {
     dbError = e instanceof Error ? e.message : String(e)
@@ -61,6 +64,18 @@ export async function GET(req: NextRequest) {
     }
   }
   if (dbError) diagnostics.raw_query_error = dbError
+  // Latencia BD: >150 ms sostenido = región lejana o pool saturado (P2024).
+  // Segunda medición ya con conexión caliente (la primera paga el handshake).
+  if (dbLatencyMs != null) {
+    diagnostics.db_latency_first_ms = dbLatencyMs
+    try {
+      const t0 = Date.now()
+      await prisma.$queryRaw`SELECT 1`
+      diagnostics.db_latency_warm_ms = Date.now() - t0
+    } catch {
+      /* ya reportado arriba */
+    }
+  }
 
   try {
     diagnostics.companies = await prisma.company.count()
@@ -70,6 +85,31 @@ export async function GET(req: NextRequest) {
   } catch (e) {
     checks.orm = 'error'
     diagnostics.orm_error = e instanceof Error ? e.message : String(e)
+  }
+
+  // Centinelas de schema drift: una columna/tabla representativa de cada
+  // tanda reciente de migraciones manuales. Si alguna sale FALTA, el deploy
+  // va adelantado a la BD → correr `npm run db:doctor` para el detalle total.
+  try {
+    const centinelas = await prisma.$queryRaw<{ objeto: string; ok: boolean }[]>`
+      SELECT 'clientes.ciudad' AS objeto, EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'clientes' AND column_name = 'ciudad') AS ok
+      UNION ALL SELECT 'transactions.esquema', to_regclass('public.transactions') IS NOT NULL
+      UNION ALL SELECT 'caja_sesiones.esquema', to_regclass('public.caja_sesiones') IS NOT NULL
+      UNION ALL SELECT 'movimientos_caja.esquema', to_regclass('public.movimientos_caja') IS NOT NULL
+      UNION ALL SELECT 'ofertas_privadas.esquema', to_regclass('public.ofertas_privadas') IS NOT NULL
+      UNION ALL SELECT 'citas.esquema', to_regclass('public.citas') IS NOT NULL`
+    const faltantes = centinelas.filter((c) => !c.ok).map((c) => c.objeto)
+    checks.schema = faltantes.length === 0 ? 'ok' : 'DRIFT'
+    if (faltantes.length > 0) {
+      diagnostics.schema_drift = faltantes
+      diagnostics.schema_remedio =
+        'La BD no tiene objetos que este deploy espera. Corre `npm run db:doctor` (detalle completo) y aplica las migraciones pendientes en Supabase.'
+    }
+  } catch (e) {
+    checks.schema = 'error'
+    diagnostics.schema_error = e instanceof Error ? e.message : String(e)
   }
 
   return NextResponse.json({ status, checks, diagnostics })

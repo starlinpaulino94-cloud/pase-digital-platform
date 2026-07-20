@@ -20,9 +20,16 @@ export interface ClienteActionState {
 export async function getClienteCompanies() {
   const user = await getUser()
   if (!user) return []
+  // select explícito (nunca include completo): un include de `company` trae
+  // TODAS sus columnas y cualquier columna aún no migrada en producción
+  // rompería esta query — que corre en cada navegación del cliente.
   return prisma.cliente.findMany({
     where: { supabaseId: user.supabaseId },
-    include: { company: true },
+    select: {
+      id: true,
+      companyId: true,
+      company: { select: { id: true, name: true, logoUrl: true } },
+    },
     orderBy: { createdAt: 'asc' },
   })
 }
