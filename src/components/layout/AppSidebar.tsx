@@ -7,7 +7,7 @@ import { ChevronDown, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react
 import { cn } from '@/lib/utils'
 import { logout } from '@/modules/auth/actions'
 import { Logo } from '@/components/layout/Logo'
-import { navForRole, roleLabel, allLinks, type NavGroup } from '@/components/layout/nav-config'
+import { navForRole, filtrarNavOculto, roleLabel, allLinks, type NavGroup } from '@/components/layout/nav-config'
 import type { AppRole } from '@/types'
 
 /** Clave de persistencia del estado colapsado (ids de grupo, por rol). */
@@ -52,6 +52,7 @@ export function AppSidebar({
   onNavigate,
   rail = false,
   onToggleRail,
+  hiddenNav,
 }: {
   role: AppRole
   title: string
@@ -61,9 +62,11 @@ export function AppSidebar({
   rail?: boolean
   /** Presente solo en desktop: muestra el botón de colapsar/expandir. */
   onToggleRail?: () => void
+  /** Rutas a ocultar por no tener contenido todavía (cliente). */
+  hiddenNav?: string[]
 }) {
   const pathname = usePathname()
-  const groups = navForRole(role)
+  const groups = filtrarNavOculto(navForRole(role), hiddenNav ?? [])
   const inicial = (userEmail[0] ?? 'U').toUpperCase()
 
   // Estado colapsado por grupo. En SSR y primer render todo va expandido

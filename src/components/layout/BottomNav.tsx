@@ -2,7 +2,15 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Compass, QrCode, Megaphone, User, type LucideIcon } from 'lucide-react'
+import {
+  Home,
+  QrCode,
+  Megaphone,
+  Ticket,
+  WalletCards,
+  User,
+  type LucideIcon,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface BottomNavItem {
@@ -19,19 +27,31 @@ interface BottomNavItem {
  * El QR es LA acción de la app (se muestra en el local para usar beneficios),
  * así que vive elevado en el centro de la barra: siempre en la zona natural
  * del pulgar y sin tapar contenido (reemplaza al antiguo FAB flotante).
+ *
+ * Los dos destinos flexibles (uno a cada lado del QR) se eligen de una lista
+ * de prioridad, saltando los módulos sin contenido (`hiddenNav`). Inicio y
+ * Perfil son fijos; "Mis membresías" cierra la lista como fallback siempre
+ * disponible, así la barra nunca queda incompleta.
  */
-const IZQUIERDA: BottomNavItem[] = [
-  { href: '/cliente/inicio', label: 'Inicio', icon: Home, match: ['/cliente/dashboard'] },
-  { href: '/cliente/explorar', label: 'Explorar', icon: Compass, match: ['/cliente/empresas'] },
-]
-const DERECHA: BottomNavItem[] = [
-  { href: '/cliente/promociones', label: 'Ofertas', icon: Megaphone, match: ['/cliente/mis-promociones'] },
-  {
-    href: '/cliente/perfil',
-    label: 'Perfil',
-    icon: User,
-    match: ['/cliente/pagos', '/cliente/historial', '/cliente/ayuda'],
-  },
+const INICIO: BottomNavItem = {
+  href: '/cliente/inicio',
+  label: 'Inicio',
+  icon: Home,
+  match: ['/cliente/dashboard'],
+}
+const PERFIL: BottomNavItem = {
+  href: '/cliente/perfil',
+  label: 'Perfil',
+  icon: User,
+  match: ['/cliente/pagos', '/cliente/historial', '/cliente/ayuda'],
+}
+/** Candidatos para los 2 slots flexibles, en orden de prioridad. */
+const FLEX_CANDIDATOS: BottomNavItem[] = [
+  { href: '/cliente/promociones', label: 'Ofertas', icon: Megaphone },
+  { href: '/cliente/mis-promociones', label: 'Beneficios', icon: Ticket },
+  // Fallbacks siempre disponibles (garantizan 2 slots llenos).
+  { href: '/mis-membresias', label: 'Membresías', icon: WalletCards },
+  { href: '/cliente/historial', label: 'Historial', icon: WalletCards },
 ]
 
 function isActive(pathname: string, item: BottomNavItem) {
@@ -77,9 +97,23 @@ function TabLink({ item, pathname }: { item: BottomNavItem; pathname: string }) 
  * dock central del QR. `qrHref` apunta al QR de la membresía activa; sin
  * membresía lleva a la wallet para activar una.
  */
-export function BottomNav({ role, qrHref }: { role: string; qrHref?: string | null }) {
+export function BottomNav({
+  role,
+  qrHref,
+  hiddenNav,
+}: {
+  role: string
+  qrHref?: string | null
+  hiddenNav?: string[]
+}) {
   const pathname = usePathname()
   if (role !== 'CLIENTE') return null
+
+  const oculto = new Set(hiddenNav ?? [])
+  // Dos destinos flexibles: primeros dos candidatos con contenido.
+  const flex = FLEX_CANDIDATOS.filter((c) => !oculto.has(c.href)).slice(0, 2)
+  const izquierda = [INICIO, flex[0]].filter(Boolean) as BottomNavItem[]
+  const derecha = [flex[1], PERFIL].filter(Boolean) as BottomNavItem[]
 
   const qrDestino = qrHref ?? '/mis-membresias'
   const qrActivo = pathname.startsWith('/membresia') || pathname.startsWith('/mis-membresias')
@@ -91,7 +125,7 @@ export function BottomNav({ role, qrHref }: { role: string; qrHref?: string | nu
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <ul className="mx-auto flex max-w-md items-stretch justify-around">
-        {IZQUIERDA.map((item) => (
+        {izquierda.map((item) => (
           <TabLink key={item.href} item={item} pathname={pathname} />
         ))}
 
@@ -118,7 +152,7 @@ export function BottomNav({ role, qrHref }: { role: string; qrHref?: string | nu
           </Link>
         </li>
 
-        {DERECHA.map((item) => (
+        {derecha.map((item) => (
           <TabLink key={item.href} item={item} pathname={pathname} />
         ))}
       </ul>

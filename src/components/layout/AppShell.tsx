@@ -31,6 +31,7 @@ export function AppShell({
   notifCount = 0,
   companies,
   qrHref,
+  hiddenNav,
   children,
 }: {
   role: AppRole
@@ -40,6 +41,8 @@ export function AppShell({
   companies?: CompanyOption[]
   /** Destino del dock central "Mi QR" en la barra inferior (cliente). */
   qrHref?: string | null
+  /** Rutas a ocultar por no tener contenido todavía (cliente). */
+  hiddenNav?: string[]
   children: React.ReactNode
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -96,6 +99,7 @@ export function AppShell({
           userEmail={userEmail}
           rail={rail}
           onToggleRail={toggleRail}
+          hiddenNav={hiddenNav}
         />
       </aside>
 
@@ -136,6 +140,7 @@ export function AppShell({
             title={title}
             userEmail={userEmail}
             onNavigate={() => setMobileOpen(false)}
+            hiddenNav={hiddenNav}
           />
         </aside>
       </div>
@@ -152,6 +157,7 @@ export function AppShell({
           notifCount={notifCount}
           companies={companies}
           onMenuClick={() => setMobileOpen(true)}
+          hiddenNav={hiddenNav}
         />
         <main
           className={cn(
@@ -164,7 +170,7 @@ export function AppShell({
         </main>
       </div>
 
-      {hasBottomNav && <BottomNav role={role} qrHref={qrHref} />}
+      {hasBottomNav && <BottomNav role={role} qrHref={qrHref} hiddenNav={hiddenNav} />}
     </div>
   )
 }

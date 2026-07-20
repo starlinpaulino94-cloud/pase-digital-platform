@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Menu, Search, X } from 'lucide-react'
 import Link from 'next/link'
-import { navForRole, allLinks } from '@/components/layout/nav-config'
+import { navForRole, filtrarNavOculto, allLinks } from '@/components/layout/nav-config'
 import { NotificationBell } from '@/components/layout/NotificationBell'
 import { CommandPalette } from '@/components/layout/CommandPalette'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -24,11 +24,14 @@ export function AppHeader({
   notifCount = 0,
   companies,
   onMenuClick,
+  hiddenNav,
 }: {
   role: AppRole
   notifCount?: number
   companies?: CompanyOption[]
   onMenuClick: () => void
+  /** Rutas a ocultar por no tener contenido todavía (cliente). */
+  hiddenNav?: string[]
 }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -36,7 +39,10 @@ export function AppHeader({
   const [open, setOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const links = useMemo(() => allLinks(navForRole(role)), [role])
+  const links = useMemo(
+    () => allLinks(filtrarNavOculto(navForRole(role), hiddenNav ?? [])),
+    [role, hiddenNav]
+  )
 
   // Breadcrumb jerárquico: sección del nav + sub-segmento actual si existe
   // (nuevo/editar/plantillas/detalle). El nombre de la sección enlaza de vuelta.
@@ -190,7 +196,7 @@ export function AppHeader({
       </div>
 
       {/* Cmd+K / Ctrl+K */}
-      <CommandPalette role={role} />
+      <CommandPalette role={role} hiddenNav={hiddenNav} />
     </header>
   )
 }

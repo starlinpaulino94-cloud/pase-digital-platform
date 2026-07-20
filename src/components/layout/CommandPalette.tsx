@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { navForRole } from '@/components/layout/nav-config'
+import { navForRole, filtrarNavOculto } from '@/components/layout/nav-config'
 import {
   CommandDialog,
   CommandEmpty,
@@ -17,10 +17,10 @@ import type { AppRole } from '@/types'
  * Paleta de comandos (Cmd+K / Ctrl+K): navegación rápida a cualquier sección
  * del panel, agrupada como el sidebar. Complementa el buscador del header.
  */
-export function CommandPalette({ role }: { role: AppRole }) {
+export function CommandPalette({ role, hiddenNav }: { role: AppRole; hiddenNav?: string[] }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const groups = navForRole(role)
+  const groups = filtrarNavOculto(navForRole(role), hiddenNav ?? [])
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
