@@ -7,11 +7,13 @@ import { useEffect, useState } from 'react'
 import { Menu, X, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+// Marca única: la nav pública le habla SOLO al cliente. Las rutas del
+// marketplace (/empresas) y el alta de negocios (/registro-empresa) siguen
+// vivas por URL para cuando la plataforma crezca.
 const LINKS = [
-  { href: '/empresas', label: 'Explorar empresas' },
   { href: '/promociones', label: 'Promociones' },
   { href: '/caracteristicas', label: 'Características' },
-  { href: '/registro-empresa', label: 'Para empresas' },
+  { href: '/faq', label: 'Preguntas' },
 ]
 
 export function PublicNav() {

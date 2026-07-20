@@ -21,6 +21,7 @@ import {
   CategoryMultiSelect,
   type CategoryOption,
 } from './CategoryMultiSelect'
+import { NuevaCategoriaForm } from './NuevaCategoriaForm'
 
 interface CompanyData {
   id: string
@@ -152,6 +153,9 @@ export function EmpresaEditForm({
             categories={categories}
             defaultSelected={selectedCategoryIds}
           />
+          {/* Marca única: si el rubro de la empresa nueva aún no existe como
+              categoría, se crea aquí mismo (aparece al guardar/recargar). */}
+          <NuevaCategoriaForm />
         </div>
       </div>
 

@@ -7,12 +7,11 @@ function fmt(n: number) {
 }
 
 export function HeroSection({ stats }: { stats: PlatformStats }) {
-  // Solo mostramos métricas reales con valor; nada inventado.
+  // Solo métricas reales con valor y centradas en el cliente (marca única:
+  // sin conteos de "empresas" ni "ciudades" que delaten un marketplace).
   const metrics = [
-    { label: 'Empresas afiliadas', value: stats.empresas },
     { label: 'Membresías activas', value: stats.membresiasActivas },
     { label: 'Promociones vigentes', value: stats.promocionesVigentes },
-    { label: 'Ciudades', value: stats.ciudades },
   ].filter((m) => m.value > 0)
 
   return (
@@ -29,7 +28,7 @@ export function HeroSection({ stats }: { stats: PlatformStats }) {
           <div className="text-white">
             <span className="inline-flex animate-slide-up items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-sm font-medium text-white/80 backdrop-blur">
               <Sparkles className="h-4 w-4 text-white/85" />
-              Membresías digitales para negocios
+              Tu membresía y tus beneficios, digitales
             </span>
 
             <h1 className="mt-6 animate-slide-up text-5xl font-extrabold leading-[1.02] tracking-tight delay-75 sm:text-6xl lg:text-7xl">
@@ -48,10 +47,10 @@ export function HeroSection({ stats }: { stats: PlatformStats }) {
 
             <div className="mt-9 flex animate-slide-up flex-col gap-3 delay-150 sm:flex-row">
               <Link
-                href="/empresas"
+                href="/registro"
                 className="group inline-flex items-center justify-center gap-2 rounded-xl bg-card px-6 py-3.5 font-semibold text-info shadow-glow-strong transition-all hover:bg-info/10 active:scale-[0.98]"
               >
-                Explorar empresas
+                Crear mi cuenta gratis
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link

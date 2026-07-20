@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -312,5 +312,40 @@ export async function duplicarEmpresa(id: string): Promise<ActionState> {
   } catch (e) {
     console.error('[empresa]', e)
     return { error: 'Ocurrió un error. Intenta de nuevo.' }
+  }
+}
+
+/**
+ * Marca única · las categorías del directorio se crean desde el superadmin
+ * cuando se incorpora una empresa nueva (no existían en la UI: venían de SQL).
+ */
+export async function crearCategoria(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requireSuperadmin()
+  if (!user) return { error: 'No autorizado.' }
+
+  const name = String(formData.get('nombre') ?? '').trim()
+  if (name.length < 2) return { error: 'Escribe el nombre de la categoría.' }
+
+  try {
+    const slug = slugify(name)
+    const existente = await prisma.businessCategory.findFirst({
+      where: { OR: [{ name }, { slug }] },
+      select: { id: true },
+    })
+    if (existente) return { error: 'Ya existe una categoría con ese nombre.' }
+
+    await prisma.businessCategory.create({
+      data: { name, slug, active: true },
+    })
+
+    revalidatePath('/superadmin/empresas')
+    revalidateTag('marketplace', 'max')
+    return { success: true, message: `Categoría "${name}" creada.` }
+  } catch (e) {
+    console.error('[categoria]', e)
+    return { error: 'No se pudo crear la categoría.' }
   }
 }
