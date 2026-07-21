@@ -40,7 +40,14 @@ export default function RecuperarPage() {
     setLoading(false)
 
     if (resetError) {
-      setError('No pudimos enviar el correo. Intenta de nuevo más tarde.')
+      // El error real queda en la consola para diagnóstico; al usuario se le
+      // distingue el caso más común (límite de reintentos) del fallo de envío.
+      console.error('[recuperar] resetPasswordForEmail:', resetError.status, resetError.message)
+      if (resetError.status === 429 || /security purposes|rate limit/i.test(resetError.message)) {
+        setError('Por seguridad solo se puede pedir un correo por minuto. Espera 60 segundos y vuelve a intentar.')
+      } else {
+        setError(`No pudimos enviar el correo (${resetError.message}). Intenta de nuevo más tarde.`)
+      }
       return
     }
 
