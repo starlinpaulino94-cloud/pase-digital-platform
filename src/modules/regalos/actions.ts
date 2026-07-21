@@ -801,6 +801,53 @@ export async function regalarMembresia(
   }
 }
 
+// ── Fase R4 · Configuración del programa (panel admin) ───────────────────────
+
+/**
+ * Guarda la configuración de regalos de la empresa (companies.regalosConfig):
+ * activar/desactivar transferencias y regalos pagados, límite mensual y
+ * vigencia de los pendientes. Lo no definido cae a REGALOS_DEFAULTS.
+ */
+export async function guardarRegalosConfig(
+  _prev: RegaloActionState,
+  formData: FormData
+): Promise<RegaloActionState> {
+  const user = await requireAdminUser()
+  if (!user) return { error: 'No autorizado.' }
+  const companyId = user.metadata.companyId
+  if (!companyId) return { error: 'Tu cuenta no está vinculada a una empresa.' }
+
+  const maxTransferenciasMes = Math.trunc(Number(formData.get('maxTransferenciasMes')))
+  const vigenciaHoras = Math.trunc(Number(formData.get('vigenciaHoras')))
+  if (!Number.isFinite(maxTransferenciasMes) || maxTransferenciasMes < 0 || maxTransferenciasMes > 100) {
+    return { error: 'El límite mensual debe estar entre 0 y 100 (0 = desactivado).' }
+  }
+  if (!Number.isFinite(vigenciaHoras) || vigenciaHoras < 1 || vigenciaHoras > 24 * 30) {
+    return { error: 'La vigencia debe estar entre 1 hora y 30 días (720 horas).' }
+  }
+
+  const config = {
+    permitirTransferencias: formData.get('permitirTransferencias') === 'on',
+    permitirRegalos: formData.get('permitirRegalos') === 'on',
+    maxTransferenciasMes,
+    vigenciaHoras,
+  }
+
+  try {
+    await prisma.company.update({
+      where: { id: companyId },
+      data: { regalosConfig: config },
+    })
+  } catch (e) {
+    console.error('[regalos] guardarRegalosConfig', e)
+    return { error: 'No se pudo guardar la configuración. Intenta de nuevo.' }
+  }
+
+  revalidatePath('/admin/regalos')
+  revalidatePath('/cliente/regalos')
+  return { success: true, detalle: 'Configuración guardada.' }
+}
+
 // ── Fase R4 · Cancelación desde el panel admin ───────────────────────────────
 
 /**

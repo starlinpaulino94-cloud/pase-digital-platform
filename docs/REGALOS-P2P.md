@@ -268,6 +268,10 @@ regalos por expirar (automatizaciones), y regalos a personas SIN cuenta
 >   partes. UI: enlace "¿No está en MembeGo? Envíaselo a su teléfono o correo"
 >   en el formulario de envío. Sin cambios de esquema (usa
 >   `destinatarioContacto` de la migración 20260752).
+> - **Configuración desde el panel** (`guardarRegalosConfig` +
+>   `RegalosConfigCard` en `/admin/regalos`): activar/desactivar
+>   transferencias y regalos pagados, límite mensual (0–100; 0 bloquea) y
+>   vigencia en horas (1–720). La vigencia solo aplica a regalos nuevos.
 > - Pendiente opcional (no pedido): "gift cards" de monto abierto.
 >   Verificado con tsc, eslint y `next build`.
 

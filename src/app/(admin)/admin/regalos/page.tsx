@@ -6,6 +6,8 @@ import { PageHeader } from '@/components/ui/page-header'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Button } from '@/components/ui/button'
 import { CancelarRegaloAdminButton } from '@/components/regalos/CancelarRegaloAdminButton'
+import { RegalosConfigCard } from '@/components/regalos/RegalosConfigCard'
+import { getRegalosConfig } from '@/modules/regalos/config'
 import {
   getRegalosAdmin,
   TIPO_REGALO_LABEL,
@@ -51,10 +53,10 @@ export default async function RegalosAdminPage({
     new Intl.DateTimeFormat('es-DO', { timeZone, dateStyle: 'medium', timeStyle: 'short' }).format(d)
 
   const hayFiltro = Boolean(sp.estado || sp.tipo)
-  const { items, kpis, truncado } = await getRegalosAdmin(companyId, {
-    estado: sp.estado,
-    tipo: sp.tipo,
-  })
+  const [{ items, kpis, truncado }, config] = await Promise.all([
+    getRegalosAdmin(companyId, { estado: sp.estado, tipo: sp.tipo }),
+    getRegalosConfig(companyId),
+  ])
 
   const tarjetas = [
     { label: 'Regalos totales', valor: String(kpis.total) },
@@ -82,6 +84,9 @@ export default async function RegalosAdminPage({
           </div>
         ))}
       </dl>
+
+      {/* Configuración del programa */}
+      <RegalosConfigCard config={config} />
 
       {/* Filtros */}
       <Form
