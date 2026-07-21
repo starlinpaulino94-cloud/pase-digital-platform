@@ -81,7 +81,10 @@ export async function seleccionarPlan(
 
     let membershipId: string
     if (existing) {
-      // Reuse existing membership (PENDIENTE or PENDIENTE_PAGO)
+      // Reuse existing membership (PENDIENTE or PENDIENTE_PAGO). Si estaba
+      // CANCELADA/VENCIDA/RECHAZADA, la solicitud la REABRE: vuelve a
+      // PENDIENTE para entrar de nuevo al flujo de pago (renovación que el
+      // cliente reclama tras una cancelación del admin).
       await prisma.membership.update({
         where: { id: existing.id },
         data: {
@@ -89,6 +92,9 @@ export async function seleccionarPlan(
           montoPagado: null,
           pagoConfirmado: false,
           descuentoBienvenida,
+          ...(['CANCELADA', 'VENCIDA', 'RECHAZADA'].includes(existing.estado)
+            ? { estado: 'PENDIENTE' as const, rechazadoReason: null }
+            : {}),
         },
       })
       membershipId = existing.id

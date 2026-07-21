@@ -258,7 +258,8 @@ export default async function ClienteDetailPage({
                     </div>
                   )}
                   {(membership.estado === 'ACTIVA' ||
-                    membership.estado === 'VENCIDA') && (
+                    membership.estado === 'VENCIDA' ||
+                    membership.estado === 'CANCELADA') && (
                     <RenewForm
                       membershipId={membership.id}
                       precio={String(Number(membership.plan.precio))}
