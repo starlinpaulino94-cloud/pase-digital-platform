@@ -11,7 +11,14 @@ import { requireRole } from '@/lib/auth/guards'
 import { prisma } from '@/lib/prisma'
 import { getFaqs, listTicketsCliente, getComunicacionConfig } from '@/modules/soporte/queries'
 import { getOnboardingCliente } from '@/modules/social/queries'
-import { renderPlantilla, buildWaLink, horarioLegible, estadoLabel, estadoBadgeClass } from '@/lib/soporte'
+import {
+  renderPlantilla,
+  buildWaLink,
+  horarioLegible,
+  estadoLabel,
+  estadoBadgeClass,
+  SOPORTE_PLATAFORMA,
+} from '@/lib/soporte'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -73,12 +80,24 @@ export default async function AyudaPage() {
         cliente: cliente?.nombre,
         empresa: empresaNombre,
       })
-    : ''
-  const waLink = config ? buildWaLink(config.codigoPais, config.numero, mensajeWa) : null
+    : `Hola, soy ${cliente?.nombre ?? 'cliente de MembeGo'}. Necesito ayuda con mi cuenta de ${empresaNombre}.`
+  // Contacto del negocio si lo configuró; si no, el soporte de la plataforma
+  // (los botones de ayuda nunca quedan "no disponibles").
+  const waLink =
+    config?.activo && config.numero
+      ? buildWaLink(config.codigoPais, config.numero, mensajeWa)
+      : buildWaLink(
+          SOPORTE_PLATAFORMA.whatsappCodigoPais,
+          SOPORTE_PLATAFORMA.whatsappNumero,
+          mensajeWa
+        )
+  const waNumero =
+    config?.activo && config.numero
+      ? `+${config.codigoPais.replace(/\D/g, '')} ${config.numero}`
+      : SOPORTE_PLATAFORMA.whatsappDisplay
   const horario = horarioLegible(config?.horaInicio, config?.horaCierre, config?.diasLaborales)
-  const mailto = config?.correoSoporte
-    ? `mailto:${config.correoSoporte}?subject=${encodeURIComponent('Soporte · ' + empresaNombre)}`
-    : null
+  const correoSoporte = config?.correoSoporte || SOPORTE_PLATAFORMA.email
+  const mailto = `mailto:${correoSoporte}?subject=${encodeURIComponent('Soporte · ' + empresaNombre)}`
 
   return (
     <div className="space-y-6 animate-fade-up">
@@ -104,20 +123,14 @@ export default async function AyudaPage() {
               </span>
               <div>
                 <p className="font-semibold text-foreground">WhatsApp</p>
-                <p className="text-xs text-muted-foreground">Respuesta rápida por chat</p>
+                <p className="text-xs text-muted-foreground">{waNumero}</p>
               </div>
             </div>
-            {config?.activo && waLink ? (
-              <a href={waLink} target="_blank" rel="noopener noreferrer">
-                <Button className="w-full bg-success hover:bg-success">
-                  <MessageCircle className="mr-2 h-4 w-4" /> Contactar por WhatsApp
-                </Button>
-              </a>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                El contacto por WhatsApp no está disponible por ahora.
-              </p>
-            )}
+            <a href={waLink} target="_blank" rel="noopener noreferrer">
+              <Button className="w-full bg-success hover:bg-success">
+                <MessageCircle className="mr-2 h-4 w-4" /> Contactar por WhatsApp
+              </Button>
+            </a>
           </CardContent>
         </Card>
 
@@ -129,20 +142,14 @@ export default async function AyudaPage() {
               </span>
               <div>
                 <p className="font-semibold text-foreground">Correo</p>
-                <p className="text-xs text-muted-foreground">Escríbenos por email</p>
+                <p className="text-xs text-muted-foreground">{correoSoporte}</p>
               </div>
             </div>
-            {mailto ? (
-              <a href={mailto}>
-                <Button variant="outline" className="w-full">
-                  <Mail className="mr-2 h-4 w-4" /> Enviar correo
-                </Button>
-              </a>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Aún no hay un correo de soporte configurado.
-              </p>
-            )}
+            <a href={mailto}>
+              <Button variant="outline" className="w-full">
+                <Mail className="mr-2 h-4 w-4" /> Enviar correo
+              </Button>
+            </a>
           </CardContent>
         </Card>
       </div>
