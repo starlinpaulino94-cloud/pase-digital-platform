@@ -14,22 +14,32 @@ export default async function CelebracionPage() {
 
   // Beneficio recién otorgado: la compra ACTIVA más reciente del cliente.
   let beneficio: string | null = null
+  let compraId: string | null = null
   if (clienteId) {
     const compra = await prisma.productoCompra
       .findFirst({
-        where: { clienteId, estado: 'ACTIVA' },
+        where: { clienteId, estado: 'ACTIVA', usosRestantes: { gt: 0 } },
         orderBy: { createdAt: 'desc' },
-        select: { promocion: { select: { titulo: true } } },
+        select: { id: true, promocion: { select: { titulo: true } } },
       })
       .catch(() => null)
     beneficio = compra?.promocion?.titulo ?? null
+    compraId = compra?.id ?? null
   }
 
+  // CTA directo a RECLAMAR: el detalle del beneficio tiene el canje (QR) listo
+  // para usar en el mostrador — el recién llegado no tiene que buscar nada.
   return (
     <ConfettiCelebration
       beneficio={beneficio}
-      href={beneficio ? '/cliente/mis-promociones' : '/cliente/membresia'}
-      ctaLabel={beneficio ? 'Ver mi beneficio' : 'Ir a mi cuenta'}
+      href={
+        compraId
+          ? `/cliente/mis-promociones/${compraId}`
+          : beneficio
+            ? '/cliente/mis-promociones'
+            : '/cliente/membresia'
+      }
+      ctaLabel={beneficio ? `Reclamar mi ${beneficio} ahora` : 'Ir a mi cuenta'}
     />
   )
 }

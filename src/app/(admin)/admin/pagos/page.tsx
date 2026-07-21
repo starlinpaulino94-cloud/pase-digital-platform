@@ -26,7 +26,7 @@ import { Badge } from '@/components/ui/badge'
 import { PageHeader } from '@/components/ui/page-header'
 import { EmptyState } from '@/components/ui/empty-state'
 import { StatusBanner } from '@/components/ui/status-banner'
-import { FileText, ExternalLink, ArrowRight } from 'lucide-react'
+import { FileText, ExternalLink, ArrowRight, Store, MessageCircle, Mail, Clock } from 'lucide-react'
 import type { MembershipEstado } from '@/types'
 
 export const dynamic = 'force-dynamic'
@@ -38,6 +38,19 @@ function fmtDate(d: Date | null) {
 
 function isImage(url: string) {
   return /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(url)
+}
+
+/** Días transcurridos desde una fecha (0 = hoy). */
+function diasDesde(d: Date) {
+  return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86_400_000))
+}
+
+/** Enlace de WhatsApp desde un teléfono local (es-DO: antepone 1 si falta). */
+function waLink(telefono: string | null) {
+  if (!telefono) return null
+  let digits = telefono.replace(/\D/g, '')
+  if (digits.length === 10 && !digits.startsWith('1')) digits = `1${digits}`
+  return digits.length >= 10 ? `https://wa.me/${digits}` : null
 }
 
 interface PendienteRow {
@@ -70,7 +83,7 @@ export default async function PagosPage() {
   // el error como [] el admin dejaría de validar pagos sin darse cuenta.
   // null = la query falló (se distingue de [] = sin resultados) para poder
   // mostrar un aviso en vez de fingir "no hay pagos pendientes".
-  const [pendientesData, cambiosData, comprasData] = await Promise.all([
+  const [pendientesData, cambiosData, comprasData, iniciadasData, comprasIniciadasData] = await Promise.all([
     prisma.membership
       .findMany({
         where: {
@@ -154,12 +167,142 @@ export default async function PagosPage() {
         console.error('[admin-pagos] compras query', e)
         return null
       }),
+    // Membresías INICIADAS sin validar: pagos en sucursal (referencia POS) y
+    // pagos que el cliente empezó y nunca completó (transferencia sin
+    // comprobante, rechazados sin reintento). Antes solo aparecían las
+    // transferencias con comprobante y el resto quedaba invisible.
+    prisma.membership
+      .findMany({
+        where: {
+          estado: { in: ['PENDIENTE', 'RECHAZADA'] },
+          ...(companyId ? { companyId } : {}),
+        },
+        select: {
+          id: true,
+          estado: true,
+          clienteId: true,
+          createdAt: true,
+          updatedAt: true,
+          referencia: true,
+          descuentoBienvenida: true,
+          fechaInicio: true,
+          rechazadoReason: true,
+          sucursalPago: { select: { nombre: true } },
+          metodoPago: { select: { nombre: true, tipo: true } },
+          cliente: {
+            select: { nombre: true, email: true, telefono: true, company: { select: { name: true } } },
+          },
+          plan: { select: { nombre: true, precio: true } },
+        },
+        orderBy: { updatedAt: 'asc' },
+        take: 100,
+      })
+      .catch((e) => {
+        console.error('[admin-pagos] iniciadas query', e)
+        return null
+      }),
+    // Compras de promociones iniciadas sin validar (misma lógica).
+    prisma.productoCompra
+      .findMany({
+        where: {
+          estado: { in: ['SOLICITADA', 'PENDIENTE_PAGO', 'RECHAZADA'] },
+          ...(companyId ? { companyId } : {}),
+        },
+        select: {
+          id: true,
+          estado: true,
+          clienteId: true,
+          createdAt: true,
+          updatedAt: true,
+          referencia: true,
+          precioCongelado: true,
+          rechazadoReason: true,
+          sucursalPago: { select: { nombre: true } },
+          metodoPago: { select: { nombre: true, tipo: true } },
+          cliente: {
+            select: { nombre: true, email: true, telefono: true, company: { select: { name: true } } },
+          },
+          promocion: { select: { titulo: true, precio: true } },
+        },
+        orderBy: { updatedAt: 'asc' },
+        take: 100,
+      })
+      .catch((e) => {
+        console.error('[admin-pagos] compras iniciadas query', e)
+        return null
+      }),
   ])
 
-  const loadError = pendientesData === null || cambiosData === null || comprasData === null
+  const loadError =
+    pendientesData === null ||
+    cambiosData === null ||
+    comprasData === null ||
+    iniciadasData === null ||
+    comprasIniciadasData === null
   const pendientes: PendienteRow[] = pendientesData ?? []
   const cambios = cambiosData ?? []
   const compras = comprasData ?? []
+  const iniciadas = iniciadasData ?? []
+  const comprasIniciadas = comprasIniciadasData ?? []
+
+  // Pago EN SUCURSAL: el cliente eligió pagar en el local (referencia POS,
+  // sucursal elegida o método presencial). Aparecen para confirmarlos desde el
+  // panel; la Caja también puede cobrarlos por su referencia.
+  const esPresencial = (x: {
+    referencia: string | null
+    sucursalPago: { nombre: string } | null
+    metodoPago: { tipo: string } | null
+  }) => x.referencia != null || x.sucursalPago != null || x.metodoPago?.tipo === 'PRESENCIAL'
+
+  const enSucursal = iniciadas.filter((m) => m.estado === 'PENDIENTE' && esPresencial(m))
+  const enSucursalCompras = comprasIniciadas.filter(
+    (c) => (c.estado === 'SOLICITADA' || c.estado === 'PENDIENTE_PAGO') && esPresencial(c)
+  )
+
+  // SEGUIMIENTO: iniciaron un pago y no lo completaron (transferencia sin
+  // comprobante, solicitud sin método, o rechazado sin reintento). Unificado
+  // membresías + compras, los más antiguos primero.
+  const seguimiento = [
+    ...iniciadas
+      .filter((m) => !(m.estado === 'PENDIENTE' && esPresencial(m)))
+      .map((m) => ({
+        key: `m-${m.id}`,
+        clienteId: m.clienteId,
+        cliente: m.cliente,
+        concepto: `Plan ${m.plan.nombre}`,
+        monto: Math.max(
+          0,
+          Number(m.plan.precio) - (m.fechaInicio == null ? Number(m.descuentoBienvenida ?? 0) : 0)
+        ),
+        situacion:
+          m.estado === 'RECHAZADA'
+            ? `Pago rechazado sin reintento${m.rechazadoReason ? ` (${m.rechazadoReason})` : ''}`
+            : m.metodoPago?.tipo === 'TRANSFERENCIA'
+              ? 'Eligió transferencia y no ha enviado el comprobante'
+              : 'Solicitó el plan y no ha completado el pago',
+        fecha: m.updatedAt,
+      })),
+    ...comprasIniciadas
+      .filter((c) => !((c.estado === 'SOLICITADA' || c.estado === 'PENDIENTE_PAGO') && esPresencial(c)))
+      .map((c) => ({
+        key: `c-${c.id}`,
+        clienteId: c.clienteId,
+        cliente: c.cliente,
+        concepto: `Promoción ${c.promocion?.titulo ?? '—'}`,
+        monto: Number(c.precioCongelado ?? c.promocion?.precio ?? 0),
+        situacion:
+          c.estado === 'RECHAZADA'
+            ? `Pago rechazado sin reintento${c.rechazadoReason ? ` (${c.rechazadoReason})` : ''}`
+            : c.estado === 'PENDIENTE_PAGO'
+              ? 'Eligió transferencia y no ha enviado el comprobante'
+              : 'Solicitó la promoción y no ha completado el pago',
+        fecha: c.updatedAt,
+      })),
+  ].sort((a, b) => a.fecha.getTime() - b.fecha.getTime())
+
+  const totalPorValidar =
+    pendientes.length + compras.length + cambios.length + enSucursal.length + enSucursalCompras.length
+  const sinPendientes = totalPorValidar === 0 && seguimiento.length === 0
 
   return (
     <div className="space-y-6">
@@ -171,8 +314,152 @@ export default async function PagosPage() {
       )}
       <PageHeader
         title="Validación de pagos"
-        description={`${pendientes.length} comprobante${pendientes.length !== 1 ? 's' : ''} esperando revisión`}
+        description={`${totalPorValidar} pago${totalPorValidar !== 1 ? 's' : ''} por validar · ${seguimiento.length} en seguimiento`}
       />
+
+      {/* Resumen: todo lo que espera acción, por origen. */}
+      <div className="flex flex-wrap gap-2 text-xs">
+        {[
+          { label: 'En sucursal', n: enSucursal.length + enSucursalCompras.length },
+          { label: 'Transferencias', n: pendientes.length + compras.length },
+          { label: 'Cambios de plan', n: cambios.length },
+          { label: 'Sin completar', n: seguimiento.length },
+        ].map((k) => (
+          <span
+            key={k.label}
+            className={`rounded-full border px-3 py-1 font-medium ${k.n > 0 ? 'border-primary/30 bg-primary/5 text-foreground' : 'border-border/60 text-muted-foreground'}`}
+          >
+            {k.label}: <strong className="tabular-nums">{k.n}</strong>
+          </span>
+        ))}
+      </div>
+
+      {/* Pagos EN SUCURSAL por cobrar/confirmar: antes eran invisibles aquí
+          (solo los veía la Caja). Confirmar desde el panel activa y factura
+          igual que la caja; la referencia sirve para cobrarlo en el POS. */}
+      {(enSucursal.length > 0 || enSucursalCompras.length > 0) && (
+        <div className="space-y-3">
+          <h2 className="flex items-center gap-2 text-h4 text-foreground">
+            <Store className="h-4 w-4 text-primary" aria-hidden />
+            Pagos en sucursal por confirmar ({enSucursal.length + enSucursalCompras.length})
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {enSucursal.map((m) => {
+              const desc = m.fechaInicio == null ? Number(m.descuentoBienvenida ?? 0) : 0
+              const monto = Math.max(0, Number(m.plan.precio) - desc)
+              return (
+                <Card key={m.id} className="overflow-hidden border-success/30">
+                  <CardHeader className="border-b bg-success/5 pb-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <CardTitle className="text-base">
+                          <Link href={`/admin/clientes/${m.clienteId}`} className="text-primary hover:underline">
+                            {m.cliente.nombre}
+                          </Link>
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">{m.cliente.email}</p>
+                        {user.metadata.role === 'SUPERADMIN' && (
+                          <Badge variant="outline" className="mt-1 text-xs">{m.cliente.company.name}</Badge>
+                        )}
+                      </div>
+                      <Badge variant="success">Pago en sucursal</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4 pt-4">
+                    <div className="rounded-lg bg-muted p-3 text-sm">
+                      <p>
+                        <span className="text-muted-foreground">Plan:</span> <strong>{m.plan.nombre}</strong>
+                      </p>
+                      <p>
+                        <span className="text-muted-foreground">Monto a cobrar:</span> <strong>{fmtMoney(monto)}</strong>
+                        {desc > 0 && <span className="ml-1 text-xs text-success">(−{fmtMoney(desc)} bienvenida)</span>}
+                      </p>
+                      {m.sucursalPago && (
+                        <p>
+                          <span className="text-muted-foreground">Sucursal elegida:</span> {m.sucursalPago.nombre}
+                        </p>
+                      )}
+                      {m.referencia && (
+                        <p className="mt-2">
+                          <span className="text-muted-foreground">Referencia (Caja):</span>{' '}
+                          <code className="rounded bg-background px-2 py-0.5 font-mono text-base font-bold tracking-wider">
+                            {m.referencia}
+                          </code>
+                        </p>
+                      )}
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Solicitado: {fmtDate(m.createdAt)} · hace {diasDesde(m.createdAt)} día{diasDesde(m.createdAt) !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Confirma aquí si ya recibiste el dinero en el local, o cóbralo desde la Caja con la referencia.
+                    </p>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <ConfirmarPagoButton membershipId={m.id} />
+                      <RechazarPagoButton membershipId={m.id} />
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+            {enSucursalCompras.map((c) => (
+              <Card key={c.id} className="overflow-hidden border-success/30">
+                <CardHeader className="border-b bg-success/5 pb-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <CardTitle className="text-base">
+                        <Link href={`/admin/clientes/${c.clienteId}`} className="text-primary hover:underline">
+                          {c.cliente.nombre}
+                        </Link>
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">{c.cliente.email}</p>
+                      {user.metadata.role === 'SUPERADMIN' && (
+                        <Badge variant="outline" className="mt-1 text-xs">{c.cliente.company.name}</Badge>
+                      )}
+                    </div>
+                    <Badge variant="success">Pago en sucursal</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-4">
+                  <div className="rounded-lg bg-muted p-3 text-sm">
+                    <p>
+                      <span className="text-muted-foreground">Promoción:</span>{' '}
+                      <strong>{c.promocion?.titulo ?? '—'}</strong>
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">Monto a cobrar:</span>{' '}
+                      <strong>{fmtMoney(Number(c.precioCongelado ?? c.promocion?.precio ?? 0))}</strong>
+                    </p>
+                    {c.sucursalPago && (
+                      <p>
+                        <span className="text-muted-foreground">Sucursal elegida:</span> {c.sucursalPago.nombre}
+                      </p>
+                    )}
+                    {c.referencia && (
+                      <p className="mt-2">
+                        <span className="text-muted-foreground">Referencia (Caja):</span>{' '}
+                        <code className="rounded bg-background px-2 py-0.5 font-mono text-base font-bold tracking-wider">
+                          {c.referencia}
+                        </code>
+                      </p>
+                    )}
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Solicitado: {fmtDate(c.createdAt)} · hace {diasDesde(c.createdAt)} día{diasDesde(c.createdAt) !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Confirma aquí si ya recibiste el dinero en el local, o cóbralo desde la Caja con la referencia.
+                  </p>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <AprobarCompraButton compraId={c.id} />
+                    <RechazarCompraButton compraId={c.id} />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Fase E5: compras de promociones por validar */}
       {compras.length > 0 && (
@@ -365,15 +652,21 @@ export default async function PagosPage() {
         </div>
       )}
 
-      {pendientes.length === 0 ? (
+      {sinPendientes && (
         <Card>
           <EmptyState
             icon={<FileText className="h-7 w-7" />}
-            title="Sin comprobantes pendientes"
-            description="Todos los pagos han sido revisados."
+            title="Sin pagos pendientes"
+            description="Todos los pagos han sido revisados y nadie tiene un pago a medio completar."
           />
         </Card>
-      ) : (
+      )}
+
+      {pendientes.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-h4 text-foreground">
+            Transferencias por validar ({pendientes.length})
+          </h2>
         <div className="grid gap-6 md:grid-cols-2">
           {pendientes.map((m) => (
             <Card key={m.id} className="overflow-hidden">
@@ -507,6 +800,85 @@ export default async function PagosPage() {
               </CardContent>
             </Card>
           ))}
+        </div>
+        </div>
+      )}
+
+      {/* Seguimiento: iniciaron un pago y no lo completaron. Contacto directo
+          (WhatsApp/correo) para recuperar la venta; los más antiguos primero. */}
+      {seguimiento.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="flex items-center gap-2 text-h4 text-foreground">
+            <Clock className="h-4 w-4 text-warning" aria-hidden />
+            Seguimiento · no completaron su pago ({seguimiento.length})
+          </h2>
+          <div className="overflow-x-auto rounded-2xl border border-border/70 bg-card">
+            <table className="w-full min-w-[720px] text-sm">
+              <thead>
+                <tr className="border-b border-border/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <th className="px-4 py-3 font-semibold">Cliente</th>
+                  <th className="px-4 py-3 font-semibold">Quería</th>
+                  <th className="px-4 py-3 text-right font-semibold">Monto</th>
+                  <th className="px-4 py-3 font-semibold">Situación</th>
+                  <th className="px-4 py-3 font-semibold">Desde hace</th>
+                  <th className="px-4 py-3 font-semibold">Contactar</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {seguimiento.map((s) => {
+                  const dias = diasDesde(s.fecha)
+                  const wa = waLink(s.cliente.telefono)
+                  return (
+                    <tr key={s.key} className="align-middle">
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/admin/clientes/${s.clienteId}`}
+                          className="font-medium text-primary hover:underline"
+                        >
+                          {s.cliente.nombre}
+                        </Link>
+                        <p className="text-xs text-muted-foreground">{s.cliente.email}</p>
+                      </td>
+                      <td className="px-4 py-3 text-foreground">{s.concepto}</td>
+                      <td className="px-4 py-3 text-right font-semibold tabular-nums text-foreground">
+                        {fmtMoney(s.monto)}
+                      </td>
+                      <td className="max-w-64 px-4 py-3 text-xs text-muted-foreground">{s.situacion}</td>
+                      <td className="whitespace-nowrap px-4 py-3">
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${dias >= 7 ? 'bg-destructive/10 text-destructive' : dias >= 3 ? 'bg-warning/15 text-warning-foreground' : 'bg-muted text-muted-foreground'}`}
+                        >
+                          {dias === 0 ? 'hoy' : `${dias} día${dias !== 1 ? 's' : ''}`}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5">
+                          {wa && (
+                            <a
+                              href={wa}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={`WhatsApp ${s.cliente.telefono}`}
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 text-success hover:bg-success/10"
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                            </a>
+                          )}
+                          <a
+                            href={`mailto:${s.cliente.email}`}
+                            title="Enviar correo"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 text-muted-foreground hover:bg-muted"
+                          >
+                            <Mail className="h-4 w-4" />
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

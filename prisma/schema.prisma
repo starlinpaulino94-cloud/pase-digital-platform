@@ -253,6 +253,10 @@ model Company {
   bienvenidaTipo   String   @default("PORCENTAJE") // PORCENTAJE | MONTO
   bienvenidaValor  Decimal? @db.Decimal(10, 2)
 
+  // Regalos P2P (docs/REGALOS-P2P.md §3.4). JSON: { permitirTransferencias?,
+  // permitirRegalos?, maxTransferenciasMes?, vigenciaHoras? }. null = defaults.
+  regalosConfig Json?
+
   users                  User[]
   plans                  Plan[]
   clientes               Cliente[]
@@ -321,6 +325,7 @@ model Company {
   agendaConfig   AgendaConfig?
   citas          Cita[]
   ofertaPrivadas OfertaPrivada[]
+  regalos        Regalo[]
 
   @@index([isPublished, isFeatured])
   @@index([ciudad, provincia])
@@ -365,6 +370,22 @@ enum CajaSesionEstado {
 enum MovimientoCajaTipo {
   ENTRADA
   SALIDA
+}
+
+/// Regalos P2P (docs/REGALOS-P2P.md): qué se envía.
+enum RegaloTipo {
+  TRANSFERENCIA_USOS // mover usos de una compra/membresía propia
+  REGALO_COMPRA // comprar una promoción PARA otro usuario
+  REGALO_MEMBRESIA // regalar un plan (paga el remitente)
+}
+
+/// Ciclo de vida del regalo: nunca se aplica solo — el receptor lo acepta.
+enum RegaloEstado {
+  PENDIENTE
+  ACEPTADO
+  RECHAZADO
+  EXPIRADO
+  CANCELADO // cancelado por el remitente (o el admin) antes de aceptarse
 }
 
 /// Forma en que se recibió un cobro presencial. OTRO deja la puerta abierta a
@@ -432,6 +453,50 @@ model MovimientoCaja {
   @@index([cajaSesionId])
   @@index([companyId, createdAt])
   @@map("movimientos_caja")
+}
+
+/// Regalo P2P (docs/REGALOS-P2P.md): el "sobre" que un cliente envía a otro.
+/// Al aceptarse usa la maquinaria existente (wallet ProductoCompra, flujo de
+/// pagos, Transaction Engine) para mover o crear el beneficio; este modelo
+/// solo guarda las partes, el contenido y el resultado. Mismo companyId
+/// siempre (los usos son de una empresa). Nada se elimina: estados finales.
+model Regalo {
+  id      String       @id @default(cuid())
+  companyId String
+  company Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tipo    RegaloTipo
+  estado  RegaloEstado @default(PENDIENTE)
+
+  // Partes. destinatarioId null = receptor aún sin cuenta (se reclama al
+  // registrarse vía destinatarioContacto).
+  remitenteId          String
+  remitente            Cliente  @relation("RegalosEnviados", fields: [remitenteId], references: [id], onDelete: Cascade)
+  destinatarioId       String?
+  destinatario         Cliente? @relation("RegalosRecibidos", fields: [destinatarioId], references: [id])
+  destinatarioContacto String? // tel/correo si aún no está en MembeGo
+
+  // Contenido (según tipo). Ids planos: se resuelven al mostrar/aceptar.
+  compraOrigenId     String? // TRANSFERENCIA_USOS desde la wallet
+  membershipOrigenId String? // TRANSFERENCIA_USOS desde lavados del plan
+  promocionId        String? // REGALO_COMPRA
+  planId             String? // REGALO_MEMBRESIA
+  usos               Int     @default(1)
+  mensaje            String? // dedicatoria visible para el receptor
+
+  // Resultado al aceptar (para trazabilidad y reimpresión de comprobantes).
+  compraDestinoId     String?
+  membershipDestinoId String?
+  txRemitenteId       String?
+  txDestinatarioId    String?
+
+  expiraAt   DateTime
+  createdAt  DateTime  @default(now())
+  resueltoAt DateTime?
+
+  @@index([destinatarioId, estado])
+  @@index([remitenteId, createdAt])
+  @@index([companyId, createdAt])
+  @@map("regalos")
 }
 
 // Métodos de pago configurables por empresa (sin tocar código)
@@ -647,6 +712,10 @@ model Cliente {
   // Módulo de Citas.
   citas           Cita[]
   ofertaInvitados OfertaInvitado[]
+
+  // Regalos P2P.
+  regalosEnviados  Regalo[] @relation("RegalosEnviados")
+  regalosRecibidos Regalo[] @relation("RegalosRecibidos")
 
   @@unique([supabaseId, companyId])
   // Filtros frecuentes solo por empresa (adminMetrics, reportes, /admin/clientes).
@@ -1103,6 +1172,9 @@ model Membership {
   // O-13: descuento de bienvenida congelado al solicitar el plan (null = sin
   // descuento). Solo se aplica si la membresía nunca se activó (fechaInicio null).
   descuentoBienvenida Decimal?         @db.Decimal(10, 2)
+  // Regalos P2P: si la membresía fue un regalo, quién la recibe.
+  beneficiarioClienteId String?
+
   // Período activo
   fechaInicio         DateTime?
   fechaVencimiento    DateTime?
@@ -1181,6 +1253,10 @@ model ProductoCompra {
   referencia         String?     @unique
   sucursalPagoId     String?
   sucursalPago       Sucursal?   @relation("CompraSucursalPago", fields: [sucursalPagoId], references: [id])
+
+  // Regalos P2P: si la compra fue un regalo, quién la recibe (pagador ≠
+  // beneficiario). null = compra normal para uno mismo.
+  beneficiarioClienteId String?
 
   // Beneficio activo
   usosIncluidos    Int       @default(1)

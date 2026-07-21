@@ -60,13 +60,27 @@ export function planRecomendadoPara(
 
 /**
  * Filtra beneficios redundantes con los badges de la tarjeta: usos, días de
- * vigencia y cálculos de ahorro ya se muestran como métricas; repetirlos en
- * la lista de checks satura la tarjeta.
+ * vigencia y cálculos de ahorro ya se muestran como métricas.
+ *
+ * Solo se descarta un beneficio si la línea COMPLETA es esa métrica repetida
+ * ("4 lavados", "30 días de vigencia", "Equivale a RD$300 por uso"). Antes
+ * bastaba con que la frase MENCIONARA lavados/ahorro/días y en un car wash
+ * eso vaciaba la lista: "Secado y aspirado en cada lavado" o "Ahorra en cada
+ * visita" desaparecían y las tarjetas quedaban con un solo beneficio.
  */
 export function beneficiosSinRedundancia(beneficios: string[]): string[] {
-  const redundante =
-    /(\d+\s*(lavados?|usos?)\b)|ahorro|por\s+uso|por\s+lavado|vigencia|\b\d+\s*d[ií]as\b/i
-  const filtrados = beneficios.filter((b) => !redundante.test(b))
+  const esSoloMetrica = (b: string) => {
+    const s = b.trim()
+    return (
+      // "4 lavados", "4 usos incluidos", "4 lavados al mes"
+      /^\d+\s*(lavados?|usos?)(\s+(incluidos?|al\s+mes|mensuales?|por\s+mes))?\.?$/i.test(s) ||
+      // "30 días", "vigencia 30 días", "30 días de vigencia", "válido por 30 días"
+      /^(v[aá]lido\s+por\s+|vigencia(\s+de)?\s+)?\d+\s*d[ií]as(\s+de\s+vigencia)?\.?$/i.test(s) ||
+      // "Equivale a RD$300 por uso/lavado" (ya sale bajo el precio)
+      /^equivale\s+a\s+\S+\s+por\s+(uso|lavado)\.?$/i.test(s)
+    )
+  }
+  const filtrados = beneficios.filter((b) => !esSoloMetrica(b))
   // Si el filtro se comió todo (beneficios mal cargados), mejor mostrar la
   // lista original que una tarjeta vacía.
   return filtrados.length > 0 ? filtrados : beneficios

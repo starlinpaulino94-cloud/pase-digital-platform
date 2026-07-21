@@ -25,7 +25,11 @@ export function PromotionDetail({ mode, promotion, comprarSlot }: PromotionDetai
   const empresaHref = isApp
     ? `/cliente/empresas/${promotion.company.slug}`
     : `/empresas/${promotion.company.slug}`
-  const registroHref = `/registro/${promotion.company.slug}`
+  // Al registrarse desde una promo compartida, lo PRIMERO que ve el usuario
+  // dentro de la app es ESTA promoción con su botón de reclamar (?next=).
+  const registroHref = `/registro/${promotion.company.slug}?next=${encodeURIComponent(
+    `/cliente/promociones/${promotion.id}`
+  )}`
 
   return (
     <div className={isApp ? 'bg-card' : 'min-h-screen bg-card'}>
