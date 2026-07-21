@@ -62,7 +62,7 @@ export function RegisterGeneralForm() {
       handledRef.current = true
       const creds = credsRef.current
       if (!creds) {
-        router.replace('/login?redirect=/cliente/explorar')
+        router.replace('/login?redirect=/cliente/celebracion')
         return
       }
       setRedirecting(true)
@@ -72,15 +72,17 @@ export function RegisterGeneralForm() {
         .then(({ error }) => {
           if (error) {
             toast.success('Cuenta creada. Inicia sesión para continuar.')
-            router.replace('/login?redirect=/cliente/explorar')
+            router.replace('/login?redirect=/cliente/celebracion')
             return
           }
-          toast.success('¡Bienvenido a MembeGo! Explora empresas y únete a las que quieras.')
-          router.replace('/cliente/explorar')
+          toast.success('¡Bienvenido a MembeGo! Tu cuenta está lista.')
+          // Igual que todo registro: primero la celebración con su regalo de
+          // bienvenida (la cuenta ya quedó afiliada a la empresa principal).
+          router.replace('/cliente/celebracion')
           router.refresh()
         })
         .catch(() => {
-          router.replace('/login?redirect=/cliente/explorar')
+          router.replace('/login?redirect=/cliente/celebracion')
         })
     }
   }, [state.success, state.pendingVerification, router])

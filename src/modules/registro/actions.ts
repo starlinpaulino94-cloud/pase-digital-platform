@@ -499,6 +499,23 @@ export async function registrarCuentaGeneral(
         },
       })
 
+      // Marca única: la cuenta "general" se afilia DE UNA VEZ a la empresa
+      // principal (ficha de cliente + regalo de bienvenida + metadata), para
+      // que ningún módulo la reciba a medias. Si aún no hay empresa publicada,
+      // la auto-reparación de getUser() completará el alta al primer acceso.
+      const { repararContextoCliente } = await import('@/lib/auth/reparar-contexto')
+      const sesion = await repararContextoCliente({
+        supabaseId,
+        email,
+        metadata: { role: 'CLIENTE', dbUserId: dbUser.id, clienteId: null, companyId: null },
+      })
+      // Teléfono del formulario → ficha recién creada (la reparación no lo tiene).
+      if (sesion.metadata.clienteId && telefono) {
+        await prisma.cliente
+          .update({ where: { id: sesion.metadata.clienteId }, data: { telefono } })
+          .catch(() => {})
+      }
+
       if (verificarCorreo) {
         await sendVerificationEmail(admin, email, nombre)
         return { pendingVerification: true }

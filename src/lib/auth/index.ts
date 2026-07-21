@@ -42,6 +42,27 @@ export const getUser = cache(async (): Promise<SessionUser | null> => {
     await sleep(250)
     ;({ data, error } = await supabase.auth.getUser())
   }
+  if (!data.user) return null
 
-  return data.user ? toSessionUser(data.user) : null
+  let session = toSessionUser(data.user)
+
+  // AUTO-REPARACIÓN: una sesión CLIENTE sin clienteId/companyId (registro
+  // general, alta a medias, metadata nunca fijado) rompe TODOS los módulos,
+  // cada uno con un error distinto. Se repara aquí una sola vez por request
+  // (getUser está cacheado): afilia a la empresa principal si hace falta y
+  // deja el app_metadata consistente. Import dinámico para no arrastrar
+  // Prisma a contextos que solo leen la sesión.
+  if (
+    session.metadata.role === 'CLIENTE' &&
+    (!session.metadata.clienteId || !session.metadata.companyId)
+  ) {
+    try {
+      const { repararContextoCliente } = await import('@/lib/auth/reparar-contexto')
+      session = await repararContextoCliente(session)
+    } catch (e) {
+      console.error('[auth] reparación de contexto falló:', e)
+    }
+  }
+
+  return session
 })
