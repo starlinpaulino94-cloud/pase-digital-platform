@@ -160,10 +160,27 @@ métricas (enviados/aceptados/expirados), y los comprobantes ya salen en
 
 ## 7. Fases de implementación
 
-**R1 — Identidad + esquema (base)**
+**R1 — Identidad + esquema (base)** — ✅ *Hecha.*
 ID MembeGo visible en el perfil (@codigoCorto + QR + copiar), buscador seguro
 de destinatarios (server action con máscara + rate-limit), esquema `Regalo` +
 `beneficiarioClienteId` + config de empresa + migración SQL idempotente.
+
+> **✅ R1 implementada:**
+> - **Esquema**: enums `RegaloTipo`/`RegaloEstado` + modelo `Regalo` (partes,
+>   contenido, resultado, expiración) con relaciones a Cliente/Company;
+>   `beneficiarioClienteId` en `producto_compras` y `memberships`;
+>   `companies.regalosConfig` (JSON). Migración idempotente
+>   `prisma/migrations/20260752_regalos_p2p/` — **ejecutarla en Supabase**.
+> - **Config**: `src/modules/regalos/config.ts` (`getRegalosConfig`) con
+>   defaults §3.4 (transferencias/regalos on, 3/mes, 72 h).
+> - **Buscador seguro**: `buscarDestinatario()` en
+>   `src/modules/regalos/actions.ts` — solo clientes de la MISMA empresa,
+>   @código exacto o texto ≥4 chars, máx. 5 resultados ENMASCARADOS (nombre +
+>   inicial, •••últimos 4 del teléfono), excluye al propio usuario y
+>   rate-limit 10/min. `obtenerMiIdMembego()` genera el @ID si no existe.
+> - **UI**: tarjeta **"Mi ID MembeGo"** en `/cliente/perfil` (@código en
+>   grande + QR + copiar + compartir nativo), con degradación si la BD aún no
+>   está migrada. Verificado con tsc, eslint y `next build`.
 
 **R2 — Transferir usos (el corazón)**
 Botón *Transferir* en Mis beneficios, flujo enviar→aceptar/rechazar/expirar,

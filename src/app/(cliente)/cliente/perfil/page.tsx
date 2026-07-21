@@ -3,6 +3,8 @@ import { requireRole } from '@/lib/auth/guards'
 import { getClientePerfil } from '@/modules/cliente/queries'
 import { prisma } from '@/lib/prisma'
 import { ProfileForm } from '@/components/cliente/ProfileForm'
+import { IdMembegoCard } from '@/components/cliente/IdMembegoCard'
+import { ensureCodigoCorto } from '@/lib/referidos'
 import { VehiculoForm } from '@/components/cliente/VehiculoForm'
 import { DeleteVehiculoButton } from '@/components/cliente/DeleteVehiculoButton'
 import { WhatsAppButton } from '@/components/cliente/WhatsAppButton'
@@ -76,6 +78,11 @@ export default async function PerfilPage() {
       .count({ where: { clienteId: cliente.id, estado: 'ACTIVA', usosRestantes: { gt: 0 } } })
       .catch(() => 0),
   ])
+
+  // Regalos P2P · R1: el @ID con el que otros pueden enviarle regalos. Se
+  // genera la primera vez; si la BD aún no está migrada, la tarjeta se oculta
+  // sin romper el perfil.
+  const idMembego = await ensureCodigoCorto(cliente.id).catch(() => null)
 
   const iniciales = cliente.nombre.trim().slice(0, 2).toUpperCase()
 
@@ -160,6 +167,9 @@ export default async function PerfilPage() {
           </Link>
         ))}
       </section>
+
+      {/* ── Mi ID MembeGo (Regalos P2P · R1) ──────────────────────────────── */}
+      {idMembego && <IdMembegoCard codigo={idMembego} />}
 
       {/* ── Configuración por categorías ──────────────────────────────────── */}
       <p className="text-overline">Configuración</p>
