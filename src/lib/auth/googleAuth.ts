@@ -10,5 +10,9 @@
  * cliente y servidor.
  */
 export function isGoogleAuthEnabled(): boolean {
-  return process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === 'true'
+  // OCULTO TEMPORALMENTE a petición del negocio (2026-07-21): el botón no se
+  // muestra y el callback responde google_off, aunque el flag esté en true.
+  // Para reactivarlo: cambia `return false` por la línea comentada.
+  return false
+  // return process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === 'true'
 }
