@@ -567,7 +567,9 @@ export async function renovarMembresia(
   const membership = await assertOwnership(membershipId, user)
   if (!membership) return { error: 'Membresía no encontrada.' }
 
-  const ESTADOS_RENOVABLES = ['ACTIVA', 'VENCIDA']
+  // CANCELADA incluida: el negocio puede reactivar/renovar una membresía que
+  // canceló (p. ej. cancelación por error o cliente que regresa).
+  const ESTADOS_RENOVABLES = ['ACTIVA', 'VENCIDA', 'CANCELADA']
   if (!ESTADOS_RENOVABLES.includes(membership.estado)) {
     return { error: `No se puede renovar una membresía en estado ${membership.estado}.` }
   }
