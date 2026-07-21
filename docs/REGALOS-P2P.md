@@ -239,10 +239,37 @@ entrega al validarse el pago, dedicatorias.
 >   *Receptor sin cuenta (contacto externo): pospuesto a R4.* Verificado con
 >   tsc, eslint y `next build`.
 
-**R4 — Gestión y crecimiento**
+**R4 — Gestión y crecimiento** — ✅ *Hecha.*
 Vista admin con métricas, cancelación admin, recordatorio automático de
-regalos por expirar (automatizaciones), agradecimiento al aceptar, y (si el
-negocio quiere) "gift cards" de monto abierto.
+regalos por expirar (automatizaciones), y regalos a personas SIN cuenta
+(reclamo automático al registrarse).
+
+> **✅ R4 implementada:**
+> - **Vista admin `/admin/regalos`** (`getRegalosAdmin`): KPIs del programa
+>   (totales, pendientes, aceptados, tasa de aceptación) + listado de quién
+>   regaló qué a quién con filtros por tipo y estado. Sección `regalos` en
+>   `ADMIN_SECTIONS` (solo admin pleno, fail-closed) y entrada "Regalos P2P"
+>   en el grupo Clientes del menú.
+> - **Cancelación admin** (`cancelarRegaloAdmin`): cancela un PENDIENTE con
+>   motivo obligatorio, devuelve los usos reservados al remitente y notifica a
+>   ambas partes. Para regalos pagados, la orden pendiente se gestiona además
+>   desde Pagos.
+> - **Mantenimiento en el cron** (`mantenimientoRegalos`, colgado de
+>   `/api/cron/automatizaciones`): expira GLOBALMENTE los pendientes vencidos
+>   (la expiración perezosa de R2 queda como respaldo) devolviendo los usos, y
+>   envía un recordatorio ⏰ al destinatario cuando la transferencia expira en
+>   menos de 24 h (deduplicado por notificación dentro de la ventana).
+> - **Receptor SIN cuenta**: `enviarTransferencia` acepta `destinatarioContacto`
+>   (correo o teléfono ≥7 dígitos, normalizados); si el contacto ya es cliente
+>   del negocio, el regalo va directo a su cuenta. Solo usos de wallet (los
+>   lavados del plan exigen membresía activa). Al registrarse con ese correo o
+>   teléfono, `vincularRegalosPorContacto` (enganchado en ambos caminos del
+>   registro) le asigna los regalos pendientes no vencidos y notifica a ambas
+>   partes. UI: enlace "¿No está en MembeGo? Envíaselo a su teléfono o correo"
+>   en el formulario de envío. Sin cambios de esquema (usa
+>   `destinatarioContacto` de la migración 20260752).
+> - Pendiente opcional (no pedido): "gift cards" de monto abierto.
+>   Verificado con tsc, eslint y `next build`.
 
 ## 8. Decisiones del negocio — ✅ CONFIRMADAS (2026-07-21)
 

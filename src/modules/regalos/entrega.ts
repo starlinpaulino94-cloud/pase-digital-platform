@@ -130,3 +130,68 @@ export async function resolverRegaloPagado(vinculo: {
     console.error('[regalos] resolverRegaloPagado', e)
   }
 }
+
+/**
+ * R4 · Regalos a personas SIN cuenta: cuando alguien se registra, los regalos
+ * PENDIENTES enviados a su correo/teléfono (destinatarioContacto) se le
+ * asignan automáticamente para que los acepte desde /cliente/regalos. Se llama
+ * tras crear el Cliente en el registro; nunca lanza (el registro no puede
+ * romperse por un regalo).
+ */
+export async function vincularRegalosPorContacto(params: {
+  clienteId: string
+  companyId: string
+  email?: string | null
+  telefono?: string | null
+}): Promise<number> {
+  try {
+    const contactos: string[] = []
+    const email = params.email?.trim().toLowerCase()
+    if (email) contactos.push(email)
+    const digits = params.telefono?.replace(/\D/g, '') ?? ''
+    if (digits.length >= 7) contactos.push(digits)
+    if (contactos.length === 0) return 0
+
+    const pendientes = await prisma.regalo.findMany({
+      where: {
+        companyId: params.companyId,
+        estado: 'PENDIENTE',
+        destinatarioId: null,
+        destinatarioContacto: { in: contactos },
+        expiraAt: { gt: new Date() },
+      },
+      select: { id: true, remitenteId: true, remitente: { select: { nombre: true } } },
+    })
+
+    let vinculados = 0
+    for (const r of pendientes) {
+      // Guard: solo si sigue pendiente y sin reclamar (otro registro simultáneo
+      // con el mismo contacto no lo duplica).
+      const upd = await prisma.regalo.updateMany({
+        where: { id: r.id, estado: 'PENDIENTE', destinatarioId: null },
+        data: { destinatarioId: params.clienteId },
+      })
+      if (upd.count === 0) continue
+      vinculados++
+      await notificarClienteRegalo(
+        r.remitenteId,
+        '🎉 Tu regalo ya tiene dueño',
+        'La persona a la que le enviaste el regalo ya se registró: puede aceptarlo desde su cuenta.',
+        '/cliente/regalos'
+      )
+    }
+
+    if (vinculados > 0) {
+      await notificarClienteRegalo(
+        params.clienteId,
+        '🎁 Te estaba esperando un regalo',
+        `Tienes ${vinculados} regalo${vinculados !== 1 ? 's' : ''} pendiente${vinculados !== 1 ? 's' : ''} de aceptar. Hazlo antes de que expire.`,
+        '/cliente/regalos'
+      )
+    }
+    return vinculados
+  } catch (e) {
+    console.error('[regalos] vincularRegalosPorContacto', e)
+    return 0
+  }
+}

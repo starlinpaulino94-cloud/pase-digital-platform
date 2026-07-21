@@ -34,9 +34,31 @@ export function EnviarRegaloForm({ fuentes }: { fuentes: FuenteTransferencia[] }
   const [destinatario, setDestinatario] = useState<DestinatarioResultado | null>(null)
   const [buscando, startBusqueda] = useTransition()
 
+  // R4: receptor SIN cuenta — se le envía a su teléfono o correo y lo reclama
+  // al registrarse. Los lavados del plan no aplican (exigen membresía activa).
+  const [externo, setExterno] = useState(false)
+  const [contacto, setContacto] = useState('')
+  const contactoValido = contacto.includes('@')
+    ? /^\S+@\S+\.\S+$/.test(contacto.trim())
+    : (contacto.match(/\d/g)?.length ?? 0) >= 7
+
   const [fuenteId, setFuenteId] = useState(fuentes[0]?.id ?? '')
-  const fuente = fuentes.find((f) => f.id === fuenteId) ?? null
+  const fuentesVisibles = externo ? fuentes.filter((f) => f.origen === 'COMPRA') : fuentes
+  const fuente = fuentesVisibles.find((f) => f.id === fuenteId) ?? null
   const [usos, setUsos] = useState(1)
+
+  function activarExterno(on: boolean) {
+    setExterno(on)
+    setDestinatario(null)
+    setResultados([])
+    if (on) {
+      const actual = fuentes.find((f) => f.id === fuenteId)
+      if (actual?.origen === 'MEMBRESIA') {
+        setFuenteId(fuentes.find((f) => f.origen === 'COMPRA')?.id ?? '')
+        setUsos(1)
+      }
+    }
+  }
 
   useEffect(() => {
     if (state.error) toast.error(state.error)
@@ -93,6 +115,30 @@ export function EnviarRegaloForm({ fuentes }: { fuentes: FuenteTransferencia[] }
             </Button>
             <input type="hidden" name="destinatarioId" value={destinatario.clienteId} />
           </div>
+        ) : externo ? (
+          <div className="space-y-2">
+            <Input
+              value={contacto}
+              onChange={(e) => setContacto(e.target.value)}
+              placeholder="Su teléfono (809 555 1234) o su correo"
+              inputMode="email"
+            />
+            <p className="text-xs text-muted-foreground">
+              Le enviaremos el regalo a ese dato: lo reclama al registrarse en MembeGo
+              con ese teléfono o correo. Aplica para usos de promociones (los lavados
+              del plan exigen membresía activa).
+            </p>
+            <button
+              type="button"
+              onClick={() => activarExterno(false)}
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              ← Mejor buscarlo en MembeGo
+            </button>
+            {contactoValido && (
+              <input type="hidden" name="destinatarioContacto" value={contacto.trim()} />
+            )}
+          </div>
         ) : (
           <>
             <div className="flex gap-2">
@@ -145,6 +191,13 @@ export function EnviarRegaloForm({ fuentes }: { fuentes: FuenteTransferencia[] }
                 ))}
               </ul>
             )}
+            <button
+              type="button"
+              onClick={() => activarExterno(true)}
+              className="mt-3 text-xs font-medium text-primary hover:underline"
+            >
+              ¿No está en MembeGo? Envíaselo a su teléfono o correo →
+            </button>
           </>
         )}
       </section>
@@ -153,7 +206,7 @@ export function EnviarRegaloForm({ fuentes }: { fuentes: FuenteTransferencia[] }
       <section className="rounded-3xl border border-border/70 bg-card p-5 shadow-card">
         <h2 className="mb-3 text-sm font-semibold text-foreground">2 · ¿Qué le envías?</h2>
         <div className="space-y-2">
-          {fuentes.map((f) => (
+          {fuentesVisibles.map((f) => (
             <label
               key={f.id}
               className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-3 transition ${fuenteId === f.id ? 'border-primary/50 bg-primary/5' : 'border-border/70 hover:bg-muted/40'}`}
@@ -204,7 +257,7 @@ export function EnviarRegaloForm({ fuentes }: { fuentes: FuenteTransferencia[] }
         <Textarea name="mensaje" rows={2} maxLength={200} placeholder="¡Disfrútalo! 🎁" />
         <Button
           type="submit"
-          disabled={enviando || !destinatario || !fuente}
+          disabled={enviando || !fuente || (!destinatario && !(externo && contactoValido))}
           className="mt-4 w-full gap-2 py-5 font-semibold"
         >
           {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gift className="h-4 w-4" />}

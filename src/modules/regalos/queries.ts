@@ -67,11 +67,12 @@ export async function expirarPendientesVencidos(clienteId: string) {
   }
 }
 
-/** Nombre legible del contenido de un regalo (promo o lavados del plan). */
+/** Nombre legible del contenido de un regalo (promo, plan o lavados del plan). */
 async function etiquetaBeneficio(r: {
   compraOrigenId: string | null
   membershipOrigenId: string | null
   promocionId: string | null
+  planId?: string | null
   usos: number
 }): Promise<string> {
   if (r.promocionId) {
@@ -80,6 +81,13 @@ async function etiquetaBeneficio(r: {
       select: { titulo: true },
     })
     if (p) return p.titulo
+  }
+  if (r.planId) {
+    const p = await prisma.plan.findUnique({
+      where: { id: r.planId },
+      select: { nombre: true },
+    })
+    if (p) return `Membresía ${p.nombre}`
   }
   if (r.membershipOrigenId) return `${r.usos} lavado${r.usos !== 1 ? 's' : ''} del plan`
   return 'Beneficio'
@@ -246,4 +254,129 @@ export async function getFuentesTransferencia(
     })
   }
   return fuentes
+}
+
+// ── Fase R4 · Vista admin ────────────────────────────────────────────────────
+
+export const TIPO_REGALO_LABEL: Record<string, string> = {
+  TRANSFERENCIA_USOS: 'Transferencia de usos',
+  REGALO_COMPRA: 'Promoción regalada',
+  REGALO_MEMBRESIA: 'Membresía regalada',
+}
+
+export const ESTADO_REGALO_LABEL: Record<string, string> = {
+  PENDIENTE: 'Pendiente',
+  ACEPTADO: 'Aceptado',
+  RECHAZADO: 'Rechazado',
+  EXPIRADO: 'Expirado',
+  CANCELADO: 'Cancelado',
+}
+
+export interface RegaloAdminItem {
+  id: string
+  tipo: string
+  estado: string
+  usos: number
+  beneficio: string
+  /** Nombre COMPLETO del remitente (vista interna del negocio). */
+  remitente: string
+  /** Nombre completo del destinatario, o su contacto si aún no tiene cuenta. */
+  destinatario: string
+  /** true si el receptor todavía no tiene cuenta (destinatarioContacto). */
+  sinCuenta: boolean
+  mensaje: string | null
+  createdAt: Date
+  expiraAt: Date
+  resueltoAt: Date | null
+}
+
+export interface RegalosAdminKpis {
+  total: number
+  pendientes: number
+  aceptados: number
+  expirados: number
+  /** % de regalos resueltos que terminaron aceptados (sin contar cancelados). */
+  tasaAceptacion: number | null
+}
+
+export interface RegaloAdminFiltro {
+  estado?: string
+  tipo?: string
+}
+
+/**
+ * Panel admin de regalos P2P: quién regaló qué a quién, con KPIs del programa.
+ * Los KPIs se calculan sobre TODOS los regalos de la empresa; el listado se
+ * limita a los 100 más recientes según el filtro.
+ */
+export async function getRegalosAdmin(
+  companyId: string,
+  filtro: RegaloAdminFiltro = {}
+): Promise<{ items: RegaloAdminItem[]; kpis: RegalosAdminKpis; truncado: boolean }> {
+  const estados = ['PENDIENTE', 'ACEPTADO', 'RECHAZADO', 'EXPIRADO', 'CANCELADO']
+  const tipos = ['TRANSFERENCIA_USOS', 'REGALO_COMPRA', 'REGALO_MEMBRESIA']
+
+  const where = {
+    companyId,
+    ...(filtro.estado && estados.includes(filtro.estado)
+      ? { estado: filtro.estado as never }
+      : {}),
+    ...(filtro.tipo && tipos.includes(filtro.tipo) ? { tipo: filtro.tipo as never } : {}),
+  }
+
+  const TAKE = 100
+  const [regalos, porEstado] = await Promise.all([
+    prisma.regalo.findMany({
+      where,
+      include: {
+        remitente: { select: { nombre: true } },
+        destinatario: { select: { nombre: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: TAKE + 1,
+    }),
+    prisma.regalo.groupBy({
+      by: ['estado'],
+      where: { companyId },
+      _count: { _all: true },
+    }),
+  ])
+
+  const conteo = (estado: string) =>
+    porEstado.find((g) => g.estado === estado)?._count._all ?? 0
+  const total = porEstado.reduce((acc, g) => acc + g._count._all, 0)
+  const aceptados = conteo('ACEPTADO')
+  const resueltosSinCancelar = aceptados + conteo('RECHAZADO') + conteo('EXPIRADO')
+
+  const items = await Promise.all(
+    regalos.slice(0, TAKE).map(async (r) => ({
+      id: r.id,
+      tipo: r.tipo,
+      estado: r.estado,
+      usos: r.usos,
+      beneficio: await etiquetaBeneficio(r),
+      remitente: r.remitente.nombre,
+      destinatario: r.destinatario?.nombre ?? r.destinatarioContacto ?? '—',
+      sinCuenta: !r.destinatarioId,
+      mensaje: r.mensaje,
+      createdAt: r.createdAt,
+      expiraAt: r.expiraAt,
+      resueltoAt: r.resueltoAt,
+    }))
+  )
+
+  return {
+    items,
+    truncado: regalos.length > TAKE,
+    kpis: {
+      total,
+      pendientes: conteo('PENDIENTE'),
+      aceptados,
+      expirados: conteo('EXPIRADO'),
+      tasaAceptacion:
+        resueltosSinCancelar > 0
+          ? Math.round((aceptados / resueltosSinCancelar) * 100)
+          : null,
+    },
+  }
 }

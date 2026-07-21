@@ -82,6 +82,7 @@ const ADMIN_NAV: NavGroup[] = [
       { href: '/admin/clientes', label: 'Clientes', icon: Users },
       { href: '/admin/membresias', label: 'Membresías', icon: CreditCard },
       { href: '/admin/citas', label: 'Citas', icon: CalendarDays },
+      { href: '/admin/regalos', label: 'Regalos P2P', icon: HeartHandshake },
     ],
   },
   {
