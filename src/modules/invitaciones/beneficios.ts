@@ -195,6 +195,39 @@ async function otorgarComoBenefitGrant(
  * ACTIVA y vigente (el campanaId viene de un hidden del formulario, es
  * manipulable). La entrega en sí es idempotente. Nunca lanza.
  */
+/**
+ * Registro DIRECTO (sin enlace de campaña): entrega el regalo de bienvenida
+ * de la campaña de invitación ACTIVA y vigente más reciente del negocio, como
+ * si el cliente hubiera entrado por su enlace. Así TODO registro recibe el
+ * "lavado gratis" prometido, venga de donde venga. Devuelve el id de la
+ * campaña usada (para localizar el QR del regalo) o null si el negocio no
+ * tiene ninguna campaña activa. Idempotente; nunca lanza.
+ */
+export async function otorgarBienvenidaDirecta(
+  clienteId: string,
+  companyId: string
+): Promise<string | null> {
+  try {
+    const ahora = new Date()
+    const campana = await prisma.campanaInvitacion.findFirst({
+      where: {
+        companyId,
+        estado: 'ACTIVA',
+        fechaInicio: { lte: ahora },
+        fechaFin: { gte: ahora },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true },
+    })
+    if (!campana) return null
+    await otorgarBeneficioCampana({ campanaId: campana.id, clienteId, rol: 'INVITADO' })
+    return campana.id
+  } catch (e) {
+    console.error('[invitaciones] otorgarBienvenidaDirecta error:', e)
+    return null
+  }
+}
+
 export async function otorgarRegaloBienvenida(
   campanaId: string,
   clienteId: string,

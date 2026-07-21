@@ -47,7 +47,11 @@ export function RegisterForm({
   const nextRaw = searchParams.get('next') ?? ''
   const nextSeguro =
     nextRaw.startsWith('/') && !nextRaw.startsWith('//') ? nextRaw : null
-  const destino = nextSeguro ?? (glCode ? '/cliente/celebracion' : '/cliente/membresia')
+  // Por defecto TODO registro aterriza en la celebración (reclamar su regalo
+  // de bienvenida): el servidor lo entrega aunque el registro sea directo,
+  // sin enlace de invitación. Si no hubiera regalo, la pantalla ofrece
+  // "Ir a mi cuenta".
+  const destino = nextSeguro ?? '/cliente/celebracion'
   const [state, formAction, pending] = useActionState(registrarCliente, initial)
   // Al enviar guardamos las credenciales para iniciar sesión automáticamente
   // en cuanto el registro se complete (sin volver a la pantalla de login).
