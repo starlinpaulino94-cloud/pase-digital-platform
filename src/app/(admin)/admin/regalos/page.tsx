@@ -7,13 +7,24 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Button } from '@/components/ui/button'
 import { CancelarRegaloAdminButton } from '@/components/regalos/CancelarRegaloAdminButton'
 import { RegalosConfigCard } from '@/components/regalos/RegalosConfigCard'
+import { GiftCardAdminActions } from '@/components/regalos/GiftCardAdminActions'
 import { getRegalosConfig } from '@/modules/regalos/config'
+import { getGiftCardsAdmin, ESTADO_GIFTCARD_LABEL } from '@/modules/regalos/giftcards'
 import {
   getRegalosAdmin,
   TIPO_REGALO_LABEL,
   ESTADO_REGALO_LABEL,
 } from '@/modules/regalos/queries'
-import { HeartHandshake } from 'lucide-react'
+import { CreditCard, HeartHandshake } from 'lucide-react'
+
+const fmtRD = (n: number) => `RD$${n.toLocaleString('es-DO', { minimumFractionDigits: 2 })}`
+
+const GIFTCARD_CHIP: Record<string, string> = {
+  PENDIENTE_PAGO: 'bg-warning/15 text-warning-foreground',
+  ACTIVA: 'bg-success/15 text-success',
+  AGOTADA: 'bg-muted text-muted-foreground',
+  CANCELADA: 'bg-destructive/10 text-destructive',
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -53,9 +64,13 @@ export default async function RegalosAdminPage({
     new Intl.DateTimeFormat('es-DO', { timeZone, dateStyle: 'medium', timeStyle: 'short' }).format(d)
 
   const hayFiltro = Boolean(sp.estado || sp.tipo)
-  const [{ items, kpis, truncado }, config] = await Promise.all([
+  const [{ items, kpis, truncado }, config, giftCards] = await Promise.all([
     getRegalosAdmin(companyId, { estado: sp.estado, tipo: sp.tipo }),
     getRegalosConfig(companyId),
+    getGiftCardsAdmin(companyId).catch(() => ({
+      items: [],
+      kpis: { porCobrar: 0, activas: 0, saldoVigente: 0 },
+    })),
   ])
 
   const tarjetas = [
@@ -198,6 +213,88 @@ export default async function RegalosAdminPage({
           </table>
         </div>
       )}
+
+      {/* ── Gift cards ─────────────────────────────────────────────────────── */}
+      <section className="space-y-3 pt-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <CreditCard className="h-4 w-4" aria-hidden /> Gift cards
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            {giftCards.kpis.porCobrar} por cobrar · {giftCards.kpis.activas} activa
+            {giftCards.kpis.activas !== 1 ? 's' : ''} · saldo vigente{' '}
+            {fmtRD(giftCards.kpis.saldoVigente)}
+          </p>
+        </div>
+
+        {giftCards.items.length === 0 ? (
+          <p className="rounded-2xl border border-border/70 bg-card p-4 text-sm text-muted-foreground">
+            Cuando un cliente compre una gift card aparecerá aquí para cobrarla,
+            activarla y redimir sus consumos.
+          </p>
+        ) : (
+          <div className="overflow-x-auto rounded-2xl border border-border/70 bg-card">
+            <table className="w-full min-w-[760px] text-sm">
+              <thead>
+                <tr className="border-b border-border/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <th className="px-4 py-3 font-semibold">Código</th>
+                  <th className="px-4 py-3 font-semibold">De</th>
+                  <th className="px-4 py-3 font-semibold">Para</th>
+                  <th className="px-4 py-3 text-right font-semibold">Monto</th>
+                  <th className="px-4 py-3 text-right font-semibold">Saldo</th>
+                  <th className="px-4 py-3 font-semibold">Estado</th>
+                  <th className="px-4 py-3 font-semibold">Creada</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {giftCards.items.map((g) => (
+                  <tr key={g.id} className="align-middle">
+                    <td className="px-4 py-3">
+                      <p className="font-mono font-semibold text-foreground">{g.codigo}</p>
+                      {g.mensaje && (
+                        <p className="max-w-44 truncate text-xs text-muted-foreground">“{g.mensaje}”</p>
+                      )}
+                    </td>
+                    <td className="max-w-40 truncate px-4 py-3 text-foreground">{g.comprador}</td>
+                    <td className="max-w-40 px-4 py-3">
+                      <p className="truncate text-foreground">{g.destinatario}</p>
+                      {g.sinCuenta && (
+                        <p className="text-[11px] text-muted-foreground">aún sin cuenta</p>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold tabular-nums text-foreground">
+                      {fmtRD(g.monto)}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-foreground">
+                      {g.estado === 'PENDIENTE_PAGO' ? '—' : fmtRD(g.saldo)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${GIFTCARD_CHIP[g.estado] ?? 'bg-muted text-muted-foreground'}`}
+                      >
+                        {ESTADO_GIFTCARD_LABEL[g.estado] ?? g.estado}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
+                      {fmtFecha(g.createdAt)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <GiftCardAdminActions
+                        giftCardId={g.id}
+                        codigo={g.codigo}
+                        estado={g.estado}
+                        monto={g.monto}
+                        saldo={g.saldo}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   )
 }

@@ -819,11 +819,22 @@ export async function guardarRegalosConfig(
 
   const maxTransferenciasMes = Math.trunc(Number(formData.get('maxTransferenciasMes')))
   const vigenciaHoras = Math.trunc(Number(formData.get('vigenciaHoras')))
+  const giftCardMontoMin = Math.trunc(Number(formData.get('giftCardMontoMin')))
+  const giftCardMontoMax = Math.trunc(Number(formData.get('giftCardMontoMax')))
   if (!Number.isFinite(maxTransferenciasMes) || maxTransferenciasMes < 0 || maxTransferenciasMes > 100) {
     return { error: 'El límite mensual debe estar entre 0 y 100 (0 = desactivado).' }
   }
   if (!Number.isFinite(vigenciaHoras) || vigenciaHoras < 1 || vigenciaHoras > 24 * 30) {
     return { error: 'La vigencia debe estar entre 1 hora y 30 días (720 horas).' }
+  }
+  if (
+    !Number.isFinite(giftCardMontoMin) ||
+    !Number.isFinite(giftCardMontoMax) ||
+    giftCardMontoMin < 50 ||
+    giftCardMontoMax > 1_000_000 ||
+    giftCardMontoMin > giftCardMontoMax
+  ) {
+    return { error: 'El rango de la gift card debe ser válido (mínimo RD$50 y mínimo ≤ máximo).' }
   }
 
   const config = {
@@ -831,6 +842,9 @@ export async function guardarRegalosConfig(
     permitirRegalos: formData.get('permitirRegalos') === 'on',
     maxTransferenciasMes,
     vigenciaHoras,
+    permitirGiftCards: formData.get('permitirGiftCards') === 'on',
+    giftCardMontoMin,
+    giftCardMontoMax,
   }
 
   try {

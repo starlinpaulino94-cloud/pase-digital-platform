@@ -189,7 +189,28 @@ export async function vincularRegalosPorContacto(params: {
         '/cliente/regalos'
       )
     }
-    return vinculados
+
+    // Gift cards enviadas a este contacto: se asignan igual (no expiran; las
+    // PENDIENTE_PAGO quedan listas para cuando el comprador pague).
+    const giftCards = await prisma.giftCard.updateMany({
+      where: {
+        companyId: params.companyId,
+        destinatarioClienteId: null,
+        destinatarioContacto: { in: contactos },
+        estado: { in: ['PENDIENTE_PAGO', 'ACTIVA'] },
+      },
+      data: { destinatarioClienteId: params.clienteId },
+    })
+    if (giftCards.count > 0) {
+      await notificarClienteRegalo(
+        params.clienteId,
+        '💳 Tienes una gift card',
+        `Te regalaron ${giftCards.count} gift card${giftCards.count !== 1 ? 's' : ''}: revisa su saldo y úsala mostrando el código al pagar.`,
+        '/cliente/regalos'
+      )
+    }
+
+    return vinculados + giftCards.count
   } catch (e) {
     console.error('[regalos] vincularRegalosPorContacto', e)
     return 0

@@ -15,6 +15,11 @@ export interface RegalosConfig {
   maxTransferenciasMes: number
   /** Horas que un regalo queda PENDIENTE antes de expirar y devolverse. */
   vigenciaHoras: number
+  /** Permitir comprar gift cards de monto abierto para otros. */
+  permitirGiftCards: boolean
+  /** Monto mínimo/máximo (RD$) de una gift card. */
+  giftCardMontoMin: number
+  giftCardMontoMax: number
 }
 
 export const REGALOS_DEFAULTS: RegalosConfig = {
@@ -22,6 +27,9 @@ export const REGALOS_DEFAULTS: RegalosConfig = {
   permitirRegalos: true,
   maxTransferenciasMes: 3,
   vigenciaHoras: 72,
+  permitirGiftCards: true,
+  giftCardMontoMin: 500,
+  giftCardMontoMax: 10000,
 }
 
 function resolver(raw: unknown): RegalosConfig {
@@ -36,6 +44,9 @@ function resolver(raw: unknown): RegalosConfig {
     permitirRegalos: bool(cfg.permitirRegalos, REGALOS_DEFAULTS.permitirRegalos),
     maxTransferenciasMes: int(cfg.maxTransferenciasMes, REGALOS_DEFAULTS.maxTransferenciasMes, 0, 100),
     vigenciaHoras: int(cfg.vigenciaHoras, REGALOS_DEFAULTS.vigenciaHoras, 1, 24 * 30),
+    permitirGiftCards: bool(cfg.permitirGiftCards, REGALOS_DEFAULTS.permitirGiftCards),
+    giftCardMontoMin: int(cfg.giftCardMontoMin, REGALOS_DEFAULTS.giftCardMontoMin, 50, 1_000_000),
+    giftCardMontoMax: int(cfg.giftCardMontoMax, REGALOS_DEFAULTS.giftCardMontoMax, 50, 1_000_000),
   }
 }
 

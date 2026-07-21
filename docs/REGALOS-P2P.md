@@ -272,7 +272,17 @@ regalos por expirar (automatizaciones), y regalos a personas SIN cuenta
 >   `RegalosConfigCard` en `/admin/regalos`): activar/desactivar
 >   transferencias y regalos pagados, límite mensual (0–100; 0 bloquea) y
 >   vigencia en horas (1–720). La vigencia solo aplica a regalos nuevos.
-> - Pendiente opcional (no pedido): "gift cards" de monto abierto.
+> - **Gift cards de monto abierto** (migración `20260753_gift_cards`): modelo
+>   `GiftCard` (código único GC-XXXXXX, monto + saldo, PENDIENTE_PAGO → ACTIVA
+>   → AGOTADA / CANCELADA; no expiran). El cliente la compra en
+>   `/cliente/regalos/giftcard` (monto entre mín/máx configurables,
+>   destinatario con cuenta o por teléfono/correo) y paga citando el código;
+>   el admin la confirma en `/admin/regalos` (queda la VENTA con factura,
+>   Transaction SALE) y redime los consumos con descuento atómico del saldo +
+>   comprobante de entrega (sin doble ingreso). El destinatario ve su código y
+>   saldo en `/cliente/regalos`; si aún no tiene cuenta, la reclama al
+>   registrarse (mismo `vincularRegalosPorContacto`). Config del panel:
+>   activar/desactivar + monto mín/máx.
 >   Verificado con tsc, eslint y `next build`.
 
 ## 8. Decisiones del negocio — ✅ CONFIRMADAS (2026-07-21)

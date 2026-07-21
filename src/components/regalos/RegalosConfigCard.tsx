@@ -23,6 +23,7 @@ export function RegalosConfigCard({ config }: { config: RegalosConfig }) {
   const [state, formAction, pending] = useActionState(guardarRegalosConfig, initial)
   const [transferencias, setTransferencias] = useState(config.permitirTransferencias)
   const [regalos, setRegalos] = useState(config.permitirRegalos)
+  const [giftCards, setGiftCards] = useState(config.permitirGiftCards)
 
   useEffect(() => {
     if (state.error) toast.error(state.error)
@@ -59,9 +60,19 @@ export function RegalosConfigCard({ config }: { config: RegalosConfig }) {
             </span>
             <Switch checked={regalos} onCheckedChange={setRegalos} />
           </label>
+          <label className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 p-3">
+            <span>
+              <span className="block text-sm font-medium text-foreground">Gift cards</span>
+              <span className="block text-xs text-muted-foreground">
+                Monto abierto que el destinatario consume con el código. No expiran.
+              </span>
+            </span>
+            <Switch checked={giftCards} onCheckedChange={setGiftCards} />
+          </label>
         </div>
         {transferencias && <input type="hidden" name="permitirTransferencias" value="on" />}
         {regalos && <input type="hidden" name="permitirRegalos" value="on" />}
+        {giftCards && <input type="hidden" name="permitirGiftCards" value="on" />}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
@@ -90,6 +101,28 @@ export function RegalosConfigCard({ config }: { config: RegalosConfig }) {
               Si nadie acepta en ese tiempo, los usos vuelven al remitente. Solo
               aplica a regalos nuevos.
             </p>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="giftCardMontoMin">Gift card · monto mínimo (RD$)</Label>
+            <Input
+              id="giftCardMontoMin"
+              name="giftCardMontoMin"
+              type="number"
+              min={50}
+              max={1000000}
+              defaultValue={config.giftCardMontoMin}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="giftCardMontoMax">Gift card · monto máximo (RD$)</Label>
+            <Input
+              id="giftCardMontoMax"
+              name="giftCardMontoMax"
+              type="number"
+              min={50}
+              max={1000000}
+              defaultValue={config.giftCardMontoMax}
+            />
           </div>
         </div>
 
