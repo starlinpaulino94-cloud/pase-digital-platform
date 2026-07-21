@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { vincularReferido } from '@/lib/referidos-attribution'
 import { registerLimiter } from '@/lib/rate-limit'
 import { TERMS_VERSION } from '@/lib/legal'
+import { getEmpresaPrincipal } from '@/modules/marketplace/marcaUnica'
 import { otorgarBienvenidaDirecta } from '@/modules/invitaciones/beneficios'
 import { vincularRegalosPorContacto } from '@/modules/regalos/entrega'
 import { ROLE_HOME, type AppRole } from '@/types'
@@ -35,6 +36,8 @@ interface GoogleOnboardingParams {
   supabaseId: string
   email: string
   name: string
+  /** Foto de perfil de Google (user_metadata.avatar_url/picture). */
+  avatarUrl?: string | null
   companySlug: string | null
   refCode: string
   ipAddress: string | null
@@ -130,6 +133,7 @@ async function afiliarUsuarioExistente(
         supabaseId,
         nombre: existing.name,
         email,
+        avatarUrl: params.avatarUrl ?? null,
       },
     })
     await prisma.companyFollow
@@ -183,12 +187,14 @@ export async function completeGoogleOnboarding(
     const byEmail = await prisma.user.findUnique({ where: { email } })
     if (byEmail) return { kind: 'email-exists' }
 
-    // Alta nueva: necesitamos una empresa de contexto (el modelo B2C liga cada
-    // cliente a una empresa). Sin slug, mandamos a elegir empresa.
-    if (!companySlug) return { kind: 'need-company' }
-
-    const company = await empresaActiva(companySlug)
-    if (!company) return { kind: 'company-not-found' }
+    // Alta nueva: empresa del contexto (registro por /registro/[slug]) o, en
+    // su defecto, la EMPRESA PRINCIPAL (marca única) — quien entra con Google
+    // desde el login debe quedar registrado con sus datos de Google, no
+    // rebotado a "elige empresa". Solo si no hay ninguna empresa publicada
+    // cae al selector.
+    let company: { id: string } | null = await empresaActiva(companySlug)
+    if (!company) company = await getEmpresaPrincipal()
+    if (!company) return companySlug ? { kind: 'company-not-found' } : { kind: 'need-company' }
 
     // Mismo freno anti-abuso por IP que el registro por contraseña: la
     // creación de cuentas no debe ser más laxa solo por entrar con Google.
@@ -217,6 +223,8 @@ export async function completeGoogleOnboarding(
           supabaseId,
           nombre,
           email,
+          // Perfil con los datos de su cuenta de Google (nombre + foto).
+          avatarUrl: params.avatarUrl ?? null,
         },
       })
       // Auto-seguir la empresa por la que se registró (consistente con el form).

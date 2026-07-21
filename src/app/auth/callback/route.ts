@@ -73,11 +73,16 @@ export async function GET(request: NextRequest) {
     (data.user.user_metadata?.full_name as string | undefined) ??
     (data.user.user_metadata?.name as string | undefined) ??
     ''
+  const avatarUrl =
+    (data.user.user_metadata?.avatar_url as string | undefined) ??
+    (data.user.user_metadata?.picture as string | undefined) ??
+    null
 
   const result = await completeGoogleOnboarding({
     supabaseId: data.user.id,
     email: data.user.email,
     name: nombre,
+    avatarUrl,
     companySlug,
     refCode: ref,
     ipAddress,
