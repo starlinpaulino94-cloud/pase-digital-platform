@@ -48,7 +48,9 @@ export default async function PlanPublicPage({ params }: PlanPageProps) {
   const plan = await getPlanPublic(id)
   if (!plan) notFound()
 
-  const registroHref = `/registro/${plan.company.slug}`
+  // Al registrarse desde un plan compartido, aterriza directo en la selección
+  // de planes para continuar con SU membresía (?next=), no en el home genérico.
+  const registroHref = `/registro/${plan.company.slug}?next=${encodeURIComponent('/cliente/planes')}`
 
   return (
     <div className="min-h-screen bg-card">

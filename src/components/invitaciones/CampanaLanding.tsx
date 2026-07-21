@@ -168,7 +168,9 @@ export function CampanaLanding({ campana, refCode, invitanteNombre }: Props) {
         const { error } = await supabase.auth.signInWithPassword(creds)
         if (!error) {
           sessionStorage.setItem('membego_celebracion', JSON.stringify(celebracion))
-          router.replace('/mis-membresias')
+          // Lo PRIMERO que ve el recién registrado es la pantalla de reclamar
+          // su regalo de la campaña (lavado gratis, etc.), no el home genérico.
+          router.replace('/cliente/celebracion')
           return
         }
         console.error('[invita] auto-login:', error.message)

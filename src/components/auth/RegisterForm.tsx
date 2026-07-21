@@ -39,6 +39,14 @@ export function RegisterForm({
   const refCode = searchParams.get('ref') ?? ''
   // Growth Engine 3.0: código del enlace de invitación (landing) si vino de uno.
   const glCode = searchParams.get('gl') ?? ''
+  // Destino tras el registro (`?next=`): si el usuario llegó desde una promo,
+  // plan o campaña compartida, lo PRIMERO que ve al entrar es la pantalla de
+  // reclamar ese beneficio (no el home genérico). Solo rutas internas
+  // (empieza con "/", no "//") para evitar open redirect.
+  const nextRaw = searchParams.get('next') ?? ''
+  const nextSeguro =
+    nextRaw.startsWith('/') && !nextRaw.startsWith('//') ? nextRaw : null
+  const destino = nextSeguro ?? (glCode ? '/cliente/celebracion' : '/cliente/membresia')
   const [state, formAction, pending] = useActionState(registrarCliente, initial)
   // Al enviar guardamos las credenciales para iniciar sesión automáticamente
   // en cuanto el registro se complete (sin volver a la pantalla de login).
@@ -63,15 +71,17 @@ export function RegisterForm({
       toast.success(
         'Te enviamos un enlace de confirmación a tu correo. Ábrelo para activar tu cuenta.'
       )
-      router.replace('/login?verifica=1')
+      // Conserva el destino: al confirmar y entrar, aterriza en su beneficio.
+      router.replace(`/login?verifica=1&redirect=${encodeURIComponent(destino)}`)
       return
     }
 
     if (state.success) {
       handledRef.current = true
       const creds = credsRef.current
+      const loginConDestino = `/login?redirect=${encodeURIComponent(destino)}`
       if (!creds) {
-        router.replace('/login?redirect=/cliente/membresia')
+        router.replace(loginConDestino)
         return
       }
       // Auto-login: crea la sesión en el navegador y entra directo a la plataforma.
@@ -81,21 +91,23 @@ export function RegisterForm({
         .signInWithPassword({ email: creds.email, password: creds.password })
         .then(({ error }) => {
           if (error) {
-            // Si por cualquier motivo no se pudo iniciar sesión, caemos al login.
+            // Si por cualquier motivo no se pudo iniciar sesión, caemos al login
+            // conservando el destino (la promo/beneficio que venía a reclamar).
             toast.success('Cuenta creada. Inicia sesión para continuar.')
-            router.replace('/login?redirect=/cliente/membresia')
+            router.replace(loginConDestino)
             return
           }
           toast.success('¡Bienvenido! Tu cuenta está lista.')
-          // Growth Engine 3.0: si vino de una invitación, celebra el beneficio.
-          router.replace(glCode ? '/cliente/celebracion' : '/cliente/membresia')
+          // Lo primero que ve: el beneficio que venía a reclamar (next), la
+          // celebración de su invitación (gl) o su cuenta (por defecto).
+          router.replace(destino)
           router.refresh()
         })
         .catch(() => {
-          router.replace('/login?redirect=/cliente/membresia')
+          router.replace(loginConDestino)
         })
     }
-  }, [state.success, state.pendingVerification, router, glCode])
+  }, [state.success, state.pendingVerification, router, glCode, destino])
 
   return (
     <div className="space-y-6">
