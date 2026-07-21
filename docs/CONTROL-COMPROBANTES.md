@@ -337,7 +337,18 @@ histórico de **cierres de caja**, entregas de regalos.
   negocio): se mantiene TCK-###### (ticket) + TX-YYYYMMDD-###### (transacción),
   secuenciales y únicos por empresa/día.
 - ✅ **Movimientos de caja** intra-turno (G9).
-- ✅ **Anulaciones/devoluciones** (§4). *Pago mixto: pendiente opcional.*
+- ✅ **Anulaciones/devoluciones** (§4).
+- ✅ **Pago mixto** (efectivo + transferencia en un solo cobro).
+
+> **✅ Pago mixto implementado.** En el cobro de caja hay un cuarto método,
+> **Mixto**: el cajero escribe la parte en efectivo y la parte por
+> transferencia se deriva del total (las partes siempre suman exacto; se
+> valida también en el servidor contra el monto real de la orden, antes de
+> activar). Se registra **una transacción SALE por cada parte** — misma
+> orden, mismo instante, con `pagoMixto`, el total real y referencia cruzada
+> al comprobante de la otra parte en el snapshot — de modo que el arqueo de
+> efectivo, el cierre Z, los Registros y el cuadre por empleado cuadran sin
+> reglas especiales, y cada parte se puede reimprimir o anular por separado.
 
 > **✅ G8 (folios internos).** El negocio **no emite NCF fiscales**, así que la
 > numeración interna existente es la definitiva: cada comprobante lleva

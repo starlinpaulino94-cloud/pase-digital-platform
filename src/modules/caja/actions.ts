@@ -321,10 +321,32 @@ export async function cobrarOrden(
   const metodoCobro = String(formData.get('metodoCobro') ?? '').trim()
   const observaciones = String(formData.get('observaciones') ?? '').trim() || null
 
+  // Pago MIXTO (Fase 4 · opcional): parte en efectivo + parte en transferencia
+  // en un solo cobro. Se registra como una transacción POR CADA parte (misma
+  // orden, mismo momento): así el arqueo, el cierre Z y los reportes por
+  // método cuadran sin reglas especiales.
+  const esMixto = metodoCobro === 'MIXTO'
+  const montoEfectivo = Math.round((num(formData.get('montoEfectivo')) ?? 0) * 100) / 100
+  const montoTransferencia =
+    Math.round((num(formData.get('montoTransferencia')) ?? 0) * 100) / 100
+
   if (!cajaSesionId || !ordenId) return { error: 'Datos incompletos.' }
   if (!['MEMBRESIA', 'PROMOCION'].includes(ordenTipo)) return { error: 'Tipo de orden no válido.' }
-  if (!['EFECTIVO', 'TRANSFERENCIA', 'OTRO'].includes(metodoCobro)) {
+  if (!['EFECTIVO', 'TRANSFERENCIA', 'OTRO', 'MIXTO'].includes(metodoCobro)) {
     return { error: 'Selecciona la forma de pago.' }
+  }
+
+  /** Valida las partes del pago mixto contra el total REAL de la orden. */
+  const validarMixto = (total: number): string | null => {
+    if (!esMixto) return null
+    if (total <= 0) return 'Esta orden no tiene monto por cobrar: usa un método simple.'
+    if (montoEfectivo <= 0 || montoTransferencia <= 0) {
+      return 'En el pago mixto, el efectivo y la transferencia deben ser mayores que cero.'
+    }
+    if (Math.abs(montoEfectivo + montoTransferencia - total) > 0.009) {
+      return `Las dos partes deben sumar RD$${total.toFixed(2)}.`
+    }
+    return null
   }
 
   // La caja debe estar ABIERTA y ser de la empresa del empleado.
@@ -365,6 +387,9 @@ export async function cobrarOrden(
     detalle = `${esCambio ? 'Cambio a ' : 'Plan '}${plan?.nombre ?? ''}`.trim()
     membershipId = m.id
 
+    const errMixto = validarMixto(monto)
+    if (errMixto) return { error: errMixto }
+
     // Activación (punto único): genera QR, aplica cambio de plan y registra
     // el historial. Rechaza estados no activables → anti doble-cobro.
     const res = await activarMembresia(m.id, auth.userId, metaAct)
@@ -388,6 +413,9 @@ export async function cobrarOrden(
     clienteNombre = c.cliente.nombre
     detalle = `Promoción ${c.promocion?.titulo ?? ''}`.trim()
 
+    const errMixto = validarMixto(monto)
+    if (errMixto) return { error: errMixto }
+
     const res = await activarCompraPromocion(c.id, auth.userId, metaAct, {
       motivo: `Cobro en caja (${metodoCobro.toLowerCase()})`,
     })
@@ -400,51 +428,78 @@ export async function cobrarOrden(
     clienteUserId = u?.id ?? null
   }
 
-  // Transacción de venta: historial permanente del cobro (quién, dónde, caja,
-  // método, monto, observaciones) con ticket y código TX únicos.
-  const tx = await crearTransaccionAplicada(prisma, {
-    tipo: 'SALE',
-    companyId: auth.companyId,
-    sucursalId: sesion.sucursalId,
-    clienteId,
-    empleadoId: auth.userId,
-    caja: sesion.sucursal.nombre,
-    cajaSesionId: sesion.id,
-    monto,
-    metodoCobro: metodoCobro as 'EFECTIVO' | 'TRANSFERENCIA' | 'OTRO',
-    membershipId,
-    snapshot: {
-      detalle,
-      cliente: clienteNombre,
-      empleado: auth.nombre,
-      sucursal: sesion.sucursal.nombre,
-      servicio: detalle,
-      ordenTipo,
-      ordenId,
-      observaciones,
-      // Factura: líneas estructuradas + totales (consultables e imprimibles).
-      lineas: [
-        {
-          descripcion: detalle,
-          cantidad: 1,
-          precioUnitario: monto,
-          descuento: 0,
-          total: monto,
-        },
-      ],
-      subtotal: monto.toFixed(2),
-      total: monto.toFixed(2),
-      metodoCobroLabel:
-        metodoCobro === 'EFECTIVO'
-          ? 'Efectivo'
-          : metodoCobro === 'TRANSFERENCIA'
-            ? 'Transferencia'
-            : 'Otro',
-    },
-    auditoria: { ipAddress: meta.ipAddress, userAgent: meta.userAgent },
-    resultado: observaciones,
-    userId: auth.userId,
-  })
+  // Transacciones de venta: historial permanente del cobro (quién, dónde,
+  // caja, método, monto, observaciones) con ticket y código TX únicos. En el
+  // pago MIXTO se crea UNA por parte (efectivo y transferencia): cada una
+  // suma en su método, así que el arqueo y los reportes cuadran solos.
+  const METODO_ETIQUETA: Record<string, string> = {
+    EFECTIVO: 'Efectivo',
+    TRANSFERENCIA: 'Transferencia',
+    OTRO: 'Otro',
+  }
+  const partes: { metodo: 'EFECTIVO' | 'TRANSFERENCIA' | 'OTRO'; monto: number }[] = esMixto
+    ? [
+        { metodo: 'EFECTIVO', monto: montoEfectivo },
+        { metodo: 'TRANSFERENCIA', monto: montoTransferencia },
+      ]
+    : [{ metodo: metodoCobro as 'EFECTIVO' | 'TRANSFERENCIA' | 'OTRO', monto }]
+
+  const txs: { codigo: string; ticketNumero: string }[] = []
+  let refMixto: string | null = null
+  for (const [i, parte] of partes.entries()) {
+    const etiquetaMetodo = esMixto
+      ? `${METODO_ETIQUETA[parte.metodo]} (pago mixto ${i + 1}/${partes.length})`
+      : METODO_ETIQUETA[parte.metodo]
+    const tx = await crearTransaccionAplicada(prisma, {
+      tipo: 'SALE',
+      companyId: auth.companyId,
+      sucursalId: sesion.sucursalId,
+      clienteId,
+      empleadoId: auth.userId,
+      caja: sesion.sucursal.nombre,
+      cajaSesionId: sesion.id,
+      monto: parte.monto,
+      metodoCobro: parte.metodo,
+      membershipId,
+      snapshot: {
+        detalle,
+        cliente: clienteNombre,
+        empleado: auth.nombre,
+        sucursal: sesion.sucursal.nombre,
+        servicio: detalle,
+        ordenTipo,
+        ordenId,
+        observaciones,
+        // Factura: líneas estructuradas + totales (consultables e imprimibles).
+        lineas: [
+          {
+            descripcion: detalle,
+            cantidad: 1,
+            precioUnitario: parte.monto,
+            descuento: 0,
+            total: parte.monto,
+          },
+        ],
+        subtotal: parte.monto.toFixed(2),
+        total: parte.monto.toFixed(2),
+        metodoCobroLabel: etiquetaMetodo,
+        // Trazabilidad del cobro dividido: total real y referencia cruzada
+        // al comprobante de la otra parte.
+        ...(esMixto
+          ? {
+              pagoMixto: true,
+              pagoMixtoTotal: monto.toFixed(2),
+              ...(refMixto ? { pagoMixtoRef: refMixto } : {}),
+            }
+          : {}),
+      },
+      auditoria: { ipAddress: meta.ipAddress, userAgent: meta.userAgent },
+      resultado: observaciones,
+      userId: auth.userId,
+    })
+    refMixto = refMixto ?? tx.codigo
+    txs.push(tx)
+  }
 
   await prisma.auditLog.create({
     data: {
@@ -453,7 +508,14 @@ export async function cobrarOrden(
       accion: 'COBRO_REGISTRADO',
       entidadTipo: ordenTipo === 'MEMBRESIA' ? 'Membership' : 'ProductoCompra',
       entidadId: ordenId,
-      payload: { codigo: tx.codigo, monto, metodoCobro, detalle, cajaSesionId },
+      payload: {
+        codigo: txs.map((t) => t.codigo).join(' + '),
+        monto,
+        metodoCobro,
+        ...(esMixto ? { montoEfectivo, montoTransferencia } : {}),
+        detalle,
+        cajaSesionId,
+      },
       ipAddress: meta.ipAddress,
       userAgent: meta.userAgent,
     },
@@ -471,5 +533,10 @@ export async function cobrarOrden(
   }
 
   revalidatePath('/empleado/caja')
-  return { success: true, detalle: `Cobro registrado · ${tx.codigo} (ticket ${tx.ticketNumero}).` }
+  return {
+    success: true,
+    detalle: esMixto
+      ? `Cobro mixto registrado · ${txs.map((t) => t.codigo).join(' + ')} (efectivo RD$${montoEfectivo.toFixed(2)} + transferencia RD$${montoTransferencia.toFixed(2)}).`
+      : `Cobro registrado · ${txs[0].codigo} (ticket ${txs[0].ticketNumero}).`,
+  }
 }

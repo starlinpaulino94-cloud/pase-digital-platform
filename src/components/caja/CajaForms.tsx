@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from 'react'
 import {
   Banknote,
+  Coins,
   Landmark,
   Loader2,
   Lock,
@@ -161,6 +162,7 @@ const ESTADO_CHIP: Record<string, string> = {
 const METODOS = [
   { value: 'EFECTIVO', label: 'Efectivo', icon: Banknote },
   { value: 'TRANSFERENCIA', label: 'Transferencia', icon: Landmark },
+  { value: 'MIXTO', label: 'Mixto', icon: Coins },
   { value: 'OTRO', label: 'Otro', icon: Wallet },
 ] as const
 
@@ -175,6 +177,12 @@ export function OrdenCobroCard({
   const [state, formAction, pending] = useActionState(cobrarOrden, initial)
   const [cobrando, setCobrando] = useState(false)
   const [metodo, setMetodo] = useState<string>('EFECTIVO')
+  // Pago mixto: el cajero escribe la parte en EFECTIVO y la transferencia se
+  // deriva del total (nunca quedan partes que no suman).
+  const [efectivoMixto, setEfectivoMixto] = useState('')
+  const efectivoNum = Math.round((Number(efectivoMixto) || 0) * 100) / 100
+  const transferenciaNum = Math.max(0, Math.round((orden.monto - efectivoNum) * 100) / 100)
+  const mixtoValido = efectivoNum > 0 && efectivoNum < orden.monto
   useToastState(state)
 
   if (state.success) {
@@ -235,7 +243,7 @@ export function OrdenCobroCard({
           <input type="hidden" name="ordenId" value={orden.id} />
           <input type="hidden" name="metodoCobro" value={metodo} />
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {METODOS.map(({ value, label, icon: Icon }) => (
               <button
                 key={value}
@@ -255,13 +263,52 @@ export function OrdenCobroCard({
             ))}
           </div>
 
+          {metodo === 'MIXTO' && (
+            <div className="space-y-2 rounded-xl border border-border/70 bg-muted/30 p-3">
+              <div className="flex items-center gap-2">
+                <Label htmlFor={`efectivo-${orden.id}`} className="w-28 shrink-0 text-xs">
+                  En efectivo
+                </Label>
+                <Input
+                  id={`efectivo-${orden.id}`}
+                  type="number"
+                  min={0.01}
+                  max={orden.monto}
+                  step="0.01"
+                  value={efectivoMixto}
+                  onChange={(e) => setEfectivoMixto(e.target.value)}
+                  placeholder="0.00"
+                  className="h-9"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Por transferencia:{' '}
+                <strong className="tabular-nums text-foreground">
+                  RD${transferenciaNum.toLocaleString('es-DO', { minimumFractionDigits: 2 })}
+                </strong>
+                {' '}(se registra un comprobante por cada parte).
+              </p>
+              {!mixtoValido && efectivoMixto !== '' && (
+                <p className="text-xs text-destructive">
+                  El efectivo debe ser mayor que 0 y menor que el total.
+                </p>
+              )}
+              <input type="hidden" name="montoEfectivo" value={efectivoNum} />
+              <input type="hidden" name="montoTransferencia" value={transferenciaNum} />
+            </div>
+          )}
+
           <Input name="observaciones" placeholder="Observaciones (opcional)" />
 
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => setCobrando(false)} className="flex-1">
               Cancelar
             </Button>
-            <Button type="submit" disabled={pending} className="flex-1 font-semibold">
+            <Button
+              type="submit"
+              disabled={pending || (metodo === 'MIXTO' && !mixtoValido)}
+              className="flex-1 font-semibold"
+            >
               {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Confirmar RD${orden.monto.toLocaleString('es-DO')}
             </Button>
