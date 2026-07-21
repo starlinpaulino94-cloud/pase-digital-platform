@@ -3,6 +3,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { vincularReferido } from '@/lib/referidos-attribution'
 import { registerLimiter } from '@/lib/rate-limit'
 import { TERMS_VERSION } from '@/lib/legal'
+import { otorgarBienvenidaDirecta } from '@/modules/invitaciones/beneficios'
+import { vincularRegalosPorContacto } from '@/modules/regalos/entrega'
 import { ROLE_HOME, type AppRole } from '@/types'
 
 /**
@@ -149,6 +151,16 @@ async function afiliarUsuarioExistente(
     await vincularReferido(refCode, company.id, cliente.id, ipAddress, {
       permitirCookie: false,
     })
+    // Regalo de bienvenida de la campaña activa del negocio + regalos P2P
+    // enviados a este correo antes de afiliarse. Aterriza en la celebración
+    // para reclamarlo de una vez.
+    await otorgarBienvenidaDirecta(cliente.id, company.id)
+    await vincularRegalosPorContacto({
+      clienteId: cliente.id,
+      companyId: company.id,
+      email,
+    })
+    return { kind: 'ok', dest: '/cliente/celebracion' }
   }
   return { kind: 'ok', dest: ROLE_HOME.CLIENTE }
 }
@@ -222,7 +234,18 @@ export async function completeGoogleOnboarding(
       vincularReferido(refCode, company.id, result.cliente.id, ipAddress),
     ])
 
-    return { kind: 'ok', dest: ROLE_HOME.CLIENTE }
+    // Regalo de bienvenida de la campaña activa (aunque no venga de un enlace)
+    // + regalos P2P enviados a este correo antes de tener cuenta.
+    await otorgarBienvenidaDirecta(result.cliente.id, company.id)
+    await vincularRegalosPorContacto({
+      clienteId: result.cliente.id,
+      companyId: company.id,
+      email,
+    })
+
+    // Lo primero que ve el recién registrado: la pantalla de reclamar su
+    // regalo de bienvenida (lavado gratis, etc.).
+    return { kind: 'ok', dest: '/cliente/celebracion' }
   } catch (e) {
     console.error('[google-onboarding] error:', e)
     return { kind: 'failed' }

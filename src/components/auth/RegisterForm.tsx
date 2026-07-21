@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { registrarCliente, type RegistroState } from '@/modules/registro/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import {
   Card,
@@ -46,7 +47,11 @@ export function RegisterForm({
   const nextRaw = searchParams.get('next') ?? ''
   const nextSeguro =
     nextRaw.startsWith('/') && !nextRaw.startsWith('//') ? nextRaw : null
-  const destino = nextSeguro ?? (glCode ? '/cliente/celebracion' : '/cliente/membresia')
+  // Por defecto TODO registro aterriza en la celebración (reclamar su regalo
+  // de bienvenida): el servidor lo entrega aunque el registro sea directo,
+  // sin enlace de invitación. Si no hubiera regalo, la pantalla ofrece
+  // "Ir a mi cuenta".
+  const destino = nextSeguro ?? '/cliente/celebracion'
   const [state, formAction, pending] = useActionState(registrarCliente, initial)
   // Al enviar guardamos las credenciales para iniciar sesión automáticamente
   // en cuanto el registro se complete (sin volver a la pantalla de login).
@@ -150,10 +155,9 @@ export function RegisterForm({
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Contraseña *</Label>
-              <Input
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
                 required
                 minLength={6}
                 className="bg-white/10 text-white"

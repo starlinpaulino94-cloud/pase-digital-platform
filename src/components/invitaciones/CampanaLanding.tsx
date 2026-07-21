@@ -13,6 +13,7 @@ import {
 } from '@/components/invitaciones/CelebracionOverlay'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { landingUrlFor } from '@/lib/site'
@@ -235,10 +236,9 @@ export function CampanaLanding({ campana, refCode, invitanteNombre }: Props) {
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="password">Contraseña</Label>
-        <Input
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
           required
           minLength={6}
           placeholder="Mínimo 6 caracteres"

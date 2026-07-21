@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import {
   Card,
@@ -128,10 +128,10 @@ export default function ActualizarPasswordPage() {
             )}
             <div className="space-y-2">
               <Label htmlFor="password">Nueva contraseña</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 required
+                minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="bg-white/10 text-white"
@@ -140,10 +140,10 @@ export default function ActualizarPasswordPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirm">Confirmar contraseña</Label>
-              <Input
+              <PasswordInput
                 id="confirm"
-                type="password"
                 required
+                minLength={6}
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 className="bg-white/10 text-white"

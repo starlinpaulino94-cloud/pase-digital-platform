@@ -7,7 +7,7 @@ import { registerLimiter } from '@/lib/rate-limit'
 import { getRequestMeta } from '@/lib/server-utils'
 import { vincularReferido } from '@/lib/referidos-attribution'
 import { ensureCodigoCorto } from '@/lib/referidos'
-import { otorgarRegaloBienvenida } from '@/modules/invitaciones/beneficios'
+import { otorgarRegaloBienvenida, otorgarBienvenidaDirecta } from '@/modules/invitaciones/beneficios'
 import { vincularRegalosPorContacto } from '@/modules/regalos/entrega'
 import { procesarRegistroGrowth } from '@/modules/growth/registro'
 import { emitirEventoEstrategia } from '@/modules/estrategias/eventos'
@@ -222,11 +222,15 @@ export async function registrarCliente(
         campanaInvitacionId,
       })
 
-      // Regalo de bienvenida de la campaña: garantizado para TODO registro
-      // que venga de ella (con o sin código de amigo). Idempotente con la
-      // entrega del motor de referidos.
+      // Regalo de bienvenida: si el registro vino de una campaña, el de ESA
+      // campaña; si fue DIRECTO (sin enlace), el de la campaña activa del
+      // negocio — todo registro recibe su regalo, venga de donde venga.
+      let campanaBienvenida = campanaInvitacionId
       if (campanaInvitacionId) {
         await otorgarRegaloBienvenida(campanaInvitacionId, cliente.id, company.id)
+      } else {
+        campanaBienvenida =
+          (await otorgarBienvenidaDirecta(cliente.id, company.id)) ?? undefined
       }
 
       await emitirEventoEstrategia({
@@ -248,7 +252,7 @@ export async function registrarCliente(
       return {
         success: true,
         codigoInvitacion: await codigoInvitacionDe(cliente.id),
-        qrBienvenida: await qrBienvenidaDe(cliente.id, campanaInvitacionId),
+        qrBienvenida: await qrBienvenidaDe(cliente.id, campanaBienvenida),
       }
     } catch (e) {
       console.error('[registro] afiliación a nueva empresa error:', e)
@@ -350,11 +354,15 @@ export async function registrarCliente(
       campanaInvitacionId,
     })
 
-    // Regalo de bienvenida de la campaña: garantizado para TODO registro que
-    // venga de ella (con o sin código de amigo). Idempotente con la entrega
-    // del motor de referidos.
+    // Regalo de bienvenida: de la campaña que trajo al usuario, o —en el
+    // registro DIRECTO sin enlace— el de la campaña activa del negocio.
+    // Idempotente con la entrega del motor de referidos.
+    let campanaBienvenida = campanaInvitacionId
     if (campanaInvitacionId) {
       await otorgarRegaloBienvenida(campanaInvitacionId, result.cliente.id, company.id)
+    } else {
+      campanaBienvenida =
+        (await otorgarBienvenidaDirecta(result.cliente.id, company.id)) ?? undefined
     }
 
     // Growth Engine 3.0: atribución al enlace + beneficio de bienvenida +
@@ -384,7 +392,7 @@ export async function registrarCliente(
 
     const [codigoInvitacion, qrBienvenida] = await Promise.all([
       codigoInvitacionDe(result.cliente.id),
-      qrBienvenidaDe(result.cliente.id, campanaInvitacionId),
+      qrBienvenidaDe(result.cliente.id, campanaBienvenida),
     ])
     if (verificarCorreo) {
       await sendVerificationEmail(admin, email, nombre)
