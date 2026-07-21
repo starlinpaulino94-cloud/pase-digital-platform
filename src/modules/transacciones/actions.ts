@@ -333,6 +333,80 @@ export async function anularTransaccion(
   }
 }
 
+/**
+ * Anulación MASIVA: pasa a CANCELLED todas las transacciones APLICADAS de un
+ * cliente (limpieza de cuentas de PRUEBA / corrección contable). Dejan de
+ * sumar en ganancias, cierres, cuadres y reportes al instante. Nada se
+ * elimina: cada transacción conserva su historial, se registra la transición
+ * con el motivo y queda un AuditLog con el total anulado.
+ */
+export async function anularTransaccionesCliente(
+  clienteId: string,
+  motivo: string
+): Promise<{ error?: string; success?: boolean; anuladas?: number }> {
+  try {
+    const user = await getUser()
+    if (!user || !ADMIN_ROLES.includes(user.metadata.role)) {
+      return { error: 'No autorizado.' }
+    }
+    const motivoLimpio = motivo.trim()
+    if (motivoLimpio.length < 3) return { error: 'Indica el motivo de la anulación.' }
+
+    const cliente = await prisma.cliente.findUnique({
+      where: { id: clienteId },
+      select: { companyId: true, nombre: true },
+    })
+    if (!cliente) return { error: 'Cliente no encontrado.' }
+    if (!autorizado(user, cliente.companyId)) return { error: 'No autorizado.' }
+
+    const aplicadas = await prisma.transaction.findMany({
+      where: { clienteId, companyId: cliente.companyId, estado: 'APPLIED' },
+      select: { id: true },
+    })
+    if (aplicadas.length === 0) return { success: true, anuladas: 0 }
+
+    // Guard atómico por fila: solo cambia lo que sigue APPLIED.
+    const res = await prisma.transaction.updateMany({
+      where: { id: { in: aplicadas.map((t) => t.id) }, estado: 'APPLIED' },
+      data: { estado: 'CANCELLED', cancelledAt: new Date() },
+    })
+    await prisma.transactionTransicion
+      .createMany({
+        data: aplicadas.map((t) => ({
+          transactionId: t.id,
+          desde: 'APPLIED' as const,
+          hacia: 'CANCELLED' as const,
+          motivo: motivoLimpio.slice(0, 300),
+          userId: user.metadata.dbUserId ?? null,
+        })),
+      })
+      .catch((e) => console.error('[transacciones] transiciones masivas:', e))
+
+    const meta = await getRequestMeta()
+    await prisma.auditLog
+      .create({
+        data: {
+          companyId: cliente.companyId,
+          userId: user.metadata.dbUserId ?? null,
+          accion: 'TRANSACCION_ANULADA',
+          entidadTipo: 'Cliente',
+          entidadId: clienteId,
+          payload: { motivo: motivoLimpio, anuladas: res.count, masiva: true, cliente: cliente.nombre },
+          ...meta,
+        },
+      })
+      .catch(() => {})
+
+    revalidatePath('/admin/registros')
+    revalidatePath('/admin/facturas')
+    revalidatePath(`/admin/clientes/${clienteId}`)
+    return { success: true, anuladas: res.count }
+  } catch (e) {
+    console.error('[transacciones] anularTransaccionesCliente:', e)
+    return { error: 'No se pudieron anular las transacciones.' }
+  }
+}
+
 // ── Plantilla del comprobante por empresa (personalizable sin código) ─────────
 
 const MAX_TEXTO = 200

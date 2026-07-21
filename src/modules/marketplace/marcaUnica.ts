@@ -24,6 +24,27 @@ export interface EmpresaPrincipal {
   ciudad: string | null
 }
 
+/**
+ * true mientras el marketplace tenga UNA sola empresa publicada (modo marca
+ * única). Las pantallas multi-empresa (explorar, etc.) se saltan solas y
+ * reaparecen automáticamente cuando entre la segunda empresa.
+ */
+export const esMarcaUnica = unstable_cache(
+  async (): Promise<boolean> => {
+    try {
+      const total = await prisma.company.count({
+        where: { isActive: true, isPublished: true },
+      })
+      return total <= 1
+    } catch (e) {
+      console.error('[marcaUnica] count', e)
+      return false
+    }
+  },
+  ['marca-unica'],
+  { revalidate: 300, tags: [MARKETPLACE_TAG] }
+)
+
 export const getEmpresaPrincipal = unstable_cache(
   async (): Promise<EmpresaPrincipal | null> => {
     try {
