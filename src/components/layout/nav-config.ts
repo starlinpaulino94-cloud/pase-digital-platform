@@ -29,6 +29,7 @@ import {
   Banknote,
   ReceiptText,
   FileText,
+  HeartHandshake,
   Trophy,
   CalendarDays,
   Palette,
@@ -170,6 +171,7 @@ const CLIENTE_NAV: NavGroup[] = [
     items: [
       { href: '/cliente/promociones', label: 'Promociones', icon: Megaphone },
       { href: '/cliente/mis-promociones', label: 'Mis beneficios', icon: Ticket },
+      { href: '/cliente/regalos', label: 'Regalos', icon: HeartHandshake },
       // Unificación: el antiguo módulo "Referidos" vive dentro de Invita y Gana.
       { href: '/cliente/invita-y-gana', label: 'Invita y Gana', icon: Gift },
       { href: '/cliente/ruleta', label: 'Ruleta de premios', icon: Trophy },

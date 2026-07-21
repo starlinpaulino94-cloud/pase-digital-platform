@@ -1,9 +1,14 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
 import { ensureCodigoCorto } from '@/lib/referidos'
 import { createRateLimiter } from '@/lib/rate-limit'
+import { getRegalosConfig } from '@/modules/regalos/config'
+import { devolverUsos } from '@/modules/regalos/queries'
+import { registrarEntregaBeneficio } from '@/modules/transacciones/entrega'
+import { crearNotificacion } from '@/modules/notificaciones/service'
 
 /**
  * Regalos P2P · Fase R1 (docs/REGALOS-P2P.md).
@@ -116,6 +121,378 @@ export async function buscarDestinatario(
       codigo: c.codigoCorto,
     })),
   }
+}
+
+// ── Fase R2 · Transferir usos ────────────────────────────────────────────────
+
+/** Notifica al User dueño de un Cliente (si tiene cuenta vinculada). */
+async function notificarCliente(
+  clienteId: string,
+  titulo: string,
+  mensaje: string,
+  href: string
+) {
+  try {
+    const cliente = await prisma.cliente.findUnique({
+      where: { id: clienteId },
+      select: { supabaseId: true },
+    })
+    if (!cliente?.supabaseId) return
+    const u = await prisma.user.findUnique({
+      where: { supabaseId: cliente.supabaseId },
+      select: { id: true },
+    })
+    if (u) await crearNotificacion({ userId: u.id, tipo: 'SISTEMA', titulo, mensaje, href })
+  } catch (e) {
+    console.error('[regalos] notificar', e)
+  }
+}
+
+export interface RegaloActionState {
+  error?: string
+  success?: boolean
+  detalle?: string
+}
+
+/**
+ * Envía una transferencia de usos (wallet o lavados del plan) a otro cliente
+ * de la MISMA empresa. Los usos se RESERVAN al enviar (descuento atómico) y
+ * se devuelven si el regalo se rechaza, expira o se cancela.
+ */
+export async function enviarTransferencia(
+  _prev: RegaloActionState,
+  formData: FormData
+): Promise<RegaloActionState> {
+  const user = await getUser()
+  if (!user || user.metadata.role !== 'CLIENTE') return { error: 'No autorizado.' }
+  const { clienteId, companyId } = user.metadata
+  if (!clienteId || !companyId) return { error: 'Tu cuenta no está vinculada a una empresa.' }
+
+  const origen = String(formData.get('origen') ?? '')
+  const origenId = String(formData.get('origenId') ?? '').trim()
+  const destinatarioId = String(formData.get('destinatarioId') ?? '').trim()
+  const usos = Math.trunc(Number(formData.get('usos') ?? 1))
+  const mensaje = String(formData.get('mensaje') ?? '').trim().slice(0, 200) || null
+
+  if (!['COMPRA', 'MEMBRESIA'].includes(origen)) return { error: 'Origen no válido.' }
+  if (!origenId || !destinatarioId) return { error: 'Datos incompletos.' }
+  if (destinatarioId === clienteId) return { error: 'No puedes enviarte un regalo a ti mismo.' }
+  if (!Number.isFinite(usos) || usos < 1 || usos > 20) return { error: 'Cantidad de usos no válida.' }
+
+  const config = await getRegalosConfig(companyId)
+  if (!config.permitirTransferencias) {
+    return { error: 'El negocio no tiene activadas las transferencias entre usuarios.' }
+  }
+
+  // Límite mensual (anti-abuso): cuenta lo enviado este mes que no fue cancelado.
+  const inicioMes = new Date()
+  inicioMes.setDate(1)
+  inicioMes.setHours(0, 0, 0, 0)
+  const enviadasMes = await prisma.regalo.count({
+    where: {
+      remitenteId: clienteId,
+      tipo: 'TRANSFERENCIA_USOS',
+      createdAt: { gte: inicioMes },
+      estado: { not: 'CANCELADO' },
+    },
+  })
+  if (enviadasMes >= config.maxTransferenciasMes) {
+    return { error: `Alcanzaste el límite de ${config.maxTransferenciasMes} transferencias este mes.` }
+  }
+
+  // Destinatario: mismo negocio, existente.
+  const destinatario = await prisma.cliente.findFirst({
+    where: { id: destinatarioId, companyId },
+    select: { id: true, nombre: true },
+  })
+  if (!destinatario) return { error: 'Destinatario no encontrado en este negocio.' }
+
+  // Origen + RESERVA atómica de los usos (guard de saldo contra doble gasto).
+  let promocionId: string | null = null
+  let compraOrigenId: string | null = null
+  let membershipOrigenId: string | null = null
+  let etiqueta = ''
+
+  if (origen === 'COMPRA') {
+    const compra = await prisma.productoCompra.findFirst({
+      where: {
+        id: origenId,
+        clienteId,
+        companyId,
+        estado: 'ACTIVA',
+        promocionId: { not: null },
+        // Anti-farmeo: los beneficios gratis (campaña/ruleta/bienvenida) no se
+        // transfieren; solo compras con precio real.
+        precioCongelado: { gt: 0 },
+      },
+      select: { id: true, promocionId: true, promocion: { select: { titulo: true } } },
+    })
+    if (!compra) return { error: 'Ese beneficio no existe o no es transferible.' }
+    const res = await prisma.productoCompra.updateMany({
+      where: { id: compra.id, usosRestantes: { gte: usos } },
+      data: { usosRestantes: { decrement: usos } },
+    })
+    if (res.count === 0) return { error: 'No tienes suficientes usos disponibles.' }
+    compraOrigenId = compra.id
+    promocionId = compra.promocionId
+    etiqueta = compra.promocion?.titulo ?? 'Beneficio'
+  } else {
+    const membresia = await prisma.membership.findFirst({
+      where: {
+        id: origenId,
+        cliente: { id: clienteId },
+        estado: 'ACTIVA',
+        OR: [{ fechaVencimiento: null }, { fechaVencimiento: { gt: new Date() } }],
+      },
+      select: { id: true, plan: { select: { nombre: true } } },
+    })
+    if (!membresia) return { error: 'No tienes una membresía activa con lavados.' }
+    // El receptor necesita membresía ACTIVA: los lavados del plan viven en el plan.
+    const memDest = await prisma.membership.findFirst({
+      where: {
+        cliente: { id: destinatarioId },
+        estado: 'ACTIVA',
+        OR: [{ fechaVencimiento: null }, { fechaVencimiento: { gt: new Date() } }],
+      },
+      select: { id: true },
+    })
+    if (!memDest) {
+      return {
+        error:
+          'Tu amigo necesita una membresía activa para recibir lavados del plan. Puedes transferirle usos de una promoción de tu wallet.',
+      }
+    }
+    const res = await prisma.membership.updateMany({
+      where: { id: membresia.id, lavadosRestantes: { gte: usos } },
+      data: { lavadosRestantes: { decrement: usos } },
+    })
+    if (res.count === 0) return { error: 'No tienes suficientes lavados disponibles.' }
+    membershipOrigenId = membresia.id
+    etiqueta = `Lavados del plan ${membresia.plan.nombre}`
+  }
+
+  const regalo = await prisma.regalo.create({
+    data: {
+      companyId,
+      tipo: 'TRANSFERENCIA_USOS',
+      remitenteId: clienteId,
+      destinatarioId,
+      compraOrigenId,
+      membershipOrigenId,
+      promocionId,
+      usos,
+      mensaje,
+      expiraAt: new Date(Date.now() + config.vigenciaHoras * 60 * 60 * 1000),
+    },
+    select: { id: true },
+  })
+
+  await notificarCliente(
+    destinatarioId,
+    '🎁 Te enviaron un regalo',
+    `Te transfirieron ${usos} uso${usos !== 1 ? 's' : ''} de ${etiqueta}. Acéptalo antes de que expire.`,
+    '/cliente/regalos'
+  )
+
+  revalidatePath('/cliente/regalos')
+  revalidatePath('/cliente/mis-promociones')
+  return { success: true, detalle: `Regalo enviado a ${destinatario.nombre.split(/\s+/)[0]}. ID ${regalo.id.slice(-6)}` }
+}
+
+/** Acepta o rechaza un regalo PENDIENTE dirigido al usuario autenticado. */
+export async function responderRegalo(
+  _prev: RegaloActionState,
+  formData: FormData
+): Promise<RegaloActionState> {
+  const user = await getUser()
+  if (!user || user.metadata.role !== 'CLIENTE') return { error: 'No autorizado.' }
+  const clienteId = user.metadata.clienteId
+  if (!clienteId) return { error: 'Tu cuenta no está vinculada a una empresa.' }
+
+  const regaloId = String(formData.get('regaloId') ?? '').trim()
+  const aceptar = String(formData.get('decision') ?? '') === 'aceptar'
+
+  const regalo = await prisma.regalo.findFirst({
+    where: { id: regaloId, destinatarioId: clienteId, estado: 'PENDIENTE' },
+    include: { remitente: { select: { id: true, nombre: true } } },
+  })
+  if (!regalo) return { error: 'Este regalo ya no está pendiente.' }
+
+  // ¿Expiró? Se marca y se devuelven los usos al remitente.
+  if (regalo.expiraAt < new Date()) {
+    const upd = await prisma.regalo.updateMany({
+      where: { id: regalo.id, estado: 'PENDIENTE' },
+      data: { estado: 'EXPIRADO', resueltoAt: new Date() },
+    })
+    if (upd.count > 0) await devolverUsos(regalo).catch(() => {})
+    revalidatePath('/cliente/regalos')
+    return { error: 'Este regalo expiró y los usos volvieron a tu amigo.' }
+  }
+
+  const remitenteNombre = regalo.remitente.nombre.split(/\s+/)[0]
+
+  if (!aceptar) {
+    const upd = await prisma.regalo.updateMany({
+      where: { id: regalo.id, estado: 'PENDIENTE' },
+      data: { estado: 'RECHAZADO', resueltoAt: new Date() },
+    })
+    if (upd.count === 0) return { error: 'Este regalo ya no está pendiente.' }
+    await devolverUsos(regalo).catch((e) => console.error('[regalos] refund rechazo', e))
+    await notificarCliente(
+      regalo.remitenteId,
+      'Regalo rechazado',
+      'Tu transferencia fue rechazada; tus usos volvieron a tu cuenta.',
+      '/cliente/regalos'
+    )
+    revalidatePath('/cliente/regalos')
+    return { success: true, detalle: 'Regalo rechazado. Los usos volvieron a tu amigo.' }
+  }
+
+  // ── Aceptar ────────────────────────────────────────────────────────────────
+  let etiqueta = 'Beneficio'
+  let compraDestinoId: string | null = null
+  let membershipDestinoId: string | null = null
+
+  if (regalo.compraOrigenId && regalo.promocionId) {
+    // Compra ESPEJO en la wallet del receptor: hereda promoción, precio y
+    // vencimiento del origen → el canje con QR funciona sin cambios.
+    const origenCompra = await prisma.productoCompra.findUnique({
+      where: { id: regalo.compraOrigenId },
+      select: { precioCongelado: true, fechaVencimiento: true, promocion: { select: { titulo: true } } },
+    })
+    etiqueta = origenCompra?.promocion?.titulo ?? 'Beneficio'
+    const espejo = await prisma.productoCompra.create({
+      data: {
+        tipo: 'PROMOCION',
+        estado: 'ACTIVA',
+        companyId: regalo.companyId,
+        clienteId,
+        promocionId: regalo.promocionId,
+        precioCongelado: origenCompra?.precioCongelado ?? null,
+        pagoConfirmado: true,
+        usosIncluidos: regalo.usos,
+        usosRestantes: regalo.usos,
+        fechaActivacion: new Date(),
+        fechaVencimiento: origenCompra?.fechaVencimiento ?? null,
+        adminNota: `Transferencia P2P de ${regalo.remitente.nombre} (regalo ${regalo.id})`,
+      },
+      select: { id: true },
+    })
+    compraDestinoId = espejo.id
+  } else if (regalo.membershipOrigenId) {
+    // Lavados del plan → a la membresía ACTIVA del receptor (revalidada aquí).
+    const memDest = await prisma.membership.findFirst({
+      where: {
+        cliente: { id: clienteId },
+        estado: 'ACTIVA',
+        OR: [{ fechaVencimiento: null }, { fechaVencimiento: { gt: new Date() } }],
+      },
+      select: { id: true, plan: { select: { nombre: true } } },
+    })
+    if (!memDest) {
+      return { error: 'Necesitas una membresía activa para recibir estos lavados.' }
+    }
+    etiqueta = 'Lavados del plan'
+    await prisma.membership.update({
+      where: { id: memDest.id },
+      data: { lavadosRestantes: { increment: regalo.usos } },
+    })
+    membershipDestinoId = memDest.id
+  } else {
+    return { error: 'Este regalo tiene un contenido no válido.' }
+  }
+
+  // Guard atómico del estado: si otra pestaña lo aceptó primero, deshacemos.
+  const upd = await prisma.regalo.updateMany({
+    where: { id: regalo.id, estado: 'PENDIENTE' },
+    data: { estado: 'ACEPTADO', resueltoAt: new Date(), compraDestinoId, membershipDestinoId },
+  })
+  if (upd.count === 0) {
+    if (compraDestinoId) {
+      await prisma.productoCompra.delete({ where: { id: compraDestinoId } }).catch(() => {})
+    }
+    if (membershipDestinoId) {
+      await prisma.membership
+        .update({ where: { id: membershipDestinoId }, data: { lavadosRestantes: { decrement: regalo.usos } } })
+        .catch(() => {})
+    }
+    return { error: 'Este regalo ya fue procesado.' }
+  }
+
+  // Comprobantes (G3): una Transaction por cada parte, reimprimibles.
+  const receptor = await prisma.cliente.findUnique({
+    where: { id: clienteId },
+    select: { nombre: true },
+  })
+  const [txRem, txDest] = await Promise.all([
+    registrarEntregaBeneficio({
+      tipo: 'BENEFIT_USE',
+      companyId: regalo.companyId,
+      clienteId: regalo.remitenteId,
+      clienteNombre: regalo.remitente.nombre,
+      empleadoId: null,
+      beneficio: `Transferencia enviada · ${etiqueta}`,
+      detalle: `Transferencia de ${regalo.usos} uso(s) de ${etiqueta} a ${receptor?.nombre ?? 'otro usuario'}`,
+      observaciones: regalo.mensaje,
+    }),
+    registrarEntregaBeneficio({
+      tipo: 'BENEFIT_USE',
+      companyId: regalo.companyId,
+      clienteId,
+      clienteNombre: receptor?.nombre ?? 'Cliente',
+      empleadoId: null,
+      beneficio: etiqueta,
+      detalle: `Regalo recibido de ${regalo.remitente.nombre}: ${regalo.usos} uso(s) de ${etiqueta}`,
+      restantes: regalo.usos,
+      observaciones: regalo.mensaje,
+    }),
+  ])
+  await prisma.regalo
+    .update({
+      where: { id: regalo.id },
+      data: { txRemitenteId: txRem?.id ?? null, txDestinatarioId: txDest?.id ?? null },
+    })
+    .catch(() => {})
+
+  await notificarCliente(
+    regalo.remitenteId,
+    '🎉 Aceptaron tu regalo',
+    `${receptor?.nombre?.split(/\s+/)[0] ?? 'Tu amigo'} aceptó tu transferencia de ${etiqueta}.`,
+    '/cliente/regalos'
+  )
+
+  revalidatePath('/cliente/regalos')
+  revalidatePath('/cliente/mis-promociones')
+  return { success: true, detalle: `¡Listo! Recibiste ${regalo.usos} uso${regalo.usos !== 1 ? 's' : ''} de ${etiqueta} de ${remitenteNombre}.` }
+}
+
+/** El remitente cancela un regalo PENDIENTE: recupera sus usos. */
+export async function cancelarRegalo(
+  _prev: RegaloActionState,
+  formData: FormData
+): Promise<RegaloActionState> {
+  const user = await getUser()
+  if (!user || user.metadata.role !== 'CLIENTE') return { error: 'No autorizado.' }
+  const clienteId = user.metadata.clienteId
+  if (!clienteId) return { error: 'Tu cuenta no está vinculada a una empresa.' }
+
+  const regaloId = String(formData.get('regaloId') ?? '').trim()
+  const regalo = await prisma.regalo.findFirst({
+    where: { id: regaloId, remitenteId: clienteId, estado: 'PENDIENTE' },
+    select: { id: true, compraOrigenId: true, membershipOrigenId: true, usos: true },
+  })
+  if (!regalo) return { error: 'Este regalo ya no está pendiente.' }
+
+  const upd = await prisma.regalo.updateMany({
+    where: { id: regalo.id, estado: 'PENDIENTE' },
+    data: { estado: 'CANCELADO', resueltoAt: new Date() },
+  })
+  if (upd.count === 0) return { error: 'Este regalo ya fue procesado.' }
+  await devolverUsos(regalo).catch((e) => console.error('[regalos] refund cancel', e))
+
+  revalidatePath('/cliente/regalos')
+  revalidatePath('/cliente/mis-promociones')
+  return { success: true, detalle: 'Regalo cancelado. Tus usos volvieron a tu cuenta.' }
 }
 
 /**

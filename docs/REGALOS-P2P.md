@@ -182,10 +182,33 @@ de destinatarios (server action con máscara + rate-limit), esquema `Regalo` +
 >   grande + QR + copiar + compartir nativo), con degradación si la BD aún no
 >   está migrada. Verificado con tsc, eslint y `next build`.
 
-**R2 — Transferir usos (el corazón)**
+**R2 — Transferir usos (el corazón)** — ✅ *Hecha.*
 Botón *Transferir* en Mis beneficios, flujo enviar→aceptar/rechazar/expirar,
 módulo `/cliente/regalos` (enviados/recibidos), notificaciones, comprobantes
 (2 Transactions), celebración del receptor, límites anti-abuso.
+
+> **✅ R2 implementada:**
+> - **Acciones** (`src/modules/regalos/actions.ts`): `enviarTransferencia`
+>   (reserva ATÓMICA de usos al enviar con guard de saldo; valida config de
+>   empresa, límite mensual, destinatario de la misma empresa, anti-farmeo
+>   —solo compras con `precioCongelado > 0`— y, para lavados del plan,
+>   membresía activa del receptor), `responderRegalo` (aceptar crea compra
+>   ESPEJO en la wallet del receptor —hereda promoción/precio/vencimiento, el
+>   canje QR funciona sin cambios— o suma lavados a su membresía; rechazar/
+>   expirar devuelve los usos; guards atómicos con deshacer), `cancelarRegalo`.
+> - **Comprobantes**: al aceptar se emiten 2 Transactions (`BENEFIT_USE`, via
+>   `registrarEntregaBeneficio`) — comprobante reimprimible para cada parte,
+>   visibles en `/admin/registros`.
+> - **Expiración perezosa** (sin cron): al listar o responder, los pendientes
+>   vencidos pasan a EXPIRADO y devuelven usos (`expirarPendientesVencidos`).
+> - **UI**: módulo `/cliente/regalos` (Recibidos con Aceptar/Rechazar +
+>   Enviados con Cancelar, dedicatorias, chips de estado y expiración) y
+>   `/cliente/regalos/enviar` (3 pasos: destinatario @ID/búsqueda con
+>   confirmación → fuente wallet o lavados del plan + cantidad → dedicatoria).
+>   Entrada "Regalos" en el menú del cliente y botón **"Transferir a un
+>   amigo"** en Mis beneficios. Aceptar lleva a `/cliente/celebracion`
+>   ("Reclamar mi X ahora"). Notificaciones a ambas partes en cada paso.
+>   Verificado con tsc, eslint y `next build`.
 
 **R3 — Regalar compra/membresía nueva (pagada)**
 `beneficiarioClienteId` en el checkout de promos y planes ("¿Es un regalo?"),
@@ -197,11 +220,12 @@ Vista admin con métricas, cancelación admin, recordatorio automático de
 regalos por expirar (automatizaciones), agradecimiento al aceptar, y (si el
 negocio quiere) "gift cards" de monto abierto.
 
-## 8. Decisiones que necesita confirmar el negocio
+## 8. Decisiones del negocio — ✅ CONFIRMADAS (2026-07-21)
 
-1. ¿Transferencias de **lavados de membresía** (además de promos de wallet)?
-   Recomendado: empezar solo con wallet (R2) y abrir membresías después.
-2. Vigencia del regalo pendiente: ¿72 h está bien?
-3. ¿Los regalos pagados (R3) permiten pagar en sucursal, o solo transferencia?
-   Recomendado: ambos (ya existe el flujo completo de pagos).
-4. Límite mensual de transferencias por cliente (default propuesto: 3).
+1. **Lavados de membresía: SÍ se transfieren** (además de la wallet). Regla
+   técnica: como los lavados del plan viven en la membresía, el receptor debe
+   tener una **membresía activa** para recibirlos (se validan al enviar y al
+   aceptar); si no la tiene, se le sugiere transferir usos de wallet.
+2. Vigencia del regalo pendiente: **72 h** ✔ (configurable por empresa).
+3. Regalos pagados (R3): **transferencia Y pago en sucursal** ✔.
+4. Límite mensual: **3 transferencias/cliente** ✔ (configurable).

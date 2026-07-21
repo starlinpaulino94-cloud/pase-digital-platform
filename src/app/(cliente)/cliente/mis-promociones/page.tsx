@@ -133,11 +133,20 @@ export default async function MisPromocionesPage() {
 
   return (
     <div className="space-y-6 animate-fade-up">
-      <div>
-        <h1 className="text-h1 text-foreground">Mis beneficios</h1>
-        <p className="text-small text-muted-foreground">
-          Tu centro de recompensas: lo que puedes usar hoy, lo que está en camino y lo que ya disfrutaste.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-h1 text-foreground">Mis beneficios</h1>
+          <p className="text-small text-muted-foreground">
+            Tu centro de recompensas: lo que puedes usar hoy, lo que está en camino y lo que ya disfrutaste.
+          </p>
+        </div>
+        {/* Regalos P2P · R2: transferir usos propios a otro usuario. */}
+        <Link
+          href="/cliente/regalos/enviar"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-border/70 px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
+        >
+          <Gift className="h-4 w-4 text-primary" /> Transferir a un amigo
+        </Link>
       </div>
 
       {/* Regalos VIP reclamados (ofertas privadas) */}
