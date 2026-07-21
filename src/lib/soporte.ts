@@ -12,7 +12,7 @@ export const MENSAJE_DEFAULT =
  * pública. Un solo lugar para cambiarlo.
  */
 export const SOPORTE_PLATAFORMA = {
-  email: 'soporte@membego.com',
+  email: 'contacto@membego.com',
   whatsappCodigoPais: '1',
   whatsappNumero: '8299618220',
   whatsappDisplay: '+1 829 961 8220',
