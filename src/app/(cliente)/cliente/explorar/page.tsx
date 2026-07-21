@@ -1,6 +1,8 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { Search, Store } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
+import { esMarcaUnica } from '@/modules/marketplace/marcaUnica'
 import { getCompaniesPublic, getCategoriesPublic } from '@/modules/marketplace/cached'
 import { getSeguidasIds } from '@/modules/social/queries'
 import { ExplorarEmpresasList } from '@/components/cliente/ExplorarEmpresasList'
@@ -21,6 +23,12 @@ export default async function ExplorarEmpresasPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const user = await requireRole('CLIENTE')
+
+  // Marca única: con UNA sola empresa publicada no se muestra el explorador
+  // multi-empresa — el cliente va directo a las membresías del negocio.
+  // Cuando haya más empresas, esta pantalla reaparece sola.
+  if (await esMarcaUnica()) redirect('/cliente/planes')
+
   const params = await searchParams
   const search = typeof params.q === 'string' ? params.q.trim() : ''
   const category = typeof params.category === 'string' ? params.category : ''

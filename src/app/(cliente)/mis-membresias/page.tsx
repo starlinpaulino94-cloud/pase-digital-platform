@@ -5,6 +5,7 @@ import { differenceInDays } from 'date-fns'
 import { getUser } from '@/lib/auth'
 import { membresiaEstadoUi } from '@/lib/estados'
 import { getClienteAllMemberships } from '@/modules/cliente/queries'
+import { esMarcaUnica } from '@/modules/marketplace/marcaUnica'
 import { WalletStack, type WalletStackItem } from '@/components/wallet/WalletStack'
 import { AnimatedCounter } from '@/components/system/AnimatedCounter'
 import { EmptyState } from '@/components/system/EmptyState'
@@ -63,6 +64,10 @@ export default async function MisMembresias() {
   if (!user || !user.supabaseId) {
     redirect('/login')
   }
+
+  // Marca única: la wallet vacía invita a los planes del negocio, no a
+  // "explorar empresas" (ese lenguaje vuelve cuando haya más de una).
+  const marcaUnica = await esMarcaUnica().catch(() => false)
 
   let memberships: Awaited<ReturnType<typeof getClienteAllMemberships>> = []
   let loadError = false
@@ -152,11 +157,19 @@ export default async function MisMembresias() {
         <EmptyState
           icon={CreditCard}
           title="Tu wallet está lista"
-          description="Explora las empresas disponibles y activa tu primera membresía para empezar a disfrutar beneficios con tu QR."
+          description={
+            marcaUnica
+              ? 'Activa tu primera membresía para empezar a disfrutar beneficios con tu QR.'
+              : 'Explora las empresas disponibles y activa tu primera membresía para empezar a disfrutar beneficios con tu QR.'
+          }
           action={
             <>
               <Button asChild size="lg">
-                <Link href="/cliente/explorar">Explorar empresas</Link>
+                {marcaUnica ? (
+                  <Link href="/cliente/planes">Ver membresías</Link>
+                ) : (
+                  <Link href="/cliente/explorar">Explorar empresas</Link>
+                )}
               </Button>
               <Button asChild size="lg" variant="outline">
                 <Link href="/cliente/promociones">Ver ofertas</Link>
