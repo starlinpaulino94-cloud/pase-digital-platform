@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { Mail, MessageCircle } from 'lucide-react'
+import { buildWaLink, SOPORTE_PLATAFORMA } from '@/lib/soporte'
 
 const COLUMNAS = [
   {
@@ -57,6 +59,29 @@ export function PublicFooter() {
               Tu membresía digital: beneficios, promociones y tu QR siempre
               contigo.
             </p>
+            {/* Ayuda y soporte de la plataforma */}
+            <div className="mt-4 space-y-2 text-sm">
+              <a
+                href={buildWaLink(
+                  SOPORTE_PLATAFORMA.whatsappCodigoPais,
+                  SOPORTE_PLATAFORMA.whatsappNumero,
+                  'Hola, necesito ayuda con MembeGo.'
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-muted-foreground transition-colors duration-150 hover:text-white"
+              >
+                <MessageCircle className="h-4 w-4 text-emerald-400" aria-hidden />
+                {SOPORTE_PLATAFORMA.whatsappDisplay}
+              </a>
+              <a
+                href={`mailto:${SOPORTE_PLATAFORMA.email}`}
+                className="flex items-center gap-2 text-muted-foreground transition-colors duration-150 hover:text-white"
+              >
+                <Mail className="h-4 w-4 text-sky-400" aria-hidden />
+                {SOPORTE_PLATAFORMA.email}
+              </a>
+            </div>
           </div>
 
           {COLUMNAS.map((col) => (

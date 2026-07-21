@@ -6,6 +6,18 @@
 export const MENSAJE_DEFAULT =
   'Hola, soy {cliente}. Necesito ayuda con mi membresía.'
 
+/**
+ * Contacto de soporte de la PLATAFORMA: respaldo cuando la empresa no ha
+ * configurado el suyo en /admin/comunicacion, y contacto de la landing
+ * pública. Un solo lugar para cambiarlo.
+ */
+export const SOPORTE_PLATAFORMA = {
+  email: 'contacto@membego.com',
+  whatsappCodigoPais: '1',
+  whatsappNumero: '8299618220',
+  whatsappDisplay: '+1 829 961 8220',
+} as const
+
 export const DIAS_SEMANA = [
   { value: 0, label: 'Dom', full: 'Domingo' },
   { value: 1, label: 'Lun', full: 'Lunes' },

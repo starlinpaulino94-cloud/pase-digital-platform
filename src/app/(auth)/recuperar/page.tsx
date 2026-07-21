@@ -42,11 +42,17 @@ export default function RecuperarPage() {
     if (resetError) {
       // El error real queda en la consola para diagnóstico; al usuario se le
       // distingue el caso más común (límite de reintentos) del fallo de envío.
-      console.error('[recuperar] resetPasswordForEmail:', resetError.status, resetError.message)
-      if (resetError.status === 429 || /security purposes|rate limit/i.test(resetError.message)) {
+      const codigo = (resetError as { code?: string }).code
+      console.error(
+        '[recuperar] resetPasswordForEmail:',
+        JSON.stringify({ status: resetError.status, code: codigo, name: resetError.name, message: resetError.message })
+      )
+      const msg = typeof resetError.message === 'string' ? resetError.message : ''
+      if (resetError.status === 429 || /security purposes|rate limit/i.test(msg)) {
         setError('Por seguridad solo se puede pedir un correo por minuto. Espera 60 segundos y vuelve a intentar.')
       } else {
-        setError(`No pudimos enviar el correo (${resetError.message}). Intenta de nuevo más tarde.`)
+        const detalle = [resetError.status, codigo, msg].filter(Boolean).join(' · ')
+        setError(`No pudimos enviar el correo${detalle ? ` (${detalle})` : ''}. Intenta de nuevo más tarde.`)
       }
       return
     }
