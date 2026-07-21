@@ -134,6 +134,59 @@ export async function getRegalosCliente(clienteId: string): Promise<{
   }
 }
 
+export interface OpcionRegalo {
+  tipo: 'PROMOCION' | 'PLAN'
+  id: string
+  titulo: string
+  precio: number
+  detalle: string | null
+}
+
+/**
+ * Qué se puede REGALAR (pagado): promociones vigentes con precio real y
+ * planes activos de la empresa (R3).
+ */
+export async function getOpcionesRegalo(companyId: string): Promise<OpcionRegalo[]> {
+  const now = new Date()
+  const [promos, planes] = await Promise.all([
+    prisma.promocion.findMany({
+      where: {
+        companyId,
+        activo: true,
+        archivada: false,
+        precio: { gt: 0 },
+        vigenciaDesde: { lte: now },
+        OR: [{ vigenciaHasta: null }, { vigenciaHasta: { gte: now } }],
+      },
+      select: { id: true, titulo: true, precio: true, usosPorCompra: true },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    }),
+    prisma.plan.findMany({
+      where: { companyId, activo: true },
+      select: { id: true, nombre: true, precio: true, lavadosIncluidos: true, vigenciaDias: true },
+      orderBy: { orden: 'asc' },
+      take: 12,
+    }),
+  ])
+  return [
+    ...promos.map((p) => ({
+      tipo: 'PROMOCION' as const,
+      id: p.id,
+      titulo: p.titulo,
+      precio: Number(p.precio ?? 0),
+      detalle: `${p.usosPorCompra} uso${p.usosPorCompra !== 1 ? 's' : ''}`,
+    })),
+    ...planes.map((p) => ({
+      tipo: 'PLAN' as const,
+      id: p.id,
+      titulo: `Membresía ${p.nombre}`,
+      precio: Number(p.precio),
+      detalle: `${p.lavadosIncluidos} lavado${p.lavadosIncluidos !== 1 ? 's' : ''} · ${p.vigenciaDias} días`,
+    })),
+  ]
+}
+
 export interface FuenteTransferencia {
   /** 'COMPRA' (wallet) o 'MEMBRESIA' (lavados del plan). */
   origen: 'COMPRA' | 'MEMBRESIA'

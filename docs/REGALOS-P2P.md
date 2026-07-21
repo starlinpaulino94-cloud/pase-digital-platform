@@ -210,10 +210,34 @@ módulo `/cliente/regalos` (enviados/recibidos), notificaciones, comprobantes
 >   ("Reclamar mi X ahora"). Notificaciones a ambas partes en cada paso.
 >   Verificado con tsc, eslint y `next build`.
 
-**R3 — Regalar compra/membresía nueva (pagada)**
+**R3 — Regalar compra/membresía nueva (pagada)** — ✅ *Hecha.*
 `beneficiarioClienteId` en el checkout de promos y planes ("¿Es un regalo?"),
-entrega al validarse el pago, receptor sin cuenta (contacto + `?next=`),
-dedicatorias.
+entrega al validarse el pago, dedicatorias.
+
+> **✅ R3 implementada:**
+> - **Regalar promoción** (`regalarPromocion`): la compra se crea bajo el
+>   COMPRADOR con `beneficiarioClienteId` — así usa el flujo de pago existente
+>   completo (transferencia con comprobante, referencia POS, caja) sin
+>   cambios. Valida ventana/cupo, promos privadas (membresía del amigo),
+>   `limitePorCliente` del BENEFICIARIO y bloquea promos gratis (esas se
+>   reclaman directo). Al validarse el pago, `activarCompraPromocion` reasigna
+>   la compra a la wallet del amigo ANTES de activar (QR y notificación le
+>   llegan a él; la factura sale a nombre de quien pagó) y resuelve el Regalo.
+> - **Regalar membresía** (`regalarMembresia`): se crea a nombre del AMIGO
+>   (los lavados viven en su plan) con referencia POS única; el regalador paga
+>   en sucursal o por transferencia citando la referencia y el admin/caja la
+>   confirma como cualquier pago (aviso a admins con la referencia). Guards:
+>   amigo sin membresía ACTIVA ni solicitud en curso. `activarMembresia`
+>   resuelve el Regalo y notifica a ambos.
+> - **Hooks de entrega** (`src/modules/regalos/entrega.ts`):
+>   `entregarCompraABeneficiario` + `resolverRegaloPagado` — nunca rompen la
+>   activación; PENDIENTE→ACEPTADO con notificaciones 🎁 a las dos partes.
+> - **UI**: `/cliente/regalos/regalar` (elegir promo/plan con precio →
+>   destinatario @ID/búsqueda enmascarada → dedicatoria). Promoción → sigue al
+>   pago de la compra; membresía → pantalla con la referencia en grande y
+>   copiar. Botón "Regalar promo o membresía" en el módulo Regalos.
+>   *Receptor sin cuenta (contacto externo): pospuesto a R4.* Verificado con
+>   tsc, eslint y `next build`.
 
 **R4 — Gestión y crecimiento**
 Vista admin con métricas, cancelación admin, recordatorio automático de

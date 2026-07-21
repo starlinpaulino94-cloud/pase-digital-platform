@@ -34,12 +34,27 @@ export async function activarCompraPromocion(
   meta: Meta,
   opts: { motivo?: string } = {}
 ): Promise<ActivarCompraResult> {
-  const compra = await prisma.productoCompra.findUnique({
+  let compra = await prisma.productoCompra.findUnique({
     where: { id: compraId },
     include: { promocion: true, cliente: true },
   })
   if (!compra) return { ok: false, error: 'Compra no encontrada.' }
   if (compra.estado === 'ACTIVA') return { ok: false, error: 'La compra ya está activa.' }
+
+  // Regalos P2P (R3): si la compra es un regalo, se entrega al beneficiario
+  // ANTES de activar — el QR y las notificaciones le llegan a él, no al
+  // comprador (la factura de venta sigue saliendo a nombre de quien pagó,
+  // porque los callers capturan al cliente antes de activar).
+  const { entregarCompraABeneficiario, resolverRegaloPagado } = await import(
+    '@/modules/regalos/entrega'
+  )
+  if (await entregarCompraABeneficiario(compra)) {
+    compra = await prisma.productoCompra.findUnique({
+      where: { id: compraId },
+      include: { promocion: true, cliente: true },
+    })
+    if (!compra) return { ok: false, error: 'Compra no encontrada.' }
+  }
   if (!(ESTADOS_ACTIVABLES as readonly string[]).includes(compra.estado)) {
     return { ok: false, error: `No se puede activar una compra en estado ${compra.estado}.` }
   }
@@ -177,6 +192,10 @@ export async function activarCompraPromocion(
   } catch (e) {
     console.error('[pagos] referido en compra:', e)
   }
+
+  // Regalos P2P (R3): si esta compra venía envuelta en un regalo, se marca
+  // entregado y se avisa a ambas partes. Nunca rompe la activación.
+  await resolverRegaloPagado({ compraId: compra.id })
 
   return {
     ok: true,

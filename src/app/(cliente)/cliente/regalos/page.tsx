@@ -37,11 +37,18 @@ export default async function RegalosPage() {
             Envía lavados a tus amigos o acepta los que te enviaron.
           </p>
         </div>
-        <Button asChild className="gap-2">
-          <Link href="/cliente/regalos/enviar">
-            <Send className="h-4 w-4" /> Enviar un regalo
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" className="gap-2">
+            <Link href="/cliente/regalos/regalar">
+              <Gift className="h-4 w-4" /> Regalar promo o membresía
+            </Link>
+          </Button>
+          <Button asChild className="gap-2">
+            <Link href="/cliente/regalos/enviar">
+              <Send className="h-4 w-4" /> Transferir mis usos
+            </Link>
+          </Button>
+        </div>
       </header>
 
       {recibidos.length === 0 && enviados.length === 0 ? (

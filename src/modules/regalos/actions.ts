@@ -8,7 +8,14 @@ import { createRateLimiter } from '@/lib/rate-limit'
 import { getRegalosConfig } from '@/modules/regalos/config'
 import { devolverUsos } from '@/modules/regalos/queries'
 import { registrarEntregaBeneficio } from '@/modules/transacciones/entrega'
-import { crearNotificacion } from '@/modules/notificaciones/service'
+import { crearNotificacion, notificarAdmins } from '@/modules/notificaciones/service'
+import {
+  registrarTransicionCompra,
+  validarVentanaAdquisicion,
+  estadoLimiteCliente,
+  mensajeLimitePorCliente,
+} from '@/modules/promociones/compra'
+import { generarCodigo } from '@/lib/codes'
 
 /**
  * Regalos P2P · Fase R1 (docs/REGALOS-P2P.md).
@@ -493,6 +500,232 @@ export async function cancelarRegalo(
   revalidatePath('/cliente/regalos')
   revalidatePath('/cliente/mis-promociones')
   return { success: true, detalle: 'Regalo cancelado. Tus usos volvieron a tu cuenta.' }
+}
+
+// ── Fase R3 · Regalos pagados (promoción o membresía nueva) ──────────────────
+
+/**
+ * Regalar una PROMOCIÓN: la compra se crea bajo el COMPRADOR (así usa todo el
+ * flujo de pago existente: transferencia con comprobante, referencia POS,
+ * caja) con `beneficiarioClienteId`. Al validarse el pago, la activación la
+ * entrega a la wallet del amigo y resuelve el Regalo.
+ */
+export async function regalarPromocion(
+  _prev: RegaloActionState,
+  formData: FormData
+): Promise<RegaloActionState & { compraId?: string }> {
+  try {
+    const user = await getUser()
+    if (!user || user.metadata.role !== 'CLIENTE') return { error: 'No autorizado.' }
+    const { clienteId, companyId } = user.metadata
+    if (!clienteId || !companyId) return { error: 'Tu cuenta no está vinculada a una empresa.' }
+
+    const promocionId = String(formData.get('promocionId') ?? '').trim()
+    const destinatarioId = String(formData.get('destinatarioId') ?? '').trim()
+    const mensaje = String(formData.get('mensaje') ?? '').trim().slice(0, 200) || null
+    if (!promocionId || !destinatarioId) return { error: 'Datos incompletos.' }
+    if (destinatarioId === clienteId) return { error: 'Para ti mismo usa la compra normal.' }
+
+    const config = await getRegalosConfig(companyId)
+    if (!config.permitirRegalos) {
+      return { error: 'El negocio no tiene activados los regalos entre usuarios.' }
+    }
+
+    const [promo, destinatario] = await Promise.all([
+      prisma.promocion.findFirst({ where: { id: promocionId, companyId } }),
+      prisma.cliente.findFirst({
+        where: { id: destinatarioId, companyId },
+        select: { id: true, nombre: true },
+      }),
+    ])
+    if (!promo) return { error: 'Promoción no encontrada.' }
+    if (!destinatario) return { error: 'Destinatario no encontrado en este negocio.' }
+
+    const precio = Number(promo.precio ?? 0)
+    if (precio <= 0) return { error: 'Las promociones gratuitas no se regalan: tu amigo puede reclamarla directo.' }
+
+    const ventana = validarVentanaAdquisicion(promo)
+    if (!ventana.ok) return { error: ventana.mensaje }
+
+    if (promo.visibilidad === 'privada') {
+      const activa = await prisma.membership.findFirst({
+        where: { clienteId: destinatario.id, companyId, estado: 'ACTIVA' },
+        select: { id: true },
+      })
+      if (!activa) return { error: 'Esta promoción es exclusiva para miembros: tu amigo necesita membresía activa.' }
+    }
+
+    // El regalo cuenta contra los límites del BENEFICIARIO (él lo recibe).
+    if (promo.limitePorCliente != null) {
+      const limite = await estadoLimiteCliente(destinatario.id, promo.id, promo.limitePorCliente)
+      if (limite.alcanzado) return { error: mensajeLimitePorCliente(promo.limitePorCliente) }
+    }
+
+    const compra = await prisma.$transaction(async (tx) => {
+      const creada = await tx.productoCompra.create({
+        data: {
+          tipo: 'PROMOCION',
+          estado: 'PENDIENTE_PAGO',
+          companyId,
+          clienteId, // el COMPRADOR gestiona el pago
+          beneficiarioClienteId: destinatario.id, // la activación la entrega al amigo
+          promocionId: promo.id,
+          precioCongelado: promo.precio,
+          usosIncluidos: promo.usosPorCompra,
+          adminNota: `Regalo P2P para ${destinatario.nombre}`,
+        },
+      })
+      await registrarTransicionCompra(tx, {
+        compraId: creada.id,
+        desde: null,
+        hacia: 'SOLICITADA',
+        motivo: `Regalo para ${destinatario.nombre}`,
+        userId: user.metadata.dbUserId ?? null,
+      })
+      await registrarTransicionCompra(tx, {
+        compraId: creada.id,
+        desde: 'SOLICITADA',
+        hacia: 'PENDIENTE_PAGO',
+        motivo: 'Esperando el pago del regalador',
+        userId: user.metadata.dbUserId ?? null,
+      })
+      await tx.regalo.create({
+        data: {
+          companyId,
+          tipo: 'REGALO_COMPRA',
+          remitenteId: clienteId,
+          destinatarioId: destinatario.id,
+          promocionId: promo.id,
+          compraDestinoId: creada.id,
+          usos: promo.usosPorCompra,
+          mensaje,
+          // El pago puede tardar: vigencia amplia (el regalo se entrega al pagar).
+          expiraAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        },
+      })
+      return creada
+    })
+
+    revalidatePath('/cliente/regalos')
+    revalidatePath('/cliente/mis-promociones')
+    return {
+      success: true,
+      compraId: compra.id,
+      detalle: `Regalo creado. Completa el pago y ${destinatario.nombre.split(/\s+/)[0]} lo recibirá al confirmarse.`,
+    }
+  } catch (e) {
+    console.error('[regalos] regalarPromocion:', e)
+    return { error: 'Ocurrió un error inesperado. Intenta de nuevo.' }
+  }
+}
+
+/**
+ * Regalar una MEMBRESÍA: se crea directamente a nombre del amigo (los lavados
+ * del plan viven en su membresía) con referencia POS para que el REGALADOR
+ * pague en sucursal o por transferencia indicando esa referencia. El admin/
+ * caja la confirma como cualquier pago; al activarse se notifica a ambos.
+ */
+export async function regalarMembresia(
+  _prev: RegaloActionState,
+  formData: FormData
+): Promise<RegaloActionState & { referencia?: string }> {
+  try {
+    const user = await getUser()
+    if (!user || user.metadata.role !== 'CLIENTE') return { error: 'No autorizado.' }
+    const { clienteId, companyId } = user.metadata
+    if (!clienteId || !companyId) return { error: 'Tu cuenta no está vinculada a una empresa.' }
+
+    const planId = String(formData.get('planId') ?? '').trim()
+    const destinatarioId = String(formData.get('destinatarioId') ?? '').trim()
+    const mensaje = String(formData.get('mensaje') ?? '').trim().slice(0, 200) || null
+    if (!planId || !destinatarioId) return { error: 'Datos incompletos.' }
+    if (destinatarioId === clienteId) return { error: 'Para ti mismo usa la selección de plan normal.' }
+
+    const config = await getRegalosConfig(companyId)
+    if (!config.permitirRegalos) {
+      return { error: 'El negocio no tiene activados los regalos entre usuarios.' }
+    }
+
+    const [plan, destinatario] = await Promise.all([
+      prisma.plan.findFirst({ where: { id: planId, companyId, activo: true } }),
+      prisma.cliente.findFirst({
+        where: { id: destinatarioId, companyId },
+        select: { id: true, nombre: true },
+      }),
+    ])
+    if (!plan) return { error: 'Plan no encontrado.' }
+    if (!destinatario) return { error: 'Destinatario no encontrado en este negocio.' }
+
+    // Estado actual del amigo: con ACTIVA no se regala otra; con solicitud en
+    // curso tampoco (no pisamos su propio proceso de pago).
+    const existente = await prisma.membership.findFirst({
+      where: { clienteId: destinatario.id, companyId },
+      orderBy: { updatedAt: 'desc' },
+      select: { id: true, estado: true },
+    })
+    if (existente?.estado === 'ACTIVA') {
+      return { error: 'Tu amigo ya tiene una membresía activa.' }
+    }
+    if (existente && ['PENDIENTE', 'PENDIENTE_PAGO'].includes(existente.estado)) {
+      return { error: 'Tu amigo ya tiene una solicitud de membresía en proceso.' }
+    }
+
+    // Referencia única para pagar en caja (o citarla en la transferencia).
+    let referencia: string | null = null
+    for (let intento = 0; intento < 5 && !referencia; intento++) {
+      const candidata = `ORD-${generarCodigo(6)}`
+      const ocupada = await prisma.membership.findUnique({
+        where: { referencia: candidata },
+        select: { id: true },
+      })
+      if (!ocupada) referencia = candidata
+    }
+    if (!referencia) return { error: 'No se pudo generar la referencia. Intenta de nuevo.' }
+
+    const membership = await prisma.membership.create({
+      data: {
+        clienteId: destinatario.id, // la membresía ES del amigo
+        companyId,
+        planId: plan.id,
+        estado: 'PENDIENTE',
+        referencia,
+        beneficiarioClienteId: destinatario.id,
+        userId: user.metadata.dbUserId || null,
+        comprobanteNota: `Regalo: la paga ${user.email ?? 'otro cliente'} (ref. ${referencia})`,
+      },
+      select: { id: true },
+    })
+
+    await prisma.regalo.create({
+      data: {
+        companyId,
+        tipo: 'REGALO_MEMBRESIA',
+        remitenteId: clienteId,
+        destinatarioId: destinatario.id,
+        planId: plan.id,
+        membershipDestinoId: membership.id,
+        mensaje,
+        expiraAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      },
+    })
+
+    await notificarAdmins(companyId, {
+      tipo: 'NUEVO_COMPROBANTE',
+      titulo: 'Membresía de regalo por cobrar',
+      mensaje: `Un cliente regalará el plan ${plan.nombre} a ${destinatario.nombre}. Referencia ${referencia}: cóbrala en caja o confírmala al recibir la transferencia.`,
+      href: '/admin/pagos',
+    })
+
+    revalidatePath('/cliente/regalos')
+    return {
+      success: true,
+      referencia,
+      detalle: `Regalo creado. Paga con la referencia ${referencia} y ${destinatario.nombre.split(/\s+/)[0]} recibirá su membresía.`,
+    }
+  } catch (e) {
+    console.error('[regalos] regalarMembresia:', e)
+    return { error: 'Ocurrió un error inesperado. Intenta de nuevo.' }
+  }
 }
 
 /**

@@ -162,6 +162,11 @@ export async function activarMembresia(
   // activación).
   await registrarHitoInvitacion(membership.clienteId, 'MEMBRESIA_ADQUIRIDA')
 
+  // Regalos P2P (R3): si esta membresía fue un regalo, se marca entregado y
+  // se notifica a ambas partes. Nunca rompe la activación.
+  const { resolverRegaloPagado } = await import('@/modules/regalos/entrega')
+  await resolverRegaloPagado({ membershipId })
+
   return {
     ok: true,
     clienteId: membership.clienteId,
