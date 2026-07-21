@@ -1,0 +1,58 @@
+import Link from 'next/link'
+import { requireRole } from '@/lib/auth/guards'
+import { getOpcionesRegalo } from '@/modules/regalos/queries'
+import { getRegalosConfig } from '@/modules/regalos/config'
+import { RegalarForm } from '@/components/regalos/RegalarForm'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Gift } from 'lucide-react'
+
+export const dynamic = 'force-dynamic'
+export const metadata = { title: 'Regalar' }
+
+/**
+ * Regalos P2P · Fase R3 — regalar una promoción o membresía nueva: la paga el
+ * regalador y se entrega al amigo cuando el negocio confirma el pago.
+ */
+export default async function RegalarPage() {
+  const user = await requireRole('CLIENTE')
+  const clienteId = user.metadata.clienteId
+  const companyId = user.metadata.companyId
+  if (!clienteId || !companyId) {
+    return <p className="text-muted-foreground">Tu cuenta no está vinculada a una empresa.</p>
+  }
+
+  const [opciones, config] = await Promise.all([
+    getOpcionesRegalo(companyId).catch(() => []),
+    getRegalosConfig(companyId),
+  ])
+
+  return (
+    <div className="mx-auto max-w-xl space-y-6 animate-fade-up">
+      <header>
+        <Link href="/cliente/regalos" className="text-sm text-primary hover:underline">
+          ← Regalos
+        </Link>
+        <h1 className="mt-2 text-h1 text-foreground">Regalar a un amigo</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Tú lo pagas, tu amigo lo disfruta. Se entrega al confirmarse el pago.
+        </p>
+      </header>
+
+      {!config.permitirRegalos ? (
+        <EmptyState
+          icon={<Gift className="h-7 w-7" />}
+          title="Regalos desactivados"
+          description="El negocio no tiene activados los regalos entre usuarios por ahora."
+        />
+      ) : opciones.length === 0 ? (
+        <EmptyState
+          icon={<Gift className="h-7 w-7" />}
+          title="Nada para regalar todavía"
+          description="El negocio no tiene promociones ni planes disponibles en este momento."
+        />
+      ) : (
+        <RegalarForm opciones={opciones} />
+      )}
+    </div>
+  )
+}

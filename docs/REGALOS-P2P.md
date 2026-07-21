@@ -182,26 +182,115 @@ de destinatarios (server action con máscara + rate-limit), esquema `Regalo` +
 >   grande + QR + copiar + compartir nativo), con degradación si la BD aún no
 >   está migrada. Verificado con tsc, eslint y `next build`.
 
-**R2 — Transferir usos (el corazón)**
+**R2 — Transferir usos (el corazón)** — ✅ *Hecha.*
 Botón *Transferir* en Mis beneficios, flujo enviar→aceptar/rechazar/expirar,
 módulo `/cliente/regalos` (enviados/recibidos), notificaciones, comprobantes
 (2 Transactions), celebración del receptor, límites anti-abuso.
 
-**R3 — Regalar compra/membresía nueva (pagada)**
+> **✅ R2 implementada:**
+> - **Acciones** (`src/modules/regalos/actions.ts`): `enviarTransferencia`
+>   (reserva ATÓMICA de usos al enviar con guard de saldo; valida config de
+>   empresa, límite mensual, destinatario de la misma empresa, anti-farmeo
+>   —solo compras con `precioCongelado > 0`— y, para lavados del plan,
+>   membresía activa del receptor), `responderRegalo` (aceptar crea compra
+>   ESPEJO en la wallet del receptor —hereda promoción/precio/vencimiento, el
+>   canje QR funciona sin cambios— o suma lavados a su membresía; rechazar/
+>   expirar devuelve los usos; guards atómicos con deshacer), `cancelarRegalo`.
+> - **Comprobantes**: al aceptar se emiten 2 Transactions (`BENEFIT_USE`, via
+>   `registrarEntregaBeneficio`) — comprobante reimprimible para cada parte,
+>   visibles en `/admin/registros`.
+> - **Expiración perezosa** (sin cron): al listar o responder, los pendientes
+>   vencidos pasan a EXPIRADO y devuelven usos (`expirarPendientesVencidos`).
+> - **UI**: módulo `/cliente/regalos` (Recibidos con Aceptar/Rechazar +
+>   Enviados con Cancelar, dedicatorias, chips de estado y expiración) y
+>   `/cliente/regalos/enviar` (3 pasos: destinatario @ID/búsqueda con
+>   confirmación → fuente wallet o lavados del plan + cantidad → dedicatoria).
+>   Entrada "Regalos" en el menú del cliente y botón **"Transferir a un
+>   amigo"** en Mis beneficios. Aceptar lleva a `/cliente/celebracion`
+>   ("Reclamar mi X ahora"). Notificaciones a ambas partes en cada paso.
+>   Verificado con tsc, eslint y `next build`.
+
+**R3 — Regalar compra/membresía nueva (pagada)** — ✅ *Hecha.*
 `beneficiarioClienteId` en el checkout de promos y planes ("¿Es un regalo?"),
-entrega al validarse el pago, receptor sin cuenta (contacto + `?next=`),
-dedicatorias.
+entrega al validarse el pago, dedicatorias.
 
-**R4 — Gestión y crecimiento**
+> **✅ R3 implementada:**
+> - **Regalar promoción** (`regalarPromocion`): la compra se crea bajo el
+>   COMPRADOR con `beneficiarioClienteId` — así usa el flujo de pago existente
+>   completo (transferencia con comprobante, referencia POS, caja) sin
+>   cambios. Valida ventana/cupo, promos privadas (membresía del amigo),
+>   `limitePorCliente` del BENEFICIARIO y bloquea promos gratis (esas se
+>   reclaman directo). Al validarse el pago, `activarCompraPromocion` reasigna
+>   la compra a la wallet del amigo ANTES de activar (QR y notificación le
+>   llegan a él; la factura sale a nombre de quien pagó) y resuelve el Regalo.
+> - **Regalar membresía** (`regalarMembresia`): se crea a nombre del AMIGO
+>   (los lavados viven en su plan) con referencia POS única; el regalador paga
+>   en sucursal o por transferencia citando la referencia y el admin/caja la
+>   confirma como cualquier pago (aviso a admins con la referencia). Guards:
+>   amigo sin membresía ACTIVA ni solicitud en curso. `activarMembresia`
+>   resuelve el Regalo y notifica a ambos.
+> - **Hooks de entrega** (`src/modules/regalos/entrega.ts`):
+>   `entregarCompraABeneficiario` + `resolverRegaloPagado` — nunca rompen la
+>   activación; PENDIENTE→ACEPTADO con notificaciones 🎁 a las dos partes.
+> - **UI**: `/cliente/regalos/regalar` (elegir promo/plan con precio →
+>   destinatario @ID/búsqueda enmascarada → dedicatoria). Promoción → sigue al
+>   pago de la compra; membresía → pantalla con la referencia en grande y
+>   copiar. Botón "Regalar promo o membresía" en el módulo Regalos.
+>   *Receptor sin cuenta (contacto externo): pospuesto a R4.* Verificado con
+>   tsc, eslint y `next build`.
+
+**R4 — Gestión y crecimiento** — ✅ *Hecha.*
 Vista admin con métricas, cancelación admin, recordatorio automático de
-regalos por expirar (automatizaciones), agradecimiento al aceptar, y (si el
-negocio quiere) "gift cards" de monto abierto.
+regalos por expirar (automatizaciones), y regalos a personas SIN cuenta
+(reclamo automático al registrarse).
 
-## 8. Decisiones que necesita confirmar el negocio
+> **✅ R4 implementada:**
+> - **Vista admin `/admin/regalos`** (`getRegalosAdmin`): KPIs del programa
+>   (totales, pendientes, aceptados, tasa de aceptación) + listado de quién
+>   regaló qué a quién con filtros por tipo y estado. Sección `regalos` en
+>   `ADMIN_SECTIONS` (solo admin pleno, fail-closed) y entrada "Regalos P2P"
+>   en el grupo Clientes del menú.
+> - **Cancelación admin** (`cancelarRegaloAdmin`): cancela un PENDIENTE con
+>   motivo obligatorio, devuelve los usos reservados al remitente y notifica a
+>   ambas partes. Para regalos pagados, la orden pendiente se gestiona además
+>   desde Pagos.
+> - **Mantenimiento en el cron** (`mantenimientoRegalos`, colgado de
+>   `/api/cron/automatizaciones`): expira GLOBALMENTE los pendientes vencidos
+>   (la expiración perezosa de R2 queda como respaldo) devolviendo los usos, y
+>   envía un recordatorio ⏰ al destinatario cuando la transferencia expira en
+>   menos de 24 h (deduplicado por notificación dentro de la ventana).
+> - **Receptor SIN cuenta**: `enviarTransferencia` acepta `destinatarioContacto`
+>   (correo o teléfono ≥7 dígitos, normalizados); si el contacto ya es cliente
+>   del negocio, el regalo va directo a su cuenta. Solo usos de wallet (los
+>   lavados del plan exigen membresía activa). Al registrarse con ese correo o
+>   teléfono, `vincularRegalosPorContacto` (enganchado en ambos caminos del
+>   registro) le asigna los regalos pendientes no vencidos y notifica a ambas
+>   partes. UI: enlace "¿No está en MembeGo? Envíaselo a su teléfono o correo"
+>   en el formulario de envío. Sin cambios de esquema (usa
+>   `destinatarioContacto` de la migración 20260752).
+> - **Configuración desde el panel** (`guardarRegalosConfig` +
+>   `RegalosConfigCard` en `/admin/regalos`): activar/desactivar
+>   transferencias y regalos pagados, límite mensual (0–100; 0 bloquea) y
+>   vigencia en horas (1–720). La vigencia solo aplica a regalos nuevos.
+> - **Gift cards de monto abierto** (migración `20260753_gift_cards`): modelo
+>   `GiftCard` (código único GC-XXXXXX, monto + saldo, PENDIENTE_PAGO → ACTIVA
+>   → AGOTADA / CANCELADA; no expiran). El cliente la compra en
+>   `/cliente/regalos/giftcard` (monto entre mín/máx configurables,
+>   destinatario con cuenta o por teléfono/correo) y paga citando el código;
+>   el admin la confirma en `/admin/regalos` (queda la VENTA con factura,
+>   Transaction SALE) y redime los consumos con descuento atómico del saldo +
+>   comprobante de entrega (sin doble ingreso). El destinatario ve su código y
+>   saldo en `/cliente/regalos`; si aún no tiene cuenta, la reclama al
+>   registrarse (mismo `vincularRegalosPorContacto`). Config del panel:
+>   activar/desactivar + monto mín/máx.
+>   Verificado con tsc, eslint y `next build`.
 
-1. ¿Transferencias de **lavados de membresía** (además de promos de wallet)?
-   Recomendado: empezar solo con wallet (R2) y abrir membresías después.
-2. Vigencia del regalo pendiente: ¿72 h está bien?
-3. ¿Los regalos pagados (R3) permiten pagar en sucursal, o solo transferencia?
-   Recomendado: ambos (ya existe el flujo completo de pagos).
-4. Límite mensual de transferencias por cliente (default propuesto: 3).
+## 8. Decisiones del negocio — ✅ CONFIRMADAS (2026-07-21)
+
+1. **Lavados de membresía: SÍ se transfieren** (además de la wallet). Regla
+   técnica: como los lavados del plan viven en la membresía, el receptor debe
+   tener una **membresía activa** para recibirlos (se validan al enviar y al
+   aceptar); si no la tiene, se le sugiere transferir usos de wallet.
+2. Vigencia del regalo pendiente: **72 h** ✔ (configurable por empresa).
+3. Regalos pagados (R3): **transferencia Y pago en sucursal** ✔.
+4. Límite mensual: **3 transferencias/cliente** ✔ (configurable).

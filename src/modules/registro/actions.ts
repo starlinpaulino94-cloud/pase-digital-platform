@@ -8,6 +8,7 @@ import { getRequestMeta } from '@/lib/server-utils'
 import { vincularReferido } from '@/lib/referidos-attribution'
 import { ensureCodigoCorto } from '@/lib/referidos'
 import { otorgarRegaloBienvenida } from '@/modules/invitaciones/beneficios'
+import { vincularRegalosPorContacto } from '@/modules/regalos/entrega'
 import { procesarRegistroGrowth } from '@/modules/growth/registro'
 import { emitirEventoEstrategia } from '@/modules/estrategias/eventos'
 import { TERMS_VERSION } from '@/lib/legal'
@@ -235,6 +236,15 @@ export async function registrarCliente(
         payload: { cliente: { nombre: cliente.nombre, compras: 0, visitas: 0 } },
       })
 
+      // Regalos P2P · R4: si alguien le envió un regalo a este correo o
+      // teléfono antes de que tuviera cuenta, se le asigna ahora.
+      await vincularRegalosPorContacto({
+        clienteId: cliente.id,
+        companyId: company.id,
+        email,
+        telefono,
+      })
+
       return {
         success: true,
         codigoInvitacion: await codigoInvitacionDe(cliente.id),
@@ -360,6 +370,16 @@ export async function registrarCliente(
       type: 'cliente.registrado',
       subjectId: result.cliente.id,
       payload: { cliente: { nombre: result.cliente.nombre, compras: 0, visitas: 0 } },
+    })
+
+    // Regalos P2P · R4: si alguien le envió un regalo a este correo o teléfono
+    // antes de que tuviera cuenta, se le asigna ahora (fuera de la transacción:
+    // nunca bloquea el registro).
+    await vincularRegalosPorContacto({
+      clienteId: result.cliente.id,
+      companyId: company.id,
+      email,
+      telefono,
     })
 
     const [codigoInvitacion, qrBienvenida] = await Promise.all([

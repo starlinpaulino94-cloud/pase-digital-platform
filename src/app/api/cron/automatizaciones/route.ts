@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { ejecutarAutomatizacionesGlobal } from '@/modules/admin/automatizaciones'
+import { mantenimientoRegalos } from '@/modules/regalos/mantenimiento'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -7,6 +8,8 @@ export const maxDuration = 60
 /**
  * F4.7: endpoint de cron para ejecutar las automatizaciones de todas las
  * empresas (cumpleaños, por vencer, inactivos). Idempotente.
+ * Regalos P2P · R4: además expira los regalos vencidos y recuerda al
+ * destinatario los que expiran en menos de 24h.
  *
  * Protegido con CRON_SECRET: configura la variable en el entorno y llama
  * con `Authorization: Bearer <CRON_SECRET>` (Vercel Cron, GitHub Actions,
@@ -36,7 +39,11 @@ export async function GET(request: NextRequest) {
       }),
       { cumpleanos: 0, porVencer: 0, inactivos: 0 }
     )
-    return NextResponse.json({ ok: true, empresas: resultados.length, totales })
+    const regalos = await mantenimientoRegalos().catch((e) => {
+      console.error('[cron-automatizaciones] regalos', e)
+      return { expirados: 0, recordatorios: 0 }
+    })
+    return NextResponse.json({ ok: true, empresas: resultados.length, totales, regalos })
   } catch (e) {
     console.error('[cron-automatizaciones]', e)
     return NextResponse.json({ error: 'Error interno.' }, { status: 500 })

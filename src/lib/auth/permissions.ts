@@ -34,6 +34,7 @@ export const ADMIN_SECTIONS = [
   'tickets',
   'empleados',
   'registros',
+  'regalos',
   'reportes',
   'audiencia',
   'invitaciones',

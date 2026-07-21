@@ -326,6 +326,7 @@ model Company {
   citas          Cita[]
   ofertaPrivadas OfertaPrivada[]
   regalos        Regalo[]
+  giftCards      GiftCard[]
 
   @@index([isPublished, isFeatured])
   @@index([ciudad, provincia])
@@ -497,6 +498,51 @@ model Regalo {
   @@index([remitenteId, createdAt])
   @@index([companyId, createdAt])
   @@map("regalos")
+}
+
+// Gift cards de monto abierto (Regalos P2P · extensión de R4): un cliente
+// paga un monto libre y el destinatario lo consume en el negocio mostrando el
+// código. El dinero entra como venta al confirmarse el pago; los consumos son
+// comprobantes de entrega (sin doble ingreso). No expiran.
+enum GiftCardEstado {
+  PENDIENTE_PAGO // creada, esperando que el comprador pague (código = referencia)
+  ACTIVA // pago confirmado: el saldo se puede consumir
+  AGOTADA // saldo en cero
+  CANCELADA // anulada por el negocio antes del pago
+}
+
+model GiftCard {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  /// Código único GC-XXXXXX: referencia de pago Y llave de consumo.
+  codigo String         @unique
+  estado GiftCardEstado @default(PENDIENTE_PAGO)
+
+  /// Valor pagado y saldo restante por consumir.
+  monto Decimal @db.Decimal(10, 2)
+  saldo Decimal @db.Decimal(10, 2)
+
+  // Partes (ids planos, como Regalo). destinatarioClienteId null = receptor
+  // sin cuenta aún (se reclama al registrarse vía destinatarioContacto).
+  compradorClienteId   String
+  destinatarioClienteId String?
+  destinatarioContacto String?
+  mensaje              String?
+
+  /// Cobro confirmado: método y Transaction SALE del ingreso.
+  metodoCobro MetodoCobroTipo?
+  txVentaId   String?
+
+  createdAt  DateTime  @default(now())
+  activadaAt DateTime?
+  resueltoAt DateTime? // agotada o cancelada
+
+  @@index([companyId, estado, createdAt])
+  @@index([destinatarioClienteId, estado])
+  @@index([compradorClienteId, createdAt])
+  @@map("gift_cards")
 }
 
 // Métodos de pago configurables por empresa (sin tocar código)
