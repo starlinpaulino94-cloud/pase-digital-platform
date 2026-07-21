@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { aceptarInvitacion, type InvitacionState } from '@/modules/admin/invitacionActions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { landingUrlFor } from '@/lib/site'
@@ -54,7 +55,7 @@ export function AceptarInvitacionForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Contraseña</Label>
-          <Input id="password" name="password" type="password" required placeholder="••••••••" />
+          <PasswordInput id="password" name="password" required placeholder="••••••••" />
         </div>
 
         <label className="flex items-start gap-2 text-sm text-muted-foreground">

@@ -10,6 +10,7 @@ import {
 } from '@/modules/superadmin/usuariosActions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -176,10 +177,9 @@ export function UsuarioStaffForm({
 
       <div className="space-y-2">
         <Label htmlFor="password">Nueva contraseña (opcional)</Label>
-        <Input
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
           minLength={6}
           placeholder="Dejar en blanco para no cambiarla"
         />

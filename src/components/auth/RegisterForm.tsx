@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { registrarCliente, type RegistroState } from '@/modules/registro/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import {
   Card,
@@ -150,10 +151,9 @@ export function RegisterForm({
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Contraseña *</Label>
-              <Input
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
                 required
                 minLength={6}
                 className="bg-white/10 text-white"
