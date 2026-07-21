@@ -17,6 +17,7 @@ import {
 import { ConfirmarPagoButton, RechazarPagoButton } from '@/components/admin/ValidarPagoActions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { NotasCliente } from '@/components/admin/NotasCliente'
+import { AnularTransaccionesClienteButton } from '@/components/registros/AnularTransaccionesClienteButton'
 import { EliminarCuentaButton } from '@/components/superadmin/EliminarCuentaButton'
 import { FileText, MessageCircle, Mail, StickyNote } from 'lucide-react'
 import type { MembershipEstado } from '@/types'
@@ -355,6 +356,20 @@ export default async function ClienteDetailPage({
           )}
         </CardContent>
       </Card>
+
+      {/* Limpieza contable: anulación masiva de sus transacciones (cuentas de
+          prueba, montos erróneos). Disponible para el admin de la empresa. */}
+      <div className="rounded-2xl border border-warning/30 bg-warning/5 p-5">
+        <h2 className="text-sm font-semibold text-foreground">Limpieza contable</h2>
+        <p className="mt-1 mb-4 text-sm text-muted-foreground">
+          Si este cliente es una cuenta de <strong>prueba</strong> (o sus cobros
+          se registraron por error), anula aquí todas sus transacciones de un
+          golpe: los montos dejan de sumar en ganancias, cierres y reportes.
+          Nada se elimina — cada transacción queda ANULADA con su motivo y
+          auditoría.
+        </p>
+        <AnularTransaccionesClienteButton clienteId={cliente.id} nombre={cliente.nombre} />
+      </div>
 
       {/* Zona de peligro: eliminación definitiva, SOLO superadmin. Los admins
           de empresa no pueden borrar clientes (protección de datos/historial). */}
