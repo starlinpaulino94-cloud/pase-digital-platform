@@ -45,10 +45,53 @@ ORDER BY "createdAt";
 -- SET "estado" = 'CANCELLED', "cancelledAt" = NOW()
 -- WHERE "estado" = 'APPLIED' AND "clienteId" IS NULL AND "monto" > 0;
 
--- 4) VERIFICAR — total de ingresos aplicados que queda por empresa.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 4) MEMBRESÍAS — ¡LA OTRA FUENTE DE "INGRESOS"!
+--    Los reportes del panel (Ingresos del mes, ingresos por empresa del
+--    superadmin) suman memberships."montoPagado" con pagoConfirmado=true.
+--    Cancelar una membresía NO borra ese monto (y al cancelarla su updatedAt
+--    cae en el mes actual, así que sigue sumando). Hay que ponerlo en cero.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- 4a) VISTA PREVIA — membresías CANCELADAS de las cuentas de prueba con monto.
+SELECT m."id", c."nombre" AS cliente, c."email", m."estado",
+       m."montoPagado", m."pagoConfirmado", m."updatedAt"
+FROM "memberships" m
+JOIN "clientes" c ON c."id" = m."clienteId"
+WHERE m."montoPagado" IS NOT NULL AND m."montoPagado" > 0
+  AND m."estado" = 'CANCELADA'
+  AND c."email" IN (
+    'prueba1@correo.com',   -- ← mismos correos de prueba
+    'prueba2@correo.com'
+  )
+ORDER BY m."updatedAt" DESC;
+
+-- 4b) LIMPIAR — cero el monto y desconfirma el pago (solo CANCELADAS de esos
+--     correos: una membresía real activa jamás se toca).
+UPDATE "memberships" m
+SET "montoPagado" = 0, "pagoConfirmado" = false
+FROM "clientes" c
+WHERE c."id" = m."clienteId"
+  AND m."estado" = 'CANCELADA'
+  AND m."montoPagado" IS NOT NULL AND m."montoPagado" > 0
+  AND c."email" IN (
+    'prueba1@correo.com',   -- ← mismos correos de prueba
+    'prueba2@correo.com'
+  );
+
+-- 5) VERIFICAR — lo que queda sumando en cada fuente.
+--    5a. Libro mayor (Registros, cierres, cuadres):
 SELECT co."name" AS empresa, COUNT(*) AS transacciones,
        COALESCE(SUM(t."monto"), 0) AS ingresos_aplicados
 FROM "transactions" t
 JOIN "companies" co ON co."id" = t."companyId"
 WHERE t."estado" = 'APPLIED' AND t."monto" IS NOT NULL
+GROUP BY co."name";
+
+--    5b. Membresías (Reportes "Ingresos del mes", superadmin):
+SELECT co."name" AS empresa, COUNT(*) AS membresias_pagadas,
+       COALESCE(SUM(m."montoPagado"), 0) AS ingresos_membresias
+FROM "memberships" m
+JOIN "companies" co ON co."id" = m."companyId"
+WHERE m."pagoConfirmado" = true AND m."montoPagado" > 0
 GROUP BY co."name";
