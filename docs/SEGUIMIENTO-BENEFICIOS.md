@@ -81,11 +81,26 @@ Más allá de lo pedido, un control serio de recompensas incluye:
   con marca `canjeInterno` + admin responsable; nueva distinción en auditoría
   (`QR_USADO` con `interno:true`), fecha/hora exacta. Diálogo con confirmación.
 
-**Fase S3 — Reportes + parametrización + recordatorio automático**
-- Export CSV + reporte imprimible por promo/período; métricas de conversión.
-- `Company.seguimientoConfig` (JSON): promos rastreadas, umbral por-vencer,
-  días para recordar, plantilla. Panel de configuración.
-- Recordatorio automático en el cron: notifica a los "sin usar y por vencer".
+**Fase S3 — Reportes + parametrización + recordatorio automático** ✅ *entregada*
+- Export CSV (`/admin/seguimiento/export`, mismos filtros, hasta 5000 filas) +
+  reporte imprimible (`/admin/seguimiento/imprimir`) con conversión
+  otorgadas → usadas por promoción y por período.
+- `Company.seguimientoConfig` (JSON, migración `20260754_seguimiento_config`):
+  umbral "por vencer", recordatorio automático (activo/días antes/frecuencia),
+  plantilla del mensaje ({cliente} {empresa} {recompensa} {vence}) y promos
+  excluidas del rastreo. Panel de configuración en la misma página. El módulo
+  funciona con defaults aunque la migración no se haya corrido; solo GUARDAR
+  la configuración la requiere.
+- Recordatorio automático en el cron diario (`recordatoriosSeguimientoAuto`):
+  avisa in-app a los "sin usar y por vencer", deduplicado por la frecuencia
+  configurada (los recordatorios manuales también cuentan) y con rastro en
+  auditoría (`NOTA_INTERNA` payload `RECORDATORIO_SEGUIMIENTO`, `auto:true`).
+
+### Migración pendiente de correr (Supabase SQL Editor)
+
+```sql
+ALTER TABLE "companies" ADD COLUMN IF NOT EXISTS "seguimientoConfig" JSONB;
+```
 
 ## 4. Decisiones tomadas
 

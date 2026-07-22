@@ -12,8 +12,10 @@ import {
   SEGUIMIENTO_ESTADO_LABEL,
   type SeguimientoFiltro,
 } from '@/modules/seguimiento/queries'
-import { Gift, Search } from 'lucide-react'
+import { Gift, Search, Download, Printer } from 'lucide-react'
 import { SeguimientoAcciones } from '@/components/seguimiento/SeguimientoAcciones'
+import { SeguimientoConfigCard } from '@/components/seguimiento/SeguimientoConfigCard'
+import { getSeguimientoConfig, renderMensajeSeguimiento } from '@/modules/seguimiento/config'
 
 export const dynamic = 'force-dynamic'
 
@@ -70,15 +72,21 @@ export default async function SeguimientoPage({
     hasta: sp.hasta,
   }
   const hayFiltro = Boolean(sp.estado || sp.promo || sp.q || sp.desde || sp.hasta)
+  const qs = new URLSearchParams(
+    Object.entries({ q: sp.q, estado: sp.estado, promo: sp.promo, desde: sp.desde, hasta: sp.hasta })
+      .filter(([, v]) => !!v) as [string, string][]
+  ).toString()
 
+  const config = await getSeguimientoConfig(companyId)
   const [{ items, kpis, truncado }, promos] = await Promise.all([
-    getSeguimiento(companyId, filtro),
+    getSeguimiento(companyId, filtro, config),
     getPromosGratisConEntregas(companyId),
   ])
 
   const tarjetas = [
     { label: 'Recompensas otorgadas', valor: String(kpis.total) },
     { label: 'Sin usar', valor: String(kpis.sinUsar) },
+    { label: `Por vencer (≤${config.umbralPorVencerDias}d)`, valor: String(kpis.porVencer) },
     { label: 'Usadas', valor: String(kpis.usados) },
     {
       label: 'Tasa de uso',
@@ -93,8 +101,22 @@ export default async function SeguimientoPage({
         description="Control de los lavados gratis y recompensas entregadas: quién no ha usado su QR, quién sí, y a quién contactar para que venga."
       />
 
+      {/* Reportes (Fase S3) */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button asChild variant="outline" size="sm" className="gap-1.5">
+          <a href={`/admin/seguimiento/export${qs ? `?${qs}` : ''}`}>
+            <Download className="h-3.5 w-3.5" /> Exportar CSV
+          </a>
+        </Button>
+        <Button asChild variant="outline" size="sm" className="gap-1.5">
+          <a href={`/admin/seguimiento/imprimir${qs ? `?${qs}` : ''}`}>
+            <Printer className="h-3.5 w-3.5" /> Reporte imprimible
+          </a>
+        </Button>
+      </div>
+
       {/* KPIs */}
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {tarjetas.map((k) => (
           <div key={k.label} className="rounded-2xl border border-border/70 bg-card p-4">
             <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{k.label}</dt>
@@ -128,6 +150,7 @@ export default async function SeguimientoPage({
           {Object.entries(SEGUIMIENTO_ESTADO_LABEL).map(([v, l]) => (
             <option key={v} value={v}>{l}</option>
           ))}
+          <option value="POR_VENCER">Por vencer (≤{config.umbralPorVencerDias} días)</option>
         </select>
         <select
           name="promo"
@@ -245,7 +268,12 @@ export default async function SeguimientoPage({
                       email={r.email}
                       promocion={r.promocion}
                       empresa={empresaNombre}
-                      venceTexto={r.venceAt ? fmtFecha(r.venceAt) : null}
+                      mensaje={renderMensajeSeguimiento(config.plantillaMensaje, {
+                        cliente: r.cliente,
+                        empresa: empresaNombre,
+                        recompensa: r.promocion,
+                        vence: r.venceAt ? fmtFecha(r.venceAt) : null,
+                      })}
                     />
                   </td>
                 </tr>
@@ -254,6 +282,9 @@ export default async function SeguimientoPage({
           </table>
         </div>
       )}
+
+      {/* Parametrización (Fase S3) */}
+      <SeguimientoConfigCard config={config} promos={promos} />
     </div>
   )
 }

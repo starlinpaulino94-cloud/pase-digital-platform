@@ -7,10 +7,16 @@
  * (un solo flujo de canje para todos los reportes).
  */
 
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { requireSection } from '@/lib/auth/guards'
 import { getRequestMeta } from '@/lib/server-utils'
 import { crearNotificacion } from '@/modules/notificaciones/service'
+import {
+  getSeguimientoConfig,
+  renderMensajeSeguimiento,
+  SEGUIMIENTO_DEFAULTS,
+} from '@/modules/seguimiento/config'
 
 export async function enviarRecordatorioSeguimiento(
   compraId: string
@@ -56,18 +62,23 @@ export async function enviarRecordatorioSeguimiento(
       return { error: 'El cliente no tiene cuenta de usuario para notificar.' }
     }
 
-    const titulo = compra.promocion?.titulo ?? 'tu recompensa'
+    const config = await getSeguimientoConfig(compra.companyId)
     const vence = compra.fechaVencimiento
-      ? ` antes del ${new Intl.DateTimeFormat('es-DO', {
+      ? new Intl.DateTimeFormat('es-DO', {
           timeZone: compra.cliente.company.zonaHoraria,
           dateStyle: 'medium',
-        }).format(compra.fechaVencimiento)}`
-      : ''
+        }).format(compra.fechaVencimiento)
+      : null
     await crearNotificacion({
       userId: destinatario.id,
       tipo: 'SISTEMA',
       titulo: '🎁 Tienes una recompensa sin usar',
-      mensaje: `Tu ${titulo} gratis en ${compra.cliente.company.name} te está esperando. Ven a usarla${vence}: solo presenta tu QR desde la app.`,
+      mensaje: renderMensajeSeguimiento(config.plantillaMensaje, {
+        cliente: compra.cliente.nombre,
+        empresa: compra.cliente.company.name,
+        recompensa: compra.promocion?.titulo ?? 'tu recompensa',
+        vence,
+      }),
       href: '/cliente/mis-promociones',
     })
 
@@ -93,5 +104,73 @@ export async function enviarRecordatorioSeguimiento(
   } catch (e) {
     console.error('[seguimiento] enviarRecordatorioSeguimiento:', e)
     return { error: 'Error interno al enviar el recordatorio.' }
+  }
+}
+
+// ── Parametrización (Fase S3) ───────────────────────────────────────────────
+
+export interface SeguimientoConfigState {
+  error?: string
+  success?: string
+}
+
+export async function guardarSeguimientoConfig(
+  _prev: SeguimientoConfigState,
+  formData: FormData
+): Promise<SeguimientoConfigState> {
+  try {
+    const user = await requireSection('seguimiento')
+    if (!user) return { error: 'No autorizado.' }
+    const companyId = user.metadata.companyId
+    if (!companyId) return { error: 'Tu cuenta no está vinculada a una empresa.' }
+
+    const int = (name: string, min: number, max: number, campo: string) => {
+      const n = Math.trunc(Number(formData.get(name)))
+      if (!Number.isFinite(n) || n < min || n > max) {
+        throw new Error(`VALIDACION:${campo} debe estar entre ${min} y ${max}.`)
+      }
+      return n
+    }
+    const umbralPorVencerDias = int('umbralPorVencerDias', 1, 90, 'El umbral de "por vencer"')
+    const recordatorioDiasAntes = int('recordatorioDiasAntes', 1, 90, 'Los días de anticipación')
+    const recordatorioFrecuenciaDias = int(
+      'recordatorioFrecuenciaDias',
+      1,
+      90,
+      'La frecuencia del recordatorio'
+    )
+    const plantillaMensaje =
+      String(formData.get('plantillaMensaje') ?? '').trim().slice(0, 500) ||
+      SEGUIMIENTO_DEFAULTS.plantillaMensaje
+    // Excluidas = todas las promos listadas en el formulario menos las marcadas
+    // como "rastrear" (así una promo nueva queda rastreada por defecto).
+    const todas = formData.getAll('promoTodas').map(String).filter(Boolean)
+    const rastreadas = new Set(formData.getAll('promoRastrear').map(String))
+    const promosExcluidas = todas.filter((id) => !rastreadas.has(id)).slice(0, 100)
+
+    const config = {
+      umbralPorVencerDias,
+      recordatorioAuto: formData.get('recordatorioAuto') === 'on',
+      recordatorioDiasAntes,
+      recordatorioFrecuenciaDias,
+      plantillaMensaje,
+      promosExcluidas,
+    }
+
+    await prisma.company.update({
+      where: { id: companyId },
+      data: { seguimientoConfig: config },
+    })
+    revalidatePath('/admin/seguimiento')
+    return { success: 'Configuración guardada.' }
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith('VALIDACION:')) {
+      return { error: e.message.slice('VALIDACION:'.length) }
+    }
+    console.error('[seguimiento] guardarSeguimientoConfig:', e)
+    return {
+      error:
+        'No se pudo guardar. Si acabas de instalar esta versión, corre la migración 20260754_seguimiento_config en la base de datos.',
+    }
   }
 }

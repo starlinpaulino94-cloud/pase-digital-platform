@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import type { Prisma } from '@prisma/client'
+import { SEGUIMIENTO_DEFAULTS, type SeguimientoConfig } from '@/modules/seguimiento/config'
 
 /**
  * Seguimiento de beneficios gratis (docs/SEGUIMIENTO-BENEFICIOS.md · Fase S1).
@@ -50,6 +51,8 @@ export interface SeguimientoKpis {
   sinUsar: number
   usados: number
   vencidos: number
+  /** Sin usar y vencen en ≤ umbralPorVencerDias (config). */
+  porVencer: number
   /** % de recompensas usadas sobre el total otorgado. */
   tasaUso: number | null
   /** Antigüedad promedio (días) de las que siguen sin usar. */
@@ -69,12 +72,12 @@ export interface OpcionPromoGratis {
   titulo: string
 }
 
-/** Where base: recompensas GRATIS con QR de la empresa. */
-function whereBase(companyId: string): Prisma.ProductoCompraWhereInput {
+/** Where base: recompensas GRATIS con QR de la empresa (sin las excluidas). */
+function whereBase(companyId: string, excluidas: string[] = []): Prisma.ProductoCompraWhereInput {
   return {
     companyId,
     tipo: 'PROMOCION',
-    promocionId: { not: null },
+    promocionId: excluidas.length ? { not: null, notIn: excluidas } : { not: null },
     estado: { in: ['ACTIVA', 'CONSUMIDA', 'EXPIRADA'] },
     OR: [{ precioCongelado: null }, { precioCongelado: { lte: 0 } }],
   }
@@ -115,15 +118,17 @@ function estadoDe(c: {
 
 /**
  * Inventario de seguimiento + KPIs. Los KPIs se calculan sobre TODO el
- * universo de la empresa; la lista se limita a los 200 más recientes según
- * el filtro.
+ * universo de la empresa; la lista se limita a los `take` más recientes según
+ * el filtro (200 en pantalla; el export CSV usa 5000).
  */
 export async function getSeguimiento(
   companyId: string,
-  filtro: SeguimientoFiltro = {}
+  filtro: SeguimientoFiltro = {},
+  config: SeguimientoConfig = SEGUIMIENTO_DEFAULTS,
+  take = 200
 ): Promise<{ items: SeguimientoItem[]; kpis: SeguimientoKpis; truncado: boolean }> {
   const ahora = new Date()
-  const base = whereBase(companyId)
+  const base = whereBase(companyId, config.promosExcluidas)
 
   // ── KPIs sobre todo el universo (sin filtro) ───────────────────────────────
   const universo = await prisma.productoCompra.findMany({
@@ -140,12 +145,15 @@ export async function getSeguimiento(
   let sinUsar = 0
   let usados = 0
   let vencidos = 0
+  let porVencer = 0
   let sumaDiasSinUsar = 0
+  const limitePorVencer = ahora.getTime() + config.umbralPorVencerDias * 86_400_000
   for (const c of universo) {
     const e = estadoDe(c)
     if (e === 'SIN_USAR') {
       sinUsar++
       sumaDiasSinUsar += Math.floor((ahora.getTime() - c.createdAt.getTime()) / 86_400_000)
+      if (c.fechaVencimiento && c.fechaVencimiento.getTime() <= limitePorVencer) porVencer++
     } else if (e === 'USADO') usados++
     else vencidos++
   }
@@ -156,6 +164,7 @@ export async function getSeguimiento(
     sinUsar,
     usados,
     vencidos,
+    porVencer,
     tasaUso: usados + vencidos > 0 ? Math.round((usados / resueltos) * 100) : null,
     antiguedadPromedioSinUsar: sinUsar > 0 ? Math.round(sumaDiasSinUsar / sinUsar) : null,
   }
@@ -180,7 +189,6 @@ export async function getSeguimiento(
     }
   }
 
-  const TAKE = 200
   const compras = await prisma.productoCompra.findMany({
     where,
     include: {
@@ -189,12 +197,12 @@ export async function getSeguimiento(
       qrTokens: { where: { activo: true }, select: { id: true }, take: 1 },
     },
     orderBy: { createdAt: 'desc' },
-    take: TAKE + 1,
+    take: take + 1,
   })
 
   // Canje: quién y cuándo (transacción PROMOTION_USE cuyo QR pertenece a estas
   // compras). Una consulta para todas.
-  const compraIds = compras.slice(0, TAKE).map((c) => c.id)
+  const compraIds = compras.slice(0, take).map((c) => c.id)
   const canjes = compraIds.length
     ? await prisma.transaction.findMany({
         where: {
@@ -223,7 +231,7 @@ export async function getSeguimiento(
     })
   }
 
-  let filtradosEstado = compras.slice(0, TAKE).map((c): SeguimientoItem => {
+  let filtradosEstado = compras.slice(0, take).map((c): SeguimientoItem => {
     const estado = estadoDe(c)
     const canje = canjePorCompra.get(c.id)
     return {
@@ -248,9 +256,90 @@ export async function getSeguimiento(
   })
 
   // El filtro por estado se aplica sobre el estado DERIVADO (no hay columna).
-  if (filtro.estado && ['SIN_USAR', 'USADO', 'VENCIDO'].includes(filtro.estado)) {
+  // POR_VENCER = sin usar y vence dentro del umbral configurado.
+  if (filtro.estado === 'POR_VENCER') {
+    filtradosEstado = filtradosEstado.filter(
+      (i) =>
+        i.estado === 'SIN_USAR' &&
+        i.venceAt != null &&
+        i.venceAt.getTime() <= limitePorVencer
+    )
+  } else if (filtro.estado && ['SIN_USAR', 'USADO', 'VENCIDO'].includes(filtro.estado)) {
     filtradosEstado = filtradosEstado.filter((i) => i.estado === filtro.estado)
   }
 
-  return { items: filtradosEstado, kpis, truncado: compras.length > TAKE }
+  return { items: filtradosEstado, kpis, truncado: compras.length > take }
+}
+
+// ── Conversión por promoción (reporte imprimible · Fase S3) ─────────────────
+
+export interface ConversionPromo {
+  promocionId: string
+  titulo: string
+  total: number
+  sinUsar: number
+  usados: number
+  vencidos: number
+  /** % usados sobre resueltos (usados + vencidos). null si nada resuelto. */
+  tasaUso: number | null
+}
+
+/**
+ * Métricas de conversión otorgadas → usadas por promoción, opcionalmente
+ * acotadas a un rango de fechas de OTORGAMIENTO.
+ */
+export async function getConversionPorPromo(
+  companyId: string,
+  filtro: Pick<SeguimientoFiltro, 'desde' | 'hasta'> = {},
+  config: SeguimientoConfig = SEGUIMIENTO_DEFAULTS
+): Promise<ConversionPromo[]> {
+  const where: Prisma.ProductoCompraWhereInput = {
+    ...whereBase(companyId, config.promosExcluidas),
+  }
+  if (filtro.desde || filtro.hasta) {
+    where.createdAt = {
+      ...(filtro.desde ? { gte: new Date(`${filtro.desde}T00:00:00`) } : {}),
+      ...(filtro.hasta ? { lte: new Date(`${filtro.hasta}T23:59:59`) } : {}),
+    }
+  }
+  const compras = await prisma.productoCompra.findMany({
+    where,
+    select: {
+      promocionId: true,
+      estado: true,
+      usosIncluidos: true,
+      usosRestantes: true,
+      fechaVencimiento: true,
+      consumidaAt: true,
+      promocion: { select: { titulo: true } },
+    },
+  })
+  const porPromo = new Map<string, ConversionPromo>()
+  for (const c of compras) {
+    if (!c.promocionId) continue
+    let fila = porPromo.get(c.promocionId)
+    if (!fila) {
+      fila = {
+        promocionId: c.promocionId,
+        titulo: c.promocion?.titulo ?? 'Recompensa',
+        total: 0,
+        sinUsar: 0,
+        usados: 0,
+        vencidos: 0,
+        tasaUso: null,
+      }
+      porPromo.set(c.promocionId, fila)
+    }
+    fila.total++
+    const e = estadoDe(c)
+    if (e === 'SIN_USAR') fila.sinUsar++
+    else if (e === 'USADO') fila.usados++
+    else fila.vencidos++
+  }
+  const filas = [...porPromo.values()]
+  for (const f of filas) {
+    const resueltos = f.usados + f.vencidos
+    f.tasaUso = resueltos > 0 ? Math.round((f.usados / resueltos) * 100) : null
+  }
+  return filas.sort((a, b) => b.total - a.total)
 }

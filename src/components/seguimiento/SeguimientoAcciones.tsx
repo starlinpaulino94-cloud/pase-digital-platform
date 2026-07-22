@@ -33,8 +33,8 @@ export interface SeguimientoAccionesProps {
   email: string | null
   promocion: string
   empresa: string
-  /** Fecha de vencimiento ya formateada, o null si no vence. */
-  venceTexto: string | null
+  /** Mensaje de contacto ya renderizado con la plantilla configurada. */
+  mensaje: string
 }
 
 export function SeguimientoAcciones(props: SeguimientoAccionesProps) {
@@ -44,8 +44,7 @@ export function SeguimientoAcciones(props: SeguimientoAccionesProps) {
   const [pending, startTransition] = useTransition()
   const [recordando, startRecordar] = useTransition()
 
-  const vence = props.venceTexto ? ` antes del ${props.venceTexto}` : ''
-  const mensaje = `Hola ${props.cliente} 👋 Te escribimos de ${props.empresa}: tienes "${props.promocion}" GRATIS sin usar. Ven a disfrutarla${vence} — solo presenta tu QR desde la app. ¡Te esperamos!`
+  const mensaje = props.mensaje
   // RD usa código de país 1; tolera teléfonos guardados con o sin él.
   const digits = props.telefono?.replace(/\D/g, '') ?? ''
   const waNumero = digits.length === 11 && digits.startsWith('1') ? digits : digits ? `1${digits}` : ''
