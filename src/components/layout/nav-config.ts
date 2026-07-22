@@ -35,6 +35,7 @@ import {
   Palette,
   Share2,
   Tag,
+  QrCode,
   type LucideIcon,
 } from 'lucide-react'
 import type { AppRole } from '@/types'
@@ -125,6 +126,7 @@ const ADMIN_NAV: NavGroup[] = [
     label: 'Análisis',
     items: [
       { href: '/admin/reportes', label: 'Reportes', icon: BarChart3 },
+      { href: '/admin/seguimiento', label: 'Seguimiento', icon: QrCode },
       { href: '/admin/audiencia', label: 'Audiencia', icon: TrendingUp },
       { href: '/admin/crecimiento', label: 'Crecimiento', icon: Rocket },
     ],

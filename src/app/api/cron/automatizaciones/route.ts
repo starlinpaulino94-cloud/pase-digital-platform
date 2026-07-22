@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { ejecutarAutomatizacionesGlobal } from '@/modules/admin/automatizaciones'
 import { mantenimientoRegalos } from '@/modules/regalos/mantenimiento'
+import { recordatoriosSeguimientoAuto } from '@/modules/seguimiento/mantenimiento'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -43,7 +44,18 @@ export async function GET(request: NextRequest) {
       console.error('[cron-automatizaciones] regalos', e)
       return { expirados: 0, recordatorios: 0 }
     })
-    return NextResponse.json({ ok: true, empresas: resultados.length, totales, regalos })
+    // Seguimiento S3: recuerda a los clientes sus recompensas gratis por vencer.
+    const seguimiento = await recordatoriosSeguimientoAuto().catch((e) => {
+      console.error('[cron-automatizaciones] seguimiento', e)
+      return { recordatorios: 0 }
+    })
+    return NextResponse.json({
+      ok: true,
+      empresas: resultados.length,
+      totales,
+      regalos,
+      seguimiento,
+    })
   } catch (e) {
     console.error('[cron-automatizaciones]', e)
     return NextResponse.json({ error: 'Error interno.' }, { status: 500 })

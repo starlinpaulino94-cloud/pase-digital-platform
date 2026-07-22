@@ -11,6 +11,7 @@ import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth'
 import { getRequestMeta } from '@/lib/server-utils'
 import { SCANNER_ROLES } from '@/types'
+import { canAccessAdminSection } from '@/lib/auth/permissions'
 import { crearTransaccionAplicada } from '@/lib/transactions'
 import type { TicketPayload } from '@/modules/transacciones/actions'
 import { registrarTransicionCompra, validarConsumoCompra } from '@/modules/promociones/compra'
@@ -44,6 +45,13 @@ export async function confirmarCanjePromocion(
     const qrTokenId = String(formData.get('qrTokenId') ?? '')
     const notas = String(formData.get('notas') ?? '').trim() || null
     const sucursalId = String(formData.get('sucursalId') ?? '').trim() || null
+    // Canje INTERNO (módulo Seguimiento): el admin canjea sin escanear el QR
+    // del cliente. Queda marcado en la transacción y en auditoría con fecha,
+    // hora y responsable. Solo roles con acceso a la sección de seguimiento.
+    const interno = String(formData.get('interno') ?? '') === '1'
+    if (interno && !canAccessAdminSection(user.metadata.role, 'seguimiento')) {
+      return { error: 'No tienes permisos para canjes internos.' }
+    }
     if (!compraId || !qrTokenId) return { error: 'Datos del canje incompletos.' }
 
     // Documento comercial: SIEMPRE el nombre del empleado, nunca su correo.
@@ -161,7 +169,12 @@ export async function confirmarCanjePromocion(
           accion: 'QR_USADO',
           entidadTipo: 'ProductoCompra',
           entidadId: compra.id,
-          payload: { promocionId: promo.id, clienteId: compra.clienteId, restantes },
+          payload: {
+            promocionId: promo.id,
+            clienteId: compra.clienteId,
+            restantes,
+            ...(interno ? { interno: true } : {}),
+          },
           ...meta,
         },
       })
@@ -183,6 +196,7 @@ export async function confirmarCanjePromocion(
           descuento: promo.descuento != null ? String(promo.descuento) : undefined,
           empleado: empleadoNombre ?? undefined,
           restantes,
+          ...(interno ? { canjeInterno: true } : {}),
         },
         auditoria: { ...meta },
         resultado: notas,

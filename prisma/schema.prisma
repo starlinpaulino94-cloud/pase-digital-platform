@@ -257,6 +257,12 @@ model Company {
   // permitirRegalos?, maxTransferenciasMes?, vigenciaHoras? }. null = defaults.
   regalosConfig Json?
 
+  // Seguimiento de beneficios gratis (docs/SEGUIMIENTO-BENEFICIOS.md · S3).
+  // JSON: { umbralPorVencerDias?, recordatorioAuto?, recordatorioDiasAntes?,
+  // recordatorioFrecuenciaDias?, plantillaMensaje?, promosExcluidas? }.
+  // null = defaults del módulo.
+  seguimientoConfig Json?
+
   users                  User[]
   plans                  Plan[]
   clientes               Cliente[]
