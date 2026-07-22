@@ -13,10 +13,17 @@
    (o `utm_source=`), el middleware (`src/proxy.ts`) siembra la cookie
    `mg_canal` por 30 días. El PRIMER canal gana: visitas posteriores con otro
    `src` no la sobreescriben.
-3. **Captura en el registro.** Al crearse la ficha del cliente —registro por
+3. **Selector obligatorio en el registro.** El formulario pregunta
+   **"¿Cómo nos conociste?"** (Facebook, Instagram, TikTok, WhatsApp, tarjeta
+   en la calle, un amigo, Google, visitó el negocio, otro) — así hay
+   atribución aunque el visitante NO haya llegado por un enlace `?src=`
+   (p. ej. tarjetas ya repartidas sin QR). Componente
+   `ComoNosConociste` (`canalDeclarado` en el FormData).
+4. **Captura en el registro.** Al crearse la ficha del cliente —registro por
    empresa, cuenta general, Google o auto-reparación— `capturarCanalRegistro`
-   lee la cookie y guarda `clientes.canalOrigen`. Nunca bloquea el registro
-   (tolera incluso la migración pendiente).
+   guarda `clientes.canalOrigen` con prioridad **cookie del enlace** (más
+   precisa: distingue campañas) **> canal declarado** por el usuario. Nunca
+   bloquea el registro (tolera incluso la migración pendiente).
 4. **Módulo de análisis.** KPIs, ranking por canal con % y barras, filtro por
    período y últimos registros con su canal. Sin cookie: `invitacion` si el
    cliente llegó por un enlace de referido, `directo` en el resto.

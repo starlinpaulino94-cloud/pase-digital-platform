@@ -19,13 +19,18 @@ export async function leerCanalCookie(): Promise<string | null> {
 }
 
 /**
- * Guarda el canal de la cookie en la ficha recién creada. NUNCA lanza y
- * tolera que la columna `canalOrigen` aún no exista en la BD (migración
- * 20260755 pendiente): el registro del cliente jamás se bloquea por esto.
+ * Guarda el canal en la ficha recién creada. Prioridad: cookie del enlace
+ * ?src= (más precisa: distingue campañas) > canal DECLARADO por el usuario en
+ * el selector "¿Cómo nos conociste?" del registro. NUNCA lanza y tolera que
+ * la columna `canalOrigen` aún no exista en la BD (migración 20260755
+ * pendiente): el registro del cliente jamás se bloquea por esto.
  */
-export async function capturarCanalRegistro(clienteId: string): Promise<void> {
+export async function capturarCanalRegistro(
+  clienteId: string,
+  canalDeclarado?: string | null
+): Promise<void> {
   try {
-    const canal = await leerCanalCookie()
+    const canal = (await leerCanalCookie()) ?? sanitizarCanal(canalDeclarado)
     if (!canal) return
     await prisma.$executeRaw`UPDATE "clientes" SET "canalOrigen" = ${canal} WHERE "id" = ${clienteId} AND "canalOrigen" IS NULL`
   } catch (e) {

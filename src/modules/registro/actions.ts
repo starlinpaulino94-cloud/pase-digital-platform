@@ -104,6 +104,8 @@ export async function registrarCliente(
   // Growth Engine 3.0: código del enlace de invitación (landing) que trajo al
   // usuario. Atribuye el registro al enlace y dispara el beneficio/recompensas.
   const glCode = String(formData.get('glCode') ?? '').trim()
+  // Atribución de marketing: canal declarado en "¿Cómo nos conociste?".
+  const canalDeclarado = String(formData.get('canalDeclarado') ?? '').trim() || null
   // F5.2: auto-seguir con opción de desmarcar. El hidden "off" va primero;
   // si el checkbox está marcado, el último valor es "on".
   const seguirEmpresa = formData.getAll('seguirEmpresa').at(-1) !== 'off'
@@ -196,8 +198,8 @@ export async function registrarCliente(
         }
       }
 
-      // Atribución de marketing: canal (?src=) con el que llegó, si lo hay.
-      await capturarCanalRegistro(cliente.id)
+      // Atribución de marketing: cookie del enlace ?src= o canal declarado.
+      await capturarCanalRegistro(cliente.id, canalDeclarado)
 
       // FASE 3/5.2: seguir la empresa al registrarse (salvo que lo desmarque).
       if (seguirEmpresa) {
@@ -354,8 +356,8 @@ export async function registrarCliente(
       },
     })
 
-    // Atribución de marketing: canal (?src=) con el que llegó, si lo hay.
-    await capturarCanalRegistro(result.cliente.id)
+    // Atribución de marketing: cookie del enlace ?src= o canal declarado.
+    await capturarCanalRegistro(result.cliente.id, canalDeclarado)
 
     await vincularReferido(refCode, company.id, result.cliente.id, ipAddress, {
       campanaInvitacionId,
@@ -440,6 +442,8 @@ export async function registrarCuentaGeneral(
     const telefono = String(formData.get('telefono') ?? '').trim()
     const aceptaTerminos = formData.get('terminos') === 'on'
     const marketingConsent = formData.getAll('marketingConsent').at(-1) === 'on'
+    // Atribución de marketing: canal declarado en "¿Cómo nos conociste?".
+    const canalDeclarado = String(formData.get('canalDeclarado') ?? '').trim() || null
 
     if (!nombre || !email || !password) {
       return { error: 'Completa todos los campos obligatorios.' }
@@ -522,9 +526,9 @@ export async function registrarCuentaGeneral(
           .update({ where: { id: sesion.metadata.clienteId }, data: { telefono } })
           .catch(() => {})
       }
-      // Atribución de marketing: canal (?src=) con el que llegó, si lo hay.
+      // Atribución de marketing: cookie del enlace ?src= o canal declarado.
       if (sesion.metadata.clienteId) {
-        await capturarCanalRegistro(sesion.metadata.clienteId)
+        await capturarCanalRegistro(sesion.metadata.clienteId, canalDeclarado)
       }
 
       if (verificarCorreo) {
