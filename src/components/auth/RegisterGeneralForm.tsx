@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
+import { ComoNosConociste } from '@/components/adquisicion/ComoNosConociste'
 import {
   Card,
   CardContent,
@@ -147,6 +148,8 @@ export function RegisterGeneralForm() {
               Lo usamos para confirmar tus citas y beneficios.
             </p>
           </div>
+
+          <ComoNosConociste selectClassName="border-white/20 bg-white/10 text-white" />
 
           <label className="flex items-start gap-2 text-sm text-white/70">
             <input

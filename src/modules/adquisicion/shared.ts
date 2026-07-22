@@ -34,6 +34,23 @@ export const CANALES_PREDEFINIDOS = [
   'tarjeta',
 ] as const
 
+/**
+ * Opciones del selector "¿Cómo nos conociste?" del formulario de registro.
+ * El valor coincide con los canales de los enlaces ?src= para que todo caiga
+ * en el mismo reporte de /admin/adquisicion.
+ */
+export const OPCIONES_COMO_CONOCISTE: { value: string; label: string }[] = [
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'tarjeta', label: 'Me dieron una tarjeta en la calle' },
+  { value: 'invitacion', label: 'Un amigo o familiar me invitó' },
+  { value: 'google', label: 'Buscando en Google' },
+  { value: 'local', label: 'Visité el negocio' },
+  { value: 'otro', label: 'Otro' },
+]
+
 const CANAL_LABELS: Record<string, string> = {
   facebook: 'Facebook',
   instagram: 'Instagram',
@@ -43,6 +60,8 @@ const CANAL_LABELS: Record<string, string> = {
   google: 'Google',
   youtube: 'YouTube',
   volante: 'Volante',
+  local: 'Visitó el negocio',
+  otro: 'Otro',
   invitacion: 'Invitación de otro cliente',
   directo: 'Directo / desconocido',
 }
