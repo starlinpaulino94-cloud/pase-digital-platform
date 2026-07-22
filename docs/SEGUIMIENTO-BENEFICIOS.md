@@ -66,7 +66,7 @@ Más allá de lo pedido, un control serio de recompensas incluye:
 
 ## 3. Plan por fases
 
-**Fase S1 — Datos + vista de control (base)** ✅ *en curso*
+**Fase S1 — Datos + vista de control (base)** ✅ *entregada*
 - `src/modules/seguimiento/queries.ts`: inventario de recompensas gratis con
   estado derivado, contacto del cliente, promo, fechas, canjeador; KPIs;
   opciones de filtro (promos gratis).
@@ -74,7 +74,7 @@ Más allá de lo pedido, un control serio de recompensas incluye:
   cliente, rango de fechas) + tabla. Sección `seguimiento` en ADMIN_SECTIONS +
   entrada en el menú. Sin cambios de esquema.
 
-**Fase S2 — Contacto + canje interno + auditoría**
+**Fase S2 — Contacto + canje interno + auditoría** ✅ *entregada*
 - Botones de WhatsApp (plantilla "tu lavado gratis te espera") y correo por
   cliente. Recordatorio in-app individual.
 - Canje INTERNO por el admin desde la tabla: reutiliza `confirmarCanjePromocion`

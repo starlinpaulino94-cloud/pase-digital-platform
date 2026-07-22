@@ -13,6 +13,7 @@ import {
   type SeguimientoFiltro,
 } from '@/modules/seguimiento/queries'
 import { Gift, Search } from 'lucide-react'
+import { SeguimientoAcciones } from '@/components/seguimiento/SeguimientoAcciones'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,9 +45,10 @@ export default async function SeguimientoPage({
 
   const empresa = await prisma.company.findUnique({
     where: { id: companyId },
-    select: { zonaHoraria: true },
+    select: { zonaHoraria: true, name: true },
   })
   const timeZone = empresa?.zonaHoraria || 'America/Santo_Domingo'
+  const empresaNombre = empresa?.name ?? 'la empresa'
   const fmtFecha = (d: Date | null) =>
     d
       ? new Intl.DateTimeFormat('es-DO', { timeZone, dateStyle: 'medium' }).format(d)
@@ -169,7 +171,7 @@ export default async function SeguimientoPage({
         />
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-border/70 bg-card">
-          <table className="w-full min-w-[880px] text-sm">
+          <table className="w-full min-w-[1040px] text-sm">
             <thead>
               <tr className="border-b border-border/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <th className="px-4 py-3 font-semibold">Cliente</th>
@@ -178,6 +180,7 @@ export default async function SeguimientoPage({
                 <th className="px-4 py-3 font-semibold">Otorgado</th>
                 <th className="px-4 py-3 font-semibold">Vence</th>
                 <th className="px-4 py-3 font-semibold">Usado</th>
+                <th className="px-4 py-3 text-right font-semibold">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
@@ -231,6 +234,19 @@ export default async function SeguimientoPage({
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <SeguimientoAcciones
+                      compraId={r.compraId}
+                      qrTokenId={r.qrTokenId}
+                      estado={r.estado}
+                      cliente={r.cliente}
+                      telefono={r.telefono}
+                      email={r.email}
+                      promocion={r.promocion}
+                      empresa={empresaNombre}
+                      venceTexto={r.venceAt ? fmtFecha(r.venceAt) : null}
+                    />
                   </td>
                 </tr>
               ))}
