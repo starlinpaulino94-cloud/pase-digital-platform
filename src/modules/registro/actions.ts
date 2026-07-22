@@ -10,6 +10,7 @@ import { ensureCodigoCorto } from '@/lib/referidos'
 import { otorgarRegaloBienvenida, otorgarBienvenidaDirecta } from '@/modules/invitaciones/beneficios'
 import { vincularRegalosPorContacto } from '@/modules/regalos/entrega'
 import { procesarRegistroGrowth } from '@/modules/growth/registro'
+import { capturarCanalRegistro } from '@/modules/adquisicion/canal'
 import { emitirEventoEstrategia } from '@/modules/estrategias/eventos'
 import { TERMS_VERSION } from '@/lib/legal'
 import { isEmailVerificationEnabled, sendVerificationEmail } from '@/lib/auth/emailVerification'
@@ -195,6 +196,9 @@ export async function registrarCliente(
         }
       }
 
+      // Atribución de marketing: canal (?src=) con el que llegó, si lo hay.
+      await capturarCanalRegistro(cliente.id)
+
       // FASE 3/5.2: seguir la empresa al registrarse (salvo que lo desmarque).
       if (seguirEmpresa) {
         await prisma.companyFollow
@@ -349,6 +353,9 @@ export async function registrarCliente(
         companyId: company.id,
       },
     })
+
+    // Atribución de marketing: canal (?src=) con el que llegó, si lo hay.
+    await capturarCanalRegistro(result.cliente.id)
 
     await vincularReferido(refCode, company.id, result.cliente.id, ipAddress, {
       campanaInvitacionId,
@@ -514,6 +521,10 @@ export async function registrarCuentaGeneral(
         await prisma.cliente
           .update({ where: { id: sesion.metadata.clienteId }, data: { telefono } })
           .catch(() => {})
+      }
+      // Atribución de marketing: canal (?src=) con el que llegó, si lo hay.
+      if (sesion.metadata.clienteId) {
+        await capturarCanalRegistro(sesion.metadata.clienteId)
       }
 
       if (verificarCorreo) {

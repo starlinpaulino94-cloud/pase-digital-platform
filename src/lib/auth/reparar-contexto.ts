@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getEmpresaPrincipal } from '@/modules/marketplace/marcaUnica'
 import { otorgarBienvenidaDirecta } from '@/modules/invitaciones/beneficios'
 import { vincularRegalosPorContacto } from '@/modules/regalos/entrega'
+import { capturarCanalRegistro } from '@/modules/adquisicion/canal'
 import type { AppRole, SessionUser } from '@/types'
 
 /**
@@ -116,8 +117,10 @@ export async function repararContextoCliente(user: SessionUser): Promise<Session
         })
         .catch(() => {})
 
-      // Misma experiencia que un registro normal: regalo de bienvenida de la
-      // campaña activa + regalos P2P que esperaban a este correo.
+      // Misma experiencia que un registro normal: canal de marketing (?src=),
+      // regalo de bienvenida de la campaña activa + regalos P2P que esperaban
+      // a este correo.
+      await capturarCanalRegistro(cliente.id)
       await otorgarBienvenidaDirecta(cliente.id, cliente.companyId)
       if (user.email) {
         await vincularRegalosPorContacto({

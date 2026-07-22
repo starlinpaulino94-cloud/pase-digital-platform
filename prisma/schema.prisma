@@ -729,6 +729,10 @@ model Cliente {
   idioma             String? // locale preferido, ej. "es-DO"
   notifPromos        Boolean   @default(true) // recibir promociones
   notifRecordatorios Boolean   @default(true) // recordatorios (vencimiento, etc.)
+  // Atribución de marketing (docs/ADQUISICION.md): canal por el que llegó el
+  // cliente (facebook, instagram, tarjeta, …), capturado con la cookie mg_canal
+  // ANTES del registro (enlaces /?src=canal). null = directo / desconocido.
+  canalOrigen        String?
   codigoReferido     String    @unique @default(cuid())
   // Código corto legible para el enlace /r/XXXXXX (se genera al visitar el
   // panel de referidos; null hasta entonces).
@@ -773,6 +777,8 @@ model Cliente {
   // Filtros frecuentes solo por empresa (adminMetrics, reportes, /admin/clientes).
   // El unique (supabaseId, companyId) no cubre búsquedas por companyId solo.
   @@index([companyId])
+  // Atribución de marketing: agrupación de registros por canal.
+  @@index([companyId, canalOrigen])
   @@map("clientes")
 }
 
