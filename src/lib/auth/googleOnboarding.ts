@@ -6,6 +6,7 @@ import { TERMS_VERSION } from '@/lib/legal'
 import { getEmpresaPrincipal } from '@/modules/marketplace/marcaUnica'
 import { otorgarBienvenidaDirecta } from '@/modules/invitaciones/beneficios'
 import { vincularRegalosPorContacto } from '@/modules/regalos/entrega'
+import { capturarCanalRegistro } from '@/modules/adquisicion/canal'
 import { ROLE_HOME, type AppRole } from '@/types'
 
 /**
@@ -150,6 +151,8 @@ async function afiliarUsuarioExistente(
   await fijarAppMetadata(supabaseId, existing.id, cliente.id, company.id)
 
   if (esAltaNueva) {
+    // Atribución de marketing: canal (?src=) con el que llegó, si lo hay.
+    await capturarCanalRegistro(cliente.id)
     // Usuario EXISTENTE afiliándose a otra empresa: solo cuenta con ?ref
     // explícito, nunca por la cookie silenciosa.
     await vincularReferido(refCode, company.id, cliente.id, ipAddress, {
@@ -240,6 +243,8 @@ export async function completeGoogleOnboarding(
     await Promise.all([
       fijarAppMetadata(supabaseId, result.dbUser.id, result.cliente.id, company.id),
       vincularReferido(refCode, company.id, result.cliente.id, ipAddress),
+      // Atribución de marketing: canal (?src=) con el que llegó, si lo hay.
+      capturarCanalRegistro(result.cliente.id),
     ])
 
     // Regalo de bienvenida de la campaña activa (aunque no venga de un enlace)

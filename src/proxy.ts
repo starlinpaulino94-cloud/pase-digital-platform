@@ -4,6 +4,7 @@ import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/env'
 import { sessionCookieDomain } from '@/lib/site'
 import { ROLE_HOME, ROUTE_PROTECTION, FULL_ADMIN_ROLES, type AppMetadata } from '@/types'
 import { adminSectionForPath, canAccessAdminSection } from '@/lib/auth/permissions'
+import { CANAL_COOKIE, CANAL_COOKIE_MAX_AGE, sanitizarCanal } from '@/modules/adquisicion/shared'
 
 type CookieToSet = { name: string; value: string; options?: CookieOptions }
 
@@ -39,6 +40,21 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
   const matched = matchProtected(path)
   const isLoginPage = path === '/login' || path === '/acceso'
+
+  // Atribución de marketing (docs/ADQUISICION.md): si el visitante llega con
+  // ?src=facebook (o utm_source), se siembra la cookie de canal ANTES de que
+  // se registre. Primer toque: una cookie existente no se sobreescribe.
+  const canal = sanitizarCanal(
+    request.nextUrl.searchParams.get('src') ??
+      request.nextUrl.searchParams.get('utm_source')
+  )
+  if (canal && !request.cookies.get(CANAL_COOKIE)) {
+    response.cookies.set(CANAL_COOKIE, canal, {
+      maxAge: CANAL_COOKIE_MAX_AGE,
+      path: '/',
+      sameSite: 'lax',
+    })
+  }
 
   // Rutas públicas SIN sesión: continuar sin tocar Supabase. Evita una llamada
   // de red por cada request anónimo, prefetch o telemetría (el grueso del
