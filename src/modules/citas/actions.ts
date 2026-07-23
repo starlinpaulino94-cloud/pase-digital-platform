@@ -53,7 +53,9 @@ export async function reservarCita(
     const ymd = String(formData.get('fecha') ?? '').trim()
     const hm = String(formData.get('hora') ?? '').trim()
     const vehiculoId = String(formData.get('vehiculoId') ?? '').trim() || null
-    const servicio = String(formData.get('servicio') ?? '').trim().slice(0, 300) || null
+    let servicio = String(formData.get('servicio') ?? '').trim().slice(0, 300) || null
+    // Cita para canjear una recompensa gratis (habilita su QR al agendar).
+    const compraId = String(formData.get('compraId') ?? '').trim() || null
     if (!YMD_RE.test(ymd) || !HM_RE.test(hm)) return { error: 'Elige día y hora.' }
 
     const cliente = await prisma.cliente.findUnique({
@@ -91,6 +93,24 @@ export async function reservarCita(
         select: { id: true },
       })
       if (!veh) return { error: 'Vehículo no válido.' }
+    }
+
+    // La recompensa (si viene) debe ser del cliente y estar disponible.
+    let compraTitulo: string | null = null
+    if (compraId) {
+      const compra = await prisma.productoCompra.findFirst({
+        where: {
+          id: compraId,
+          clienteId: cliente.id,
+          companyId: cliente.companyId,
+          estado: 'ACTIVA',
+          usosRestantes: { gt: 0 },
+        },
+        select: { promocion: { select: { titulo: true } } },
+      })
+      if (!compra) return { error: 'Esa recompensa ya no está disponible.' }
+      compraTitulo = compra.promocion?.titulo ?? 'Recompensa'
+      if (!servicio) servicio = `Canje: ${compraTitulo}`.slice(0, 300)
     }
 
     // Límites del día natural en la TZ del negocio.
@@ -145,6 +165,15 @@ export async function reservarCita(
     })
     if ('error' in resultado) return { error: resultado.error }
 
+    // Vincular la recompensa a la cita (habilita su QR). Defensivo: si la
+    // columna citas.compraId aún no existe (migración 20260756 pendiente),
+    // la cita queda creada igual y solo se pierde el vínculo.
+    if (compraId) {
+      await prisma.cita
+        .update({ where: { id: resultado.cita.id }, data: { compraId } })
+        .catch((e) => console.error('[citas] vincular compra:', e))
+    }
+
     const cuando = `${etiquetaDia(ymd, tz, cliente.company.idioma ?? undefined)} · ${hm}`
     await notificarAdmins(cliente.companyId, {
       tipo: 'CITA_NUEVA',
@@ -155,11 +184,17 @@ export async function reservarCita(
 
     revalidatePath('/cliente/citas')
     revalidatePath('/admin/citas')
+    if (compraId) {
+      revalidatePath(`/cliente/mis-promociones/${compraId}`)
+      revalidatePath('/cliente/mis-promociones')
+    }
     return {
       success: true,
-      mensaje: cfg.autoConfirmar
-        ? `Cita confirmada para el ${cuando}.`
-        : `Cita reservada para el ${cuando}. El negocio la confirmará pronto.`,
+      mensaje: compraId
+        ? `Cita para tu ${compraTitulo ?? 'recompensa'} el ${cuando}. ¡Tu QR quedó habilitado!`
+        : cfg.autoConfirmar
+          ? `Cita confirmada para el ${cuando}.`
+          : `Cita reservada para el ${cuando}. El negocio la confirmará pronto.`,
     }
   } catch (e) {
     console.error('[citas] reservar:', e)

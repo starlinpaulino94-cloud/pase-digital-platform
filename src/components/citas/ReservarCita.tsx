@@ -35,6 +35,8 @@ export function ReservarCita({
   vehiculos,
   limiteDiaAlcanzado,
   notas,
+  compraId,
+  compraTitulo,
 }: {
   fecha: string
   etiquetaFecha: string
@@ -42,6 +44,9 @@ export function ReservarCita({
   vehiculos: VehiculoOption[]
   limiteDiaAlcanzado: boolean
   notas: string | null
+  /** Recompensa gratis a canjear: al reservar se habilita su QR. */
+  compraId?: string | null
+  compraTitulo?: string | null
 }) {
   const [horaSeleccionada, setHoraSeleccionada] = useState<string | null>(null)
   const [state, formAction, pending] = useActionState(reservarCita, init)
@@ -124,6 +129,13 @@ export function ReservarCita({
           <form action={formAction} className="space-y-4">
             <input type="hidden" name="fecha" value={fecha} />
             <input type="hidden" name="hora" value={horaSeleccionada ?? ''} />
+            {compraId && <input type="hidden" name="compraId" value={compraId} />}
+            {compraId && compraTitulo && (
+              <p className="rounded-xl border border-success/25 bg-success/10 p-3 text-xs leading-relaxed text-foreground">
+                Esta cita es para canjear tu <strong>{compraTitulo}</strong> gratis.
+                Al confirmarla, tu QR quedará habilitado.
+              </p>
+            )}
 
             {vehiculos.length > 0 && (
               <label className="block text-sm font-medium text-foreground">
