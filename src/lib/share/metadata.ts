@@ -46,7 +46,7 @@ export function shareMetadata({
       description,
       url,
       siteName,
-      locale: 'es_ES',
+      locale: 'es_DO',
       ...(image
         ? { images: [{ url: image, width: 1200, height: 630, alt: imageAlt ?? title }] }
         : {}),
