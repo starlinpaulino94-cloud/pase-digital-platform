@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath, revalidateTag } from 'next/cache'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requireAdminUser, requireSection } from '@/lib/auth/guards'
 import { resolveCompanyId } from '@/lib/auth/company-context'
@@ -18,6 +19,8 @@ export interface PromocionState {
 
 /** Campos de Promociones 2.0 compartidos entre crear y actualizar. */
 function parsePromocion(formData: FormData): { error: string } | {
+  // Share Engine: textos propios al compartir (persistidos aparte).
+  share: { shareTitulo: string | null; shareDescripcion: string | null }
   data: {
     titulo: string
     descripcion: string
@@ -48,6 +51,9 @@ function parsePromocion(formData: FormData): { error: string } | {
   const imagenUrl = String(formData.get('imagenUrl') ?? '').trim() || null
   const tipo = String(formData.get('tipo') ?? 'general').trim()
   const codigo = String(formData.get('codigo') ?? '').trim() || null
+  // Share Engine: textos propios al compartir (vacío = usar título/descripción).
+  const shareTitulo = String(formData.get('shareTitulo') ?? '').trim().slice(0, 120) || null
+  const shareDescripcion = String(formData.get('shareDescripcion') ?? '').trim().slice(0, 200) || null
   const visibilidad = String(formData.get('visibilidad') ?? 'publica').trim()
   const campanaRaw = String(formData.get('campanaId') ?? '').trim()
   const campanaId = campanaRaw && campanaRaw !== 'none' ? campanaRaw : null
@@ -124,6 +130,7 @@ function parsePromocion(formData: FormData): { error: string } | {
   }
 
   return {
+    share: { shareTitulo, shareDescripcion },
     data: {
       titulo,
       descripcion,
@@ -170,6 +177,25 @@ function toBridgeData(d: {
     prioridad: d.prioridad,
     campanaId: d.campanaId ?? null,
   }
+}
+
+/**
+ * Share Engine: persiste los textos de compartición en un update APARTE y
+ * defensivo — si la columna shareConfig aún no existe (migración 20260757
+ * pendiente), crear/editar la promoción sigue funcionando y solo se pierde
+ * la personalización.
+ */
+async function guardarShareConfig(
+  id: string,
+  share: { shareTitulo: string | null; shareDescripcion: string | null }
+) {
+  const config =
+    share.shareTitulo || share.shareDescripcion
+      ? { ogTitulo: share.shareTitulo, ogDescripcion: share.shareDescripcion }
+      : Prisma.DbNull
+  await prisma.promocion
+    .update({ where: { id }, data: { shareConfig: config } })
+    .catch((e) => console.error('[promocion] shareConfig:', e))
 }
 
 /** Valida que la campaña exista y pertenezca a la empresa. */
@@ -233,6 +259,7 @@ export async function crearPromocion(
 
   try {
     const legacy = await prisma.promocion.create({ data: { companyId, ...parsed.data } })
+    await guardarShareConfig(legacy.id, parsed.share)
 
     await syncCreate(
       legacy.id, companyId,
@@ -281,6 +308,7 @@ export async function actualizarPromocion(
       where: { id },
       data: { ...parsed.data, activo },
     })
+    await guardarShareConfig(id, parsed.share)
 
     await syncUpdate(id, promo.companyId, toBridgeData(parsed.data), user.metadata.dbUserId)
     if (activo !== promo.activo) {

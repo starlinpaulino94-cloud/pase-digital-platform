@@ -55,6 +55,17 @@ interface Existing {
   diasPermitidos: number[]
   horaDesde: string | null
   horaHasta: string | null
+  // Share Engine: textos propios al compartir ({ ogTitulo?, ogDescripcion? }).
+  shareConfig?: unknown
+}
+
+/** Textos de compartición guardados (tolerante a null/JSON ajeno). */
+function shareDe(raw: unknown): { ogTitulo: string; ogDescripcion: string } {
+  const cfg = (raw ?? {}) as { ogTitulo?: unknown; ogDescripcion?: unknown }
+  return {
+    ogTitulo: typeof cfg.ogTitulo === 'string' ? cfg.ogTitulo : '',
+    ogDescripcion: typeof cfg.ogDescripcion === 'string' ? cfg.ogDescripcion : '',
+  }
 }
 
 const DIAS_SEMANA = [
@@ -210,6 +221,42 @@ export function PromocionForm({
           <PromoImagenUpload
             folder={existing?.id ?? 'nueva'}
             currentUrl={existing?.imagenUrl ?? null}
+          />
+          <p className="text-xs text-muted-foreground">
+            Al compartir el enlace (WhatsApp, Facebook…) esta imagen se muestra
+            ENTERA como vista previa. Ideal 1200×630 px (horizontal).
+          </p>
+        </div>
+      </div>
+
+      {/* Share Engine: textos al compartir el enlace */}
+      <div className="space-y-5 rounded-xl border border-border p-5">
+        <div>
+          <h3 className="font-semibold text-foreground">Al compartir</h3>
+          <p className="text-sm text-muted-foreground">
+            Texto que acompaña la vista previa del enlace en WhatsApp, Facebook y
+            demás apps. Vacío = se usa el título y la descripción de arriba.
+          </p>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="shareTitulo">Título al compartir</Label>
+          <Input
+            id="shareTitulo"
+            name="shareTitulo"
+            maxLength={120}
+            defaultValue={shareDe(existing?.shareConfig).ogTitulo}
+            placeholder="Ej: 🚗 Tu primer lavado GRATIS en CARTOWN"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="shareDescripcion">Descripción al compartir</Label>
+          <Textarea
+            id="shareDescripcion"
+            name="shareDescripcion"
+            rows={2}
+            maxLength={200}
+            defaultValue={shareDe(existing?.shareConfig).ogDescripcion}
+            placeholder="Ej: Regístrate gratis y reclama tu lavado de bienvenida. Solo esta semana."
           />
         </div>
       </div>
