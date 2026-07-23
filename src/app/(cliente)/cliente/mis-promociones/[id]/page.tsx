@@ -129,6 +129,7 @@ export default async function MiCompraPage({
             promocionId={promo.id}
             titulo={promo.titulo}
             companyName={compra.company.name}
+            version={promo.updatedAt?.getTime() ?? null}
           />
         </div>
       )}
