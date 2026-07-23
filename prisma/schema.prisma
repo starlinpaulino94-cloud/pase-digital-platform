@@ -1328,6 +1328,8 @@ model ProductoCompra {
 
   transiciones ProductoCompraTransicion[]
   qrTokens     QrToken[]
+  // Citas agendadas para canjear esta recompensa (cita antes del QR).
+  citas        Cita[]                     @relation("CitaCompra")
 
   @@index([companyId, estado])
   @@index([clienteId, estado])
@@ -2993,12 +2995,17 @@ model Cita {
   motivoCancelacion String?
   atendidaPorId     String?
   atendidaPor       User?      @relation("CitaAtendidaPor", fields: [atendidaPorId], references: [id], onDelete: SetNull)
+  /// Recompensa gratis que el cliente viene a canjear: su QR se habilita al
+  /// agendar esta cita (docs/SEGUIMIENTO-BENEFICIOS.md · cita antes del QR).
+  compraId          String?
+  compra            ProductoCompra? @relation("CitaCompra", fields: [compraId], references: [id], onDelete: SetNull)
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
   // Agenda del día por empresa y "mis citas" del cliente.
   @@index([companyId, inicio])
   @@index([clienteId, inicio])
+  @@index([compraId])
   @@map("citas")
 }
 

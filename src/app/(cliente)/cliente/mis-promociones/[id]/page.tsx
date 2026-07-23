@@ -8,6 +8,7 @@ import {
   Clock,
   XCircle,
   FileText,
+  CalendarDays,
 } from 'lucide-react'
 import { requireRole } from '@/lib/auth/guards'
 import { prisma } from '@/lib/prisma'
@@ -18,6 +19,8 @@ import { ComprobanteCompraForm } from '@/components/cliente/ComprobanteCompraFor
 import { CancelarCompraButton } from '@/components/cliente/CancelarCompraButton'
 import { SharePromocionMenu } from '@/components/public/SharePromocionMenu'
 import { compraEstadoUi, compraEstadoVisual } from '@/components/cliente/compra-estado'
+import { Button } from '@/components/ui/button'
+import { getAgendaConfig } from '@/modules/citas/queries'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,7 +46,7 @@ export default async function MiCompraPage({
     where: { id },
     include: {
       promocion: true,
-      company: { select: { name: true } },
+      company: { select: { name: true, zonaHoraria: true } },
       metodoPago: true,
       transiciones: { orderBy: { createdAt: 'asc' } },
       qrTokens: { where: { activo: true }, orderBy: { createdAt: 'desc' }, take: 1 },
@@ -60,6 +63,35 @@ export default async function MiCompraPage({
   const qr = compra.qrTokens[0] ?? null
   const precio = Number(compra.precioCongelado ?? 0)
   const promoPublica = promo?.visibilidad === 'publica'
+
+  // Cita antes del QR: las recompensas GRATIS exigen agendar una cita para
+  // habilitar el QR (docs/SEGUIMIENTO-BENEFICIOS.md), si la empresa tiene la
+  // agenda de citas activa. Tolerante a la migración 20260756 pendiente.
+  const esGratis = compra.promocionId != null && precio <= 0
+  let citaCanje: { inicio: Date; estado: string } | null = null
+  let requiereCita = false
+  if (esGratis && compra.estado === 'ACTIVA' && qr) {
+    const agenda = await getAgendaConfig(compra.companyId).catch(() => null)
+    if (agenda?.activa) {
+      try {
+        citaCanje = await prisma.cita.findFirst({
+          where: { compraId: compra.id, estado: { notIn: ['CANCELADA', 'NO_ASISTIO'] } },
+          orderBy: { inicio: 'desc' },
+          select: { inicio: true, estado: true },
+        })
+        requiereCita = !citaCanje
+      } catch (e) {
+        // Columna citas.compraId sin migrar: no bloquear el QR.
+        console.error('[mis-promociones] cita del canje:', e)
+      }
+    }
+  }
+  const fmtCita = (d: Date) =>
+    new Intl.DateTimeFormat('es-DO', {
+      timeZone: compra.company.zonaHoraria,
+      dateStyle: 'full',
+      timeStyle: 'short',
+    }).format(d)
 
   // Cuentas bancarias activas de la empresa (transferencia).
   const metodosPago = ESPERA_PAGO.includes(compra.estado)
@@ -140,8 +172,33 @@ export default async function MiCompraPage({
         </CardContent>
       </Card>
 
+      {/* Recompensa gratis sin cita: agendar ANTES de recibir el QR */}
+      {compra.estado === 'ACTIVA' && qr && requiereCita && (
+        <Card className="border-primary/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <CalendarDays className="h-4 w-4 text-primary" /> Agenda tu cita para
+              recibir tu QR
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 pb-6">
+            <p className="text-sm text-muted-foreground">
+              Tu <strong className="text-foreground">{promo?.titulo ?? 'recompensa'}</strong>{' '}
+              gratis está reservada a tu nombre. Para usarla, primero elige el día y la
+              hora en que vendrás; al confirmar la cita, tu QR aparecerá aquí listo para
+              presentarlo en el local.
+            </p>
+            <Button asChild className="w-full gap-2 font-bold sm:w-auto">
+              <Link href={`/cliente/citas?compra=${compra.id}`}>
+                <CalendarDays className="h-4 w-4" /> Agendar mi cita
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* QR activo */}
-      {compra.estado === 'ACTIVA' && qr && (
+      {compra.estado === 'ACTIVA' && qr && !requiereCita && (
         <Card className="border-success/25">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -149,6 +206,11 @@ export default async function MiCompraPage({
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-3 pb-6">
+            {citaCanje && (
+              <p className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                <CalendarDays className="h-3.5 w-3.5" /> Tu cita: {fmtCita(citaCanje.inicio)}
+              </p>
+            )}
             <QRDisplay token={qr.token} />
             <p className="max-w-sm text-center text-xs text-muted-foreground">
               Muestra este código en el local. Es de un solo uso.

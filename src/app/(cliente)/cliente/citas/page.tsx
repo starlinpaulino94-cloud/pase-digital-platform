@@ -26,10 +26,10 @@ const ACTIVAS = ['PENDIENTE', 'CONFIRMADA']
 export default async function CitasClientePage({
   searchParams,
 }: {
-  searchParams: Promise<{ fecha?: string }>
+  searchParams: Promise<{ fecha?: string; compra?: string }>
 }) {
   const user = await requireRole('CLIENTE')
-  const { fecha } = await searchParams
+  const { fecha, compra } = await searchParams
 
   if (!user.metadata.clienteId) {
     return (
@@ -63,6 +63,23 @@ export default async function CitasClientePage({
     getCitasCliente(cliente.id),
   ])
 
+  // Cita para canjear una recompensa gratis (?compra=): valida que sea suya
+  // y esté disponible; al reservar, su QR queda habilitado.
+  const compraCanje = compra
+    ? await prisma.productoCompra
+        .findFirst({
+          where: {
+            id: compra,
+            clienteId: cliente.id,
+            estado: 'ACTIVA',
+            usosRestantes: { gt: 0 },
+          },
+          select: { id: true, promocion: { select: { titulo: true } } },
+        })
+        .catch(() => null)
+    : null
+  const compraParam = compraCanje ? `&compra=${compraCanje.id}` : ''
+
   const ahora = new Date()
   const proximas = citas
     .filter((c) => ACTIVAS.includes(c.estado) && c.inicio >= ahora)
@@ -94,6 +111,18 @@ export default async function CitasClientePage({
         </p>
       </header>
 
+      {compraCanje && (
+        <div className="animate-fade-up rounded-2xl border border-success/30 bg-success/10 p-4">
+          <p className="text-sm font-semibold text-foreground">
+            🎁 Estás agendando tu {compraCanje.promocion?.titulo ?? 'recompensa'} GRATIS
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Elige el día y la hora en que vendrás. Al confirmar la cita, el QR de tu
+            recompensa quedará habilitado para presentarlo ese día.
+          </p>
+        </div>
+      )}
+
       {!cfg?.activa ? (
         <EmptyState
           icon={CalendarX2}
@@ -113,7 +142,7 @@ export default async function CitasClientePage({
             {diasAbiertos.map((d) => (
               <Link
                 key={d.ymd}
-                href={`/cliente/citas?fecha=${d.ymd}`}
+                href={`/cliente/citas?fecha=${d.ymd}${compraParam}`}
                 aria-current={d.ymd === fechaSel ? 'date' : undefined}
                 className={cn(
                   'shrink-0 rounded-xl border px-3.5 py-2 text-sm font-semibold capitalize transition',
@@ -136,6 +165,8 @@ export default async function CitasClientePage({
               vehiculos={cliente.vehiculos}
               limiteDiaAlcanzado={disponibilidad.limiteDiaAlcanzado}
               notas={cfg.notas}
+              compraId={compraCanje?.id ?? null}
+              compraTitulo={compraCanje?.promocion?.titulo ?? null}
             />
           )}
         </section>

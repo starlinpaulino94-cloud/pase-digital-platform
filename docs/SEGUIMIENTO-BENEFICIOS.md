@@ -102,6 +102,22 @@ Más allá de lo pedido, un control serio de recompensas incluye:
 ALTER TABLE "companies" ADD COLUMN IF NOT EXISTS "seguimientoConfig" JSONB;
 ```
 
+## 5. Cita antes del QR (extensión)
+
+Las recompensas **GRATIS** exigen **agendar una cita** para habilitar su QR
+(si la empresa tiene la agenda de citas activa; si no, el QR se muestra como
+antes):
+
+- El detalle del beneficio (`/cliente/mis-promociones/[id]`) oculta el QR y
+  muestra "Agenda tu cita para recibir tu QR" → `/cliente/citas?compra=<id>`.
+- `reservarCita` acepta `compraId` (valida dueño/empresa/ACTIVA/usos>0),
+  prellena el servicio con "Canje: <promo>" (visible en la agenda del admin) y
+  vincula `citas.compraId` tras crear la cita (defensivo: si la columna no
+  existe aún, la cita se crea igual sin vínculo y el QR no se bloquea).
+- Con cita activa (no CANCELADA/NO_ASISTIO) el QR aparece junto a la fecha de
+  la cita. Migración `20260756_cita_compra` (columna + índice + FK,
+  idempotente).
+
 ## 4. Decisiones tomadas
 
 - **Alcance de "recompensa gratis"**: `ProductoCompra` gratis con promoción y QR
