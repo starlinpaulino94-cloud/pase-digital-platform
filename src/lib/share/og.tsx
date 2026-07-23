@@ -68,7 +68,13 @@ export async function fetchImageDataUrl(url: string, timeoutMs = 4000): Promise<
  * Devuelve null si la imagen no es apta (formato/tamaño/timeout) para que el
  * llamador caiga a la tarjeta compuesta.
  */
-export async function originalImageResponse(url: string, timeoutMs = 4000): Promise<Response | null> {
+export async function originalImageResponse(
+  url: string,
+  timeoutMs = 4000,
+  // >600 KB: WhatsApp puede degradar a miniatura. El llamador puede subir el
+  // tope (ej. 4 MB) cuando prefiera SIEMPRE la imagen original entera.
+  maxBytes = 600_000
+): Promise<Response | null> {
   try {
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), timeoutMs)
@@ -78,8 +84,7 @@ export async function originalImageResponse(url: string, timeoutMs = 4000): Prom
     const tipo = (res.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase()
     if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(tipo)) return null
     const buf = Buffer.from(await res.arrayBuffer())
-    // >600 KB: WhatsApp degrada a miniatura — mejor la tarjeta compuesta.
-    if (buf.length === 0 || buf.length > 600_000) return null
+    if (buf.length === 0 || buf.length > maxBytes) return null
     return new Response(new Uint8Array(buf), {
       headers: {
         'Content-Type': tipo,

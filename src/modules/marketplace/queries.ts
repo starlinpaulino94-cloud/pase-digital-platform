@@ -466,6 +466,9 @@ export interface PromotionOg {
   descuento: number | null
   empresa: string
   logoUrl: string | null
+  /** Share Engine: textos propios al compartir (si el negocio los editó). */
+  ogTitulo: string | null
+  ogDescripcion: string | null
 }
 
 export async function getPromotionOg(promotionId: string): Promise<PromotionOg | null> {
@@ -488,10 +491,19 @@ export async function getPromotionOg(promotionId: string): Promise<PromotionOg |
       },
     })
     if (!p) return null
+    // Textos editables al compartir. Consulta APARTE y defensiva: si la
+    // columna shareConfig aún no existe (migración 20260757 pendiente), la
+    // vista previa sigue funcionando con los textos base.
+    const share = await prisma.promocion
+      .findUnique({ where: { id: promotionId }, select: { shareConfig: true } })
+      .then((r) => (r?.shareConfig ?? {}) as { ogTitulo?: unknown; ogDescripcion?: unknown })
+      .catch(() => ({}) as { ogTitulo?: unknown; ogDescripcion?: unknown })
+    const texto = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null)
     return {
       id: p.id, titulo: p.titulo, descripcion: p.descripcion, imagenUrl: p.imagenUrl,
       tipo: p.tipo, beneficioTipo: p.beneficioTipo, descuento: p.descuento,
       empresa: p.company.name, logoUrl: p.company.logoUrl,
+      ogTitulo: texto(share.ogTitulo), ogDescripcion: texto(share.ogDescripcion),
     }
   } catch (e) {
     console.error('[getPromotionOg]', e)

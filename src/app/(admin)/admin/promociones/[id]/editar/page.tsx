@@ -16,6 +16,13 @@ export default async function EditarPromocionPage({
   const promo = await prisma.promocion.findUnique({ where: { id } })
   if (!promo) notFound()
 
+  // Textos de compartición guardados (para la vista previa de abajo).
+  const shareRaw = (promo.shareConfig ?? {}) as { ogTitulo?: unknown; ogDescripcion?: unknown }
+  const share = {
+    ogTitulo: typeof shareRaw.ogTitulo === 'string' ? shareRaw.ogTitulo : '',
+    ogDescripcion: typeof shareRaw.ogDescripcion === 'string' ? shareRaw.ogDescripcion : '',
+  }
+
   const campanas = await prisma.campana.findMany({
     where: { companyId: promo.companyId, activo: true },
     select: { id: true, nombre: true },
@@ -45,8 +52,8 @@ export default async function EditarPromocionPage({
         </h2>
         <SharePreviewCard
           imageSrc={`/promocion/${promo.id}/opengraph-image?v=${promo.updatedAt.getTime()}`}
-          titulo={promo.titulo}
-          descripcion={promo.descripcion ?? ''}
+          titulo={share.ogTitulo || promo.titulo}
+          descripcion={share.ogDescripcion || promo.descripcion || ''}
           urlMostrada={`membego.com/promocion/${promo.id.slice(0, 10)}…`}
         />
       </section>

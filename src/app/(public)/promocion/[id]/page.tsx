@@ -25,13 +25,14 @@ export async function generateMetadata({
     return { title: `Promoción · ${SITE_NAME}` }
   }
 
-  const title = `${og.titulo} · ${og.empresa}`
+  // Share Engine: los textos EDITADOS por el negocio tienen prioridad.
+  const title = og.ogTitulo || `${og.titulo} · ${og.empresa}`
   const descuento =
     og.descuento && og.descuento > 0 ? `${og.descuento}% de descuento · ` : ''
-  const description = `${descuento}${og.descripcion || `Beneficio de ${og.empresa} en ${SITE_NAME}`}`.slice(
-    0,
-    200
-  )
+  const description = (
+    og.ogDescripcion ||
+    `${descuento}${og.descripcion || `Beneficio de ${og.empresa} en ${SITE_NAME}`}`
+  ).slice(0, 200)
   // Share Engine: la imagen la genera opengraph-image.tsx de esta ruta
   // (tarjeta con la imagen oficial de la promo y el descuento protagonista).
   return shareMetadata({

@@ -601,6 +601,10 @@ model Promocion {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  // Share Engine: textos propios al compartir (JSON { ogTitulo?, ogDescripcion? }).
+  // null = usar titulo/descripcion de la promoción.
+  shareConfig Json?
+
   // FASE 2: Marketplace fields
   slug          String?
   tipo          String   @default("general") // ver PROMO_TIPOS en src/lib/promociones.ts

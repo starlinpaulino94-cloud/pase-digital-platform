@@ -47,10 +47,11 @@ export default async function Image({ params }: { params: Promise<{ id: string }
   const { id } = await params
   const og = await getPromotionOg(id).catch(() => null)
 
-  // Con imagen oficial ligera se entrega la imagen (tarjeta GRANDE en
-  // WhatsApp, como Temu); si no hay o pesa mucho, la tarjeta compuesta.
+  // Con imagen oficial se entrega la imagen ORIGINAL ENTERA (sin recortes ni
+  // composición, como Temu) hasta 4 MB. La tarjeta compuesta queda solo para
+  // promociones sin imagen o con imagen inservible.
   if (og?.imagenUrl) {
-    const original = await originalImageResponse(og.imagenUrl)
+    const original = await originalImageResponse(og.imagenUrl, 4000, 4_000_000)
     if (original) return original
   }
 
