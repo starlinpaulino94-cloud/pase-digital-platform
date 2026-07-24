@@ -38,6 +38,7 @@ import {
   QrCode,
   Compass,
   LayoutGrid,
+  SlidersHorizontal,
   type LucideIcon,
 } from 'lucide-react'
 import type { AppRole } from '@/types'
@@ -219,6 +220,7 @@ const SUPERADMIN_NAV: NavGroup[] = [
       { href: '/superadmin/planes', label: 'Planes globales', icon: Package },
       { href: '/superadmin/membresias', label: 'Membresías globales', icon: CreditCard },
       { href: '/superadmin/operaciones', label: 'Operaciones', icon: ClipboardList },
+      { href: '/superadmin/capacidades', label: 'Capacidades', icon: SlidersHorizontal },
       { href: '/superadmin/reportes', label: 'Reportes globales', icon: BarChart3 },
     ],
   },

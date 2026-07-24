@@ -63,6 +63,23 @@
   AppShell). Apagada = menú idéntico al de siempre. Encender/apagar NO
   requiere deploy (esperar el caché de 5 min o `revalidateTag`).
 
+## E4 entregada: panel de administración + cableado
+
+- **Panel superadmin** `/superadmin/capacidades` (entrada "Capacidades" en el
+  menú Plataforma): selector de empresa, categoría y un toggle por capacidad.
+  Guarda SOLO las diferencias contra el paquete base (si el paquete base
+  evoluciona, las empresas sin override lo heredan solo) y deja AuditLog.
+  Al guardar hace `revalidateTag(CAPACIDADES_TAG)` → los cambios aplican de
+  inmediato (sin esperar los 5 min de caché).
+- **Cableado real (además de las secciones citas/seguimiento/gamificación
+  de E1):** `GIFT_CARDS` bloquea la compra de gift cards en el servidor;
+  `CITA_ANTES_DEL_QR` controla la regla de agendar antes de mostrar el QR
+  del regalo; `NAVEGACION_V2` controla el menú (E2).
+- Pendiente de cablear cuando existan: `INVENTARIO`, `COLA_VEHICULOS`,
+  `EVIDENCIA_FOTOS` (P2 · E5) — sus guards deben usar
+  `tieneCapacidad(companyId, '…')` y son fail-closed por nacer fuera del
+  paquete base.
+
 ## Migración (Supabase SQL Editor, idempotente)
 
 ```sql
