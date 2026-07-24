@@ -3,6 +3,9 @@ import { requireRole } from '@/lib/auth/guards'
 import { ADMIN_ROLES } from '@/types'
 import { prisma } from '@/lib/prisma'
 import { getCapacidadesEmpresa } from '@/modules/capacidades/resolver'
+import { getDashboardOperativo } from '@/modules/carwash/dashboard'
+import { hmEnTz } from '@/modules/citas/disponibilidad'
+import { CitaEstadoBadge } from '@/components/citas/CitaEstadoBadge'
 import {
   ArrowLeft,
   ScanLine,
@@ -16,6 +19,21 @@ import {
   Camera,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+
+function fmtRD(n: number) {
+  return new Intl.NumberFormat('es-DO', {
+    style: 'currency',
+    currency: 'DOP',
+    maximumFractionDigits: 0,
+  }).format(n)
+}
+
+const TIPO_LABEL: Record<string, string> = {
+  SALE: 'Venta',
+  PROMOTION_USE: 'Canje',
+  VISIT: 'Visita',
+  BENEFIT_USE: 'Beneficio',
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -47,12 +65,36 @@ export default async function CarwashShellPage() {
   const [empresa, capacidades] = await Promise.all([
     prisma.company.findUnique({
       where: { id: companyId },
-      select: { name: true, colorPrimario: true, logoUrl: true },
+      select: { name: true, colorPrimario: true, logoUrl: true, zonaHoraria: true },
     }),
     getCapacidadesEmpresa(companyId).catch(() => null),
   ])
   const color = empresa?.colorPrimario || '#0D9488'
   const activas = new Set(capacidades?.activas ?? [])
+  const tz = empresa?.zonaHoraria || 'America/Santo_Domingo'
+
+  // E3: dashboard operativo del día (citas, canjes, ventas, recompensas).
+  const dia = await getDashboardOperativo(companyId, tz)
+  const kpis = [
+    { label: 'Citas de hoy', valor: String(dia.citasActivas), href: '/admin/citas' },
+    { label: 'Canjes de hoy', valor: String(dia.canjesHoy), href: '/admin/registros' },
+    {
+      label: 'Caja de hoy',
+      valor: `${fmtRD(dia.ventasHoyMonto)} · ${dia.ventasHoyCount}`,
+      href: '/admin/registros',
+    },
+    {
+      label: 'Regalos sin usar',
+      valor:
+        dia.recompensasPorVencer > 0
+          ? `${dia.recompensasSinUsar} (${dia.recompensasPorVencer} por vencer)`
+          : String(dia.recompensasSinUsar),
+      href: '/admin/seguimiento',
+    },
+  ]
+  const proximasCitas = dia.citas
+    .filter((c) => ['PENDIENTE', 'CONFIRMADA'].includes(c.estado))
+    .slice(0, 6)
 
   const modulos: Modulo[] = [
     { href: '/admin/scanner', label: 'Escanear QR', descripcion: 'Canjes y visitas en pista', icon: ScanLine },
@@ -62,6 +104,7 @@ export default async function CarwashShellPage() {
     ...(activas.has('SEGUIMIENTO')
       ? [{ href: '/admin/seguimiento', label: 'Seguimiento', descripcion: 'Lavados gratis: quién no ha venido', icon: QrCode } as Modulo]
       : []),
+    { href: '/admin/app/carwash/vehiculos', label: 'Vehículos', descripcion: 'Busca por placa, marca o dueño', icon: Car },
     { href: '/admin/sucursales', label: 'Sucursales', descripcion: 'Puntos de servicio', icon: Building2 },
     ...(activas.has('POS_CAJA')
       ? [{ href: '/empleado/caja', label: 'Caja', descripcion: 'Cobros y órdenes del día', icon: Banknote } as Modulo]
@@ -122,6 +165,82 @@ export default async function CarwashShellPage() {
             </h1>
           </div>
         </div>
+      </div>
+
+      {/* Dashboard operativo del día (E3) */}
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {kpis.map((k) => (
+          <Link
+            key={k.label}
+            href={k.href}
+            className="rounded-2xl border border-border/70 bg-card p-4 transition hover:border-foreground/30"
+          >
+            <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{k.label}</dt>
+            <dd className="mt-1 truncate text-lg font-bold tabular-nums text-foreground">
+              {k.valor}
+            </dd>
+          </Link>
+        ))}
+      </dl>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Próximas citas de hoy */}
+        <section className="rounded-2xl border border-border/70 bg-card p-4">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">
+            <CalendarDays className="h-4 w-4" /> Citas de hoy
+          </h2>
+          {proximasCitas.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No hay citas activas para hoy.</p>
+          ) : (
+            <ul className="divide-y divide-border/50">
+              {proximasCitas.map((c) => (
+                <li key={c.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-foreground">
+                      {hmEnTz(c.inicio, tz)} · {c.cliente.nombre}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {c.vehiculo ? `${c.vehiculo.marca} ${c.vehiculo.modelo}` : null}
+                      {c.vehiculo && c.servicio ? ' · ' : null}
+                      {c.servicio}
+                    </p>
+                  </div>
+                  <CitaEstadoBadge estado={c.estado} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* Últimas operaciones de hoy */}
+        <section className="rounded-2xl border border-border/70 bg-card p-4">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted-foreground">
+            <Banknote className="h-4 w-4" /> Últimas operaciones
+          </h2>
+          {dia.ultimas.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Aún no hay operaciones hoy.</p>
+          ) : (
+            <ul className="divide-y divide-border/50">
+              {dia.ultimas.map((op) => (
+                <li key={op.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-foreground">
+                      {TIPO_LABEL[op.tipo] ?? op.tipo}
+                      {op.cliente ? ` · ${op.cliente}` : ''}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {hmEnTz(op.fecha, tz)}
+                      {op.detalle ? ` · ${op.detalle}` : ''}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-sm font-bold tabular-nums text-foreground">
+                    {op.monto != null && op.monto > 0 ? fmtRD(op.monto) : '—'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
 
       {/* Menú de la app */}
