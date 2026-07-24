@@ -37,6 +37,7 @@ import {
   Tag,
   QrCode,
   Compass,
+  LayoutGrid,
   type LucideIcon,
 } from 'lucide-react'
 import type { AppRole } from '@/types'
@@ -132,6 +133,13 @@ const ADMIN_NAV: NavGroup[] = [
       { href: '/admin/adquisicion', label: 'Origen de clientes', icon: Compass },
       { href: '/admin/crecimiento', label: 'Crecimiento', icon: Rocket },
     ],
+  },
+  {
+    // Plataforma modular · E2: puerta de entrada al segundo nivel (los
+    // sistemas del negocio). El launchpad muestra las apps de la empresa.
+    id: 'aplicaciones',
+    label: 'Aplicaciones',
+    items: [{ href: '/admin/aplicaciones', label: 'Aplicaciones', icon: LayoutGrid }],
   },
   {
     id: 'configuracion',

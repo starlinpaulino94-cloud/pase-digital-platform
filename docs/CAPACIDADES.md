@@ -28,7 +28,7 @@
 
 | Capacidad | Controla | CAR_WASH base |
 |---|---|---|
-| `NAVEGACION_V2` | Launchpad + shell (interruptor D7, E2) | ❌ apagada |
+| `NAVEGACION_V2` | Oculta los módulos operativos del menú MembeGo (viven solo en la app; interruptor D7, E2) | ❌ apagada |
 | `CITAS` | Sección citas | ✅ |
 | `SEGUIMIENTO` | Sección seguimiento | ✅ |
 | `RULETA` | Sección gamificación | ✅ |
@@ -47,6 +47,21 @@
   `requireSection`; P1 la puede usar para filtrar menús (E2).
 - `navegacionV2` es la bandera del interruptor para P1-T3.
 - E4 (P2): al guardar el panel, `revalidateTag(CAPACIDADES_TAG)`.
+
+## E2 entregada: launchpad + shell
+
+- **Launchpad** `/admin/aplicaciones` (entrada "Aplicaciones" en el menú):
+  tarjetas de las apps de la categoría de la empresa.
+- **Shell Car Wash** `/admin/app/carwash`: cabecera con identidad del negocio
+  (color/logo) + "← Volver a MembeGo" + menú de módulos operativos que
+  ENLAZAN a las pantallas actuales (D5: ninguna URL se movió). Los módulos
+  futuros (cola, inventario, evidencia) aparecen "próximamente" hasta
+  encender su capacidad.
+- **Interruptor D7**: con `NAVEGACION_V2` encendida (override
+  `{"overrides":{"NAVEGACION_V2":true}}` en `companies.capacidades`), los
+  módulos operativos salen del menú de MembeGo (capa `hiddenNav` del
+  AppShell). Apagada = menú idéntico al de siempre. Encender/apagar NO
+  requiere deploy (esperar el caché de 5 min o `revalidateTag`).
 
 ## Migración (Supabase SQL Editor, idempotente)
 
