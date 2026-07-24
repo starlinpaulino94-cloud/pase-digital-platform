@@ -257,6 +257,11 @@ model Company {
   // permitirRegalos?, maxTransferenciasMes?, vigenciaHoras? }. null = defaults.
   regalosConfig Json?
 
+  // Plataforma modular (docs/ESTRATEGIA-PLATAFORMA.md · E1). JSON:
+  // { categoria?, overrides?: { CAPACIDAD: boolean } }. null = paquete base
+  // de su categoría (fail-open: nada de lo actual desaparece).
+  capacidades Json?
+
   // Seguimiento de beneficios gratis (docs/SEGUIMIENTO-BENEFICIOS.md · S3).
   // JSON: { umbralPorVencerDias?, recordatorioAuto?, recordatorioDiasAntes?,
   // recordatorioFrecuenciaDias?, plantillaMensaje?, promosExcluidas? }.
